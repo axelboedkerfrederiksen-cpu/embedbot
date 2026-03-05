@@ -1,8 +1,8 @@
 (function () {
   const scriptTag = document.currentScript;
   const businessId = new URL(scriptTag.src).searchParams.get("id");
-  const API_URL = "http://localhost:3000/api/chat";
-
+  const API_URL = "https://embedbot1-12ejg9qq7-axelboedkerfrederiksens-projects.vercel.app/api/chat";
+  
   const container = document.createElement("div");
   container.innerHTML = `
     <div id="eb-bubble" style="position:fixed;bottom:24px;right:24px;width:56px;height:56px;background:#000;border-radius:50%;cursor:pointer;display:flex;align-items:center;justify-content:center;z-index:9999;">
