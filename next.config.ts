@@ -7,6 +7,7 @@ const nextConfig: NextConfig = {
         source: "/widget.js",
         headers: [
           { key: "Access-Control-Allow-Origin", value: "*" },
+          { key: "Content-Type", value: "application/javascript" },
         ],
       },
       {
