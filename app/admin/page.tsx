@@ -1,7 +1,6 @@
 "use client";
 
-import { FormEvent, useMemo, useState } from "react";
-import { createClient } from "@supabase/supabase-js";
+import { FormEvent, useState } from "react";
 
 type Business = {
   id: string;
@@ -14,15 +13,6 @@ type Business = {
 };
 
 export default function AdminPage() {
-  const supabase = useMemo(
-    () =>
-      createClient(
-        process.env.NEXT_PUBLIC_SUPABASE_URL!,
-        process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
-      ),
-    []
-  );
-
   const [password, setPassword] = useState("");
   const [authError, setAuthError] = useState("");
   const [isAuthenticated, setIsAuthenticated] = useState(false);
@@ -37,19 +27,27 @@ export default function AdminPage() {
     setLoading(true);
     setError("");
 
-    const { data, error: queryError } = await supabase
-      .from("businesses")
-      .select("*")
-      .order("created_at", { ascending: false });
+    try {
+      const res = await fetch("/api/admin/businesses", {
+        method: "GET",
+        headers: { "Content-Type": "application/json" },
+      });
 
-    if (queryError) {
-      setError(queryError.message || "Kunne ikke hente virksomheder.");
+      const data = await res.json();
+      if (!res.ok) {
+        throw new Error(data.error || "Kunne ikke hente virksomheder.");
+      }
+
+      setBusinesses((data.businesses || []) as Business[]);
+    } catch (fetchError) {
+      if (fetchError instanceof Error) {
+        setError(fetchError.message || "Kunne ikke hente virksomheder.");
+      } else {
+        setError("Kunne ikke hente virksomheder.");
+      }
+    } finally {
       setLoading(false);
-      return;
     }
-
-    setBusinesses((data || []) as Business[]);
-    setLoading(false);
   }
 
   async function handleLogin(e: FormEvent) {
