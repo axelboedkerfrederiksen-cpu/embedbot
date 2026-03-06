@@ -106,51 +106,340 @@ export default function Home() {
   }
 
   const input = (label: string, key: string, placeholder = "", required = false) => (
-    <div style={{ marginBottom: 12 }}>
-      <label style={{ display: "block", fontSize: 13, fontWeight: 600, marginBottom: 4, color: "#333" }}>
-        {label}{required && <span style={{ color: "red" }}> *</span>}
+    <div className="field">
+      <label className="field-label">
+        {label}{required && <span className="required"> *</span>}
       </label>
       <input
         value={(form as any)[key]}
         onChange={e => update(key, e.target.value)}
         placeholder={placeholder}
-        style={{ width: "100%", padding: "10px 12px", border: "1px solid #ddd", borderRadius: 8, boxSizing: "border-box", fontSize: 14 }}
+        className="field-input"
       />
     </div>
   );
 
   const textarea = (label: string, key: string, placeholder = "", required = false) => (
-    <div style={{ marginBottom: 12 }}>
-      <label style={{ display: "block", fontSize: 13, fontWeight: 600, marginBottom: 4, color: "#333" }}>
-        {label}{required && <span style={{ color: "red" }}> *</span>}
+    <div className="field">
+      <label className="field-label">
+        {label}{required && <span className="required"> *</span>}
       </label>
       <textarea
         value={(form as any)[key]}
         onChange={e => update(key, e.target.value)}
         placeholder={placeholder}
         rows={3}
-        style={{ width: "100%", padding: "10px 12px", border: "1px solid #ddd", borderRadius: 8, boxSizing: "border-box", fontSize: 14, resize: "vertical" }}
+        className="field-input field-textarea"
       />
     </div>
   );
 
+  const styles = (
+    <style jsx global>{`
+      @import url("https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;700&family=DM+Serif+Display:ital@0;1&display=swap");
+
+      .eb-page {
+        min-height: 100vh;
+        background: #f5f5f5;
+        padding: 28px 16px;
+        font-family: "DM Sans", sans-serif;
+        color: #000;
+      }
+
+      .eb-shell {
+        width: 100%;
+        max-width: 640px;
+        margin: 0 auto;
+      }
+
+      .eb-auth-shell {
+        width: 100%;
+        max-width: 440px;
+        margin: 6vh auto 0;
+      }
+
+      .eb-card {
+        background: #fff;
+        border: 1px solid #e7e7e7;
+        border-radius: 16px;
+        padding: 24px;
+        box-shadow: 0 8px 30px rgba(0, 0, 0, 0.06);
+      }
+
+      .eb-animate {
+        animation: eb-fade-up 350ms ease-out;
+      }
+
+      .brand {
+        font-family: "DM Serif Display", serif;
+        letter-spacing: 0.4px;
+        line-height: 1.05;
+        margin: 0;
+      }
+
+      .brand-auth {
+        font-size: clamp(2rem, 7vw, 2.4rem);
+        text-align: center;
+        margin-bottom: 6px;
+      }
+
+      .brand-main {
+        font-size: clamp(1.7rem, 5vw, 2.1rem);
+      }
+
+      .muted {
+        color: #666;
+      }
+
+      .tagline {
+        text-align: center;
+        color: #666;
+        margin: 0 0 24px;
+      }
+
+      .header-row {
+        display: flex;
+        justify-content: space-between;
+        align-items: flex-end;
+        gap: 12px;
+        margin-bottom: 14px;
+      }
+
+      .step-note {
+        font-size: 13px;
+        color: #666;
+        font-weight: 500;
+      }
+
+      .progress-track {
+        width: 100%;
+        height: 8px;
+        border-radius: 999px;
+        background: #e8e8e8;
+        overflow: hidden;
+        margin-bottom: 20px;
+      }
+
+      .progress-fill {
+        height: 100%;
+        border-radius: inherit;
+        background: #000;
+        transition: width 260ms ease;
+      }
+
+      .section-title {
+        margin: 0 0 18px;
+        font-family: "DM Serif Display", serif;
+        font-size: clamp(1.35rem, 4vw, 1.65rem);
+        line-height: 1.2;
+      }
+
+      .subsection-title {
+        font-size: 0.96rem;
+        font-weight: 700;
+        margin: 18px 0 10px;
+      }
+
+      .field {
+        margin-bottom: 12px;
+      }
+
+      .field-label {
+        display: block;
+        font-size: 13px;
+        font-weight: 700;
+        margin-bottom: 6px;
+      }
+
+      .required {
+        color: #000;
+      }
+
+      .field-input {
+        width: 100%;
+        background: #fff;
+        border: 1px solid #d9d9d9;
+        border-radius: 10px;
+        padding: 11px 12px;
+        font-family: "DM Sans", sans-serif;
+        font-size: 14px;
+        box-sizing: border-box;
+        transition: border-color 150ms ease, box-shadow 150ms ease;
+        color: #000;
+      }
+
+      .field-input::placeholder {
+        color: #999;
+      }
+
+      .field-input:focus {
+        outline: none;
+        border-color: #000;
+        box-shadow: 0 0 0 1px #000;
+      }
+
+      .field-textarea {
+        resize: vertical;
+        min-height: 92px;
+      }
+
+      .actions {
+        display: flex;
+        justify-content: space-between;
+        gap: 12px;
+      }
+
+      .btn {
+        border-radius: 10px;
+        border: 1px solid #000;
+        padding: 11px 20px;
+        font-size: 14px;
+        font-weight: 700;
+        cursor: pointer;
+        transition: transform 160ms ease, background-color 160ms ease, color 160ms ease, opacity 160ms ease;
+        font-family: "DM Sans", sans-serif;
+      }
+
+      .btn:hover {
+        transform: translateY(-1px);
+      }
+
+      .btn:disabled {
+        cursor: not-allowed;
+        opacity: 0.6;
+        transform: none;
+      }
+
+      .btn-primary {
+        background: #000;
+        color: #fff;
+      }
+
+      .btn-primary:hover {
+        background: #111;
+      }
+
+      .btn-secondary {
+        background: #fff;
+        color: #000;
+        border-color: #d0d0d0;
+      }
+
+      .btn-secondary:hover {
+        border-color: #000;
+      }
+
+      .btn-full {
+        width: 100%;
+      }
+
+      .message-error {
+        color: #b00020;
+        margin: 12px 0 0;
+        font-size: 14px;
+      }
+
+      .toggle-auth {
+        margin: 14px 0 0;
+        text-align: center;
+        color: #666;
+        font-size: 14px;
+        cursor: pointer;
+        text-decoration: underline;
+        text-underline-offset: 3px;
+      }
+
+      .thanks-wrap {
+        text-align: center;
+        padding: 38px 22px;
+      }
+
+      .checkmark {
+        width: 68px;
+        height: 68px;
+        margin: 0 auto 16px;
+        border-radius: 999px;
+        border: 2px solid #000;
+        display: grid;
+        place-items: center;
+        font-size: 34px;
+        line-height: 1;
+      }
+
+      .thanks-title {
+        margin: 0 0 10px;
+        font-size: clamp(1.6rem, 5vw, 2rem);
+      }
+
+      .thanks-text {
+        margin: 0;
+        color: #666;
+        max-width: 520px;
+        margin-inline: auto;
+      }
+
+      @keyframes eb-fade-up {
+        from {
+          opacity: 0;
+          transform: translateY(8px);
+        }
+        to {
+          opacity: 1;
+          transform: translateY(0);
+        }
+      }
+
+      @media (max-width: 640px) {
+        .eb-card {
+          padding: 18px;
+          border-radius: 14px;
+        }
+
+        .header-row {
+          align-items: center;
+        }
+
+        .btn {
+          padding: 10px 16px;
+        }
+      }
+    `}</style>
+  );
+
   if (!user) {
     return (
-      <main style={{ maxWidth: 400, margin: "100px auto", fontFamily: "sans-serif" }}>
-        <h1 style={{ fontSize: 24, fontWeight: "bold", marginBottom: 8 }}>EmbedBot</h1>
-        <p style={{ color: "#666", marginBottom: 24 }}>AI kundeservice til din hjemmeside</p>
-        <input placeholder="Email" value={email} onChange={e => setEmail(e.target.value)}
-          style={{ width: "100%", padding: "10px 12px", border: "1px solid #ddd", borderRadius: 8, marginBottom: 12, boxSizing: "border-box" }} />
-        <input placeholder="Adgangskode" type="password" value={password} onChange={e => setPassword(e.target.value)}
-          style={{ width: "100%", padding: "10px 12px", border: "1px solid #ddd", borderRadius: 8, marginBottom: 12, boxSizing: "border-box" }} />
-        <button onClick={handleAuth} disabled={loading}
-          style={{ width: "100%", padding: 12, background: "#000", color: "white", border: "none", borderRadius: 8, cursor: "pointer", fontWeight: "bold" }}>
-          {loading ? "Indlæser..." : isLogin ? "Log ind" : "Opret konto"}
-        </button>
-        <p style={{ textAlign: "center", marginTop: 16, color: "#666", cursor: "pointer" }} onClick={() => setIsLogin(!isLogin)}>
-          {isLogin ? "Har du ikke en konto? Opret en" : "Har du allerede en konto? Log ind"}
-        </p>
-        {message && <p style={{ color: "red", marginTop: 12, textAlign: "center" }}>{message}</p>}
+      <main className="eb-page">
+        {styles}
+        <div className="eb-auth-shell">
+          <div className="eb-card eb-animate">
+            <h1 className="brand brand-auth">EmbedBot</h1>
+            <p className="tagline">AI kundeservice til din hjemmeside</p>
+            <div className="field">
+              <input
+                placeholder="Email"
+                value={email}
+                onChange={e => setEmail(e.target.value)}
+                className="field-input"
+              />
+            </div>
+            <div className="field">
+              <input
+                placeholder="Adgangskode"
+                type="password"
+                value={password}
+                onChange={e => setPassword(e.target.value)}
+                className="field-input"
+              />
+            </div>
+            <button onClick={handleAuth} disabled={loading} className="btn btn-primary btn-full">
+              {loading ? "Indlæser..." : isLogin ? "Log ind" : "Opret konto"}
+            </button>
+            <p className="toggle-auth" onClick={() => setIsLogin(!isLogin)}>
+              {isLogin ? "Har du ikke en konto? Opret en" : "Har du allerede en konto? Log ind"}
+            </p>
+            {message && <p className="message-error">{message}</p>}
+          </div>
+        </div>
       </main>
     );
   }
@@ -158,7 +447,7 @@ export default function Home() {
   const sections: Record<number, React.ReactElement> = {
     1: (
       <div>
-        <h2 style={{ fontSize: 18, fontWeight: "bold", marginBottom: 16 }}>1. Virksomhed</h2>
+        <h2 className="section-title">1. Virksomhed</h2>
         {input("Virksomhedsnavn", "name", "fx Modebutikken ApS", true)}
         {input("Hjemmeside URL", "website_url", "https://...", true)}
         {input("Branche", "industry", "fx webshop, restaurant, klinik", true)}
@@ -167,12 +456,12 @@ export default function Home() {
     ),
     2: (
       <div>
-        <h2 style={{ fontSize: 18, fontWeight: "bold", marginBottom: 16 }}>2. Kontakt & Åbningstider</h2>
+        <h2 className="section-title">2. Kontakt & Åbningstider</h2>
         {input("Email til kundeservice", "support_email", "support@...", true)}
         {input("Telefonnummer", "phone", "fx +45 12 34 56 78", true)}
         {input("Adresse", "address", "fx Vestergade 12")}
         {input("By / postnummer", "city", "fx 2000 Frederiksberg")}
-        <h3 style={{ fontSize: 15, fontWeight: 600, margin: "16px 0 8px" }}>Åbningstider</h3>
+        <h3 className="subsection-title">Åbningstider</h3>
         {input("Mandag–fredag", "hours_weekday", "fx 9:00–17:00", true)}
         {input("Lørdag", "hours_saturday", "fx 10:00–14:00 eller Lukket")}
         {input("Søndag", "hours_sunday", "fx Lukket")}
@@ -180,7 +469,7 @@ export default function Home() {
     ),
     3: (
       <div>
-        <h2 style={{ fontSize: 18, fontWeight: "bold", marginBottom: 16 }}>3. Support & Produkter</h2>
+        <h2 className="section-title">3. Support & Produkter</h2>
         {input("Forventet svartid", "response_time", "fx Inden for 24 timer", true)}
         {textarea("Hvad gør botten hvis den ikke kan hjælpe?", "fallback_action", "fx Henvis til telefon og email", true)}
         {textarea("Hvad gør botten ved klager?", "complaint_action", "fx Henvis altid til telefon ved klager", true)}
@@ -192,27 +481,27 @@ export default function Home() {
     ),
     4: (
       <div>
-        <h2 style={{ fontSize: 18, fontWeight: "bold", marginBottom: 16 }}>4. Chatbot & FAQ</h2>
+        <h2 className="section-title">4. Chatbot & FAQ</h2>
         {input("Velkomstbesked", "welcome_message", "fx Hej! Hvordan kan jeg hjælpe dig i dag? 😊", true)}
-        <div style={{ marginBottom: 12 }}>
-          <label style={{ display: "block", fontSize: 13, fontWeight: 600, marginBottom: 4, color: "#333" }}>Tone *</label>
+        <div className="field">
+          <label className="field-label">Tone *</label>
           <select value={form.tone} onChange={e => update("tone", e.target.value)}
-            style={{ width: "100%", padding: "10px 12px", border: "1px solid #ddd", borderRadius: 8, fontSize: 14 }}>
+            className="field-input">
             <option value="uformel">Uformel og venlig</option>
             <option value="formel">Formel og professionel</option>
           </select>
         </div>
-        <div style={{ marginBottom: 12 }}>
-          <label style={{ display: "block", fontSize: 13, fontWeight: 600, marginBottom: 4, color: "#333" }}>Sprog *</label>
+        <div className="field">
+          <label className="field-label">Sprog *</label>
           <select value={form.language} onChange={e => update("language", e.target.value)}
-            style={{ width: "100%", padding: "10px 12px", border: "1px solid #ddd", borderRadius: 8, fontSize: 14 }}>
+            className="field-input">
             <option value="dansk">Dansk</option>
             <option value="engelsk">Engelsk</option>
             <option value="begge">Begge</option>
           </select>
         </div>
         {textarea("FAQ – 5 mest stillede spørgsmål + svar", "faq", "Q: Hvad er jeres returpolitik?\nA: 30 dages returret...")}
-        <h3 style={{ fontSize: 15, fontWeight: 600, margin: "16px 0 8px" }}>Valgfrit</h3>
+        <h3 className="subsection-title">Valgfrit</h3>
         {input("CVR nummer", "cvr", "fx 12345678")}
         {input("Sociale medier", "social_media", "fx instagram.com/jeresfirma")}
         {textarea("Aktuelle tilbud / rabatkoder", "current_offers", "fx 10% rabat med koden SOMMER24")}
@@ -224,44 +513,51 @@ export default function Home() {
 
   if (step === 5) {
     return (
-      <main style={{ maxWidth: 600, margin: "60px auto", fontFamily: "sans-serif", padding: "0 16px" }}>
-        <h1 style={{ fontSize: 24, fontWeight: "bold", marginBottom: 8 }}>🎉 Tak for din ordre!</h1>
-        <p style={{ color: "#666" }}>Din chatbot er i gang med at blive behandlet. Vi vender tilbage inden for 24 timer med dit embed script.</p>
+      <main className="eb-page">
+        {styles}
+        <div className="eb-shell">
+          <div className="eb-card eb-animate thanks-wrap">
+            <div className="checkmark">✓</div>
+            <h1 className="brand thanks-title">Tak for din ordre!</h1>
+            <p className="thanks-text">Din chatbot er i gang med at blive behandlet. Vi vender tilbage inden for 24 timer med dit embed script.</p>
+          </div>
+        </div>
       </main>
     );
   }
 
   return (
-    <main style={{ maxWidth: 600, margin: "60px auto", fontFamily: "sans-serif", padding: "0 16px" }}>
-      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 32 }}>
-        <h1 style={{ fontSize: 22, fontWeight: "bold" }}>Opsæt din chatbot</h1>
-        <span style={{ color: "#666", fontSize: 14 }}>Trin {step} af 4</span>
-      </div>
+    <main className="eb-page">
+      {styles}
+      <div className="eb-shell eb-animate">
+        <div className="header-row">
+          <h1 className="brand brand-main">Opsæt din chatbot</h1>
+          <span className="step-note">Trin {step} af 4</span>
+        </div>
+        <div className="progress-track">
+          <div className="progress-fill" style={{ width: `${(step / 4) * 100}%` }} />
+        </div>
 
-      <div style={{ background: "#f9f9f9", padding: 24, borderRadius: 12, marginBottom: 24 }}>
-        {sections[step]}
-      </div>
+        <div className="eb-card">{sections[step]}</div>
 
-      {message && <p style={{ color: "red", marginBottom: 16 }}>{message}</p>}
+        {message && <p className="message-error">{message}</p>}
 
-      <div style={{ display: "flex", justifyContent: "space-between" }}>
+        <div className="actions" style={{ marginTop: 20 }}>
         {step > 1 && (
-          <button onClick={() => setStep(s => s - 1)}
-            style={{ padding: "12px 24px", background: "#fff", border: "1px solid #ddd", borderRadius: 8, cursor: "pointer", fontWeight: "bold" }}>
+          <button onClick={() => setStep(s => s - 1)} className="btn btn-secondary">
             ← Tilbage
           </button>
         )}
         {step < 4 ? (
-          <button onClick={() => setStep(s => s + 1)}
-            style={{ marginLeft: "auto", padding: "12px 24px", background: "#000", color: "white", border: "none", borderRadius: 8, cursor: "pointer", fontWeight: "bold" }}>
+          <button onClick={() => setStep(s => s + 1)} className="btn btn-primary" style={{ marginLeft: "auto" }}>
             Næste →
           </button>
         ) : (
-          <button onClick={handleSetup} disabled={loading}
-            style={{ marginLeft: "auto", padding: "12px 24px", background: "#000", color: "white", border: "none", borderRadius: 8, cursor: "pointer", fontWeight: "bold" }}>
+          <button onClick={handleSetup} disabled={loading} className="btn btn-primary" style={{ marginLeft: "auto" }}>
             {loading ? "Genererer chatbot..." : "Generer chatbot 🚀"}
           </button>
         )}
+        </div>
       </div>
     </main>
   );
