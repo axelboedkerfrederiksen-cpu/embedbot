@@ -1,8 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
-import { Resend } from "resend";
 import { createClient } from "@supabase/supabase-js";
+import { resend } from "@/lib/resend";
 
-const resend = new Resend(process.env.RESEND_API_KEY);
 const supabase = createClient(
   process.env.SUPABASE_URL!,
   process.env.SUPABASE_SERVICE_KEY!
@@ -15,7 +14,7 @@ export async function POST(req: NextRequest) {
 
   await resend.emails.send({
     from: "onboarding@resend.dev",
-    to: "axelbf@icloud.com",
+    to: "axel.boedker.frederiksen@gmail.com",
     subject: `Ny chatbot ordre: ${form.name}`,
     html: `
       <h2>Ny chatbot ordre fra ${form.name}</h2>
