@@ -53,7 +53,7 @@ export default function Home() {
 
     if (data.success) {
       setEmbedCode(
-        `<script src="https://ditdomæne.dk/widget.js?id=${user.id}"></script>`
+       `<script src="https://embedbot1-12ejg9qq7-axelboedkerfrederiksens-projects.vercel.app/widget.js?id=${user.id}"></script>`
       );
       setMessage(`✅ ${data.chunks} chunks indlæst fra din hjemmeside!`);
     } else {
