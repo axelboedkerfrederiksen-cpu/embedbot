@@ -61,28 +61,18 @@ export default function Home() {
     setCopyMessage("");
 
     try {
-      const { error: businessError } = await supabase
-        .from("businesses")
-        .upsert({ id: user.id, ...form });
-
-      if (businessError) {
-        throw new Error(`Kunne ikke gemme virksomhedsdata: ${businessError.message}`);
-      }
-
-      const res = await fetch("/api/ingest", {
+      const res = await fetch("/api/submit", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ url: form.website_url, business_id: user.id }),
+        body: JSON.stringify({ form, user_id: user.id }),
       });
 
       const data = await res.json();
 
       if (!res.ok || !data.success) {
-        throw new Error(data.error || "Noget gik galt under genereringen af chatbotten.");
+        throw new Error(data.error || "Noget gik galt.");
       }
 
-      setEmbedCode(`<script src="https://embedbot1.vercel.app/widget.js?id=${user.id}"></script>`);
-      setMessage(`✅ ${data.chunks} chunks indlæst!`);
       setStep(5);
     } catch (error) {
       setMessage(formatSetupError(error));
@@ -235,19 +225,8 @@ export default function Home() {
   if (step === 5) {
     return (
       <main style={{ maxWidth: 600, margin: "60px auto", fontFamily: "sans-serif", padding: "0 16px" }}>
-        <h1 style={{ fontSize: 24, fontWeight: "bold", marginBottom: 8 }}>🎉 Din chatbot er klar!</h1>
-        <p style={{ color: "#666", marginBottom: 24 }}>Paste denne linje ind på din hjemmeside:</p>
-        <code
-          ref={embedCodeRef}
-          style={{ display: "block", background: "#000", color: "#00ff00", padding: 16, borderRadius: 8, fontSize: 13, wordBreak: "break-all", whiteSpace: "pre-wrap" }}>
-          {embedCode}
-        </code>
-        <button onClick={handleCopyEmbedCode}
-          style={{ marginTop: 12, padding: "10px 20px", background: "#000", color: "white", border: "none", borderRadius: 8, cursor: "pointer" }}>
-          Kopier kode
-        </button>
-        {copyMessage && <p style={{ marginTop: 12, color: copyMessage.includes("automatisk") ? "#b45309" : "green" }}>{copyMessage}</p>}
-        {message && <p style={{ marginTop: 16, color: "green" }}>{message}</p>}
+        <h1 style={{ fontSize: 24, fontWeight: "bold", marginBottom: 8 }}>🎉 Tak for din ordre!</h1>
+        <p style={{ color: "#666" }}>Din chatbot er i gang med at blive behandlet. Vi vender tilbage inden for 24 timer med dit embed script.</p>
       </main>
     );
   }
