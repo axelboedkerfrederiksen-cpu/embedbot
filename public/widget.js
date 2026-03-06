@@ -1,7 +1,7 @@
 (function () {
   const scriptTag = document.currentScript;
   const businessId = new URL(scriptTag.src).searchParams.get("id");
-  const API_URL = "https://embedbot1-12ejg9qq7-axelboedkerfrederiksens-projects.vercel.app/api/chat";
+  const API_URL = "https://embedbot1.vercel.app/api/chat";
   
   const container = document.createElement("div");
   container.innerHTML = `
