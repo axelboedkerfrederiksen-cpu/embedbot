@@ -16,30 +16,29 @@ const supabase = createClient(
 
 const resend = new Resend(process.env.RESEND_API_KEY);
 
-function buildCustomerEmailHtml(businessId: string, businessName: string | null) {
+function buildCustomerEmailHtml(
+  businessId: string,
+  businessName: string | null,
+  customerEmail: string | null
+) {
   const embedScript = `<script src="https://embedbot1.vercel.app/widget.js?id=${businessId}"></script>`;
 
   return `
     <div style="margin:0;padding:24px;background:#f5f5f5;font-family:Arial,sans-serif;color:#111;">
       <div style="max-width:640px;margin:0 auto;background:#ffffff;border:1px solid #e6e6e6;border-radius:12px;overflow:hidden;">
         <div style="padding:28px 24px 16px;">
-          <h1 style="margin:0 0 12px;font-size:28px;line-height:1.2;color:#000;">Din EmbedBot chatbot er klar! 🎉</h1>
+          <h1 style="margin:0 0 12px;font-size:28px;line-height:1.2;color:#000;">Ny aktivering</h1>
           <p style="margin:0 0 16px;font-size:15px;line-height:1.6;color:#333;">
-            Hej${businessName ? ` ${businessName}` : ""},
+            En chatbot er blevet aktiveret i EmbedBot.
           </p>
-          <p style="margin:0 0 16px;font-size:15px;line-height:1.6;color:#333;">
-            Din chatbot er nu aktiveret og klar til brug. Indsæt scriptet herunder i din hjemmeside,
-            lige før <code style="background:#f0f0f0;padding:1px 5px;border-radius:4px;">&lt;/body&gt;</code>.
-          </p>
+          <p style="margin:0 0 12px;font-size:15px;line-height:1.6;color:#333;"><strong>Virksomhed:</strong> ${businessName || "Ukendt"}</p>
+          <p style="margin:0 0 16px;font-size:15px;line-height:1.6;color:#333;"><strong>Kundens email:</strong> ${customerEmail || "-"}</p>
           <div style="background:#111;color:#f9f9f9;border-radius:10px;padding:14px;font-family:Consolas,Monaco,monospace;font-size:13px;line-height:1.5;word-break:break-all;">
             ${embedScript
               .replace(/&/g, "&amp;")
               .replace(/</g, "&lt;")
               .replace(/>/g, "&gt;")}
           </div>
-          <p style="margin:16px 0 0;font-size:14px;line-height:1.6;color:#555;">
-            Hvis du har spørgsmål, er du velkommen til at svare på denne email.
-          </p>
         </div>
         <div style="padding:14px 24px;background:#fafafa;border-top:1px solid #ededed;">
           <p style="margin:0;font-size:12px;line-height:1.5;color:#666;">EmbedBot - AI kundeservice til din hjemmeside</p>
@@ -111,9 +110,9 @@ export async function POST(req: NextRequest) {
 
     await resend.emails.send({
       from: "onboarding@resend.dev",
-      to: business.support_email,
-      subject: "Din EmbedBot chatbot er klar! 🎉",
-      html: buildCustomerEmailHtml(business_id, business.name),
+      to: "axel.boedker.frederiksen@gmail.com",
+      subject: `Ny aktivering: ${business.name || "Ukendt virksomhed"}`,
+      html: buildCustomerEmailHtml(business_id, business.name, business.support_email),
     });
 
     const { error: updateError } = await supabase
