@@ -64,11 +64,15 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    const { data: business, error: businessError } = await supabase
+    const { data: businessRows, error: businessError } = await supabase
       .from("businesses")
       .select("id, name, website_url, support_email")
       .eq("id", business_id)
-      .single<BusinessRecord>();
+      .order("created_at", { ascending: false })
+      .limit(1)
+      .returns<BusinessRecord[]>();
+
+    const business = businessRows?.[0] || null;
 
     if (businessError || !business) {
       return NextResponse.json(
@@ -91,7 +95,7 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    const ingestRes = await fetch(`${req.nextUrl.origin}/api/ingest`, {
+    const ingestRes = await fetch("https://embedbot1.vercel.app/api/ingest", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ url: business.website_url, business_id }),
