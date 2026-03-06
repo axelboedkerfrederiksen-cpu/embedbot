@@ -45,24 +45,35 @@ export default function Home() {
     setLoading(true);
     setMessage("");
 
-    await supabase.from("businesses").upsert({ id: user.id, ...form });
+    try {
+      const { error: businessError } = await supabase
+        .from("businesses")
+        .upsert({ id: user.id, ...form });
 
-    const res = await fetch("/api/ingest", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ url: form.website_url, business_id: user.id }),
-    });
+      if (businessError) {
+        throw new Error(`Kunne ikke gemme virksomhedsdata: ${businessError.message}`);
+      }
 
-    const data = await res.json();
+      const res = await fetch("/api/ingest", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ url: form.website_url, business_id: user.id }),
+      });
 
-    if (data.success) {
+      const data = await res.json();
+
+      if (!res.ok || !data.success) {
+        throw new Error(data.error || "Noget gik galt under genereringen af chatbotten.");
+      }
+
       setEmbedCode(`<script src="https://embedbot1.vercel.app/widget.js?id=${user.id}"></script>`);
       setMessage(`✅ ${data.chunks} chunks indlæst!`);
       setStep(5);
-    } else {
-      setMessage("Noget gik galt — prøv igen.");
+    } catch (error) {
+      setMessage(error instanceof Error ? error.message : "Noget gik galt — prøv igen.");
+    } finally {
+      setLoading(false);
     }
-    setLoading(false);
   }
 
   const input = (label: string, key: string, placeholder = "", required = false) => (
