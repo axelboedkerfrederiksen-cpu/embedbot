@@ -20,6 +20,41 @@ function chunkText(text: string, size = 500): string[] {
   return chunks;
 }
 
+function formatIngestError(error: unknown, url?: string) {
+  if (!(error instanceof Error)) {
+    return {
+      message: "Ukendt serverfejl under generering af chatbotten.",
+      status: 500,
+    };
+  }
+
+  if (error.name === "AbortError" || error.message.includes("aborted")) {
+    return {
+      message: "Det tog for lang tid at hente hjemmesiden. Tjek at URL'en virker, og prøv igen.",
+      status: 504,
+    };
+  }
+
+  if (error.message.includes("Failed to fetch") || error.message.includes("fetch failed")) {
+    return {
+      message: `Kunne ikke hente hjemmesiden ${url ? `(${url})` : ""}. Tjek at URL'en er korrekt, offentlig tilgængelig og starter med https://.`,
+      status: 502,
+    };
+  }
+
+  if (error.message.includes("ENOTFOUND") || error.message.includes("getaddrinfo") || error.message.includes("DNS")) {
+    return {
+      message: `Domænet kunne ikke findes ${url ? `for ${url}` : ""}. Tjek stavning og om hjemmesiden faktisk er online.`,
+      status: 502,
+    };
+  }
+
+  return {
+    message: error.message,
+    status: 500,
+  };
+}
+
 export async function POST(req: NextRequest) {
   try {
     const { url, business_id } = await req.json();
@@ -28,8 +63,26 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ success: false, error: "Mangler url eller business_id." }, { status: 400 });
     }
 
+    try {
+      const parsedUrl = new URL(url);
+      if (!parsedUrl.hostname || !["http:", "https:"].includes(parsedUrl.protocol)) {
+        return NextResponse.json(
+          { success: false, error: "URL'en skal starte med http:// eller https:// og pege på en gyldig hjemmeside." },
+          { status: 400 }
+        );
+      }
+    } catch {
+      return NextResponse.json(
+        { success: false, error: "URL'en er ugyldig. Indtast en fuld adresse som fx https://example.com." },
+        { status: 400 }
+      );
+    }
+
     if (!process.env.OPENAI_API_KEY || !process.env.SUPABASE_URL || !process.env.SUPABASE_SERVICE_KEY) {
-      return NextResponse.json({ success: false, error: "Serveren mangler environment variables." }, { status: 500 });
+      return NextResponse.json(
+        { success: false, error: "Serveren mangler API-nøgler eller database-konfiguration. Tilføj environment variables i Vercel." },
+        { status: 500 }
+      );
     }
 
     const controller = new AbortController();
@@ -47,7 +100,7 @@ export async function POST(req: NextRequest) {
 
       if (!res.ok) {
         return NextResponse.json(
-          { success: false, error: `Kunne ikke hente hjemmesiden (${res.status}).` },
+          { success: false, error: `Hjemmesiden svarede med fejl (${res.status}). Tjek at siden er offentlig og kan åbnes i browseren.` },
           { status: 502 }
         );
       }
@@ -91,8 +144,7 @@ export async function POST(req: NextRequest) {
 
     return NextResponse.json({ success: true, chunks: chunks.length });
   } catch (error) {
-    const message = error instanceof Error ? error.message : "Ukendt serverfejl.";
-    const status = message.includes("aborted") ? 504 : 500;
+    const { message, status } = formatIngestError(error);
     return NextResponse.json({ success: false, error: message }, { status });
   }
 }

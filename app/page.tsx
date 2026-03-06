@@ -1,5 +1,5 @@
 "use client";
-import { useState } from "react";
+import { useRef, useState } from "react";
 import { createClient } from "@/lib/supabase";
 
 export default function Home() {
@@ -10,7 +10,9 @@ export default function Home() {
   const [loading, setLoading] = useState(false);
   const [embedCode, setEmbedCode] = useState("");
   const [message, setMessage] = useState("");
+  const [copyMessage, setCopyMessage] = useState("");
   const [step, setStep] = useState(1);
+  const embedCodeRef = useRef<HTMLElement | null>(null);
 
   const [form, setForm] = useState({
     name: "", website_url: "", industry: "", description: "",
@@ -25,6 +27,18 @@ export default function Home() {
   const supabase = createClient();
 
   const update = (key: string, value: string) => setForm(f => ({ ...f, [key]: value }));
+
+  function formatSetupError(error: unknown) {
+    if (!(error instanceof Error)) {
+      return "Noget gik galt under genereringen af chatbotten. Prøv igen.";
+    }
+
+    if (error.message === "Failed to fetch") {
+      return "Kunne ikke kontakte serveren. Tjek din internetforbindelse og prøv igen om et øjeblik.";
+    }
+
+    return error.message;
+  }
 
   async function handleAuth() {
     setLoading(true);
@@ -44,6 +58,7 @@ export default function Home() {
   async function handleSetup() {
     setLoading(true);
     setMessage("");
+    setCopyMessage("");
 
     try {
       const { error: businessError } = await supabase
@@ -70,9 +85,33 @@ export default function Home() {
       setMessage(`✅ ${data.chunks} chunks indlæst!`);
       setStep(5);
     } catch (error) {
-      setMessage(error instanceof Error ? error.message : "Noget gik galt — prøv igen.");
+      setMessage(formatSetupError(error));
     } finally {
       setLoading(false);
+    }
+  }
+
+  async function handleCopyEmbedCode() {
+    const textToCopy = embedCodeRef.current?.textContent || embedCode;
+
+    try {
+      if (navigator.clipboard?.writeText) {
+        await navigator.clipboard.writeText(textToCopy);
+      } else {
+        const tempInput = document.createElement("textarea");
+        tempInput.value = textToCopy;
+        tempInput.setAttribute("readonly", "true");
+        tempInput.style.position = "absolute";
+        tempInput.style.left = "-9999px";
+        document.body.appendChild(tempInput);
+        tempInput.select();
+        document.execCommand("copy");
+        document.body.removeChild(tempInput);
+      }
+
+      setCopyMessage("Koden er kopieret til udklipsholderen.");
+    } catch {
+      setCopyMessage("Kunne ikke kopiere koden automatisk. Marker hele linjen og kopiér den manuelt.");
     }
   }
 
@@ -198,13 +237,16 @@ export default function Home() {
       <main style={{ maxWidth: 600, margin: "60px auto", fontFamily: "sans-serif", padding: "0 16px" }}>
         <h1 style={{ fontSize: 24, fontWeight: "bold", marginBottom: 8 }}>🎉 Din chatbot er klar!</h1>
         <p style={{ color: "#666", marginBottom: 24 }}>Paste denne linje ind på din hjemmeside:</p>
-        <code style={{ display: "block", background: "#000", color: "#00ff00", padding: 16, borderRadius: 8, fontSize: 13, wordBreak: "break-all" }}>
+        <code
+          ref={embedCodeRef}
+          style={{ display: "block", background: "#000", color: "#00ff00", padding: 16, borderRadius: 8, fontSize: 13, wordBreak: "break-all", whiteSpace: "pre-wrap" }}>
           {embedCode}
         </code>
-        <button onClick={() => navigator.clipboard.writeText(embedCode)}
+        <button onClick={handleCopyEmbedCode}
           style={{ marginTop: 12, padding: "10px 20px", background: "#000", color: "white", border: "none", borderRadius: 8, cursor: "pointer" }}>
           Kopier kode
         </button>
+        {copyMessage && <p style={{ marginTop: 12, color: copyMessage.includes("automatisk") ? "#b45309" : "green" }}>{copyMessage}</p>}
         {message && <p style={{ marginTop: 16, color: "green" }}>{message}</p>}
       </main>
     );
