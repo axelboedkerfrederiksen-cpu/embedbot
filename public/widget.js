@@ -12,7 +12,7 @@
       <div style="background:#000;color:white;padding:16px;font-weight:bold">Support Chat</div>
       <div id="eb-messages" style="flex:1;overflow-y:auto;padding:16px;display:flex;flex-direction:column;gap:8px;height:340px"></div>
       <div style="padding:12px;border-top:1px solid #eee;display:flex;gap:8px">
-        <div id="eb-input" contenteditable="true" tabindex="0" role="textbox" aria-label="Skriv dit spørgsmål" style="flex:1;padding:8px 12px;border:1px solid #ddd;border-radius:8px;outline:none;pointer-events:all;position:relative;z-index:99999;color:black;min-height:20px;background:white;cursor:text;user-select:text;-webkit-user-select:text;white-space:pre-wrap;overflow-wrap:anywhere;caret-color:black;"></div>
+        <input id="eb-input" type="text" placeholder="Skriv dit spørgsmål..." style="flex:1;padding:8px 12px;border:1px solid #ddd;border-radius:8px;outline:none;pointer-events:all;position:relative;z-index:99999;color:black;background:white;cursor:text;user-select:text;-webkit-user-select:text;font-size:14px;font-family:inherit;caret-color:black;"/>
         <button id="eb-send" style="background:#000;color:white;border:none;padding:8px 16px;border-radius:8px;cursor:pointer">Send</button>
       </div>
     </div>
@@ -32,10 +32,6 @@
     }
   };
 
-  input.onclick = () => {
-    input.focus();
-  };
-
   function addMessage(text, isUser) {
     const msg = document.createElement("div");
     msg.style.cssText = `align-self:${isUser ? "flex-end" : "flex-start"};background:${isUser ? "#000" : "#f1f1f1"};color:${isUser ? "white" : "black"};padding:8px 12px;border-radius:12px;max-width:80%;font-size:14px`;
@@ -45,9 +41,9 @@
   }
 
   async function sendMessage() {
-    const text = input.innerText.trim();
+    const text = input.value.trim();
     if (!text) return;
-    input.innerText = "";
+    input.value = "";
     addMessage(text, true);
     addMessage("Skriver...", false);
 
@@ -62,5 +58,5 @@
   }
 
   send.onclick = sendMessage;
-  input.onkeydown = (e) => e.key === "Enter" && sendMessage();
+  input.onkeydown = (e) => { if (e.key === "Enter") { e.preventDefault(); sendMessage(); } };
 })();
