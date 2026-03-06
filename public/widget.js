@@ -12,7 +12,7 @@
       <div style="background:#000;color:white;padding:16px;font-weight:bold">Support Chat</div>
       <div id="eb-messages" style="flex:1;overflow-y:auto;padding:16px;display:flex;flex-direction:column;gap:8px;height:340px"></div>
       <div style="padding:12px;border-top:1px solid #eee;display:flex;gap:8px">
-        <input id="eb-input" placeholder="Skriv dit spørgsmål..." style="flex:1;padding:8px 12px;border:1px solid #ddd;border-radius:8px;outline:none"/>
+        <input id="eb-input" placeholder="Skriv dit spørgsmål..." style="flex:1;padding:8px 12px;border:1px solid #ddd;border-radius:8px;outline:none;pointer-events:all;position:relative;z-index:99999;color:black;"/>
         <button id="eb-send" style="background:#000;color:white;border:none;padding:8px 16px;border-radius:8px;cursor:pointer">Send</button>
       </div>
     </div>
