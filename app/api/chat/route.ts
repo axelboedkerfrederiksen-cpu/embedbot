@@ -15,6 +15,8 @@ export async function POST(req: NextRequest) {
     .from("businesses")
     .select("*")
     .eq("id", business_id)
+    .order("created_at", { ascending: false })
+    .limit(1)
     .single();
 
   const embeddingRes = await openai.embeddings.create({
