@@ -115,7 +115,7 @@ export default function Home() {
     );
   }
 
-  const sections: Record<number, JSX.Element> = {
+  const sections: Record<number, React.ReactElement> = {
     1: (
       <div>
         <h2 style={{ fontSize: 18, fontWeight: "bold", marginBottom: 16 }}>1. Virksomhed</h2>
