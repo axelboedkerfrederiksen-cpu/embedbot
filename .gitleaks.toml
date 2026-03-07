@@ -1,0 +1,11 @@
+title = "Local gitleaks noise reduction"
+
+[extend]
+useDefault = true
+
+[allowlist]
+description = "Ignore generated Next.js output and local environment secrets"
+paths = [
+  '''(^|[\\/])\.next([\\/]|$)''',
+  '''(^|[\\/])\.env\.local$'''
+]

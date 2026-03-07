@@ -2,6 +2,48 @@ import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@supabase/supabase-js";
 import OpenAI from "openai";
 
+const RATE_LIMIT_MAX = 20;
+const RATE_LIMIT_WINDOW_MS = 60 * 60 * 1000;
+
+type RateLimitEntry = {
+  count: number;
+  resetAt: number;
+};
+
+const ipRateLimit = new Map<string, RateLimitEntry>();
+
+function getClientIp(req: NextRequest): string {
+  const forwardedFor = req.headers.get("x-forwarded-for");
+  if (forwardedFor) {
+    return forwardedFor.split(",")[0].trim();
+  }
+
+  const realIp = req.headers.get("x-real-ip");
+  if (realIp) {
+    return realIp.trim();
+  }
+
+  return "unknown";
+}
+
+function isRateLimited(ip: string): boolean {
+  const now = Date.now();
+  const current = ipRateLimit.get(ip);
+
+  if (!current || now >= current.resetAt) {
+    ipRateLimit.set(ip, { count: 1, resetAt: now + RATE_LIMIT_WINDOW_MS });
+    return false;
+  }
+
+  if (current.count >= RATE_LIMIT_MAX) {
+    return true;
+  }
+
+  current.count += 1;
+  ipRateLimit.set(ip, current);
+  return false;
+}
+
 const supabase = createClient(
   process.env.SUPABASE_URL!,
   process.env.SUPABASE_SERVICE_KEY!
@@ -9,6 +51,14 @@ const supabase = createClient(
 const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY! });
 
 export async function POST(req: NextRequest) {
+  const clientIp = getClientIp(req);
+  if (isRateLimited(clientIp)) {
+    return NextResponse.json(
+      { error: "For mange beskeder. Prøv igen om lidt." },
+      { status: 429 }
+    );
+  }
+
   const { message, business_id } = await req.json();
 
   const { data: business } = await supabase

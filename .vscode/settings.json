@@ -1,0 +1,15 @@
+{
+  "files.exclude": {
+    "**/.next": true
+  },
+  "search.exclude": {
+    "**/.next/**": true
+  },
+  "files.watcherExclude": {
+    "**/.next/**": true
+  },
+  "problems.exclude": {
+    "**/.next/**": true,
+    "**/.env.local": true
+  }
+}

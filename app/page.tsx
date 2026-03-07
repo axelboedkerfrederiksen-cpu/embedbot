@@ -93,12 +93,49 @@ export default function Home() {
       throw new Error("Mangler businessId. Log ind igen og prøv på ny.");
     }
 
-    const { error } = await supabase
+    let { error } = await supabase
       .from("businesses")
       .upsert({
         id: stableBusinessId,
         ...form,
       });
+
+    // Fallback for databases that do not yet include newer branding columns.
+    if (error && error.message.toLowerCase().includes("column")) {
+      const safePayload = {
+        id: stableBusinessId,
+        name: form.name,
+        website_url: form.website_url,
+        industry: form.industry,
+        description: form.description,
+        support_email: form.support_email,
+        phone: form.phone,
+        address: form.address,
+        city: form.city,
+        hours_weekday: form.hours_weekday,
+        hours_saturday: form.hours_saturday,
+        hours_sunday: form.hours_sunday,
+        response_time: form.response_time,
+        fallback_action: form.fallback_action,
+        complaint_action: form.complaint_action,
+        products_services: form.products_services,
+        delivery_time: form.delivery_time,
+        return_policy: form.return_policy,
+        payment_methods: form.payment_methods,
+        welcome_message: form.welcome_message,
+        tone: form.tone,
+        language: form.language,
+        faq: form.faq,
+        cvr: form.cvr,
+        social_media: form.social_media,
+        current_offers: form.current_offers,
+        warranty: form.warranty,
+        size_guide: form.size_guide,
+      };
+
+      const retry = await supabase.from("businesses").upsert(safePayload);
+      error = retry.error;
+    }
 
     if (error) {
       throw new Error(`Kunne ikke gemme kladde: ${error.message}`);
