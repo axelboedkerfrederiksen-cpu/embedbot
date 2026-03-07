@@ -22,6 +22,7 @@ export default function AdminPage() {
   const [error, setError] = useState("");
   const [expanded, setExpanded] = useState<Record<string, boolean>>({});
   const [activatingId, setActivatingId] = useState<string | null>(null);
+  const [deletingId, setDeletingId] = useState<string | null>(null);
 
   async function fetchBusinesses() {
     setLoading(true);
@@ -99,6 +100,42 @@ export default function AdminPage() {
       }
     } finally {
       setActivatingId(null);
+    }
+  }
+
+  async function deleteBusiness(id: string) {
+    const confirmed = window.confirm(
+      "Er du sikker på at du vil slette denne virksomhed? Dobble tjek for at du ikke laver en fejl"
+    );
+
+    if (!confirmed) {
+      return;
+    }
+
+    setDeletingId(id);
+    setError("");
+
+    try {
+      const res = await fetch("/api/admin/businesses", {
+        method: "DELETE",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ business_id: id }),
+      });
+
+      const data = await res.json();
+      if (!res.ok || !data.success) {
+        throw new Error(data.error || "Kunne ikke slette virksomhed.");
+      }
+
+      await fetchBusinesses();
+    } catch (deleteError) {
+      if (deleteError instanceof Error) {
+        setError(deleteError.message);
+      } else {
+        setError("Kunne ikke slette virksomhed.");
+      }
+    } finally {
+      setDeletingId(null);
     }
   }
 
@@ -216,6 +253,17 @@ export default function AdminPage() {
 
       .btn-secondary:hover {
         border-color: #000;
+      }
+
+      .btn-danger {
+        background: #fff;
+        color: #b00020;
+        border-color: #f2b8c0;
+      }
+
+      .btn-danger:hover {
+        border-color: #b00020;
+        background: #fff5f6;
       }
 
       .btn-row {
@@ -420,12 +468,19 @@ export default function AdminPage() {
                     <button
                       className="btn btn-primary"
                       onClick={() => activateBusiness(business.id)}
-                      disabled={activatingId === business.id}
+                      disabled={activatingId === business.id || deletingId === business.id}
                     >
                       {activatingId === business.id ? "Aktiverer..." : "Aktiver"}
                     </button>
                     <button className="btn btn-secondary" onClick={() => toggleExpand(business.id)}>
                       {isOpen ? "Skjul info" : "Se info"}
+                    </button>
+                    <button
+                      className="btn btn-danger"
+                      onClick={() => deleteBusiness(business.id)}
+                      disabled={deletingId === business.id || activatingId === business.id}
+                    >
+                      {deletingId === business.id ? "Sletter..." : "Slet"}
                     </button>
                   </div>
 
