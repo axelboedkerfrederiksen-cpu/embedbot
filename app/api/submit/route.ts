@@ -7,6 +7,45 @@ const supabase = createClient(
   process.env.SUPABASE_SERVICE_KEY!
 );
 
+function isOnConflictConstraintError(errorMessage: string) {
+  return errorMessage.toLowerCase().includes("no unique or exclusion constraint matching the on conflict specification");
+}
+
+async function persistBusinessPayload(payload: Record<string, unknown> & { id: string }) {
+  const { error } = await supabase
+    .from("businesses")
+    .upsert(payload, { onConflict: "id" });
+
+  if (!error || !isOnConflictConstraintError(error.message)) {
+    return { error };
+  }
+
+  const { data: existingRows, error: findError } = await supabase
+    .from("businesses")
+    .select("id")
+    .eq("id", payload.id)
+    .limit(1);
+
+  if (findError) {
+    return { error: findError };
+  }
+
+  if (existingRows && existingRows.length > 0) {
+    const updateResult = await supabase
+      .from("businesses")
+      .update(payload)
+      .eq("id", payload.id);
+
+    return { error: updateResult.error };
+  }
+
+  const insertResult = await supabase
+    .from("businesses")
+    .insert(payload);
+
+  return { error: insertResult.error };
+}
+
 export async function POST(req: NextRequest) {
   try {
     const { form, user_id, business_id } = await req.json();
@@ -27,9 +66,8 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    let { error: upsertError } = await supabase
-      .from("businesses")
-      .upsert({ id: stableBusinessId, ...form }, { onConflict: "id" });
+    const fullPayload = { id: stableBusinessId, ...form };
+    let { error: upsertError } = await persistBusinessPayload(fullPayload);
 
     // If branding columns are not migrated yet, retry with the stable core fields.
     if (upsertError && upsertError.message.toLowerCase().includes("column")) {
@@ -64,7 +102,7 @@ export async function POST(req: NextRequest) {
         size_guide: form.size_guide,
       };
 
-      const retry = await supabase.from("businesses").upsert(safePayload, { onConflict: "id" });
+      const retry = await persistBusinessPayload(safePayload);
       upsertError = retry.error;
     }
 

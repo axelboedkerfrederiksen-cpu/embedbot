@@ -93,6 +93,45 @@ export default function Home() {
     return newBusinessId;
   }
 
+  function isOnConflictConstraintError(errorMessage: string) {
+    return errorMessage.toLowerCase().includes("no unique or exclusion constraint matching the on conflict specification");
+  }
+
+  async function persistBusinessPayload(payload: Record<string, unknown> & { id: string }) {
+    const { error } = await supabase
+      .from("businesses")
+      .upsert(payload, { onConflict: "id" });
+
+    if (!error || !isOnConflictConstraintError(error.message)) {
+      return { error };
+    }
+
+    const { data: existingRows, error: findError } = await supabase
+      .from("businesses")
+      .select("id")
+      .eq("id", payload.id)
+      .limit(1);
+
+    if (findError) {
+      return { error: findError };
+    }
+
+    if (existingRows && existingRows.length > 0) {
+      const updateResult = await supabase
+        .from("businesses")
+        .update(payload)
+        .eq("id", payload.id);
+
+      return { error: updateResult.error };
+    }
+
+    const insertResult = await supabase
+      .from("businesses")
+      .insert(payload);
+
+    return { error: insertResult.error };
+  }
+
   useEffect(() => {
     let isMounted = true;
 
@@ -180,12 +219,12 @@ export default function Home() {
       throw new Error("Mangler businessId. Log ind igen og prøv på ny.");
     }
 
-    let { error } = await supabase
-      .from("businesses")
-      .upsert({
-        id: stableBusinessId,
-        ...form,
-      }, { onConflict: "id" });
+    const fullPayload = {
+      id: stableBusinessId,
+      ...form,
+    };
+
+    let { error } = await persistBusinessPayload(fullPayload);
 
     // Fallback for databases that do not yet include newer branding columns.
     if (error && error.message.toLowerCase().includes("column")) {
@@ -220,7 +259,7 @@ export default function Home() {
         size_guide: form.size_guide,
       };
 
-      const retry = await supabase.from("businesses").upsert(safePayload, { onConflict: "id" });
+      const retry = await persistBusinessPayload(safePayload);
       error = retry.error;
     }
 
