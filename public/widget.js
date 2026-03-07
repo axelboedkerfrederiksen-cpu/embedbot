@@ -5,6 +5,12 @@
   const API_URL = `${apiOrigin}/api/chat`;
   const CONFIG_URL = `${apiOrigin}/api/widget-config?id=${encodeURIComponent(businessId || "")}`;
 
+  const hasPrimaryColorAttr = scriptTag.getAttribute("data-primary-color") !== null;
+  const hasSecondaryColorAttr = scriptTag.getAttribute("data-secondary-color") !== null;
+  const hasFabColorAttr = scriptTag.getAttribute("data-fab-color") !== null;
+  const hasFontAttr = scriptTag.getAttribute("data-font") !== null;
+  const hasAnyStyleDataAttribute = hasPrimaryColorAttr || hasSecondaryColorAttr || hasFabColorAttr || hasFontAttr;
+
   const defaultConfig = {
     primary_color: "#000000",
     secondary_color: "#000000",
@@ -13,7 +19,13 @@
     font_choice: "sans-serif",
   };
 
-  let widgetConfig = { ...defaultConfig };
+  let widgetConfig = {
+    ...defaultConfig,
+    primary_color: scriptTag.getAttribute("data-primary-color") || defaultConfig.primary_color,
+    secondary_color: scriptTag.getAttribute("data-secondary-color") || defaultConfig.secondary_color,
+    fab_color: scriptTag.getAttribute("data-fab-color") || defaultConfig.fab_color,
+    font_choice: scriptTag.getAttribute("data-font") || defaultConfig.font_choice,
+  };
   
   const container = document.createElement("div");
   container.innerHTML = `
@@ -44,7 +56,7 @@
 
   function applyWidgetStyles() {
     bubble.style.background = widgetConfig.fab_color || defaultConfig.fab_color;
-    send.style.background = widgetConfig.fab_color || defaultConfig.fab_color;
+    send.style.background = widgetConfig.primary_color || defaultConfig.primary_color;
     header.style.background = widgetConfig.primary_color || defaultConfig.primary_color;
     box.style.fontFamily = widgetConfig.font_choice || defaultConfig.font_choice;
 
@@ -57,6 +69,11 @@
   }
 
   async function loadWidgetConfig() {
+    if (hasAnyStyleDataAttribute) {
+      applyWidgetStyles();
+      return;
+    }
+
     if (!businessId) {
       applyWidgetStyles();
       return;
