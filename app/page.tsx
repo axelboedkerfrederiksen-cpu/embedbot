@@ -12,6 +12,8 @@ export default function Home() {
   const [message, setMessage] = useState("");
   const [copyMessage, setCopyMessage] = useState("");
   const [step, setStep] = useState(1);
+  const [businessId, setBusinessId] = useState("");
+  const [savingDraft, setSavingDraft] = useState(false);
   const embedCodeRef = useRef<HTMLElement | null>(null);
 
   const [form, setForm] = useState({
@@ -72,7 +74,10 @@ export default function Home() {
     if (isLogin) {
       const { data, error } = await supabase.auth.signInWithPassword({ email, password });
       if (error) setMessage(error.message);
-      else setUser(data.user);
+      else {
+        setUser(data.user);
+        setBusinessId(data.user?.id || "");
+      }
     } else {
       const { data, error } = await supabase.auth.signUp({ email, password });
       if (error) setMessage(error.message);
@@ -81,16 +86,59 @@ export default function Home() {
     setLoading(false);
   }
 
+  async function saveBusinessDraft() {
+    const stableBusinessId = businessId || user?.id;
+
+    if (!stableBusinessId) {
+      throw new Error("Mangler businessId. Log ind igen og prøv på ny.");
+    }
+
+    const { error } = await supabase
+      .from("businesses")
+      .upsert({
+        id: stableBusinessId,
+        ...form,
+      });
+
+    if (error) {
+      throw new Error(`Kunne ikke gemme kladde: ${error.message}`);
+    }
+
+    if (!businessId) {
+      setBusinessId(stableBusinessId);
+    }
+  }
+
+  async function handleNextStep() {
+    setMessage("");
+    setSavingDraft(true);
+
+    try {
+      await saveBusinessDraft();
+      setStep(s => Math.min(s + 1, 5));
+    } catch (error) {
+      setMessage(formatSetupError(error));
+    } finally {
+      setSavingDraft(false);
+    }
+  }
+
   async function handleSetup() {
     setLoading(true);
     setMessage("");
     setCopyMessage("");
 
     try {
+      const stableBusinessId = businessId || user?.id;
+
+      if (!stableBusinessId) {
+        throw new Error("Mangler businessId. Log ind igen og prøv på ny.");
+      }
+
       const res = await fetch("/api/submit", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ form, user_id: user.id }),
+        body: JSON.stringify({ form, user_id: stableBusinessId }),
       });
 
       const data = await res.json();
@@ -722,8 +770,8 @@ export default function Home() {
           </button>
         )}
         {step < 5 ? (
-          <button onClick={() => setStep(s => s + 1)} className="btn btn-primary" style={{ marginLeft: "auto" }}>
-            Næste →
+          <button onClick={handleNextStep} disabled={savingDraft || loading} className="btn btn-primary" style={{ marginLeft: "auto" }}>
+            {savingDraft ? "Gemmer..." : "Næste →"}
           </button>
         ) : (
           <button onClick={handleSetup} disabled={loading} className="btn btn-primary" style={{ marginLeft: "auto" }}>

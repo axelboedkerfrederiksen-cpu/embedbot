@@ -15,27 +15,16 @@ export async function GET() {
       );
     }
 
-    // Equivalent to: select distinct on (id) * from businesses order by id, created_at desc
     const { data, error } = await supabase
       .from("businesses")
       .select("*")
-      .order("id", { ascending: true })
       .order("created_at", { ascending: false });
 
     if (error) {
       return NextResponse.json({ error: error.message }, { status: 500 });
     }
 
-    const latestById = new Map<string, Record<string, unknown>>();
-    for (const row of data || []) {
-      const id = String((row as { id?: unknown }).id ?? "");
-      if (!id || latestById.has(id)) {
-        continue;
-      }
-      latestById.set(id, row as Record<string, unknown>);
-    }
-
-    return NextResponse.json({ businesses: Array.from(latestById.values()) });
+    return NextResponse.json({ businesses: data || [] });
   } catch (error) {
     if (error instanceof Error) {
       return NextResponse.json({ error: error.message }, { status: 500 });
