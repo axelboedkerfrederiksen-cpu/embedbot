@@ -21,12 +21,38 @@ export default function Home() {
     response_time: "", fallback_action: "", complaint_action: "",
     products_services: "", delivery_time: "", return_policy: "", payment_methods: "",
     welcome_message: "", tone: "uformel", language: "dansk",
-    faq: "", cvr: "", social_media: "", current_offers: "", warranty: "", size_guide: ""
+    faq: "", cvr: "", social_media: "", current_offers: "", warranty: "", size_guide: "",
+    primary_color: "#000000", secondary_color: "#f1f1f1", chat_icon_color: "#000000",
+    font_choice: "DM Sans", logo_data_url: "", logo_file_name: ""
   });
 
   const supabase = createClient();
 
   const update = (key: string, value: string) => setForm(f => ({ ...f, [key]: value }));
+
+  const previewFontFamily: Record<string, string> = {
+    "DM Sans": '"DM Sans", sans-serif',
+    Inter: '"Inter", sans-serif',
+    Poppins: '"Poppins", sans-serif',
+    Lora: '"Lora", serif',
+  };
+
+  function handleLogoUpload(file: File | null) {
+    if (!file) {
+      update("logo_data_url", "");
+      update("logo_file_name", "");
+      return;
+    }
+
+    const reader = new FileReader();
+    reader.onload = () => {
+      if (typeof reader.result === "string") {
+        update("logo_data_url", reader.result);
+        update("logo_file_name", file.name);
+      }
+    };
+    reader.readAsDataURL(file);
+  }
 
   function formatSetupError(error: unknown) {
     if (!(error instanceof Error)) {
@@ -73,7 +99,7 @@ export default function Home() {
         throw new Error(data.error || "Noget gik galt.");
       }
 
-      setStep(5);
+      setStep(6);
     } catch (error) {
       setMessage(formatSetupError(error));
     } finally {
@@ -136,7 +162,7 @@ export default function Home() {
 
   const styles = (
     <style jsx global>{`
-      @import url("https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;700&family=DM+Serif+Display:ital@0;1&display=swap");
+      @import url("https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;700&family=DM+Serif+Display:ital@0;1&family=Inter:wght@400;500;700&family=Poppins:wght@400;500;700&family=Lora:wght@400;600;700&display=swap");
 
       .eb-page {
         min-height: 100vh;
@@ -283,6 +309,53 @@ export default function Home() {
         min-height: 92px;
       }
 
+      .color-grid {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 12px;
+      }
+
+      .color-swatch-wrap {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+      }
+
+      .color-input {
+        width: 46px;
+        height: 38px;
+        border: 1px solid #d9d9d9;
+        border-radius: 10px;
+        background: #fff;
+        padding: 2px;
+        cursor: pointer;
+      }
+
+      .color-text {
+        flex: 1;
+      }
+
+      .logo-preview {
+        margin-top: 10px;
+        border: 1px dashed #d0d0d0;
+        border-radius: 10px;
+        padding: 10px;
+        background: #fafafa;
+      }
+
+      .logo-preview img {
+        display: block;
+        max-height: 56px;
+        width: auto;
+        max-width: 180px;
+      }
+
+      .font-preview {
+        margin-top: 8px;
+        font-size: 14px;
+        color: #444;
+      }
+
       .actions {
         display: flex;
         justify-content: space-between;
@@ -402,6 +475,10 @@ export default function Home() {
         .btn {
           padding: 10px 16px;
         }
+
+        .color-grid {
+          grid-template-columns: 1fr;
+        }
       }
     `}</style>
   );
@@ -509,9 +586,105 @@ export default function Home() {
         {input("Link til størrelsesguide", "size_guide", "https://...")}
       </div>
     ),
+    5: (
+      <div>
+        <h2 className="section-title">5. Design & Branding</h2>
+        <div className="color-grid">
+          <div className="field">
+            <label className="field-label">🎨 Primærfarve *</label>
+            <div className="color-swatch-wrap">
+              <input
+                type="color"
+                value={form.primary_color}
+                onChange={e => update("primary_color", e.target.value)}
+                className="color-input"
+              />
+              <input
+                value={form.primary_color}
+                onChange={e => update("primary_color", e.target.value)}
+                className="field-input color-text"
+                placeholder="#000000"
+              />
+            </div>
+            <p className="font-preview">Bruges til chat-header + send-knap.</p>
+          </div>
+
+          <div className="field">
+            <label className="field-label">🎨 Sekundærfarve *</label>
+            <div className="color-swatch-wrap">
+              <input
+                type="color"
+                value={form.secondary_color}
+                onChange={e => update("secondary_color", e.target.value)}
+                className="color-input"
+              />
+              <input
+                value={form.secondary_color}
+                onChange={e => update("secondary_color", e.target.value)}
+                className="field-input color-text"
+                placeholder="#f1f1f1"
+              />
+            </div>
+            <p className="font-preview">Bruges til brugerens beskedbobler.</p>
+          </div>
+        </div>
+
+        <div className="field">
+          <label className="field-label">💬 Chat-ikon farve *</label>
+          <div className="color-swatch-wrap">
+            <input
+              type="color"
+              value={form.chat_icon_color}
+              onChange={e => update("chat_icon_color", e.target.value)}
+              className="color-input"
+            />
+            <input
+              value={form.chat_icon_color}
+              onChange={e => update("chat_icon_color", e.target.value)}
+              className="field-input color-text"
+              placeholder="#000000"
+            />
+          </div>
+          <p className="font-preview">Farven på FAB-knappen i hjørnet.</p>
+        </div>
+
+        <div className="field">
+          <label className="field-label">🖼️ Logo upload</label>
+          <input
+            type="file"
+            accept="image/*"
+            className="field-input"
+            onChange={e => handleLogoUpload(e.target.files?.[0] || null)}
+          />
+          {form.logo_file_name && <p className="font-preview">Valgt fil: {form.logo_file_name}</p>}
+          {form.logo_data_url && (
+            <div className="logo-preview">
+              <img src={form.logo_data_url} alt="Logo preview" />
+            </div>
+          )}
+        </div>
+
+        <div className="field">
+          <label className="field-label">🔤 Font valg *</label>
+          <select
+            value={form.font_choice}
+            onChange={e => update("font_choice", e.target.value)}
+            className="field-input"
+          >
+            <option value="DM Sans">DM Sans</option>
+            <option value="Inter">Inter</option>
+            <option value="Poppins">Poppins</option>
+            <option value="Lora">Lora</option>
+          </select>
+          <p className="font-preview" style={{ fontFamily: previewFontFamily[form.font_choice] || '"DM Sans", sans-serif' }}>
+            Preview: Sådan kan teksten se ud i chatten.
+          </p>
+        </div>
+      </div>
+    ),
   };
 
-  if (step === 5) {
+  if (step === 6) {
     return (
       <main className="eb-page">
         {styles}
@@ -532,10 +705,10 @@ export default function Home() {
       <div className="eb-shell eb-animate">
         <div className="header-row">
           <h1 className="brand brand-main">Opsæt din chatbot</h1>
-          <span className="step-note">Trin {step} af 4</span>
+          <span className="step-note">Trin {step} af 5</span>
         </div>
         <div className="progress-track">
-          <div className="progress-fill" style={{ width: `${(step / 4) * 100}%` }} />
+          <div className="progress-fill" style={{ width: `${(Math.min(step, 5) / 5) * 100}%` }} />
         </div>
 
         <div className="eb-card">{sections[step]}</div>
@@ -548,7 +721,7 @@ export default function Home() {
             ← Tilbage
           </button>
         )}
-        {step < 4 ? (
+        {step < 5 ? (
           <button onClick={() => setStep(s => s + 1)} className="btn btn-primary" style={{ marginLeft: "auto" }}>
             Næste →
           </button>

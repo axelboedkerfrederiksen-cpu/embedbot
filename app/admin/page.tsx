@@ -54,10 +54,10 @@ export default function AdminPage() {
     e.preventDefault();
     setAuthError("");
 
-    const expected = process.env.NEXT_PUBLIC_ADMIN_PASSWORD;
+    const expected = process.env.NEXT_PUBLIC_ADMIN_PASSWORD || process.env.ADMIN_PASSWORD;
 
     if (!expected) {
-      setAuthError("NEXT_PUBLIC_ADMIN_PASSWORD mangler i miljøvariabler.");
+      setAuthError("NEXT_PUBLIC_ADMIN_PASSWORD eller ADMIN_PASSWORD mangler i miljøvariabler.");
       return;
     }
 

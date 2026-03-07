@@ -8,15 +8,75 @@ const supabase = createClient(
 );
 
 export async function POST(req: NextRequest) {
-  const { form, user_id } = await req.json();
+  try {
+    const { form, user_id } = await req.json();
 
-  await supabase.from("businesses").upsert({ id: user_id, ...form });
+    if (!user_id) {
+      return NextResponse.json({ success: false, error: "Mangler user_id." }, { status: 400 });
+    }
 
-  await resend.emails.send({
-    from: "onboarding@resend.dev",
-    to: "axel.boedker.frederiksen@gmail.com",
-    subject: `Ny chatbot ordre: ${form.name}`,
-    html: `
+    if (!form || typeof form !== "object") {
+      return NextResponse.json({ success: false, error: "Mangler form-data." }, { status: 400 });
+    }
+
+    if (!process.env.SUPABASE_URL || !process.env.SUPABASE_SERVICE_KEY || !process.env.RESEND_API_KEY) {
+      return NextResponse.json(
+        { success: false, error: "Serveren mangler nødvendige environment variables." },
+        { status: 500 }
+      );
+    }
+
+    let { error: upsertError } = await supabase.from("businesses").upsert({ id: user_id, ...form });
+
+    // If branding columns are not migrated yet, retry with the stable core fields.
+    if (upsertError && upsertError.message.toLowerCase().includes("column")) {
+      const safePayload = {
+        id: user_id,
+        name: form.name,
+        website_url: form.website_url,
+        industry: form.industry,
+        description: form.description,
+        support_email: form.support_email,
+        phone: form.phone,
+        address: form.address,
+        city: form.city,
+        hours_weekday: form.hours_weekday,
+        hours_saturday: form.hours_saturday,
+        hours_sunday: form.hours_sunday,
+        response_time: form.response_time,
+        fallback_action: form.fallback_action,
+        complaint_action: form.complaint_action,
+        products_services: form.products_services,
+        delivery_time: form.delivery_time,
+        return_policy: form.return_policy,
+        payment_methods: form.payment_methods,
+        welcome_message: form.welcome_message,
+        tone: form.tone,
+        language: form.language,
+        faq: form.faq,
+        cvr: form.cvr,
+        social_media: form.social_media,
+        current_offers: form.current_offers,
+        warranty: form.warranty,
+        size_guide: form.size_guide,
+      };
+
+      const retry = await supabase.from("businesses").upsert(safePayload);
+      upsertError = retry.error;
+    }
+
+    if (upsertError) {
+      return NextResponse.json(
+        { success: false, error: `Kunne ikke gemme virksomhedsdata: ${upsertError.message}` },
+        { status: 500 }
+      );
+    }
+
+    const mailResult = await resend.emails.send({
+      from: "onboarding@resend.dev",
+      to: "axel.boedker.frederiksen@gmail.com",
+      subject: `Ny chatbot ordre: ${form.name}`,
+      html: `
       <h2>Ny chatbot ordre fra ${form.name}</h2>
       <p><b>Hjemmeside:</b> ${form.website_url}</p>
       <p><b>Branche:</b> ${form.industry}</p>
@@ -58,9 +118,33 @@ export async function POST(req: NextRequest) {
       <p><b>Garanti:</b> ${form.warranty}</p>
       <p><b>Størrelsesguide:</b> ${form.size_guide}</p>
       <hr/>
+      <h3>Design & Branding</h3>
+      <p><b>Primærfarve:</b> ${form.primary_color || "-"}</p>
+      <p><b>Sekundærfarve:</b> ${form.secondary_color || "-"}</p>
+      <p><b>Chat-ikon farve:</b> ${form.chat_icon_color || "-"}</p>
+      <p><b>Font:</b> ${form.font_choice || "-"}</p>
+      <p><b>Logo fil:</b> ${form.logo_file_name || "-"}</p>
+      <hr/>
       <p><b>User ID:</b> ${user_id}</p>
     `,
-  });
+    });
 
-  return NextResponse.json({ success: true });
+    if ((mailResult as { error?: { message?: string } })?.error) {
+      return NextResponse.json(
+        {
+          success: false,
+          error: `Virksomheden blev gemt, men email kunne ikke sendes: ${(mailResult as { error?: { message?: string } }).error?.message || "Ukendt mailfejl."}`,
+        },
+        { status: 502 }
+      );
+    }
+
+    return NextResponse.json({ success: true });
+  } catch (error) {
+    if (error instanceof Error) {
+      return NextResponse.json({ success: false, error: error.message }, { status: 500 });
+    }
+
+    return NextResponse.json({ success: false, error: "Ukendt serverfejl." }, { status: 500 });
+  }
 }
