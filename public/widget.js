@@ -30,7 +30,12 @@
   const container = document.createElement("div");
   container.innerHTML = `
     <div id="eb-bubble" style="position:fixed;bottom:24px;right:24px;width:56px;height:56px;background:#000;border-radius:50%;cursor:pointer;display:flex;align-items:center;justify-content:center;z-index:9999;">
-      <span style="color:white;font-size:24px">💬</span>
+      <svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+        <path d="M5 4.75h14a2.75 2.75 0 0 1 2.75 2.75v7A2.75 2.75 0 0 1 19 17.25h-6.23l-2.9 2.6a.75.75 0 0 1-1.24-.65l.33-1.95H5A2.75 2.75 0 0 1 2.25 14.5v-7A2.75 2.75 0 0 1 5 4.75Z" stroke="#fff" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
+        <circle cx="8.5" cy="11" r="1.05" fill="#fff"/>
+        <circle cx="12" cy="11" r="1.05" fill="#fff"/>
+        <circle cx="15.5" cy="11" r="1.05" fill="#fff"/>
+      </svg>
     </div>
     <div id="eb-box" style="display:none;position:fixed;bottom:90px;right:24px;width:340px;height:480px;background:white;border-radius:16px;box-shadow:0 8px 32px rgba(0,0,0,0.15);z-index:9999;flex-direction:column;overflow:hidden;">
       <div id="eb-header" style="background:#000;color:white;padding:16px;font-weight:bold;display:flex;align-items:center;gap:10px;">
@@ -110,12 +115,31 @@
   };
 
   function addMessage(text, isUser) {
+    const row = document.createElement("div");
+    row.style.cssText = `display:flex;align-items:flex-end;gap:6px;justify-content:${isUser ? "flex-end" : "flex-start"}`;
+
+    const icon = document.createElement("span");
+    icon.style.cssText = "display:flex;align-items:center;justify-content:center;flex:0 0 auto;";
+    icon.innerHTML = isUser
+      ? '<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="#aaa"><path d="M12 12c2.7 0 4.8-2.1 4.8-4.8S14.7 2.4 12 2.4 7.2 4.5 7.2 7.2 9.3 12 12 12zm0 2.4c-3.2 0-9.6 1.6-9.6 4.8v2.4h19.2v-2.4c0-3.2-6.4-4.8-9.6-4.8z"/></svg>'
+      : '<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="#aaa"><path d="M20 9V7c0-1.1-.9-2-2-2h-3c0-1.66-1.34-3-3-3S9 3.34 9 5H6c-1.1 0-2 .9-2 2v2c-1.66 0-3 1.34-3 3s1.34 3 3 3v4c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2v-4c1.66 0 3-1.34 3-3s-1.34-3-3-3zm-2 10H6V7h12v12zm-9-6c-.83 0-1.5-.67-1.5-1.5S8.17 10 9 10s1.5.67 1.5 1.5S9.83 13 9 13zm6 0c-.83 0-1.5-.67-1.5-1.5S14.17 10 15 10s1.5.67 1.5 1.5S15.83 13 15 13z"/></svg>';
+
     const msg = document.createElement("div");
     const userBubbleColor = widgetConfig.secondary_color || defaultConfig.secondary_color;
-    msg.style.cssText = `align-self:${isUser ? "flex-end" : "flex-start"};background:${isUser ? userBubbleColor : "#f1f1f1"};color:${isUser ? "white" : "black"};padding:8px 12px;border-radius:12px;max-width:80%;font-size:14px`;
+    msg.style.cssText = `background:${isUser ? userBubbleColor : "#f1f1f1"};color:${isUser ? "white" : "black"};padding:8px 12px;border-radius:12px;max-width:80%;font-size:14px`;
     msg.textContent = text;
-    messages.appendChild(msg);
+
+    if (isUser) {
+      row.appendChild(msg);
+      row.appendChild(icon);
+    } else {
+      row.appendChild(icon);
+      row.appendChild(msg);
+    }
+
+    messages.appendChild(row);
     messages.scrollTop = messages.scrollHeight;
+    return msg;
   }
 
   async function sendMessage() {
@@ -123,7 +147,7 @@
     if (!text) return;
     input.value = "";
     addMessage(text, true);
-    addMessage("Skriver...", false);
+    const typingMessage = addMessage("Skriver...", false);
 
     const res = await fetch(API_URL, {
       method: "POST",
@@ -132,7 +156,7 @@
     });
 
     const data = await res.json();
-    messages.lastChild.textContent = data.answer;
+    typingMessage.textContent = data.answer;
   }
 
   send.onclick = sendMessage;
