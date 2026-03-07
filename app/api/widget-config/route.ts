@@ -43,6 +43,8 @@ export async function GET(req: NextRequest) {
       return NextResponse.json({ error: error.message }, { status: 500 });
     }
 
+    console.log("Widget config from Supabase:", business);
+
     return NextResponse.json({
       primary_color: business?.primary_color || DEFAULT_WIDGET_CONFIG.primary_color,
       secondary_color: business?.secondary_color || DEFAULT_WIDGET_CONFIG.secondary_color,

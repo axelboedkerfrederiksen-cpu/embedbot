@@ -70,6 +70,7 @@
       }
 
       const data = await res.json();
+      console.log("Widget config:", data);
       widgetConfig = {
         primary_color: data.primary_color || defaultConfig.primary_color,
         secondary_color: data.secondary_color || defaultConfig.secondary_color,
