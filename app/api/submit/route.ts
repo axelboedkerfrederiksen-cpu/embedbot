@@ -9,10 +9,11 @@ const supabase = createClient(
 
 export async function POST(req: NextRequest) {
   try {
-    const { form, user_id } = await req.json();
+    const { form, user_id, business_id } = await req.json();
+    const stableBusinessId = business_id || user_id;
 
-    if (!user_id) {
-      return NextResponse.json({ success: false, error: "Mangler user_id." }, { status: 400 });
+    if (!stableBusinessId) {
+      return NextResponse.json({ success: false, error: "Mangler business_id." }, { status: 400 });
     }
 
     if (!form || typeof form !== "object") {
@@ -26,12 +27,14 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    let { error: upsertError } = await supabase.from("businesses").upsert({ id: user_id, ...form });
+    let { error: upsertError } = await supabase
+      .from("businesses")
+      .upsert({ id: stableBusinessId, ...form }, { onConflict: "id" });
 
     // If branding columns are not migrated yet, retry with the stable core fields.
     if (upsertError && upsertError.message.toLowerCase().includes("column")) {
       const safePayload = {
-        id: user_id,
+        id: stableBusinessId,
         name: form.name,
         website_url: form.website_url,
         industry: form.industry,
@@ -61,7 +64,7 @@ export async function POST(req: NextRequest) {
         size_guide: form.size_guide,
       };
 
-      const retry = await supabase.from("businesses").upsert(safePayload);
+      const retry = await supabase.from("businesses").upsert(safePayload, { onConflict: "id" });
       upsertError = retry.error;
     }
 
@@ -125,7 +128,7 @@ export async function POST(req: NextRequest) {
       <p><b>Font:</b> ${form.font_choice || "-"}</p>
       <p><b>Logo fil:</b> ${form.logo_file_name || "-"}</p>
       <hr/>
-      <p><b>User ID:</b> ${user_id}</p>
+      <p><b>Business ID:</b> ${stableBusinessId}</p>
     `,
     });
 

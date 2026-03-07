@@ -1,6 +1,8 @@
 "use client";
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { createClient } from "@/lib/supabase";
+
+const ONBOARDING_BUSINESS_ID_KEY = "onboarding_business_id";
 
 export default function Home() {
   const [email, setEmail] = useState("");
@@ -28,7 +30,89 @@ export default function Home() {
     font_choice: "DM Sans", logo_data_url: "", logo_file_name: ""
   });
 
-  const supabase = createClient();
+  const [supabase] = useState(() => createClient());
+
+  function getStoredBusinessId() {
+    if (typeof window === "undefined") {
+      return "";
+    }
+
+    try {
+      return localStorage.getItem(ONBOARDING_BUSINESS_ID_KEY) || "";
+    } catch {
+      return "";
+    }
+  }
+
+  function persistBusinessId(id: string) {
+    if (typeof window === "undefined") {
+      return;
+    }
+
+    try {
+      localStorage.setItem(ONBOARDING_BUSINESS_ID_KEY, id);
+    } catch {
+      // Ignore storage failures (e.g. restricted browser settings).
+    }
+  }
+
+  function clearPersistedBusinessId() {
+    if (typeof window === "undefined") {
+      return;
+    }
+
+    try {
+      localStorage.removeItem(ONBOARDING_BUSINESS_ID_KEY);
+    } catch {
+      // Ignore storage failures (e.g. restricted browser settings).
+    }
+  }
+
+  function generateBusinessId() {
+    if (typeof crypto !== "undefined" && typeof crypto.randomUUID === "function") {
+      return crypto.randomUUID();
+    }
+
+    return `biz-${Date.now()}-${Math.random().toString(36).slice(2, 10)}`;
+  }
+
+  function ensureBusinessId() {
+    const existingId = businessId || getStoredBusinessId();
+
+    if (existingId) {
+      if (!businessId) {
+        setBusinessId(existingId);
+      }
+
+      return existingId;
+    }
+
+    const newBusinessId = generateBusinessId();
+    persistBusinessId(newBusinessId);
+    setBusinessId(newBusinessId);
+    return newBusinessId;
+  }
+
+  useEffect(() => {
+    let isMounted = true;
+
+    supabase.auth.getUser().then(({ data }) => {
+      if (!isMounted || !data.user) {
+        return;
+      }
+
+      setUser(data.user);
+
+      const storedBusinessId = getStoredBusinessId();
+      if (storedBusinessId) {
+        setBusinessId(storedBusinessId);
+      }
+    });
+
+    return () => {
+      isMounted = false;
+    };
+  }, [supabase]);
 
   const update = (key: string, value: string) => setForm(f => ({ ...f, [key]: value }));
 
@@ -76,7 +160,10 @@ export default function Home() {
       if (error) setMessage(error.message);
       else {
         setUser(data.user);
-        setBusinessId(data.user?.id || "");
+        const storedBusinessId = getStoredBusinessId();
+        if (storedBusinessId) {
+          setBusinessId(storedBusinessId);
+        }
       }
     } else {
       const { data, error } = await supabase.auth.signUp({ email, password });
@@ -87,7 +174,7 @@ export default function Home() {
   }
 
   async function saveBusinessDraft() {
-    const stableBusinessId = businessId || user?.id;
+    const stableBusinessId = ensureBusinessId();
 
     if (!stableBusinessId) {
       throw new Error("Mangler businessId. Log ind igen og prøv på ny.");
@@ -98,7 +185,7 @@ export default function Home() {
       .upsert({
         id: stableBusinessId,
         ...form,
-      });
+      }, { onConflict: "id" });
 
     // Fallback for databases that do not yet include newer branding columns.
     if (error && error.message.toLowerCase().includes("column")) {
@@ -133,7 +220,7 @@ export default function Home() {
         size_guide: form.size_guide,
       };
 
-      const retry = await supabase.from("businesses").upsert(safePayload);
+      const retry = await supabase.from("businesses").upsert(safePayload, { onConflict: "id" });
       error = retry.error;
     }
 
@@ -141,9 +228,7 @@ export default function Home() {
       throw new Error(`Kunne ikke gemme kladde: ${error.message}`);
     }
 
-    if (!businessId) {
-      setBusinessId(stableBusinessId);
-    }
+    persistBusinessId(stableBusinessId);
   }
 
   async function handleNextStep() {
@@ -166,7 +251,7 @@ export default function Home() {
     setCopyMessage("");
 
     try {
-      const stableBusinessId = businessId || user?.id;
+      const stableBusinessId = ensureBusinessId();
 
       if (!stableBusinessId) {
         throw new Error("Mangler businessId. Log ind igen og prøv på ny.");
@@ -175,7 +260,7 @@ export default function Home() {
       const res = await fetch("/api/submit", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ form, user_id: stableBusinessId }),
+        body: JSON.stringify({ form, business_id: stableBusinessId }),
       });
 
       const data = await res.json();
@@ -184,6 +269,8 @@ export default function Home() {
         throw new Error(data.error || "Noget gik galt.");
       }
 
+      clearPersistedBusinessId();
+      setBusinessId("");
       setStep(6);
     } catch (error) {
       setMessage(formatSetupError(error));
