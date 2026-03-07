@@ -1,10 +1,17 @@
 "use client";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useState } from "react";
 import { createClient } from "@/lib/supabase";
 
 const ONBOARDING_BUSINESS_ID_KEY = "onboarding_business_id";
 
 export default function Home() {
+  type PlatformKey = "html" | "wordpress" | "shopify" | "squarespace" | "wix" | "webflow";
+  type GuideBlock = {
+    heading?: string;
+    steps: string[];
+    codeSample?: string;
+  };
+
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [isLogin, setIsLogin] = useState(true);
@@ -12,11 +19,10 @@ export default function Home() {
   const [loading, setLoading] = useState(false);
   const [embedCode, setEmbedCode] = useState("");
   const [message, setMessage] = useState("");
-  const [copyMessage, setCopyMessage] = useState("");
   const [step, setStep] = useState(1);
   const [businessId, setBusinessId] = useState("");
+  const [selectedPlatform, setSelectedPlatform] = useState<PlatformKey>("html");
   const [savingDraft, setSavingDraft] = useState(false);
-  const embedCodeRef = useRef<HTMLElement | null>(null);
 
   const [form, setForm] = useState({
     name: "", website_url: "", industry: "", description: "",
@@ -285,7 +291,6 @@ export default function Home() {
   async function handleSetup() {
     setLoading(true);
     setMessage("");
-    setCopyMessage("");
 
     try {
       const stableBusinessId = ensureBusinessId();
@@ -306,6 +311,8 @@ export default function Home() {
         throw new Error(data.error || "Noget gik galt.");
       }
 
+      setEmbedCode(`<script src="https://embedbot1.vercel.app/widget.js?id=${stableBusinessId}"></script>`);
+
       clearPersistedBusinessId();
       setBusinessId("");
       setStep(6);
@@ -313,30 +320,6 @@ export default function Home() {
       setMessage(formatSetupError(error));
     } finally {
       setLoading(false);
-    }
-  }
-
-  async function handleCopyEmbedCode() {
-    const textToCopy = embedCodeRef.current?.textContent || embedCode;
-
-    try {
-      if (navigator.clipboard?.writeText) {
-        await navigator.clipboard.writeText(textToCopy);
-      } else {
-        const tempInput = document.createElement("textarea");
-        tempInput.value = textToCopy;
-        tempInput.setAttribute("readonly", "true");
-        tempInput.style.position = "absolute";
-        tempInput.style.left = "-9999px";
-        document.body.appendChild(tempInput);
-        tempInput.select();
-        document.execCommand("copy");
-        document.body.removeChild(tempInput);
-      }
-
-      setCopyMessage("Koden er kopieret til udklipsholderen.");
-    } catch {
-      setCopyMessage("Kunne ikke kopiere koden automatisk. Marker hele linjen og kopiér den manuelt.");
     }
   }
 
@@ -660,6 +643,81 @@ export default function Home() {
         margin-inline: auto;
       }
 
+      .install-card {
+        margin-top: 14px;
+      }
+
+      .install-intro {
+        text-align: left;
+        margin-top: -6px;
+      }
+
+      .platform-tabs {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 8px;
+        margin: 16px 0;
+      }
+
+      .platform-tab {
+        border: 1px solid #d0d0d0;
+        background: #fff;
+        border-radius: 999px;
+        padding: 8px 12px;
+        font-size: 13px;
+        font-weight: 700;
+        cursor: pointer;
+        font-family: "DM Sans", sans-serif;
+      }
+
+      .platform-tab:hover {
+        border-color: #000;
+      }
+
+      .platform-tab.is-active {
+        background: #000;
+        color: #fff;
+        border-color: #000;
+      }
+
+      .guide-wrap {
+        border-top: 1px solid #ededed;
+        padding-top: 6px;
+      }
+
+      .guide-title {
+        margin-top: 8px;
+      }
+
+      .guide-block + .guide-block {
+        margin-top: 14px;
+      }
+
+      .guide-heading {
+        margin: 0 0 8px;
+        font-size: 14px;
+      }
+
+      .guide-list {
+        margin: 0;
+        padding-left: 20px;
+        display: grid;
+        gap: 6px;
+        color: #202020;
+        font-size: 14px;
+      }
+
+      .guide-code {
+        margin: 10px 0 0;
+        background: #fff;
+        border: 1px solid #dfdfdf;
+        border-radius: 10px;
+        padding: 10px;
+        overflow-x: auto;
+        font-size: 13px;
+        line-height: 1.45;
+      }
+
       @keyframes eb-fade-up {
         from {
           opacity: 0;
@@ -687,6 +745,11 @@ export default function Home() {
 
         .color-grid {
           grid-template-columns: 1fr;
+        }
+
+        .platform-tab {
+          width: 100%;
+          text-align: left;
         }
       }
     `}</style>
@@ -893,7 +956,122 @@ export default function Home() {
     ),
   };
 
+  const embedScript = embedCode || `<script src="https://embedbot1.vercel.app/widget.js?id=${businessId || "DIN_BUSINESS_ID"}"></script>`;
+
+  const installGuides: Record<PlatformKey, { label: string; blocks: GuideBlock[] }> = {
+    html: {
+      label: "Ren HTML",
+      blocks: [
+        {
+          steps: [
+            "Åbn din .html fil i en teksteditor (Notepad, VS Code osv.)",
+            "Tryk Ctrl+F og søg efter </body>",
+            "Indsæt scriptet på linjen lige før </body>",
+            "Gem filen og upload den til din server",
+          ],
+          codeSample: `<script src="https://embedbot1.vercel.app/widget.js?id=*****************************"></script>\n</body>\n</html>`,
+        },
+      ],
+    },
+    wordpress: {
+      label: "WordPress",
+      blocks: [
+        {
+          heading: "Metode 1 - Plugin (nemmest)",
+          steps: [
+            "Gå til dit WordPress admin panel (dinside.dk/wp-admin)",
+            "Klik Plugins -> Tilføj ny",
+            "Søg efter \"Insert Headers and Footers\"",
+            "Installer og aktiver pluginnet",
+            "Gå til Indstillinger -> Insert Headers and Footers",
+            "Indsæt scriptet i \"Scripts in Footer\" boksen",
+            "Klik Gem",
+          ],
+        },
+        {
+          heading: "Metode 2 - Tema editor",
+          steps: [
+            "Gå til Udseende -> Tema-editor",
+            "Find footer.php i højre side",
+            "Find </body> i koden",
+            "Indsæt scriptet lige før </body>",
+            "Klik Opdater fil",
+          ],
+        },
+      ],
+    },
+    shopify: {
+      label: "Shopify",
+      blocks: [
+        {
+          steps: [
+            "Gå til dit Shopify admin (dinbutik.myshopify.com/admin)",
+            "Klik Online Butik -> Temaer",
+            "Klik på \"...\" -> Rediger kode ud for dit aktive tema",
+            "Under Layout: klik på theme.liquid",
+            "Tryk Ctrl+F og søg efter </body>",
+            "Indsæt scriptet lige før </body>",
+            "Klik Gem",
+          ],
+        },
+      ],
+    },
+    squarespace: {
+      label: "Squarespace",
+      blocks: [
+        {
+          steps: [
+            "Gå til dit Squarespace dashboard",
+            "Klik Indstillinger i venstre menu",
+            "Klik Avanceret",
+            "Klik Kodeinjektion",
+            "Scroll ned til Footer boksen",
+            "Indsæt scriptet der",
+            "Klik Gem",
+          ],
+        },
+      ],
+    },
+    wix: {
+      label: "Wix",
+      blocks: [
+        {
+          steps: [
+            "Gå til din Wix editor",
+            "Klik på Indstillinger øverst",
+            "Vælg Tilpasset kode",
+            "Klik + Tilføj kode",
+            "Indsæt scriptet i tekstboksen",
+            "Under \"Tilføj kode til\" vælg Alle sider",
+            "Under \"Placer kode i\" vælg Body - end",
+            "Klik Anvend",
+          ],
+        },
+      ],
+    },
+    webflow: {
+      label: "Webflow",
+      blocks: [
+        {
+          steps: [
+            "Gå til Webflow Designer",
+            "Klik på tandhjulet (Projektindstillinger) øverst til venstre",
+            "Gå til fanen Tilpasset kode",
+            "Scroll ned til Footer kode boksen",
+            "Indsæt scriptet der",
+            "Klik Gem ændringer",
+            "Publicer dit site igen, så ændringerne træder i kraft",
+          ],
+        },
+      ],
+    },
+  };
+
+  const platformKeys: PlatformKey[] = ["html", "wordpress", "shopify", "squarespace", "wix", "webflow"];
+
   if (step === 6) {
+    const selectedGuide = installGuides[selectedPlatform];
+
     return (
       <main className="eb-page">
         {styles}
@@ -902,6 +1080,45 @@ export default function Home() {
             <div className="checkmark">✓</div>
             <h1 className="brand thanks-title">Tak for din ordre!</h1>
             <p className="thanks-text">Din chatbot er i gang med at blive behandlet. Vi vender tilbage inden for 24 timer med dit embed script.</p>
+          </div>
+
+          <div className="eb-card eb-animate install-card">
+            <h2 className="section-title">Indsæt chatbot på din hjemmeside</h2>
+            <p className="thanks-text install-intro">Vælg din platform for at se trin-for-trin instrukser.</p>
+
+            <div className="platform-tabs" role="tablist" aria-label="Vælg platform">
+              {platformKeys.map((key) => (
+                <button
+                  key={key}
+                  type="button"
+                  className={`platform-tab ${selectedPlatform === key ? "is-active" : ""}`}
+                  onClick={() => setSelectedPlatform(key)}
+                  role="tab"
+                  aria-selected={selectedPlatform === key}
+                >
+                  {installGuides[key].label}
+                </button>
+              ))}
+            </div>
+
+            <div className="guide-wrap" role="tabpanel">
+              <h3 className="subsection-title guide-title">{selectedGuide.label}</h3>
+              {selectedGuide.blocks.map((block, index) => (
+                <section key={`${selectedPlatform}-${index}`} className="guide-block">
+                  {block.heading && <h4 className="guide-heading">{block.heading}</h4>}
+                  <ol className="guide-list">
+                    {block.steps.map((stepText, stepIndex) => (
+                      <li key={`${selectedPlatform}-${index}-${stepIndex}`}>{stepText}</li>
+                    ))}
+                  </ol>
+                  {block.codeSample && (
+                    <pre className="guide-code">
+                      <code>{block.codeSample}</code>
+                    </pre>
+                  )}
+                </section>
+              ))}
+            </div>
           </div>
         </div>
       </main>

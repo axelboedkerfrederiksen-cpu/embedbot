@@ -23,6 +23,9 @@ export default function AdminPage() {
   const [expanded, setExpanded] = useState<Record<string, boolean>>({});
   const [activatingId, setActivatingId] = useState<string | null>(null);
   const [deletingId, setDeletingId] = useState<string | null>(null);
+  const [editingId, setEditingId] = useState<string | null>(null);
+  const [savingId, setSavingId] = useState<string | null>(null);
+  const [editDrafts, setEditDrafts] = useState<Record<string, Record<string, string>>>({});
 
   async function fetchBusinesses() {
     setLoading(true);
@@ -73,6 +76,99 @@ export default function AdminPage() {
 
   function toggleExpand(id: string) {
     setExpanded(prev => ({ ...prev, [id]: !prev[id] }));
+  }
+
+  function startEditing(business: Business) {
+    const draft: Record<string, string> = {};
+
+    Object.entries(business).forEach(([key, value]) => {
+      if (key === "id" || key === "created_at") {
+        return;
+      }
+
+      if (value === null || value === undefined) {
+        draft[key] = "";
+        return;
+      }
+
+      if (typeof value === "string" || typeof value === "number" || typeof value === "boolean") {
+        draft[key] = String(value);
+        return;
+      }
+
+      draft[key] = JSON.stringify(value);
+    });
+
+    setEditDrafts(prev => ({ ...prev, [business.id]: draft }));
+    setEditingId(business.id);
+    setExpanded(prev => ({ ...prev, [business.id]: true }));
+    setError("");
+  }
+
+  function cancelEditing() {
+    setEditingId(null);
+  }
+
+  function updateDraftValue(businessId: string, key: string, value: string) {
+    setEditDrafts(prev => ({
+      ...prev,
+      [businessId]: {
+        ...(prev[businessId] || {}),
+        [key]: value,
+      },
+    }));
+  }
+
+  async function saveBusinessEdit(businessId: string) {
+    const updates = editDrafts[businessId] || {};
+
+    if (Object.keys(updates).length === 0) {
+      setError("Ingen ændringer at gemme.");
+      return;
+    }
+
+    setSavingId(businessId);
+    setError("");
+
+    try {
+      const res = await fetch("/api/admin/businesses", {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ business_id: businessId, updates }),
+      });
+
+      const data = await res.json();
+      if (!res.ok || !data.success) {
+        throw new Error(data.error || "Kunne ikke gemme ændringer.");
+      }
+
+      setBusinesses(prev => prev.map(b => (b.id === businessId ? (data.business as Business) : b)));
+      setEditingId(null);
+    } catch (saveError) {
+      if (saveError instanceof Error) {
+        setError(saveError.message);
+      } else {
+        setError("Kunne ikke gemme ændringer.");
+      }
+    } finally {
+      setSavingId(null);
+    }
+  }
+
+  function isTextareaField(field: string) {
+    return [
+      "description",
+      "faq",
+      "products_services",
+      "fallback_action",
+      "complaint_action",
+      "return_policy",
+      "current_offers",
+      "social_media",
+      "welcome_message",
+      "logo_data_url",
+      "logo_url",
+    ].includes(field);
   }
 
   async function activateBusiness(id: string) {
@@ -364,6 +460,31 @@ export default function AdminPage() {
         word-break: break-word;
       }
 
+      .detail-input,
+      .detail-textarea {
+        width: 100%;
+        background: #fff;
+        border: 1px solid #d9d9d9;
+        border-radius: 8px;
+        padding: 8px 10px;
+        font-family: "DM Sans", sans-serif;
+        font-size: 13px;
+        color: #111;
+        box-sizing: border-box;
+      }
+
+      .detail-input:focus,
+      .detail-textarea:focus {
+        outline: none;
+        border-color: #000;
+        box-shadow: 0 0 0 1px #000;
+      }
+
+      .detail-textarea {
+        resize: vertical;
+        min-height: 80px;
+      }
+
       .login-wrap {
         max-width: 420px;
         margin: 8vh auto 0;
@@ -440,6 +561,8 @@ export default function AdminPage() {
             {businesses.map(business => {
               const isOpen = !!expanded[business.id];
               const isActive = !!business.activated;
+              const isEditing = editingId === business.id;
+              const draft = editDrafts[business.id] || {};
 
               return (
                 <article className="business-card" key={business.id}>
@@ -468,17 +591,44 @@ export default function AdminPage() {
                     <button
                       className="btn btn-primary"
                       onClick={() => activateBusiness(business.id)}
-                      disabled={activatingId === business.id || deletingId === business.id}
+                      disabled={activatingId === business.id || deletingId === business.id || savingId === business.id}
                     >
                       {activatingId === business.id ? "Aktiverer..." : "Aktiver"}
                     </button>
                     <button className="btn btn-secondary" onClick={() => toggleExpand(business.id)}>
                       {isOpen ? "Skjul info" : "Se info"}
                     </button>
+                    {!isEditing && (
+                      <button
+                        className="btn btn-secondary"
+                        onClick={() => startEditing(business)}
+                        disabled={savingId === business.id || deletingId === business.id || activatingId === business.id}
+                      >
+                        Rediger
+                      </button>
+                    )}
+                    {isEditing && (
+                      <>
+                        <button
+                          className="btn btn-primary"
+                          onClick={() => saveBusinessEdit(business.id)}
+                          disabled={savingId === business.id}
+                        >
+                          {savingId === business.id ? "Gemmer..." : "Gem"}
+                        </button>
+                        <button
+                          className="btn btn-secondary"
+                          onClick={cancelEditing}
+                          disabled={savingId === business.id}
+                        >
+                          Annuller
+                        </button>
+                      </>
+                    )}
                     <button
                       className="btn btn-danger"
                       onClick={() => deleteBusiness(business.id)}
-                      disabled={deletingId === business.id || activatingId === business.id}
+                      disabled={deletingId === business.id || activatingId === business.id || savingId === business.id}
                     >
                       {deletingId === business.id ? "Sletter..." : "Slet"}
                     </button>
@@ -487,6 +637,7 @@ export default function AdminPage() {
                   {isOpen && (
                     <div className="details">
                       {Object.entries(business).map(([key, value]) => {
+                        const isReadOnlyKey = key === "id" || key === "created_at";
                         const text =
                           value === null || value === undefined
                             ? "-"
@@ -497,7 +648,25 @@ export default function AdminPage() {
                         return (
                           <div className="detail-row" key={`${business.id}-${key}`}>
                             <div className="detail-key">{key}</div>
-                            <div className="detail-value">{text}</div>
+                            <div className="detail-value">
+                              {isEditing && !isReadOnlyKey ? (
+                                isTextareaField(key) ? (
+                                  <textarea
+                                    className="detail-textarea"
+                                    value={draft[key] ?? ""}
+                                    onChange={e => updateDraftValue(business.id, key, e.target.value)}
+                                  />
+                                ) : (
+                                  <input
+                                    className="detail-input"
+                                    value={draft[key] ?? ""}
+                                    onChange={e => updateDraftValue(business.id, key, e.target.value)}
+                                  />
+                                )
+                              ) : (
+                                text
+                              )}
+                            </div>
                           </div>
                         );
                       })}
