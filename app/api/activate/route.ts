@@ -21,7 +21,7 @@ function buildCustomerEmailHtml(
   businessName: string | null,
   customerEmail: string | null
 ) {
-  const embedScript = `<script src="https://embedbot1.vercel.app/widget.js?id=${businessId}"></script>`;
+  const embedScript = `<script src="https://getembedbot.vercel.app/widget.js?id=${businessId}"></script>`;
 
   return `
     <div style="margin:0;padding:24px;background:#f5f5f5;font-family:Arial,sans-serif;color:#111;">
@@ -94,7 +94,7 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    const ingestRes = await fetch("https://embedbot1.vercel.app/api/ingest", {
+    const ingestRes = await fetch("https://getembedbot.vercel.app/api/ingest", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ url: business.website_url, business_id }),
