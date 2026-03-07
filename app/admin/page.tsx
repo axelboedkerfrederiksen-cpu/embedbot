@@ -9,6 +9,10 @@ type Business = {
   support_email?: string | null;
   created_at?: string | null;
   activated?: boolean | null;
+  primary_color?: string | null;
+  secondary_color?: string | null;
+  fab_color?: string | null;
+  font_choice?: string | null;
   [key: string]: unknown;
 };
 
@@ -563,6 +567,13 @@ export default function AdminPage() {
               const isActive = !!business.activated;
               const isEditing = editingId === business.id;
               const draft = editDrafts[business.id] || {};
+              const installScript = `<script 
+  src="https://embedbot1.vercel.app/widget.js?id=${business.id}"
+  data-primary-color="${business.primary_color || "#000000"}"
+  data-secondary-color="${business.secondary_color || "#000000"}"
+  data-fab-color="${business.fab_color || "#000000"}"
+  data-font="${business.font_choice || "sans-serif"}">
+<\/script>`;
 
               return (
                 <article className="business-card" key={business.id}>
@@ -633,6 +644,28 @@ export default function AdminPage() {
                       {deletingId === business.id ? "Sletter..." : "Slet"}
                     </button>
                   </div>
+
+                  {isActive && (
+                    <div style={{ marginTop: 12 }}>
+                      <div style={{ fontSize: 13, fontWeight: 700, marginBottom: 6 }}>Install script</div>
+                      <pre
+                        style={{
+                          margin: 0,
+                          padding: "10px 12px",
+                          borderRadius: 10,
+                          border: "1px solid #e5e5e5",
+                          background: "#fafafa",
+                          fontFamily: 'Consolas, Monaco, "Courier New", monospace',
+                          fontSize: 12,
+                          lineHeight: 1.45,
+                          whiteSpace: "pre-wrap",
+                          wordBreak: "break-all",
+                        }}
+                      >
+                        {installScript}
+                      </pre>
+                    </div>
+                  )}
 
                   {isOpen && (
                     <div className="details">
