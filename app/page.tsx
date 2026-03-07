@@ -68,15 +68,18 @@ export default function Home() {
     }
   }
 
-  function generateBusinessId() {
-    if (typeof crypto !== "undefined" && typeof crypto.randomUUID === "function") {
-      return crypto.randomUUID();
+  function ensureBusinessId() {
+    const userBusinessId = user?.id || "";
+
+    if (userBusinessId) {
+      if (businessId !== userBusinessId) {
+        setBusinessId(userBusinessId);
+      }
+
+      persistBusinessId(userBusinessId);
+      return userBusinessId;
     }
 
-    return `biz-${Date.now()}-${Math.random().toString(36).slice(2, 10)}`;
-  }
-
-  function ensureBusinessId() {
     const existingId = businessId || getStoredBusinessId();
 
     if (existingId) {
@@ -87,10 +90,7 @@ export default function Home() {
       return existingId;
     }
 
-    const newBusinessId = generateBusinessId();
-    persistBusinessId(newBusinessId);
-    setBusinessId(newBusinessId);
-    return newBusinessId;
+    return "";
   }
 
   function isOnConflictConstraintError(errorMessage: string) {
@@ -141,11 +141,8 @@ export default function Home() {
       }
 
       setUser(data.user);
-
-      const storedBusinessId = getStoredBusinessId();
-      if (storedBusinessId) {
-        setBusinessId(storedBusinessId);
-      }
+      setBusinessId(data.user.id);
+      persistBusinessId(data.user.id);
     });
 
     return () => {
@@ -199,9 +196,10 @@ export default function Home() {
       if (error) setMessage(error.message);
       else {
         setUser(data.user);
-        const storedBusinessId = getStoredBusinessId();
-        if (storedBusinessId) {
-          setBusinessId(storedBusinessId);
+        const nextBusinessId = data.user?.id || "";
+        if (nextBusinessId) {
+          setBusinessId(nextBusinessId);
+          persistBusinessId(nextBusinessId);
         }
       }
     } else {
