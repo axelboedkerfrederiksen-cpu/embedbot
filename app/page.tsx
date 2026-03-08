@@ -119,6 +119,14 @@ export default function Home() {
     return resolveOrCreateOnboardingBusinessId();
   }
 
+  function ensureDatabaseBusinessId() {
+    if (!user?.id || typeof user.id !== "string") {
+      throw new Error("Mangler bruger-id. Log ind igen og prøv på ny.");
+    }
+
+    return user.id;
+  }
+
   useEffect(() => {
     let isMounted = true;
 
@@ -202,7 +210,8 @@ export default function Home() {
   }
 
   async function saveBusinessDraft() {
-    const stableBusinessId = ensureBusinessId();
+    ensureBusinessId();
+    const stableBusinessId = ensureDatabaseBusinessId();
 
     if (!stableBusinessId) {
       throw new Error("Mangler businessId. Log ind igen og prøv på ny.");
@@ -242,7 +251,8 @@ export default function Home() {
     setMessage("");
 
     try {
-      const stableBusinessId = ensureBusinessId();
+      ensureBusinessId();
+      const stableBusinessId = ensureDatabaseBusinessId();
 
       if (!stableBusinessId) {
         throw new Error("Mangler businessId. Log ind igen og prøv på ny.");
