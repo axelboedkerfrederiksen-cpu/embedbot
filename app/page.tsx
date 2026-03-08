@@ -119,45 +119,6 @@ export default function Home() {
     return resolveOrCreateOnboardingBusinessId();
   }
 
-  function isOnConflictConstraintError(errorMessage: string) {
-    return errorMessage.toLowerCase().includes("no unique or exclusion constraint matching the on conflict specification");
-  }
-
-  async function persistBusinessPayload(payload: Record<string, unknown> & { id: string }) {
-    const { error } = await supabase
-      .from("businesses")
-      .upsert(payload, { onConflict: "id" });
-
-    if (!error || !isOnConflictConstraintError(error.message)) {
-      return { error };
-    }
-
-    const { data: existingRows, error: findError } = await supabase
-      .from("businesses")
-      .select("id")
-      .eq("id", payload.id)
-      .limit(1);
-
-    if (findError) {
-      return { error: findError };
-    }
-
-    if (existingRows && existingRows.length > 0) {
-      const updateResult = await supabase
-        .from("businesses")
-        .update(payload)
-        .eq("id", payload.id);
-
-      return { error: updateResult.error };
-    }
-
-    const insertResult = await supabase
-      .from("businesses")
-      .insert(payload);
-
-    return { error: insertResult.error };
-  }
-
   useEffect(() => {
     let isMounted = true;
 
@@ -247,52 +208,16 @@ export default function Home() {
       throw new Error("Mangler businessId. Log ind igen og prøv på ny.");
     }
 
-    const fullPayload = {
-      id: stableBusinessId,
-      ...form,
-    };
+    const res = await fetch("/api/business-draft", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ form, business_id: stableBusinessId }),
+    });
 
-    let { error } = await persistBusinessPayload(fullPayload);
+    const data = await res.json();
 
-    // Fallback for databases that do not yet include newer branding columns.
-    if (error && error.message.toLowerCase().includes("column")) {
-      const safePayload = {
-        id: stableBusinessId,
-        name: form.name,
-        website_url: form.website_url,
-        industry: form.industry,
-        description: form.description,
-        support_email: form.support_email,
-        phone: form.phone,
-        address: form.address,
-        city: form.city,
-        hours_weekday: form.hours_weekday,
-        hours_saturday: form.hours_saturday,
-        hours_sunday: form.hours_sunday,
-        response_time: form.response_time,
-        fallback_action: form.fallback_action,
-        complaint_action: form.complaint_action,
-        products_services: form.products_services,
-        delivery_time: form.delivery_time,
-        return_policy: form.return_policy,
-        payment_methods: form.payment_methods,
-        welcome_message: form.welcome_message,
-        tone: form.tone,
-        language: form.language,
-        faq: form.faq,
-        cvr: form.cvr,
-        social_media: form.social_media,
-        current_offers: form.current_offers,
-        warranty: form.warranty,
-        size_guide: form.size_guide,
-      };
-
-      const retry = await persistBusinessPayload(safePayload);
-      error = retry.error;
-    }
-
-    if (error) {
-      throw new Error(`Kunne ikke gemme kladde: ${error.message}`);
+    if (!res.ok || !data.success) {
+      throw new Error(`Kunne ikke gemme kladde: ${data.error || "Ukendt fejl."}`);
     }
 
     persistBusinessId(stableBusinessId);
