@@ -60,14 +60,26 @@ export async function POST(req: NextRequest) {
   }
 
   const { message, business_id } = await req.json();
+  const stableBusinessId = typeof business_id === "string" ? business_id.trim() : "";
+
+  if (!stableBusinessId) {
+    return NextResponse.json(
+      { error: "Mangler business_id." },
+      { status: 400 }
+    );
+  }
 
   const { data: business } = await supabase
     .from("businesses")
     .select("*")
-    .eq("id", business_id)
+    .eq("id", stableBusinessId)
     .order("created_at", { ascending: false })
     .limit(1)
     .single();
+
+  const companyName = typeof business?.name === "string" && business.name.trim()
+    ? business.name.trim()
+    : "denne virksomhed";
 
   const embeddingRes = await openai.embeddings.create({
     model: "text-embedding-3-small",
@@ -77,7 +89,7 @@ export async function POST(req: NextRequest) {
 
   const { data: docs } = await supabase.rpc("match_documents", {
     query_embedding: queryEmbedding,
-    match_business_id: business_id,
+    match_business_id: stableBusinessId,
     match_count: 5,
   });
 
@@ -124,7 +136,7 @@ VALGFRIT:
     messages: [
       {
         role: "system",
-        content: `Du er en kundeserviceassistent for ${business?.name || "denne virksomhed"}.
+        content: `Du er en kundeserviceassistent for ${companyName}.
 
 Her er al information om virksomheden:
 ${businessInfo}
