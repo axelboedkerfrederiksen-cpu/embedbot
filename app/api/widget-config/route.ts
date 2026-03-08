@@ -7,6 +7,7 @@ const DEFAULT_WIDGET_CONFIG = {
   fab_color: "#000000",
   logo_url: "",
   font_choice: "sans-serif",
+  name: "",
 };
 
 const supabase = createClient(
@@ -33,7 +34,7 @@ export async function GET(req: NextRequest) {
 
     const { data: business, error } = await supabase
       .from("businesses")
-      .select("primary_color, secondary_color, fab_color, chat_icon_color, logo_url, logo_data_url, font_choice")
+      .select("name, primary_color, secondary_color, fab_color, chat_icon_color, logo_url, logo_data_url, font_choice")
       .eq("id", businessId)
       .order("created_at", { ascending: false })
       .limit(1)
@@ -46,6 +47,7 @@ export async function GET(req: NextRequest) {
     console.log("Widget config from Supabase:", business);
 
     return NextResponse.json({
+      name: business?.name || DEFAULT_WIDGET_CONFIG.name,
       primary_color: business?.primary_color || DEFAULT_WIDGET_CONFIG.primary_color,
       secondary_color: business?.secondary_color || DEFAULT_WIDGET_CONFIG.secondary_color,
       fab_color: business?.fab_color || business?.chat_icon_color || DEFAULT_WIDGET_CONFIG.fab_color,

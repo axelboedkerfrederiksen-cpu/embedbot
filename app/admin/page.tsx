@@ -569,6 +569,7 @@ export default function AdminPage() {
               const draft = editDrafts[business.id] || {};
               const installScript = `<script 
   src="https://embedbot1.vercel.app/widget.js?id=${business.id}"
+  data-name="${business.name || "Support"}"
   data-primary-color="${business.primary_color || "#000000"}"
   data-secondary-color="${business.secondary_color || "#000000"}"
   data-fab-color="${business.fab_color || "#000000"}"

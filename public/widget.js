@@ -22,7 +22,7 @@
   const hasSecondaryColorAttr = scriptTag.getAttribute("data-secondary-color") !== null;
   const hasFabColorAttr = scriptTag.getAttribute("data-fab-color") !== null;
   const hasFontAttr = scriptTag.getAttribute("data-font") !== null;
-  const hasAnyStyleDataAttribute = hasPrimaryColorAttr || hasSecondaryColorAttr || hasFabColorAttr || hasFontAttr;
+  const scriptName = (scriptTag.getAttribute("data-name") || "").trim();
 
   const defaultConfig = {
     primary_color: "#000000",
@@ -30,8 +30,14 @@
     fab_color: "#000000",
     logo_url: "",
     font_choice: "sans-serif",
-    bot_name: "Meny Assistent",
+    name: "",
+    header_title: "Support Chat",
   };
+
+  function formatHeaderTitle(name) {
+    const cleanName = (name || "").trim();
+    return cleanName ? `${cleanName} ChatBot` : defaultConfig.header_title;
+  }
 
   let widgetConfig = {
     ...defaultConfig,
@@ -39,7 +45,8 @@
     secondary_color: scriptTag.getAttribute("data-secondary-color") || defaultConfig.secondary_color,
     fab_color: scriptTag.getAttribute("data-fab-color") || defaultConfig.fab_color,
     font_choice: scriptTag.getAttribute("data-font") || defaultConfig.font_choice,
-    bot_name: scriptTag.getAttribute("data-bot-name") || defaultConfig.bot_name,
+    name: scriptName,
+    header_title: formatHeaderTitle(scriptName),
   };
 
   let lastSender = null;
@@ -67,7 +74,7 @@
       <div id="eb-header" style="background:#000;color:white;padding:16px;font-weight:bold;display:flex;align-items:center;gap:10px;">
         <img id="eb-logo" alt="Company logo" style="display:none;height:24px;width:auto;max-width:120px;object-fit:contain;" />
         <div style="display:flex;flex-direction:column;line-height:1.1;">
-          <span id="eb-title">Meny Assistent</span>
+          <span id="eb-title">Support Chat</span>
           <span style="font-size:12px;font-weight:500;opacity:0.85;">Online</span>
         </div>
       </div>
@@ -94,7 +101,7 @@
     send.style.background = widgetConfig.primary_color || defaultConfig.primary_color;
     header.style.background = widgetConfig.primary_color || defaultConfig.primary_color;
     box.style.fontFamily = widgetConfig.font_choice || defaultConfig.font_choice;
-    title.textContent = widgetConfig.bot_name || defaultConfig.bot_name;
+    title.textContent = widgetConfig.header_title || defaultConfig.header_title;
 
     if (widgetConfig.logo_url) {
       logo.src = widgetConfig.logo_url;
@@ -105,11 +112,6 @@
   }
 
   async function loadWidgetConfig() {
-    if (hasAnyStyleDataAttribute) {
-      applyWidgetStyles();
-      return;
-    }
-
     if (!businessId) {
       applyWidgetStyles();
       return;
@@ -124,16 +126,22 @@
 
       const data = await res.json();
       console.log("Widget config:", data);
+
+      const resolvedName = (data.name || scriptName || defaultConfig.name || "").trim();
       widgetConfig = {
-        primary_color: data.primary_color || defaultConfig.primary_color,
-        secondary_color: data.secondary_color || defaultConfig.secondary_color,
-        fab_color: data.fab_color || defaultConfig.fab_color,
+        primary_color: scriptTag.getAttribute("data-primary-color") || data.primary_color || defaultConfig.primary_color,
+        secondary_color: scriptTag.getAttribute("data-secondary-color") || data.secondary_color || defaultConfig.secondary_color,
+        fab_color: scriptTag.getAttribute("data-fab-color") || data.fab_color || defaultConfig.fab_color,
         logo_url: data.logo_url || defaultConfig.logo_url,
-        font_choice: data.font_choice || defaultConfig.font_choice,
-        bot_name: data.bot_name || widgetConfig.bot_name || defaultConfig.bot_name,
+        font_choice: scriptTag.getAttribute("data-font") || data.font_choice || defaultConfig.font_choice,
+        name: resolvedName,
+        header_title: formatHeaderTitle(resolvedName),
       };
     } catch (_) {
-      widgetConfig = { ...defaultConfig };
+      widgetConfig = {
+        ...widgetConfig,
+        header_title: formatHeaderTitle(scriptName),
+      };
     }
 
     applyWidgetStyles();
