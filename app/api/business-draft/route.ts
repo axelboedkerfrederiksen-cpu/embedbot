@@ -57,8 +57,9 @@ async function persistBusinessPayload(payload: Record<string, unknown> & { id: s
 export async function POST(req: NextRequest) {
   try {
     const { form, business_id, user_id } = await req.json();
+    const stableBusinessId = typeof business_id === "string" ? business_id.trim() : "";
 
-    if (!business_id || typeof business_id !== "string") {
+    if (!stableBusinessId) {
       return NextResponse.json({ success: false, error: "Mangler business_id." }, { status: 400 });
     }
 
@@ -77,19 +78,19 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    const fullPayload = { id: business_id, user_id, ...form };
+    const fullPayload = { id: stableBusinessId, user_id, ...form };
     let { error: upsertError } = await persistBusinessPayload(fullPayload);
 
     // Backward compatibility: if user_id column is not deployed yet, retry without it.
     if (upsertError && isMissingColumnError(upsertError.message, "user_id")) {
-      const retryWithoutUserId = await persistBusinessPayload({ id: business_id, ...form });
+      const retryWithoutUserId = await persistBusinessPayload({ id: stableBusinessId, ...form });
       upsertError = retryWithoutUserId.error;
     }
 
     // If branding columns are not migrated yet, retry with stable core fields only.
     if (upsertError && upsertError.message.toLowerCase().includes("column")) {
       const safePayload = {
-        id: business_id,
+        id: stableBusinessId,
         name: form.name,
         website_url: form.website_url,
         industry: form.industry,

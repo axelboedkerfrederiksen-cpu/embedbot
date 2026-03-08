@@ -58,7 +58,7 @@ async function persistBusinessPayload(payload: Record<string, unknown> & { id: s
 export async function POST(req: NextRequest) {
   try {
     const { form, user_id, business_id } = await req.json();
-    const stableBusinessId = business_id;
+    const stableBusinessId = typeof business_id === "string" ? business_id.trim() : "";
 
     if (!stableBusinessId) {
       return NextResponse.json({ success: false, error: "Mangler business_id." }, { status: 400 });

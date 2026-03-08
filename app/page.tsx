@@ -44,7 +44,7 @@ export default function Home() {
     }
 
     try {
-      return localStorage.getItem(ONBOARDING_BUSINESS_ID_KEY) || "";
+      return (localStorage.getItem(ONBOARDING_BUSINESS_ID_KEY) || "").trim();
     } catch {
       return "";
     }
@@ -55,8 +55,13 @@ export default function Home() {
       return;
     }
 
+    const normalizedId = id.trim();
+    if (!normalizedId) {
+      return;
+    }
+
     try {
-      localStorage.setItem(ONBOARDING_BUSINESS_ID_KEY, id);
+      localStorage.setItem(ONBOARDING_BUSINESS_ID_KEY, normalizedId);
     } catch {
       // Ignore storage failures (e.g. restricted browser settings).
     }
@@ -91,7 +96,7 @@ export default function Home() {
   }
 
   function resolveOrCreateOnboardingBusinessId() {
-    const inMemoryId = businessId.trim();
+    const inMemoryId = (businessId || "").trim();
     if (inMemoryId) {
       persistBusinessId(inMemoryId);
       return inMemoryId;
@@ -215,7 +220,6 @@ export default function Home() {
   }
 
   async function saveBusinessDraft() {
-    ensureBusinessId();
     const stableBusinessId = ensureDatabaseBusinessId();
 
     if (!stableBusinessId) {
@@ -256,7 +260,6 @@ export default function Home() {
     setMessage("");
 
     try {
-      ensureBusinessId();
       const stableBusinessId = ensureDatabaseBusinessId();
 
       if (!stableBusinessId) {
