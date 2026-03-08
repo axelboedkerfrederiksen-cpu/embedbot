@@ -75,12 +75,19 @@ export default function Home() {
   }
 
   function createBusinessId() {
-    if (typeof crypto !== "undefined" && typeof crypto.randomUUID === "function") {
-      return crypto.randomUUID();
+    if (typeof crypto === "undefined" || typeof crypto.randomUUID !== "function") {
+      throw new Error("Browseren understotter ikke crypto.randomUUID().");
     }
 
-    const random = Math.random().toString(16).slice(2);
-    return `biz_${Date.now().toString(16)}_${random}`;
+    return crypto.randomUUID();
+  }
+
+  function resetBusinessIdForStepOne() {
+    const freshBusinessId = createBusinessId();
+    clearPersistedBusinessId();
+    setBusinessId(freshBusinessId);
+    persistBusinessId(freshBusinessId);
+    return freshBusinessId;
   }
 
   function resolveOrCreateOnboardingBusinessId() {
@@ -103,15 +110,9 @@ export default function Home() {
   }
 
   function startNewOnboardingSessionFromFrontpage() {
-    clearPersistedBusinessId();
-    setBusinessId("");
     setEmbedCode("");
     setStep(1);
-
-    const newBusinessId = createBusinessId();
-    setBusinessId(newBusinessId);
-    persistBusinessId(newBusinessId);
-    return newBusinessId;
+    return resetBusinessIdForStepOne();
   }
 
   function ensureBusinessId() {
@@ -173,6 +174,15 @@ export default function Home() {
       isMounted = false;
     };
   }, [supabase]);
+
+  useEffect(() => {
+    if (!user || step !== 1) {
+      return;
+    }
+
+    // Every arrival at step 1 starts a new onboarding session ID.
+    resetBusinessIdForStepOne();
+  }, [user, step]);
 
   const update = (key: string, value: string) => setForm(f => ({ ...f, [key]: value }));
 
