@@ -44,14 +44,16 @@ export async function DELETE(req: NextRequest) {
     }
 
     const { business_id } = await req.json();
-    if (!business_id || typeof business_id !== "string") {
+    const stableBusinessId = typeof business_id === "string" ? business_id.trim() : "";
+
+    if (!stableBusinessId) {
       return NextResponse.json({ error: "Mangler business_id." }, { status: 400 });
     }
 
     const { error: docsDeleteError } = await supabase
       .from("documents")
       .delete()
-      .eq("business_id", business_id);
+      .eq("business_id", stableBusinessId);
 
     if (docsDeleteError) {
       return NextResponse.json({ error: docsDeleteError.message }, { status: 500 });
@@ -60,7 +62,7 @@ export async function DELETE(req: NextRequest) {
     const { error: businessDeleteError } = await supabase
       .from("businesses")
       .delete()
-      .eq("id", business_id);
+      .eq("id", stableBusinessId);
 
     if (businessDeleteError) {
       return NextResponse.json({ error: businessDeleteError.message }, { status: 500 });
@@ -86,8 +88,9 @@ export async function PUT(req: NextRequest) {
     }
 
     const { business_id, updates } = await req.json();
+    const stableBusinessId = typeof business_id === "string" ? business_id.trim() : "";
 
-    if (!business_id || typeof business_id !== "string") {
+    if (!stableBusinessId) {
       return NextResponse.json({ error: "Mangler business_id." }, { status: 400 });
     }
 
@@ -110,7 +113,7 @@ export async function PUT(req: NextRequest) {
     const { data, error } = await supabase
       .from("businesses")
       .update(safeUpdates)
-      .eq("id", business_id)
+      .eq("id", stableBusinessId)
       .select("*")
       .single();
 

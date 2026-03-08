@@ -123,22 +123,28 @@ export default function AdminPage() {
     }));
   }
 
-  async function saveBusinessEdit(businessId: string) {
-    const updates = editDrafts[businessId] || {};
+  async function saveBusinessEdit(business: Business) {
+    const stableBusinessId = (business.id || "").trim();
+    if (!stableBusinessId) {
+      setError("Virksomheden mangler et gyldigt id.");
+      return;
+    }
+
+    const updates = editDrafts[stableBusinessId] || {};
 
     if (Object.keys(updates).length === 0) {
       setError("Ingen ændringer at gemme.");
       return;
     }
 
-    setSavingId(businessId);
+    setSavingId(stableBusinessId);
     setError("");
 
     try {
       const res = await fetch("/api/admin/businesses", {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ business_id: businessId, updates }),
+        body: JSON.stringify({ business_id: stableBusinessId, updates }),
       });
 
       const data = await res.json();
@@ -146,7 +152,7 @@ export default function AdminPage() {
         throw new Error(data.error || "Kunne ikke gemme ændringer.");
       }
 
-      setBusinesses(prev => prev.map(b => (b.id === businessId ? (data.business as Business) : b)));
+      setBusinesses(prev => prev.map(b => (b.id === stableBusinessId ? (data.business as Business) : b)));
       setEditingId(null);
     } catch (saveError) {
       if (saveError instanceof Error) {
@@ -623,7 +629,7 @@ export default function AdminPage() {
                       <>
                         <button
                           className="btn btn-primary"
-                          onClick={() => saveBusinessEdit(business.id)}
+                          onClick={() => saveBusinessEdit(business)}
                           disabled={savingId === business.id}
                         >
                           {savingId === business.id ? "Gemmer..." : "Gem"}
