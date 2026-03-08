@@ -225,7 +225,7 @@ export default function Home() {
     const res = await fetch("/api/business-draft", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ form, business_id: stableBusinessId }),
+      body: JSON.stringify({ form, business_id: stableBusinessId, user_id: user.id }),
     });
 
     const data = await res.json();
@@ -266,7 +266,7 @@ export default function Home() {
       const res = await fetch("/api/submit", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ form, business_id: stableBusinessId }),
+        body: JSON.stringify({ form, business_id: stableBusinessId, user_id: user.id }),
       });
 
       const data = await res.json();

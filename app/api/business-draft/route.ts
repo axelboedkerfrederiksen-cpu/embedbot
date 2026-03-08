@@ -10,6 +10,15 @@ function isOnConflictConstraintError(errorMessage: string) {
   return errorMessage.toLowerCase().includes("no unique or exclusion constraint matching the on conflict specification");
 }
 
+function isMissingColumnError(errorMessage: string, columnName: string) {
+  const normalized = errorMessage.toLowerCase();
+  return normalized.includes(`could not find the '${columnName.toLowerCase()}' column`) || normalized.includes(`column \"${columnName.toLowerCase()}\"`);
+}
+
+function isLegacyBusinessIdForeignKeyError(errorMessage: string) {
+  return errorMessage.toLowerCase().includes("businesses_id_fkey");
+}
+
 async function persistBusinessPayload(payload: Record<string, unknown> & { id: string }) {
   const { error } = await supabase
     .from("businesses")
@@ -47,10 +56,14 @@ async function persistBusinessPayload(payload: Record<string, unknown> & { id: s
 
 export async function POST(req: NextRequest) {
   try {
-    const { form, business_id } = await req.json();
+    const { form, business_id, user_id } = await req.json();
 
     if (!business_id || typeof business_id !== "string") {
       return NextResponse.json({ success: false, error: "Mangler business_id." }, { status: 400 });
+    }
+
+    if (!user_id || typeof user_id !== "string") {
+      return NextResponse.json({ success: false, error: "Mangler user_id." }, { status: 400 });
     }
 
     if (!form || typeof form !== "object") {
@@ -64,8 +77,14 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    const fullPayload = { id: business_id, ...form };
+    const fullPayload = { id: business_id, user_id, ...form };
     let { error: upsertError } = await persistBusinessPayload(fullPayload);
+
+    // Backward compatibility: if user_id column is not deployed yet, retry without it.
+    if (upsertError && isMissingColumnError(upsertError.message, "user_id")) {
+      const retryWithoutUserId = await persistBusinessPayload({ id: business_id, ...form });
+      upsertError = retryWithoutUserId.error;
+    }
 
     // If branding columns are not migrated yet, retry with stable core fields only.
     if (upsertError && upsertError.message.toLowerCase().includes("column")) {
@@ -102,6 +121,16 @@ export async function POST(req: NextRequest) {
 
       const retry = await persistBusinessPayload(safePayload);
       upsertError = retry.error;
+    }
+
+    if (upsertError && isLegacyBusinessIdForeignKeyError(upsertError.message)) {
+      return NextResponse.json(
+        {
+          success: false,
+          error: "Databaseskema mangler migration: fjern FK `businesses_id_fkey` og tilfoj kolonnen `businesses.user_id` for at understotte flere virksomheder per bruger.",
+        },
+        { status: 500 }
+      );
     }
 
     if (upsertError) {
