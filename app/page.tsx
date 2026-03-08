@@ -74,29 +74,48 @@ export default function Home() {
     }
   }
 
+  function createBusinessId() {
+    if (typeof crypto !== "undefined" && typeof crypto.randomUUID === "function") {
+      return crypto.randomUUID();
+    }
+
+    const random = Math.random().toString(16).slice(2);
+    return `biz_${Date.now().toString(16)}_${random}`;
+  }
+
+  function resolveOrCreateOnboardingBusinessId() {
+    const inMemoryId = businessId.trim();
+    if (inMemoryId) {
+      persistBusinessId(inMemoryId);
+      return inMemoryId;
+    }
+
+    const activeStoredId = getStoredBusinessId();
+    if (activeStoredId) {
+      setBusinessId(activeStoredId);
+      return activeStoredId;
+    }
+
+    const generatedId = createBusinessId();
+    setBusinessId(generatedId);
+    persistBusinessId(generatedId);
+    return generatedId;
+  }
+
+  function startNewOnboardingSessionFromFrontpage() {
+    clearPersistedBusinessId();
+    setBusinessId("");
+    setEmbedCode("");
+    setStep(1);
+
+    const newBusinessId = createBusinessId();
+    setBusinessId(newBusinessId);
+    persistBusinessId(newBusinessId);
+    return newBusinessId;
+  }
+
   function ensureBusinessId() {
-    const userBusinessId = user?.id || "";
-
-    if (userBusinessId) {
-      if (businessId !== userBusinessId) {
-        setBusinessId(userBusinessId);
-      }
-
-      persistBusinessId(userBusinessId);
-      return userBusinessId;
-    }
-
-    const existingId = businessId || getStoredBusinessId();
-
-    if (existingId) {
-      if (!businessId) {
-        setBusinessId(existingId);
-      }
-
-      return existingId;
-    }
-
-    return "";
+    return resolveOrCreateOnboardingBusinessId();
   }
 
   function isOnConflictConstraintError(errorMessage: string) {
@@ -147,8 +166,7 @@ export default function Home() {
       }
 
       setUser(data.user);
-      setBusinessId(data.user.id);
-      persistBusinessId(data.user.id);
+      resolveOrCreateOnboardingBusinessId();
     });
 
     return () => {
@@ -202,11 +220,7 @@ export default function Home() {
       if (error) setMessage(error.message);
       else {
         setUser(data.user);
-        const nextBusinessId = data.user?.id || "";
-        if (nextBusinessId) {
-          setBusinessId(nextBusinessId);
-          persistBusinessId(nextBusinessId);
-        }
+        startNewOnboardingSessionFromFrontpage();
       }
     } else {
       const { data, error } = await supabase.auth.signUp({ email, password });
