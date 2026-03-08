@@ -98,9 +98,33 @@ export async function PUT(req: NextRequest) {
       return NextResponse.json({ error: "Mangler gyldige updates." }, { status: 400 });
     }
 
-    const blockedKeys = new Set(["id", "created_at"]);
+    const blockedKeys = new Set(["id", "created_at", "user_id"]);
     const safeUpdates = Object.fromEntries(
-      Object.entries(updates).filter(([key]) => !blockedKeys.has(key))
+      Object.entries(updates).flatMap(([key, value]) => {
+        if (blockedKeys.has(key)) {
+          return [];
+        }
+
+        // Protect UUID/system columns from invalid empty-string values.
+        if (key.endsWith("_id")) {
+          if (typeof value !== "string") {
+            return [];
+          }
+
+          const trimmedUuid = value.trim();
+          if (!trimmedUuid) {
+            return [];
+          }
+
+          return [[key, trimmedUuid]];
+        }
+
+        if (typeof value === "string") {
+          return [[key, value.trim()]];
+        }
+
+        return [[key, value]];
+      })
     );
 
     if (Object.keys(safeUpdates).length === 0) {

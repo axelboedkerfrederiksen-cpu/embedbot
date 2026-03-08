@@ -677,7 +677,7 @@ export default function AdminPage() {
                   {isOpen && (
                     <div className="details">
                       {Object.entries(business).map(([key, value]) => {
-                        const isReadOnlyKey = key === "id" || key === "created_at";
+                        const isReadOnlyKey = key === "id" || key === "created_at" || key.endsWith("_id");
                         const text =
                           value === null || value === undefined
                             ? "-"
