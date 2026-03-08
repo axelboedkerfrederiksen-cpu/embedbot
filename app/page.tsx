@@ -124,7 +124,12 @@ export default function Home() {
       throw new Error("Mangler bruger-id. Log ind igen og prøv på ny.");
     }
 
-    return user.id;
+    const resolvedId = resolveOrCreateOnboardingBusinessId();
+    if (!resolvedId) {
+      throw new Error("Mangler businessId. Log ind igen og prøv på ny.");
+    }
+
+    return resolvedId;
   }
 
   useEffect(() => {
