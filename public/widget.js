@@ -54,6 +54,23 @@
   let chatOpen = false;
   let hasShownWelcomeMessage = false;
 
+  function tryShowWelcomeMessage() {
+    if (hasShownWelcomeMessage) {
+      console.log("[EmbedBot] Welcome already shown, skipping.");
+      return;
+    }
+
+    const welcomeMessage = (widgetConfig.welcome_message || "").trim();
+    if (!welcomeMessage) {
+      console.log("[EmbedBot] No welcome_message available yet.");
+      return;
+    }
+
+    addMessage(welcomeMessage, false);
+    hasShownWelcomeMessage = true;
+    console.log("[EmbedBot] Welcome message shown automatically.");
+  }
+
   function nowAsTime() {
     return new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
   }
@@ -127,7 +144,8 @@
       }
 
       const data = await res.json();
-      console.log("Widget config:", data);
+      console.log("[EmbedBot] /api/widget-config response:", data);
+      console.log("[EmbedBot] welcome_message from API:", data.welcome_message);
 
       const resolvedName = (data.name || scriptName || defaultConfig.name || "").trim();
       widgetConfig = {
@@ -149,21 +167,21 @@
     }
 
     applyWidgetStyles();
+
+    if (chatOpen) {
+      // If chat was opened before config finished loading, try again now.
+      tryShowWelcomeMessage();
+    }
   }
 
   function setChatOpen(isOpen) {
+    console.log("[EmbedBot] setChatOpen called:", { isOpen, hasShownWelcomeMessage });
     chatOpen = isOpen;
     box.style.display = chatOpen ? "flex" : "none";
     bubble.innerHTML = chatOpen ? CLOSE_ICON : OPEN_ICON;
     bubble.setAttribute("aria-label", chatOpen ? "Close support chat" : "Open support chat");
     if (chatOpen) {
-      if (!hasShownWelcomeMessage) {
-        const welcomeMessage = (widgetConfig.welcome_message || "").trim();
-        if (welcomeMessage) {
-          addMessage(welcomeMessage, false);
-        }
-        hasShownWelcomeMessage = true;
-      }
+      tryShowWelcomeMessage();
       input.focus();
     }
   }
