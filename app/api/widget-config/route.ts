@@ -56,6 +56,18 @@ async function fetchBusinessWidgetConfig(businessId: string) {
   return { data: null, error: lastError };
 }
 
+function asRecord(value: unknown): Record<string, unknown> | null {
+  if (!value || typeof value !== "object") {
+    return null;
+  }
+
+  return value as Record<string, unknown>;
+}
+
+function asString(value: unknown): string {
+  return typeof value === "string" ? value : "";
+}
+
 export async function GET(req: NextRequest) {
   try {
     if (!process.env.SUPABASE_URL || !process.env.SUPABASE_SERVICE_KEY) {
@@ -73,22 +85,33 @@ export async function GET(req: NextRequest) {
       );
     }
 
-    const { data: business, error } = await fetchBusinessWidgetConfig(businessId);
+    const { data: businessRaw, error } = await fetchBusinessWidgetConfig(businessId);
 
     if (error) {
       return NextResponse.json({ error: error.message }, { status: 500 });
     }
 
-    console.log("Widget config from Supabase:", business);
+    const business = asRecord(businessRaw);
+    console.log("Widget config from Supabase:", businessRaw);
+
+    const name = asString(business?.name);
+    const primaryColor = asString(business?.primary_color);
+    const secondaryColor = asString(business?.secondary_color);
+    const fabColor = asString(business?.fab_color);
+    const chatIconColor = asString(business?.chat_icon_color);
+    const logoUrl = asString(business?.logo_url);
+    const logoDataUrl = asString(business?.logo_data_url);
+    const fontChoice = asString(business?.font_choice);
+    const welcomeMessage = asString(business?.welcome_message);
 
     return NextResponse.json({
-      name: business?.name || DEFAULT_WIDGET_CONFIG.name,
-      primary_color: business?.primary_color || DEFAULT_WIDGET_CONFIG.primary_color,
-      secondary_color: business?.secondary_color || DEFAULT_WIDGET_CONFIG.secondary_color,
-      fab_color: business?.fab_color || business?.chat_icon_color || DEFAULT_WIDGET_CONFIG.fab_color,
-      logo_url: business?.logo_url || business?.logo_data_url || DEFAULT_WIDGET_CONFIG.logo_url,
-      font_choice: business?.font_choice || DEFAULT_WIDGET_CONFIG.font_choice,
-      welcome_message: business?.welcome_message || DEFAULT_WIDGET_CONFIG.welcome_message,
+      name: name || DEFAULT_WIDGET_CONFIG.name,
+      primary_color: primaryColor || DEFAULT_WIDGET_CONFIG.primary_color,
+      secondary_color: secondaryColor || DEFAULT_WIDGET_CONFIG.secondary_color,
+      fab_color: fabColor || chatIconColor || DEFAULT_WIDGET_CONFIG.fab_color,
+      logo_url: logoUrl || logoDataUrl || DEFAULT_WIDGET_CONFIG.logo_url,
+      font_choice: fontChoice || DEFAULT_WIDGET_CONFIG.font_choice,
+      welcome_message: welcomeMessage || DEFAULT_WIDGET_CONFIG.welcome_message,
     });
   } catch (error) {
     if (error instanceof Error) {
