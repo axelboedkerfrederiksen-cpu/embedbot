@@ -32,6 +32,7 @@
     font_choice: "sans-serif",
     name: "",
     header_title: "Support Chat",
+    welcome_message: "",
   };
 
   function formatHeaderTitle(name) {
@@ -51,6 +52,7 @@
 
   let lastSender = null;
   let chatOpen = false;
+  let hasShownWelcomeMessage = false;
 
   function nowAsTime() {
     return new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
@@ -134,12 +136,14 @@
         fab_color: scriptTag.getAttribute("data-fab-color") || data.fab_color || defaultConfig.fab_color,
         logo_url: data.logo_url || defaultConfig.logo_url,
         font_choice: scriptTag.getAttribute("data-font") || data.font_choice || defaultConfig.font_choice,
+        welcome_message: data.welcome_message || defaultConfig.welcome_message,
         name: resolvedName,
         header_title: formatHeaderTitle(resolvedName),
       };
     } catch (_) {
       widgetConfig = {
         ...widgetConfig,
+        welcome_message: defaultConfig.welcome_message,
         header_title: formatHeaderTitle(scriptName),
       };
     }
@@ -153,6 +157,13 @@
     bubble.innerHTML = chatOpen ? CLOSE_ICON : OPEN_ICON;
     bubble.setAttribute("aria-label", chatOpen ? "Close support chat" : "Open support chat");
     if (chatOpen) {
+      if (!hasShownWelcomeMessage) {
+        const welcomeMessage = (widgetConfig.welcome_message || "").trim();
+        if (welcomeMessage) {
+          addMessage(welcomeMessage, false);
+        }
+        hasShownWelcomeMessage = true;
+      }
       input.focus();
     }
   }

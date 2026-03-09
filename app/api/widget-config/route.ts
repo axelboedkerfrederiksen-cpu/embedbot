@@ -8,6 +8,7 @@ const DEFAULT_WIDGET_CONFIG = {
   logo_url: "",
   font_choice: "sans-serif",
   name: "",
+  welcome_message: "",
 };
 
 const supabase = createClient(
@@ -34,7 +35,7 @@ export async function GET(req: NextRequest) {
 
     const { data: business, error } = await supabase
       .from("businesses")
-      .select("name, primary_color, secondary_color, fab_color, chat_icon_color, logo_url, logo_data_url, font_choice")
+      .select("name, primary_color, secondary_color, fab_color, chat_icon_color, logo_url, logo_data_url, font_choice, welcome_message")
       .eq("id", businessId)
       .order("created_at", { ascending: false })
       .limit(1)
@@ -53,6 +54,7 @@ export async function GET(req: NextRequest) {
       fab_color: business?.fab_color || business?.chat_icon_color || DEFAULT_WIDGET_CONFIG.fab_color,
       logo_url: business?.logo_url || business?.logo_data_url || DEFAULT_WIDGET_CONFIG.logo_url,
       font_choice: business?.font_choice || DEFAULT_WIDGET_CONFIG.font_choice,
+      welcome_message: business?.welcome_message || DEFAULT_WIDGET_CONFIG.welcome_message,
     });
   } catch (error) {
     if (error instanceof Error) {
