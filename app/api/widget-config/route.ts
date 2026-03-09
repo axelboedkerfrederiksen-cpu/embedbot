@@ -18,7 +18,13 @@ const supabase = createClient(
 
 function isMissingColumnError(errorMessage: string, columnName: string) {
   const normalized = errorMessage.toLowerCase();
-  return normalized.includes(`could not find the '${columnName.toLowerCase()}' column`) || normalized.includes(`column \"${columnName.toLowerCase()}\"`);
+  const lowerColumn = columnName.toLowerCase();
+  return (
+    normalized.includes(`could not find the '${lowerColumn}' column`) ||
+    normalized.includes(`column \"${lowerColumn}\"`) ||
+    normalized.includes(`column ${lowerColumn}`) ||
+    normalized.includes(`column businesses.${lowerColumn}`)
+  );
 }
 
 async function fetchBusinessWidgetConfig(businessId: string) {
