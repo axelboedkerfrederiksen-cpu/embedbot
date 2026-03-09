@@ -13,7 +13,31 @@ function isOnConflictConstraintError(errorMessage: string) {
 
 function isMissingColumnError(errorMessage: string, columnName: string) {
   const normalized = errorMessage.toLowerCase();
-  return normalized.includes(`could not find the '${columnName.toLowerCase()}' column`) || normalized.includes(`column \"${columnName.toLowerCase()}\"`);
+  const lowerColumn = columnName.toLowerCase();
+  return (
+    normalized.includes(`could not find the '${lowerColumn}' column`) ||
+    normalized.includes(`column \"${lowerColumn}\"`) ||
+    normalized.includes(`column ${lowerColumn}`) ||
+    normalized.includes(`column businesses.${lowerColumn}`)
+  );
+}
+
+function extractMissingColumnName(errorMessage: string): string | null {
+  const normalized = errorMessage.toLowerCase();
+  const patterns = [
+    /could not find the '([a-z0-9_]+)' column/,
+    /column\s+businesses\.([a-z0-9_]+)\s+does not exist/,
+    /column\s+"?([a-z0-9_]+)"?\s+does not exist/,
+  ];
+
+  for (const pattern of patterns) {
+    const match = normalized.match(pattern);
+    if (match?.[1]) {
+      return match[1];
+    }
+  }
+
+  return null;
 }
 
 function isLegacyBusinessIdForeignKeyError(errorMessage: string) {
@@ -55,6 +79,30 @@ async function persistBusinessPayload(payload: Record<string, unknown> & { id: s
   return { error: insertResult.error };
 }
 
+async function persistWithMissingColumnFallback(payload: Record<string, unknown> & { id: string }) {
+  let activePayload: Record<string, unknown> & { id: string } = { ...payload };
+  let attempts = 0;
+
+  while (attempts < 8) {
+    attempts += 1;
+    const result = await persistBusinessPayload(activePayload);
+    if (!result.error) {
+      return result;
+    }
+
+    const missingColumn = extractMissingColumnName(result.error.message);
+    if (!missingColumn || !(missingColumn in activePayload) || missingColumn === "id") {
+      return result;
+    }
+
+    // Keep as much data as possible by removing only unavailable columns.
+    const { [missingColumn]: _removed, ...rest } = activePayload;
+    activePayload = { ...rest, id: payload.id };
+  }
+
+  return { error: { message: "Kunne ikke gemme payload efter flere kolonne-fallbacks." } as { message: string } };
+}
+
 export async function POST(req: NextRequest) {
   try {
     const { form, user_id, business_id } = await req.json();
@@ -80,49 +128,12 @@ export async function POST(req: NextRequest) {
     }
 
     const fullPayload = { id: stableBusinessId, user_id, ...form };
-    let { error: upsertError } = await persistBusinessPayload(fullPayload);
+    let { error: upsertError } = await persistWithMissingColumnFallback(fullPayload);
 
     // Backward compatibility: if user_id column is not deployed yet, retry without it.
     if (upsertError && isMissingColumnError(upsertError.message, "user_id")) {
-      const retryWithoutUserId = await persistBusinessPayload({ id: stableBusinessId, ...form });
+      const retryWithoutUserId = await persistWithMissingColumnFallback({ id: stableBusinessId, ...form });
       upsertError = retryWithoutUserId.error;
-    }
-
-    // If branding columns are not migrated yet, retry with the stable core fields.
-    if (upsertError && upsertError.message.toLowerCase().includes("column")) {
-      const safePayload = {
-        id: stableBusinessId,
-        name: form.name,
-        website_url: form.website_url,
-        industry: form.industry,
-        description: form.description,
-        support_email: form.support_email,
-        phone: form.phone,
-        address: form.address,
-        city: form.city,
-        hours_weekday: form.hours_weekday,
-        hours_saturday: form.hours_saturday,
-        hours_sunday: form.hours_sunday,
-        response_time: form.response_time,
-        fallback_action: form.fallback_action,
-        complaint_action: form.complaint_action,
-        products_services: form.products_services,
-        delivery_time: form.delivery_time,
-        return_policy: form.return_policy,
-        payment_methods: form.payment_methods,
-        welcome_message: form.welcome_message,
-        tone: form.tone,
-        language: form.language,
-        faq: form.faq,
-        cvr: form.cvr,
-        social_media: form.social_media,
-        current_offers: form.current_offers,
-        warranty: form.warranty,
-        size_guide: form.size_guide,
-      };
-
-      const retry = await persistBusinessPayload(safePayload);
-      upsertError = retry.error;
     }
 
     if (upsertError && isLegacyBusinessIdForeignKeyError(upsertError.message)) {
