@@ -264,18 +264,25 @@
         body: JSON.stringify({ message: text, business_id: businessId }),
       });
 
+      const data = await res.json().catch(() => ({}));
+
       if (!res.ok) {
-        throw new Error("Failed to send message");
+        const apiError = typeof data.error === "string" && data.error.trim()
+          ? data.error.trim()
+          : "Failed to send message";
+        throw new Error(apiError);
       }
 
-      const data = await res.json();
       typingMessage.msg.textContent = data.answer || labels.errorReply;
       typingMessage.time.textContent = nowAsTime();
       if (userMessage.status) {
         userMessage.status.textContent = labels.sent;
       }
-    } catch (_) {
-      typingMessage.msg.textContent = labels.errorReply;
+    } catch (error) {
+      const errorMessage = error instanceof Error && error.message
+        ? error.message
+        : labels.errorReply;
+      typingMessage.msg.textContent = errorMessage;
       typingMessage.time.textContent = nowAsTime();
       if (userMessage.status) {
         userMessage.status.textContent = labels.failed;

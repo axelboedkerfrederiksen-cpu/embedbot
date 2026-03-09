@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@supabase/supabase-js";
 import OpenAI from "openai";
 
-const RATE_LIMIT_MAX = 20;
+const RATE_LIMIT_MAX = 5;
 const RATE_LIMIT_WINDOW_MS = 60 * 60 * 1000;
 
 type RateLimitEntry = {
@@ -54,7 +54,7 @@ export async function POST(req: NextRequest) {
   const clientIp = getClientIp(req);
   if (isRateLimited(clientIp)) {
     return NextResponse.json(
-      { error: "For mange beskeder. Prøv igen om lidt." },
+      { error: "Rate limit ramt: maks 5 beskeder pr. time." },
       { status: 429 }
     );
   }

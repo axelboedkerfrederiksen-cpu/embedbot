@@ -1,1129 +1,198 @@
 "use client";
-import { useEffect, useState } from "react";
-import { createClient } from "@/lib/supabase";
 
-const ONBOARDING_BUSINESS_ID_KEY = "onboarding_business_id";
+import Link from "next/link";
 
 export default function Home() {
-  type PlatformKey = "html" | "wordpress" | "shopify" | "squarespace" | "wix" | "webflow";
-  type GuideBlock = {
-    heading?: string;
-    steps: string[];
-    codeSample?: string;
-  };
-
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
-  const [isLogin, setIsLogin] = useState(true);
-  const [user, setUser] = useState<any>(null);
-  const [loading, setLoading] = useState(false);
-  const [embedCode, setEmbedCode] = useState("");
-  const [message, setMessage] = useState("");
-  const [step, setStep] = useState(1);
-  const [businessId, setBusinessId] = useState("");
-  const [selectedPlatform, setSelectedPlatform] = useState<PlatformKey>("html");
-  const [savingDraft, setSavingDraft] = useState(false);
-
-  const [form, setForm] = useState({
-    name: "", website_url: "", industry: "", description: "",
-    support_email: "", phone: "", address: "", city: "",
-    hours_weekday: "", hours_saturday: "", hours_sunday: "",
-    response_time: "", fallback_action: "", complaint_action: "",
-    products_services: "", delivery_time: "", return_policy: "", payment_methods: "",
-    welcome_message: "", tone: "uformel", language: "dansk",
-    faq: "", cvr: "", social_media: "", current_offers: "", warranty: "", size_guide: "",
-    primary_color: "#000000", secondary_color: "#f1f1f1", chat_icon_color: "#000000",
-    font_choice: "DM Sans", logo_data_url: "", logo_file_name: ""
-  });
-
-  const [supabase] = useState(() => createClient());
-
-  function getStoredBusinessId() {
-    if (typeof window === "undefined") {
-      return "";
-    }
-
-    try {
-      return (localStorage.getItem(ONBOARDING_BUSINESS_ID_KEY) || "").trim();
-    } catch {
-      return "";
-    }
-  }
-
-  function persistBusinessId(id: string) {
-    if (typeof window === "undefined") {
-      return;
-    }
-
-    const normalizedId = id.trim();
-    if (!normalizedId) {
-      return;
-    }
-
-    try {
-      localStorage.setItem(ONBOARDING_BUSINESS_ID_KEY, normalizedId);
-    } catch {
-      // Ignore storage failures (e.g. restricted browser settings).
-    }
-  }
-
-  function clearPersistedBusinessId() {
-    if (typeof window === "undefined") {
-      return;
-    }
-
-    try {
-      localStorage.removeItem(ONBOARDING_BUSINESS_ID_KEY);
-    } catch {
-      // Ignore storage failures (e.g. restricted browser settings).
-    }
-  }
-
-  function createBusinessId() {
-    if (typeof crypto === "undefined" || typeof crypto.randomUUID !== "function") {
-      throw new Error("Browseren understotter ikke crypto.randomUUID().");
-    }
-
-    return crypto.randomUUID();
-  }
-
-  function resetBusinessIdForStepOne() {
-    const freshBusinessId = createBusinessId();
-    clearPersistedBusinessId();
-    setBusinessId(freshBusinessId);
-    persistBusinessId(freshBusinessId);
-    return freshBusinessId;
-  }
-
-  function resolveOrCreateOnboardingBusinessId() {
-    const inMemoryId = (businessId || "").trim();
-    if (inMemoryId) {
-      persistBusinessId(inMemoryId);
-      return inMemoryId;
-    }
-
-    const activeStoredId = getStoredBusinessId();
-    if (activeStoredId) {
-      setBusinessId(activeStoredId);
-      return activeStoredId;
-    }
-
-    const generatedId = createBusinessId();
-    setBusinessId(generatedId);
-    persistBusinessId(generatedId);
-    return generatedId;
-  }
-
-  function startNewOnboardingSessionFromFrontpage() {
-    setEmbedCode("");
-    setStep(1);
-    return resetBusinessIdForStepOne();
-  }
-
-  function ensureBusinessId() {
-    return resolveOrCreateOnboardingBusinessId();
-  }
-
-  function ensureDatabaseBusinessId() {
-    if (!user?.id || typeof user.id !== "string") {
-      throw new Error("Mangler bruger-id. Log ind igen og prøv på ny.");
-    }
-
-    const resolvedId = resolveOrCreateOnboardingBusinessId();
-    if (!resolvedId) {
-      throw new Error("Mangler businessId. Log ind igen og prøv på ny.");
-    }
-
-    return resolvedId;
-  }
-
-  useEffect(() => {
-    let isMounted = true;
-
-    supabase.auth.getUser().then(({ data }) => {
-      if (!isMounted || !data.user) {
-        return;
-      }
-
-      setUser(data.user);
-      resolveOrCreateOnboardingBusinessId();
-    });
-
-    return () => {
-      isMounted = false;
-    };
-  }, [supabase]);
-
-  useEffect(() => {
-    if (!user || step !== 1) {
-      return;
-    }
-
-    // Every arrival at step 1 starts a new onboarding session ID.
-    resetBusinessIdForStepOne();
-  }, [user, step]);
-
-  const update = (key: string, value: string) => setForm(f => ({ ...f, [key]: value }));
-
-  const previewFontFamily: Record<string, string> = {
-    "DM Sans": '"DM Sans", sans-serif',
-    Inter: '"Inter", sans-serif',
-    Poppins: '"Poppins", sans-serif',
-    Lora: '"Lora", serif',
-  };
-
-  function handleLogoUpload(file: File | null) {
-    if (!file) {
-      update("logo_data_url", "");
-      update("logo_file_name", "");
-      return;
-    }
-
-    const reader = new FileReader();
-    reader.onload = () => {
-      if (typeof reader.result === "string") {
-        update("logo_data_url", reader.result);
-        update("logo_file_name", file.name);
-      }
-    };
-    reader.readAsDataURL(file);
-  }
-
-  function formatSetupError(error: unknown) {
-    if (!(error instanceof Error)) {
-      return "Noget gik galt under genereringen af chatbotten. Prøv igen.";
-    }
-
-    if (error.message === "Failed to fetch") {
-      return "Kunne ikke kontakte serveren. Tjek din internetforbindelse og prøv igen om et øjeblik.";
-    }
-
-    return error.message;
-  }
-
-  async function handleAuth() {
-    setLoading(true);
-    setMessage("");
-    if (isLogin) {
-      const { data, error } = await supabase.auth.signInWithPassword({ email, password });
-      if (error) setMessage(error.message);
-      else {
-        setUser(data.user);
-        startNewOnboardingSessionFromFrontpage();
-      }
-    } else {
-      const { data, error } = await supabase.auth.signUp({ email, password });
-      if (error) setMessage(error.message);
-      else setMessage("Tjek din email for at bekræfte din konto!");
-    }
-    setLoading(false);
-  }
-
-  async function saveBusinessDraft() {
-    const stableBusinessId = ensureDatabaseBusinessId();
-
-    if (!stableBusinessId) {
-      throw new Error("Mangler businessId. Log ind igen og prøv på ny.");
-    }
-
-    const res = await fetch("/api/business-draft", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ form, business_id: stableBusinessId, user_id: user.id }),
-    });
-
-    const data = await res.json();
-
-    if (!res.ok || !data.success) {
-      throw new Error(`Kunne ikke gemme kladde: ${data.error || "Ukendt fejl."}`);
-    }
-
-    persistBusinessId(stableBusinessId);
-  }
-
-  async function handleNextStep() {
-    setMessage("");
-    setSavingDraft(true);
-
-    try {
-      await saveBusinessDraft();
-      setStep(s => Math.min(s + 1, 5));
-    } catch (error) {
-      setMessage(formatSetupError(error));
-    } finally {
-      setSavingDraft(false);
-    }
-  }
-
-  async function handleSetup() {
-    setLoading(true);
-    setMessage("");
-
-    try {
-      const stableBusinessId = ensureDatabaseBusinessId();
-
-      if (!stableBusinessId) {
-        throw new Error("Mangler businessId. Log ind igen og prøv på ny.");
-      }
-
-      const res = await fetch("/api/submit", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ form, business_id: stableBusinessId, user_id: user.id }),
-      });
-
-      const data = await res.json();
-
-      if (!res.ok || !data.success) {
-        throw new Error(data.error || "Noget gik galt.");
-      }
-
-      setEmbedCode(`<script src="https://embedbot1.vercel.app/widget.js?id=${stableBusinessId}"></script>`);
-
-      clearPersistedBusinessId();
-      setBusinessId("");
-      setStep(6);
-    } catch (error) {
-      setMessage(formatSetupError(error));
-    } finally {
-      setLoading(false);
-    }
-  }
-
-  const input = (label: string, key: string, placeholder = "", required = false) => (
-    <div className="field">
-      <label className="field-label">
-        {label}{required && <span className="required"> *</span>}
-      </label>
-      <input
-        value={(form as any)[key]}
-        onChange={e => update(key, e.target.value)}
-        placeholder={placeholder}
-        className="field-input"
-      />
-    </div>
-  );
-
-  const textarea = (label: string, key: string, placeholder = "", required = false) => (
-    <div className="field">
-      <label className="field-label">
-        {label}{required && <span className="required"> *</span>}
-      </label>
-      <textarea
-        value={(form as any)[key]}
-        onChange={e => update(key, e.target.value)}
-        placeholder={placeholder}
-        rows={3}
-        className="field-input field-textarea"
-      />
-    </div>
-  );
-
-  const styles = (
-    <style jsx global>{`
-      @import url("https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;700&family=DM+Serif+Display:ital@0;1&family=Inter:wght@400;500;700&family=Poppins:wght@400;500;700&family=Lora:wght@400;600;700&display=swap");
-
-      .eb-page {
-        min-height: 100vh;
-        background: #f5f5f5;
-        padding: 28px 16px;
-        font-family: "DM Sans", sans-serif;
-        color: #000;
-      }
-
-      .eb-shell {
-        width: 100%;
-        max-width: 640px;
-        margin: 0 auto;
-      }
-
-      .eb-auth-shell {
-        width: 100%;
-        max-width: 440px;
-        margin: 6vh auto 0;
-      }
-
-      .eb-card {
-        background: #fff;
-        border: 1px solid #e7e7e7;
-        border-radius: 16px;
-        padding: 24px;
-        box-shadow: 0 8px 30px rgba(0, 0, 0, 0.06);
-      }
-
-      .eb-animate {
-        animation: eb-fade-up 350ms ease-out;
-      }
-
-      .brand {
-        font-family: "DM Serif Display", serif;
-        letter-spacing: 0.4px;
-        line-height: 1.05;
-        margin: 0;
-      }
-
-      .brand-auth {
-        font-size: clamp(2rem, 7vw, 2.4rem);
-        text-align: center;
-        margin-bottom: 6px;
-      }
-
-      .brand-main {
-        font-size: clamp(1.7rem, 5vw, 2.1rem);
-      }
-
-      .muted {
-        color: #666;
-      }
-
-      .tagline {
-        text-align: center;
-        color: #666;
-        margin: 0 0 24px;
-      }
-
-      .header-row {
-        display: flex;
-        justify-content: space-between;
-        align-items: flex-end;
-        gap: 12px;
-        margin-bottom: 14px;
-      }
-
-      .step-note {
-        font-size: 13px;
-        color: #666;
-        font-weight: 500;
-      }
-
-      .progress-track {
-        width: 100%;
-        height: 8px;
-        border-radius: 999px;
-        background: #e8e8e8;
-        overflow: hidden;
-        margin-bottom: 20px;
-      }
-
-      .progress-fill {
-        height: 100%;
-        border-radius: inherit;
-        background: #000;
-        transition: width 260ms ease;
-      }
-
-      .section-title {
-        margin: 0 0 18px;
-        font-family: "DM Serif Display", serif;
-        font-size: clamp(1.35rem, 4vw, 1.65rem);
-        line-height: 1.2;
-      }
-
-      .subsection-title {
-        font-size: 0.96rem;
-        font-weight: 700;
-        margin: 18px 0 10px;
-      }
-
-      .field {
-        margin-bottom: 12px;
-      }
-
-      .field-label {
-        display: block;
-        font-size: 13px;
-        font-weight: 700;
-        margin-bottom: 6px;
-      }
-
-      .required {
-        color: #000;
-      }
-
-      .field-input {
-        width: 100%;
-        background: #fff;
-        border: 1px solid #d9d9d9;
-        border-radius: 10px;
-        padding: 11px 12px;
-        font-family: "DM Sans", sans-serif;
-        font-size: 14px;
-        box-sizing: border-box;
-        transition: border-color 150ms ease, box-shadow 150ms ease;
-        color: #000;
-      }
-
-      .field-input::placeholder {
-        color: #999;
-      }
-
-      .field-input:focus {
-        outline: none;
-        border-color: #000;
-        box-shadow: 0 0 0 1px #000;
-      }
-
-      .field-textarea {
-        resize: vertical;
-        min-height: 92px;
-      }
-
-      .color-grid {
-        display: grid;
-        grid-template-columns: 1fr 1fr;
-        gap: 12px;
-      }
-
-      .color-swatch-wrap {
-        display: flex;
-        align-items: center;
-        gap: 8px;
-      }
-
-      .color-input {
-        width: 46px;
-        height: 38px;
-        border: 1px solid #d9d9d9;
-        border-radius: 10px;
-        background: #fff;
-        padding: 2px;
-        cursor: pointer;
-      }
-
-      .color-text {
-        flex: 1;
-      }
-
-      .logo-preview {
-        margin-top: 10px;
-        border: 1px dashed #d0d0d0;
-        border-radius: 10px;
-        padding: 10px;
-        background: #fafafa;
-      }
-
-      .logo-preview img {
-        display: block;
-        max-height: 56px;
-        width: auto;
-        max-width: 180px;
-      }
-
-      .font-preview {
-        margin-top: 8px;
-        font-size: 14px;
-        color: #444;
-      }
-
-      .actions {
-        display: flex;
-        justify-content: space-between;
-        gap: 12px;
-      }
-
-      .btn {
-        border-radius: 10px;
-        border: 1px solid #000;
-        padding: 11px 20px;
-        font-size: 14px;
-        font-weight: 700;
-        cursor: pointer;
-        transition: transform 160ms ease, background-color 160ms ease, color 160ms ease, opacity 160ms ease;
-        font-family: "DM Sans", sans-serif;
-      }
-
-      .btn:hover {
-        transform: translateY(-1px);
-      }
-
-      .btn:disabled {
-        cursor: not-allowed;
-        opacity: 0.6;
-        transform: none;
-      }
-
-      .btn-primary {
-        background: #000;
-        color: #fff;
-      }
-
-      .btn-primary:hover {
-        background: #111;
-      }
-
-      .btn-secondary {
-        background: #fff;
-        color: #000;
-        border-color: #d0d0d0;
-      }
-
-      .btn-secondary:hover {
-        border-color: #000;
-      }
-
-      .btn-full {
-        width: 100%;
-      }
-
-      .message-error {
-        color: #b00020;
-        margin: 12px 0 0;
-        font-size: 14px;
-      }
-
-      .toggle-auth {
-        margin: 14px 0 0;
-        text-align: center;
-        color: #666;
-        font-size: 14px;
-        cursor: pointer;
-        text-decoration: underline;
-        text-underline-offset: 3px;
-      }
-
-      .thanks-wrap {
-        text-align: center;
-        padding: 38px 22px;
-      }
-
-      .checkmark {
-        width: 68px;
-        height: 68px;
-        margin: 0 auto 16px;
-        border-radius: 999px;
-        border: 2px solid #000;
-        display: grid;
-        place-items: center;
-        font-size: 34px;
-        line-height: 1;
-      }
-
-      .thanks-title {
-        margin: 0 0 10px;
-        font-size: clamp(1.6rem, 5vw, 2rem);
-      }
-
-      .thanks-text {
-        margin: 0;
-        color: #666;
-        max-width: 520px;
-        margin-inline: auto;
-      }
-
-      .install-card {
-        margin-top: 14px;
-      }
-
-      .install-intro {
-        text-align: left;
-        margin-top: -6px;
-      }
-
-      .platform-tabs {
-        display: flex;
-        flex-wrap: wrap;
-        gap: 8px;
-        margin: 16px 0;
-      }
-
-      .platform-tab {
-        border: 1px solid #d0d0d0;
-        background: #fff;
-        border-radius: 999px;
-        padding: 8px 12px;
-        font-size: 13px;
-        font-weight: 700;
-        cursor: pointer;
-        font-family: "DM Sans", sans-serif;
-      }
-
-      .platform-tab:hover {
-        border-color: #000;
-      }
-
-      .platform-tab.is-active {
-        background: #000;
-        color: #fff;
-        border-color: #000;
-      }
-
-      .guide-wrap {
-        border-top: 1px solid #ededed;
-        padding-top: 6px;
-      }
-
-      .guide-title {
-        margin-top: 8px;
-      }
-
-      .guide-block + .guide-block {
-        margin-top: 14px;
-      }
-
-      .guide-heading {
-        margin: 0 0 8px;
-        font-size: 14px;
-      }
-
-      .guide-list {
-        margin: 0;
-        padding-left: 20px;
-        display: grid;
-        gap: 6px;
-        color: #202020;
-        font-size: 14px;
-      }
-
-      .guide-code {
-        margin: 10px 0 0;
-        background: #fff;
-        border: 1px solid #dfdfdf;
-        border-radius: 10px;
-        padding: 10px;
-        overflow-x: auto;
-        font-size: 13px;
-        line-height: 1.45;
-      }
-
-      @keyframes eb-fade-up {
-        from {
-          opacity: 0;
-          transform: translateY(8px);
-        }
-        to {
-          opacity: 1;
-          transform: translateY(0);
-        }
-      }
-
-      @media (max-width: 640px) {
-        .eb-card {
-          padding: 18px;
-          border-radius: 14px;
+  return (
+    <main className="start-page">
+      <style jsx global>{`
+        @import url("https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;700&family=DM+Serif+Display:ital@0;1&display=swap");
+
+        html,
+        body {
+          margin: 0;
+          padding: 0;
+          min-height: 100%;
+          background:
+            radial-gradient(circle at 10% 0%, rgba(255, 210, 180, 0.45) 0%, transparent 40%),
+            radial-gradient(circle at 90% 15%, rgba(160, 210, 255, 0.42) 0%, transparent 45%),
+            #f7f4ef;
         }
 
-        .header-row {
-          align-items: center;
+        .start-page {
+          min-height: 100dvh;
+          background: transparent;
+          padding: 24px 16px;
+          color: #121212;
+          font-family: "DM Sans", sans-serif;
+          display: grid;
+          place-items: center;
+        }
+
+        .start-shell {
+          width: 100%;
+          max-width: 980px;
+          margin: 0 auto;
+          display: grid;
+          gap: 18px;
+        }
+
+        .hero {
+          background: rgba(255, 255, 255, 0.82);
+          border: 1px solid rgba(0, 0, 0, 0.08);
+          border-radius: 22px;
+          padding: clamp(22px, 5vw, 44px);
+          box-shadow: 0 12px 40px rgba(0, 0, 0, 0.08);
+          animation: lift-in 380ms ease-out;
+        }
+
+        .brand {
+          margin: 0;
+          font-family: "DM Serif Display", serif;
+          font-size: clamp(2rem, 6vw, 3.4rem);
+          line-height: 1.02;
+          letter-spacing: 0.4px;
+        }
+
+        .kicker {
+          margin: 0 0 8px;
+          font-size: 0.86rem;
+          font-weight: 700;
+          letter-spacing: 0.08em;
+          text-transform: uppercase;
+          color: #7a4f24;
+        }
+
+        .lead {
+          margin: 14px 0 0;
+          max-width: 62ch;
+          color: #3e3e3e;
+          font-size: clamp(1rem, 2.8vw, 1.15rem);
+          line-height: 1.6;
+        }
+
+        .cta-row {
+          margin-top: 26px;
+          display: flex;
+          flex-wrap: wrap;
+          gap: 10px;
         }
 
         .btn {
-          padding: 10px 16px;
+          border-radius: 999px;
+          padding: 11px 20px;
+          font-size: 0.95rem;
+          font-weight: 700;
+          text-decoration: none;
+          transition: transform 160ms ease, box-shadow 160ms ease, background 160ms ease;
+          border: 1px solid transparent;
+          display: inline-flex;
+          align-items: center;
+          justify-content: center;
         }
 
-        .color-grid {
-          grid-template-columns: 1fr;
+        .btn:hover {
+          transform: translateY(-1px);
         }
 
-        .platform-tab {
-          width: 100%;
-          text-align: left;
+        .btn-primary {
+          background: #111;
+          color: #fff;
+          box-shadow: 0 8px 20px rgba(0, 0, 0, 0.2);
         }
-      }
-    `}</style>
-  );
 
-  if (!user) {
-    return (
-      <main className="eb-page">
-        {styles}
-        <div className="eb-auth-shell">
-          <div className="eb-card eb-animate">
-            <h1 className="brand brand-auth">EmbedBot</h1>
-            <p className="tagline">AI kundeservice til din hjemmeside</p>
-            <div className="field">
-              <input
-                placeholder="Email"
-                value={email}
-                onChange={e => setEmail(e.target.value)}
-                className="field-input"
-              />
-            </div>
-            <div className="field">
-              <input
-                placeholder="Adgangskode"
-                type="password"
-                value={password}
-                onChange={e => setPassword(e.target.value)}
-                className="field-input"
-              />
-            </div>
-            <button onClick={handleAuth} disabled={loading} className="btn btn-primary btn-full">
-              {loading ? "Indlæser..." : isLogin ? "Log ind" : "Opret konto"}
-            </button>
-            <p className="toggle-auth" onClick={() => setIsLogin(!isLogin)}>
-              {isLogin ? "Har du ikke en konto? Opret en" : "Har du allerede en konto? Log ind"}
-            </p>
-            {message && <p className="message-error">{message}</p>}
-          </div>
-        </div>
-      </main>
-    );
-  }
+        .btn-secondary {
+          background: #fff;
+          color: #121212;
+          border-color: #cfcfcf;
+        }
 
-  const sections: Record<number, React.ReactElement> = {
-    1: (
-      <div>
-        <h2 className="section-title">1. Virksomhed</h2>
-        {input("Virksomhedsnavn", "name", "fx Modebutikken ApS", true)}
-        {input("Hjemmeside URL", "website_url", "https://...", true)}
-        {input("Branche", "industry", "fx webshop, restaurant, klinik", true)}
-        {textarea("Kort beskrivelse", "description", "Beskriv kort hvad I tilbyder...", true)}
-      </div>
-    ),
-    2: (
-      <div>
-        <h2 className="section-title">2. Kontakt & Åbningstider</h2>
-        {input("Email til kundeservice", "support_email", "support@...", true)}
-        {input("Telefonnummer", "phone", "fx +45 12 34 56 78", true)}
-        {input("Adresse", "address", "fx Vestergade 12")}
-        {input("By / postnummer", "city", "fx 2000 Frederiksberg")}
-        <h3 className="subsection-title">Åbningstider</h3>
-        {input("Mandag–fredag", "hours_weekday", "fx 9:00–17:00", true)}
-        {input("Lørdag", "hours_saturday", "fx 10:00–14:00 eller Lukket")}
-        {input("Søndag", "hours_sunday", "fx Lukket")}
-      </div>
-    ),
-    3: (
-      <div>
-        <h2 className="section-title">3. Support & Produkter</h2>
-        {input("Forventet svartid", "response_time", "fx Inden for 24 timer", true)}
-        {textarea("Hvad gør botten hvis den ikke kan hjælpe?", "fallback_action", "fx Henvis til telefon og email", true)}
-        {textarea("Hvad gør botten ved klager?", "complaint_action", "fx Henvis altid til telefon ved klager", true)}
-        {textarea("Hvad sælger/tilbyder I?", "products_services", "Beskriv jeres produkter eller services...", true)}
-        {input("Leveringstid", "delivery_time", "fx 2-4 hverdage")}
-        {textarea("Returpolitik", "return_policy", "fx 30 dages returret...")}
-        {input("Betalingsmetoder", "payment_methods", "fx Visa, MobilePay, Klarna")}
-      </div>
-    ),
-    4: (
-      <div>
-        <h2 className="section-title">4. Chatbot & FAQ</h2>
-        {input("Velkomstbesked", "welcome_message", "fx Hej! Hvordan kan jeg hjælpe dig i dag? 😊", true)}
-        <div className="field">
-          <label className="field-label">Tone *</label>
-          <select value={form.tone} onChange={e => update("tone", e.target.value)}
-            className="field-input">
-            <option value="uformel">Uformel og venlig</option>
-            <option value="formel">Formel og professionel</option>
-          </select>
-        </div>
-        <div className="field">
-          <label className="field-label">Sprog *</label>
-          <select value={form.language} onChange={e => update("language", e.target.value)}
-            className="field-input">
-            <option value="dansk">Dansk</option>
-            <option value="engelsk">Engelsk</option>
-            <option value="begge">Begge</option>
-          </select>
-        </div>
-        {textarea("FAQ – 5 mest stillede spørgsmål + svar", "faq", "Q: Hvad er jeres returpolitik?\nA: 30 dages returret...")}
-        <h3 className="subsection-title">Valgfrit</h3>
-        {input("CVR nummer", "cvr", "fx 12345678")}
-        {input("Sociale medier", "social_media", "fx instagram.com/jeresfirma")}
-        {textarea("Aktuelle tilbud / rabatkoder", "current_offers", "fx 10% rabat med koden SOMMER24")}
-        {input("Garantiperiode", "warranty", "fx 2 års garanti på alle produkter")}
-        {input("Link til størrelsesguide", "size_guide", "https://...")}
-      </div>
-    ),
-    5: (
-      <div>
-        <h2 className="section-title">5. Design & Branding</h2>
-        <div className="color-grid">
-          <div className="field">
-            <label className="field-label">🎨 Primærfarve *</label>
-            <div className="color-swatch-wrap">
-              <input
-                type="color"
-                value={form.primary_color}
-                onChange={e => update("primary_color", e.target.value)}
-                className="color-input"
-              />
-              <input
-                value={form.primary_color}
-                onChange={e => update("primary_color", e.target.value)}
-                className="field-input color-text"
-                placeholder="#000000"
-              />
-            </div>
-            <p className="font-preview">Bruges til chat-header + send-knap.</p>
-          </div>
+        .feature-grid {
+          display: grid;
+          grid-template-columns: repeat(3, minmax(0, 1fr));
+          gap: 10px;
+        }
 
-          <div className="field">
-            <label className="field-label">🎨 Sekundærfarve *</label>
-            <div className="color-swatch-wrap">
-              <input
-                type="color"
-                value={form.secondary_color}
-                onChange={e => update("secondary_color", e.target.value)}
-                className="color-input"
-              />
-              <input
-                value={form.secondary_color}
-                onChange={e => update("secondary_color", e.target.value)}
-                className="field-input color-text"
-                placeholder="#f1f1f1"
-              />
-            </div>
-            <p className="font-preview">Bruges til brugerens beskedbobler.</p>
-          </div>
-        </div>
+        .feature {
+          background: rgba(255, 255, 255, 0.76);
+          border: 1px solid rgba(0, 0, 0, 0.08);
+          border-radius: 16px;
+          padding: 14px;
+          animation: lift-in 420ms ease-out;
+        }
 
-        <div className="field">
-          <label className="field-label">💬 Chat-ikon farve *</label>
-          <div className="color-swatch-wrap">
-            <input
-              type="color"
-              value={form.chat_icon_color}
-              onChange={e => update("chat_icon_color", e.target.value)}
-              className="color-input"
-            />
-            <input
-              value={form.chat_icon_color}
-              onChange={e => update("chat_icon_color", e.target.value)}
-              className="field-input color-text"
-              placeholder="#000000"
-            />
-          </div>
-          <p className="font-preview">Farven på FAB-knappen i hjørnet.</p>
-        </div>
+        .feature h2 {
+          margin: 0 0 6px;
+          font-size: 0.98rem;
+          line-height: 1.2;
+        }
 
-        <div className="field">
-          <label className="field-label">🖼️ Logo upload</label>
-          <input
-            type="file"
-            accept="image/*"
-            className="field-input"
-            onChange={e => handleLogoUpload(e.target.files?.[0] || null)}
-          />
-          {form.logo_file_name && <p className="font-preview">Valgt fil: {form.logo_file_name}</p>}
-          {form.logo_data_url && (
-            <div className="logo-preview">
-              <img src={form.logo_data_url} alt="Logo preview" />
-            </div>
-          )}
-        </div>
+        .feature p {
+          margin: 0;
+          font-size: 0.9rem;
+          color: #444;
+          line-height: 1.5;
+        }
 
-        <div className="field">
-          <label className="field-label">🔤 Font valg *</label>
-          <select
-            value={form.font_choice}
-            onChange={e => update("font_choice", e.target.value)}
-            className="field-input"
-          >
-            <option value="DM Sans">DM Sans</option>
-            <option value="Inter">Inter</option>
-            <option value="Poppins">Poppins</option>
-            <option value="Lora">Lora</option>
-          </select>
-          <p className="font-preview" style={{ fontFamily: previewFontFamily[form.font_choice] || '"DM Sans", sans-serif' }}>
-            Preview: Sådan kan teksten se ud i chatten.
+        @keyframes lift-in {
+          from {
+            opacity: 0;
+            transform: translateY(10px);
+          }
+          to {
+            opacity: 1;
+            transform: translateY(0);
+          }
+        }
+
+        @media (max-width: 900px) {
+          .feature-grid {
+            grid-template-columns: 1fr;
+          }
+
+          .hero {
+            border-radius: 18px;
+          }
+
+          .btn {
+            width: 100%;
+          }
+        }
+      `}</style>
+
+      <div className="start-shell">
+        <section className="hero">
+          <p className="kicker">EMBEDBOT</p>
+          <h1 className="brand">Giv din webshop en AI-chatbot på 5 minutter</h1>
+          <p className="lead">
+            EmbedBot lærer din forretning at kende og svarer dine kunders spørgsmål automatisk
+            - så du ikke skal.
           </p>
-        </div>
-      </div>
-    ),
-  };
 
-  const embedScript = embedCode || `<script src="https://embedbot1.vercel.app/widget.js?id=${businessId || "DIN_BUSINESS_ID"}"></script>`;
-
-  const installGuides: Record<PlatformKey, { label: string; blocks: GuideBlock[] }> = {
-    html: {
-      label: "Ren HTML",
-      blocks: [
-        {
-          steps: [
-            "Åbn din .html fil i en teksteditor (Notepad, VS Code osv.)",
-            "Tryk Ctrl+F og søg efter </body>",
-            "Indsæt scriptet på linjen lige før </body>",
-            "Gem filen og upload den til din server",
-          ],
-          codeSample: `<script src="https://embedbot1.vercel.app/widget.js?id=*****************************"></script>\n</body>\n</html>`,
-        },
-      ],
-    },
-    wordpress: {
-      label: "WordPress",
-      blocks: [
-        {
-          heading: "Metode 1 - Plugin (nemmest)",
-          steps: [
-            "Gå til dit WordPress admin panel (dinside.dk/wp-admin)",
-            "Klik Plugins -> Tilføj ny",
-            "Søg efter \"Insert Headers and Footers\"",
-            "Installer og aktiver pluginnet",
-            "Gå til Indstillinger -> Insert Headers and Footers",
-            "Indsæt scriptet i \"Scripts in Footer\" boksen",
-            "Klik Gem",
-          ],
-        },
-        {
-          heading: "Metode 2 - Tema editor",
-          steps: [
-            "Gå til Udseende -> Tema-editor",
-            "Find footer.php i højre side",
-            "Find </body> i koden",
-            "Indsæt scriptet lige før </body>",
-            "Klik Opdater fil",
-          ],
-        },
-      ],
-    },
-    shopify: {
-      label: "Shopify",
-      blocks: [
-        {
-          steps: [
-            "Gå til dit Shopify admin (dinbutik.myshopify.com/admin)",
-            "Klik Online Butik -> Temaer",
-            "Klik på \"...\" -> Rediger kode ud for dit aktive tema",
-            "Under Layout: klik på theme.liquid",
-            "Tryk Ctrl+F og søg efter </body>",
-            "Indsæt scriptet lige før </body>",
-            "Klik Gem",
-          ],
-        },
-      ],
-    },
-    squarespace: {
-      label: "Squarespace",
-      blocks: [
-        {
-          steps: [
-            "Gå til dit Squarespace dashboard",
-            "Klik Indstillinger i venstre menu",
-            "Klik Avanceret",
-            "Klik Kodeinjektion",
-            "Scroll ned til Footer boksen",
-            "Indsæt scriptet der",
-            "Klik Gem",
-          ],
-        },
-      ],
-    },
-    wix: {
-      label: "Wix",
-      blocks: [
-        {
-          steps: [
-            "Gå til din Wix editor",
-            "Klik på Indstillinger øverst",
-            "Vælg Tilpasset kode",
-            "Klik + Tilføj kode",
-            "Indsæt scriptet i tekstboksen",
-            "Under \"Tilføj kode til\" vælg Alle sider",
-            "Under \"Placer kode i\" vælg Body - end",
-            "Klik Anvend",
-          ],
-        },
-      ],
-    },
-    webflow: {
-      label: "Webflow",
-      blocks: [
-        {
-          steps: [
-            "Gå til Webflow Designer",
-            "Klik på tandhjulet (Projektindstillinger) øverst til venstre",
-            "Gå til fanen Tilpasset kode",
-            "Scroll ned til Footer kode boksen",
-            "Indsæt scriptet der",
-            "Klik Gem ændringer",
-            "Publicer dit site igen, så ændringerne træder i kraft",
-          ],
-        },
-      ],
-    },
-  };
-
-  const platformKeys: PlatformKey[] = ["html", "wordpress", "shopify", "squarespace", "wix", "webflow"];
-
-  if (step === 6) {
-    const selectedGuide = installGuides[selectedPlatform];
-
-    return (
-      <main className="eb-page">
-        {styles}
-        <div className="eb-shell">
-          <div className="eb-card eb-animate thanks-wrap">
-            <div className="checkmark">✓</div>
-            <h1 className="brand thanks-title">Tak for din ordre!</h1>
-            <p className="thanks-text">Din chatbot er i gang med at blive behandlet. Vi vender tilbage inden for 24 timer med dit embed script.</p>
+          <div className="cta-row">
+            <Link href="/setup" className="btn btn-primary">
+              Start chatbot opsætning
+            </Link>
+            <Link href="/demo.html" className="btn btn-secondary">
+              Se chatbot demo
+            </Link>
           </div>
+        </section>
 
-          <div className="eb-card eb-animate install-card">
-            <h2 className="section-title">Indsæt chatbot på din hjemmeside</h2>
-            <p className="thanks-text install-intro">Vælg din platform for at se trin-for-trin instrukser.</p>
-
-            <div className="platform-tabs" role="tablist" aria-label="Vælg platform">
-              {platformKeys.map((key) => (
-                <button
-                  key={key}
-                  type="button"
-                  className={`platform-tab ${selectedPlatform === key ? "is-active" : ""}`}
-                  onClick={() => setSelectedPlatform(key)}
-                  role="tab"
-                  aria-selected={selectedPlatform === key}
-                >
-                  {installGuides[key].label}
-                </button>
-              ))}
-            </div>
-
-            <div className="guide-wrap" role="tabpanel">
-              <h3 className="subsection-title guide-title">{selectedGuide.label}</h3>
-              {selectedGuide.blocks.map((block, index) => (
-                <section key={`${selectedPlatform}-${index}`} className="guide-block">
-                  {block.heading && <h4 className="guide-heading">{block.heading}</h4>}
-                  <ol className="guide-list">
-                    {block.steps.map((stepText, stepIndex) => (
-                      <li key={`${selectedPlatform}-${index}-${stepIndex}`}>{stepText}</li>
-                    ))}
-                  </ol>
-                  {block.codeSample && (
-                    <pre className="guide-code">
-                      <code>{block.codeSample}</code>
-                    </pre>
-                  )}
-                </section>
-              ))}
-            </div>
-          </div>
-        </div>
-      </main>
-    );
-  }
-
-  return (
-    <main className="eb-page">
-      {styles}
-      <div className="eb-shell eb-animate">
-        <div className="header-row">
-          <h1 className="brand brand-main">Opsæt din chatbot</h1>
-          <span className="step-note">Trin {step} af 5</span>
-        </div>
-        <div className="progress-track">
-          <div className="progress-fill" style={{ width: `${(Math.min(step, 5) / 5) * 100}%` }} />
-        </div>
-
-        <div className="eb-card">{sections[step]}</div>
-
-        {message && <p className="message-error">{message}</p>}
-
-        <div className="actions" style={{ marginTop: 20 }}>
-        {step > 1 && (
-          <button onClick={() => setStep(s => s - 1)} className="btn btn-secondary">
-            ← Tilbage
-          </button>
-        )}
-        {step < 5 ? (
-          <button onClick={handleNextStep} disabled={savingDraft || loading} className="btn btn-primary" style={{ marginLeft: "auto" }}>
-            {savingDraft ? "Gemmer..." : "Næste →"}
-          </button>
-        ) : (
-          <button onClick={handleSetup} disabled={loading} className="btn btn-primary" style={{ marginLeft: "auto" }}>
-            {loading ? "Genererer chatbot..." : "Generer chatbot 🚀"}
-          </button>
-        )}
-        </div>
+        <section className="feature-grid" aria-label="Fordele ved flowet">
+          <article className="feature">
+            <h2>Klar på 5 minutter</h2>
+            <p>Ingen kodning krævet. Du udfylder en simpel formular, og din chatbot er klar til at blive sat ind på din hjemmeside.</p>
+          </article>
+          <article className="feature">
+            <h2>299kr pr. måned</h2>
+            <p>For 299kr får du en chatbot 24/7, med ingen ansatte.</p>
+          </article>
+          <article className="feature">
+            <h2>Dine kunder får svar med det samme</h2>
+            <p>I stedet for at vente på en mail, får dine kunder svar døgnet rundt - direkte på din side.</p>
+          </article>
+        </section>
       </div>
     </main>
   );
