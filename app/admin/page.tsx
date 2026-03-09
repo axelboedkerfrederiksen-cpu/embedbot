@@ -12,6 +12,7 @@ type Business = {
   primary_color?: string | null;
   secondary_color?: string | null;
   fab_color?: string | null;
+  chat_icon_color?: string | null;
   font_choice?: string | null;
   [key: string]: unknown;
 };
@@ -573,13 +574,19 @@ export default function AdminPage() {
               const isActive = !!business.activated;
               const isEditing = editingId === business.id;
               const draft = editDrafts[business.id] || {};
+
+              const primaryColor = (business.primary_color || "").trim() || "#000000";
+              const secondaryColor = (business.secondary_color || "").trim() || "#000000";
+              const fabColor = (business.fab_color || "").trim() || (business.chat_icon_color || "").trim() || "#000000";
+              const fontChoice = (business.font_choice || "").trim() || "sans-serif";
+
               const installScript = `<script 
   src="https://embedbot1.vercel.app/widget.js?id=${business.id}"
   data-name="${business.name || "Support"}"
-  data-primary-color="${business.primary_color || "#000000"}"
-  data-secondary-color="${business.secondary_color || "#000000"}"
-  data-fab-color="${business.fab_color || "#000000"}"
-  data-font="${business.font_choice || "sans-serif"}">
+  data-primary-color="${primaryColor}"
+  data-secondary-color="${secondaryColor}"
+  data-fab-color="${fabColor}"
+  data-font="${fontChoice}">
 <\/script>`;
 
               return (
