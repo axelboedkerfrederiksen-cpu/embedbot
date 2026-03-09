@@ -16,6 +16,46 @@ const supabase = createClient(
   process.env.SUPABASE_SERVICE_KEY!
 );
 
+function isMissingColumnError(errorMessage: string, columnName: string) {
+  const normalized = errorMessage.toLowerCase();
+  return normalized.includes(`could not find the '${columnName.toLowerCase()}' column`) || normalized.includes(`column \"${columnName.toLowerCase()}\"`);
+}
+
+async function fetchBusinessWidgetConfig(businessId: string) {
+  const selectVariants = [
+    "name, primary_color, secondary_color, fab_color, chat_icon_color, logo_url, logo_data_url, font_choice, welcome_message",
+    "name, primary_color, secondary_color, fab_color, logo_url, logo_data_url, font_choice, welcome_message",
+    "name, primary_color, secondary_color, fab_color, logo_url, font_choice, welcome_message",
+  ];
+
+  let lastError: { message: string } | null = null;
+
+  for (const fields of selectVariants) {
+    const { data, error } = await supabase
+      .from("businesses")
+      .select(fields)
+      .eq("id", businessId)
+      .order("created_at", { ascending: false })
+      .limit(1)
+      .maybeSingle();
+
+    if (!error) {
+      return { data, error: null };
+    }
+
+    const missingChatIconColor = isMissingColumnError(error.message, "chat_icon_color");
+    const missingLogoDataUrl = isMissingColumnError(error.message, "logo_data_url");
+
+    if (!missingChatIconColor && !missingLogoDataUrl) {
+      return { data: null, error };
+    }
+
+    lastError = error;
+  }
+
+  return { data: null, error: lastError };
+}
+
 export async function GET(req: NextRequest) {
   try {
     if (!process.env.SUPABASE_URL || !process.env.SUPABASE_SERVICE_KEY) {
@@ -33,13 +73,7 @@ export async function GET(req: NextRequest) {
       );
     }
 
-    const { data: business, error } = await supabase
-      .from("businesses")
-      .select("name, primary_color, secondary_color, fab_color, chat_icon_color, logo_url, logo_data_url, font_choice, welcome_message")
-      .eq("id", businessId)
-      .order("created_at", { ascending: false })
-      .limit(1)
-      .maybeSingle();
+    const { data: business, error } = await fetchBusinessWidgetConfig(businessId);
 
     if (error) {
       return NextResponse.json({ error: error.message }, { status: 500 });
