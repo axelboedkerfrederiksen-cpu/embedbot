@@ -126,12 +126,22 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    const fullPayload = { id: stableBusinessId, user_id, ...form };
+    const normalizedForm = {
+      ...form,
+      fab_color:
+        typeof form.fab_color === "string" && form.fab_color.trim()
+          ? form.fab_color
+          : typeof form.chat_icon_color === "string"
+          ? form.chat_icon_color
+          : undefined,
+    };
+
+    const fullPayload = { id: stableBusinessId, user_id, ...normalizedForm };
     let { error: upsertError } = await persistWithMissingColumnFallback(fullPayload);
 
     // Backward compatibility: if user_id column is not deployed yet, retry without it.
     if (upsertError && isMissingColumnError(upsertError.message, "user_id")) {
-      const retryWithoutUserId = await persistWithMissingColumnFallback({ id: stableBusinessId, ...form });
+      const retryWithoutUserId = await persistWithMissingColumnFallback({ id: stableBusinessId, ...normalizedForm });
       upsertError = retryWithoutUserId.error;
     }
 
