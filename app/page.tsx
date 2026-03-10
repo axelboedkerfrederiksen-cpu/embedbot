@@ -37,6 +37,38 @@ export default function Home() {
           gap: 18px;
         }
 
+        .top-nav {
+          display: flex;
+          align-items: center;
+          justify-content: space-between;
+          background: transparent;
+          border: 0;
+          box-shadow: none;
+          padding: 4px 2px;
+        }
+
+        .nav-logo {
+          font-family: "DM Serif Display", serif;
+          font-size: 1.2rem;
+          text-decoration: none;
+          color: #121212;
+          line-height: 1;
+        }
+
+        .nav-login {
+          display: inline-flex;
+          align-items: center;
+          justify-content: center;
+          border-radius: 999px;
+          border: 1px solid #d0d0d0;
+          background: rgba(255, 255, 255, 0.72);
+          color: #121212;
+          text-decoration: none;
+          font-size: 0.9rem;
+          font-weight: 700;
+          padding: 9px 14px;
+        }
+
         .hero {
           background: rgba(255, 255, 255, 0.82);
           border: 1px solid rgba(0, 0, 0, 0.08);
@@ -134,6 +166,17 @@ export default function Home() {
           line-height: 1.5;
         }
 
+        .existing-customer-link {
+          text-align: center;
+          font-size: 0.84rem;
+          color: #6f6f6f;
+          text-decoration: none;
+        }
+
+        .existing-customer-link:hover {
+          color: #4c4c4c;
+        }
+
         @keyframes lift-in {
           from {
             opacity: 0;
@@ -161,6 +204,11 @@ export default function Home() {
       `}</style>
 
       <div className="start-shell">
+        <nav className="top-nav" aria-label="Top navigation">
+          <Link href="/" className="nav-logo">EmbedBot</Link>
+          <Link href="/login" className="nav-login">Log ind</Link>
+        </nav>
+
         <section className="hero">
           <p className="kicker">EMBEDBOT</p>
           <h1 className="brand">Giv din webshop en AI-chatbot på 5 minutter</h1>
@@ -193,6 +241,10 @@ export default function Home() {
             <p>I stedet for at vente på en mail, får dine kunder svar døgnet rundt - direkte på din side.</p>
           </article>
         </section>
+
+        <Link href="/dashboard" className="existing-customer-link">
+          Allerede kunde? Log ind og se dine chatbots →
+        </Link>
       </div>
     </main>
   );

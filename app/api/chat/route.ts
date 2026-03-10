@@ -158,7 +158,24 @@ Følg disse regler STRENGT:
     ],
   });
 
+  const answer = completion.choices[0].message.content || "";
+
+  // Save each user/bot exchange so the dashboard can render historical conversations.
+  try {
+    await supabase
+      .from("conversations")
+      .insert({
+        business_id: stableBusinessId,
+        messages: [
+          { role: "user", content: message },
+          { role: "assistant", content: answer },
+        ],
+      });
+  } catch {
+    // Do not block chat replies if persistence fails.
+  }
+
   return NextResponse.json({
-    answer: completion.choices[0].message.content,
+    answer,
   });
 }
