@@ -26,6 +26,18 @@ export default function DashboardPage() {
     let mounted = true;
 
     async function loadDashboard() {
+      if (typeof window !== "undefined") {
+        const freshLoginAtRaw = sessionStorage.getItem("dashboard_fresh_login_at");
+        const freshLoginAt = Number(freshLoginAtRaw || "0");
+        const isFreshLogin = Number.isFinite(freshLoginAt) && Date.now() - freshLoginAt < 2 * 60 * 1000;
+
+        if (!isFreshLogin) {
+          await supabase.auth.signOut();
+          router.replace("/login");
+          return;
+        }
+      }
+
       const { data: userData } = await supabase.auth.getUser();
 
       if (!mounted) {
@@ -42,6 +54,7 @@ export default function DashboardPage() {
       const { data, error } = await supabase
         .from("businesses")
         .select("id,name,website_url,created_at,industry")
+        .eq("user_id", userData.user.id)
         .order("created_at", { ascending: false });
 
       if (!mounted) {

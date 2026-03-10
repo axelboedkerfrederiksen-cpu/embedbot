@@ -14,17 +14,8 @@ export default function LoginPage() {
   const [error, setError] = useState("");
 
   useEffect(() => {
-    let mounted = true;
-
-    supabase.auth.getUser().then(({ data }) => {
-      if (mounted && data.user) {
-        router.replace("/dashboard");
-      }
-    });
-
-    return () => {
-      mounted = false;
-    };
+    // Force explicit login each time user lands on /login.
+    supabase.auth.signOut();
   }, [router, supabase.auth]);
 
   async function handleSubmit(e: FormEvent) {
@@ -43,6 +34,7 @@ export default function LoginPage() {
       return;
     }
 
+    sessionStorage.setItem("dashboard_fresh_login_at", Date.now().toString());
     router.push("/dashboard");
   }
 
