@@ -1,6 +1,20 @@
 "use client";
 
 import Link from "next/link";
+import wordpressLogo from "@/media/download.jpeg";
+import shopifyLogo from "@/media/Shopify-Logo-PNG.png";
+import squarespaceLogo from "@/media/Squarespace_Logo.png";
+import wixLogo from "@/media/WIX-Logo.png";
+import webflowLogo from "@/media/webflow_logo_icon_169218.png";
+
+const supportedPlatforms = [
+  { name: "HTML", logo: "https://www.w3.org/html/logo/downloads/HTML5_Logo_256.png" },
+  { name: "WordPress", logo: wordpressLogo.src },
+  { name: "Shopify", logo: shopifyLogo.src },
+  { name: "Squarespace", logo: squarespaceLogo.src },
+  { name: "Wix", logo: wixLogo.src },
+  { name: "Webflow", logo: webflowLogo.src },
+];
 
 export default function Home() {
   return (
@@ -13,6 +27,7 @@ export default function Home() {
           margin: 0;
           padding: 0;
           min-height: 100%;
+          overflow: hidden;
           background:
             radial-gradient(circle at 10% 0%, rgba(255, 210, 180, 0.45) 0%, transparent 40%),
             radial-gradient(circle at 90% 15%, rgba(160, 210, 255, 0.42) 0%, transparent 45%),
@@ -143,6 +158,7 @@ export default function Home() {
           display: grid;
           grid-template-columns: repeat(3, minmax(0, 1fr));
           gap: 10px;
+          margin-top: 6px;
         }
 
         .feature {
@@ -169,12 +185,68 @@ export default function Home() {
         .existing-customer-link {
           text-align: center;
           font-size: 0.84rem;
-          color: #6f6f6f;
+          color: #4f4f4f;
           text-decoration: none;
+          margin-top: 2px;
         }
 
         .existing-customer-link:hover {
-          color: #4c4c4c;
+          color: #222;
+          text-decoration: underline;
+          text-underline-offset: 2px;
+        }
+
+        .platforms-section {
+          text-align: center;
+          padding-top: 14px;
+          animation: lift-in 500ms ease-out 200ms both;
+        }
+
+        .platforms-label {
+          margin: 0 0 12px;
+          font-size: 0.75rem;
+          text-transform: uppercase;
+          letter-spacing: 0.08em;
+          font-weight: 700;
+          color: #999;
+        }
+
+        .platforms-grid {
+          display: flex;
+          flex-wrap: wrap;
+          gap: 16px;
+          justify-content: center;
+          align-items: center;
+        }
+
+        .platform-item {
+          display: flex;
+          align-items: center;
+          gap: 6px;
+          font-size: 0.85rem;
+          color: #555;
+          height: 32px;
+        }
+
+        .platform-icon {
+          width: 20px;
+          height: 20px;
+          flex-shrink: 0;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+        }
+
+        .platform-icon img {
+          width: 20px;
+          height: 20px;
+          object-fit: contain;
+          display: block;
+        }
+
+        .platform-icon.platform-icon-xl img {
+          width: 44px;
+          height: 44px;
         }
 
         @keyframes lift-in {
@@ -211,7 +283,7 @@ export default function Home() {
 
         <section className="hero">
           <p className="kicker">EMBEDBOT</p>
-          <h1 className="brand">Giv din webshop en AI-chatbot på 5 minutter</h1>
+          <h1 className="brand">Tilføj en AI-chatbot til din webshop på 5 minutter</h1>
           <p className="lead">
             EmbedBot lærer din forretning at kende og svarer dine kunders spørgsmål automatisk
             - så du ikke skal.
@@ -245,6 +317,26 @@ export default function Home() {
         <Link href="/dashboard" className="existing-customer-link">
           Allerede kunde? Log ind og se dine chatbots →
         </Link>
+
+        <section className="platforms-section" aria-label="Understøttede platforme">
+          <p className="platforms-label">EmbedBot understøtter</p>
+          <div className="platforms-grid">
+            {supportedPlatforms.map((platform) => (
+              <div className="platform-item" key={platform.name}>
+                <div
+                  className={`platform-icon ${
+                    platform.name === "Shopify" || platform.name === "Squarespace"
+                      ? "platform-icon-xl"
+                      : ""
+                  }`}
+                >
+                  <img src={platform.logo} alt={`${platform.name} logo`} loading="lazy" />
+                </div>
+                <span>{platform.name}</span>
+              </div>
+            ))}
+          </div>
+        </section>
       </div>
     </main>
   );

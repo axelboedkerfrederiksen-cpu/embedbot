@@ -1,3 +1,33 @@
 * {
   box-sizing: border-box;
 }
+
+.universal-back-button {
+  position: fixed;
+  top: 16px;
+  left: 16px;
+  width: 40px;
+  height: 40px;
+  border-radius: 999px;
+  border: 1px solid #d8d8d8;
+  background: rgba(255, 255, 255, 0.9);
+  color: #111;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 20px;
+  font-weight: 700;
+  line-height: 1;
+  cursor: pointer;
+  z-index: 9999;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.12);
+}
+
+.universal-back-button:hover {
+  background: #fff;
+}
+
+.universal-back-button:focus-visible {
+  outline: 2px solid #111;
+  outline-offset: 2px;
+}
