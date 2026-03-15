@@ -1,5 +1,6 @@
 "use client";
 import { useEffect, useState } from "react";
+import Link from "next/link";
 import { createClient } from "@/lib/supabase";
 
 const ONBOARDING_BUSINESS_ID_KEY = "onboarding_business_id";
@@ -1108,6 +1109,14 @@ export default function Home() {
               ))}
             </div>
           </div>
+
+          <Link
+            href="/dashboard"
+            className="btn btn-primary"
+            style={{ textDecoration: "none", textAlign: "center", marginTop: 8 }}
+          >
+            Se og administrer mine chatbots →
+          </Link>
         </div>
       </main>
     );

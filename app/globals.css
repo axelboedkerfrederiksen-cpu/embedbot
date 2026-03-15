@@ -1,5 +1,11 @@
-* {
+*, *::before, *::after {
   box-sizing: border-box;
+}
+
+html, body {
+  margin: 0;
+  padding: 0;
+  background: #f6f3ed;
 }
 
 .universal-back-button {
