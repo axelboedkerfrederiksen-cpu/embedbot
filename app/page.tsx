@@ -1,342 +1,333 @@
 "use client";
-
 import Link from "next/link";
 import wordpressLogo from "@/media/download.jpeg";
 import shopifyLogo from "@/media/Shopify-Logo-PNG.png";
 import squarespaceLogo from "@/media/Squarespace_Logo.png";
 import wixLogo from "@/media/WIX-Logo.png";
 import webflowLogo from "@/media/webflow_logo_icon_169218.png";
+import html5Logo from "@/media/html5_logo.png";
+import logoImage from "@/media/86a91d6a-f484-4e7d-a05c-55ab0979c3b1.png";
 
 const supportedPlatforms = [
-  { name: "HTML", logo: "https://www.w3.org/html/logo/downloads/HTML5_Logo_256.png" },
-  { name: "WordPress", logo: wordpressLogo.src },
-  { name: "Shopify", logo: shopifyLogo.src },
-  { name: "Squarespace", logo: squarespaceLogo.src },
-  { name: "Wix", logo: wixLogo.src },
-  { name: "Webflow", logo: webflowLogo.src },
+  { name: "HTML",        logo: html5Logo.src,        height: 21 },
+  { name: "WordPress",   logo: wordpressLogo.src,    height: 26 },
+  { name: "Shopify",     logo: shopifyLogo.src,      height: 27 },
+  { name: "Squarespace", logo: squarespaceLogo.src,  height: 19 },
+  { name: "Wix",         logo: wixLogo.src,          height: 15 },
+  { name: "Webflow",     logo: webflowLogo.src,      height: 15 },
+];
+
+const features = [
+  {
+    num: "01",
+    title: "Klar på 5 minutter",
+    desc: "Ingen kodning. Udfyld en simpel formular, og din chatbot er klar til at blive indsat på din hjemmeside.",
+  },
+  {
+    num: "02",
+    title: "Bygget til dansk",
+    desc: "EmbedBot er tilpasset til danske virksomheder og forstår konteksten bag dine produkter og services.",
+  },
+  {
+    num: "03",
+    title: "Svar døgnet rundt",
+    desc: "I stedet for at vente på en mail, får dine kunder svar direkte på din side — hvornår det passer dem.",
+  },
 ];
 
 export default function Home() {
-  return (
-    <main className="start-page">
-      <style jsx global>{`
-        @import url("https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;700&family=DM+Serif+Display:ital@0;1&display=swap");
+  const DEMO_BUSINESS_ID = "a2678b5f-6d8b-415f-bbc0-ef3ce2a148bc";
 
-        html,
-        body {
+  const openWidgetIfAvailable = () => {
+    const bubble = document.getElementById("eb-bubble") as HTMLButtonElement | null;
+    if (!bubble) return;
+    const ariaLabel = bubble.getAttribute("aria-label") || "";
+    if (ariaLabel.includes("Open") || ariaLabel.includes("open")) bubble.click();
+  };
+
+  const handleDemoClick = () => {
+    const existingScript = document.getElementById("embedbot-demo-script");
+    if (existingScript) { openWidgetIfAvailable(); return; }
+    const script = document.createElement("script");
+    script.id = "embedbot-demo-script";
+    script.src = `${window.location.origin}/widget.js?id=${DEMO_BUSINESS_ID}`;
+    script.setAttribute("data-name", "EmbedBot");
+    script.setAttribute("data-primary-color", "#000000");
+    script.setAttribute("data-secondary-color", "#d9d9d9");
+    script.setAttribute("data-fab-color", "#000000");
+    script.setAttribute("data-font", "DM Sans");
+    script.onload = () => window.setTimeout(openWidgetIfAvailable, 50);
+    document.body.appendChild(script);
+  };
+
+  return (
+    <main className="page">
+      <style jsx global>{`
+        @import url("https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;1,9..40,300&family=DM+Serif+Display:ital@0;1&display=swap");
+
+        *, *::before, *::after { box-sizing: border-box; }
+
+        html, body {
           margin: 0;
           padding: 0;
-          min-height: 100%;
-          overflow: hidden;
-          background:
-            radial-gradient(circle at 10% 0%, rgba(255, 210, 180, 0.45) 0%, transparent 40%),
-            radial-gradient(circle at 90% 15%, rgba(160, 210, 255, 0.42) 0%, transparent 45%),
-            #f7f4ef;
+          background: #f6f3ed;
         }
 
-        .start-page {
+        .page {
           min-height: 100dvh;
-          background: transparent;
-          padding: 24px 16px;
-          color: #121212;
           font-family: "DM Sans", sans-serif;
-          display: grid;
-          place-items: center;
-        }
-
-        .start-shell {
-          width: 100%;
-          max-width: 980px;
+          color: #1a1713;
+          max-width: 820px;
           margin: 0 auto;
-          display: grid;
-          gap: 18px;
+          padding: 0 28px 56px;
+          background: #f6f3ed;
         }
 
-        .top-nav {
+        /* ── Nav ─────────────────────────────────── */
+        .nav {
           display: flex;
           align-items: center;
           justify-content: space-between;
-          background: transparent;
-          border: 0;
-          box-shadow: none;
-          padding: 4px 2px;
+          padding: 22px 0;
+          border-bottom: 1px solid rgba(26, 23, 19, 0.12);
         }
 
-        .nav-logo {
-          font-family: "DM Serif Display", serif;
-          font-size: 1.2rem;
-          text-decoration: none;
-          color: #121212;
-          line-height: 1;
-        }
+        .nav-logo { display: block; line-height: 0; text-decoration: none; }
+        .nav-logo img { height: 26px; width: auto; }
 
         .nav-login {
-          display: inline-flex;
-          align-items: center;
-          justify-content: center;
-          border-radius: 999px;
-          border: 1px solid #d0d0d0;
-          background: rgba(255, 255, 255, 0.72);
-          color: #121212;
+          font-size: 0.85rem;
+          font-weight: 400;
+          color: #1a1713;
           text-decoration: none;
-          font-size: 0.9rem;
-          font-weight: 700;
-          padding: 9px 14px;
+          opacity: 0.5;
+          transition: opacity 140ms;
         }
+        .nav-login:hover { opacity: 1; }
 
+        /* ── Hero ────────────────────────────────── */
         .hero {
-          background: rgba(255, 255, 255, 0.82);
-          border: 1px solid rgba(0, 0, 0, 0.08);
-          border-radius: 22px;
-          padding: clamp(22px, 5vw, 44px);
-          box-shadow: 0 12px 40px rgba(0, 0, 0, 0.08);
-          animation: lift-in 380ms ease-out;
+          padding: 64px 0 52px;
+          border-bottom: 1px solid rgba(26, 23, 19, 0.12);
         }
 
-        .brand {
-          margin: 0;
-          font-family: "DM Serif Display", serif;
-          font-size: clamp(2rem, 6vw, 3.4rem);
-          line-height: 1.02;
-          letter-spacing: 0.4px;
-        }
-
-        .kicker {
-          margin: 0 0 8px;
-          font-size: 0.86rem;
-          font-weight: 700;
-          letter-spacing: 0.08em;
+        .tag {
+          display: block;
+          font-size: 0.7rem;
+          font-weight: 500;
+          letter-spacing: 0.14em;
           text-transform: uppercase;
-          color: #7a4f24;
+          color: #9c7248;
+          margin-bottom: 18px;
+        }
+
+        .headline {
+          font-family: "DM Serif Display", serif;
+          font-size: clamp(2rem, 5vw, 3.4rem);
+          line-height: 1.06;
+          letter-spacing: -0.015em;
+          margin: 0 0 22px;
+          max-width: 16ch;
         }
 
         .lead {
-          margin: 14px 0 0;
-          max-width: 62ch;
-          color: #3e3e3e;
-          font-size: clamp(1rem, 2.8vw, 1.15rem);
-          line-height: 1.6;
+          font-size: clamp(0.95rem, 2.2vw, 1.075rem);
+          font-weight: 300;
+          line-height: 1.7;
+          color: #5a564f;
+          margin: 0 0 30px;
+          max-width: 52ch;
         }
 
         .cta-row {
-          margin-top: 26px;
           display: flex;
           flex-wrap: wrap;
-          gap: 10px;
+          gap: 8px;
         }
 
         .btn {
-          border-radius: 999px;
-          padding: 11px 20px;
-          font-size: 0.95rem;
-          font-weight: 700;
+          font-family: "DM Sans", sans-serif;
+          font-size: 0.875rem;
+          font-weight: 500;
           text-decoration: none;
-          transition: transform 160ms ease, box-shadow 160ms ease, background 160ms ease;
+          padding: 10px 20px;
+          border-radius: 5px;
           border: 1px solid transparent;
+          cursor: pointer;
+          transition: opacity 140ms, border-color 140ms;
           display: inline-flex;
           align-items: center;
-          justify-content: center;
         }
 
-        .btn:hover {
-          transform: translateY(-1px);
-        }
+        .btn-primary { background: #1a1713; color: #f6f3ed; }
+        .btn-primary:hover { opacity: 0.78; }
 
-        .btn-primary {
-          background: #111;
-          color: #fff;
-          box-shadow: 0 8px 20px rgba(0, 0, 0, 0.2);
+        .btn-outline {
+          background: transparent;
+          color: #1a1713;
+          border-color: rgba(26, 23, 19, 0.22);
         }
+        .btn-outline:hover { border-color: rgba(26, 23, 19, 0.55); }
 
-        .btn-secondary {
-          background: #fff;
-          color: #121212;
-          border-color: #cfcfcf;
-        }
-
-        .feature-grid {
+        /* ── Features ────────────────────────────── */
+        .features {
           display: grid;
-          grid-template-columns: repeat(3, minmax(0, 1fr));
-          gap: 10px;
-          margin-top: 6px;
+          grid-template-columns: repeat(3, 1fr);
         }
 
-        .feature {
-          background: rgba(255, 255, 255, 0.76);
-          border: 1px solid rgba(0, 0, 0, 0.08);
-          border-radius: 16px;
-          padding: 14px;
-          animation: lift-in 420ms ease-out;
+        .feat {
+          padding: 36px 0;
+          border-bottom: 1px solid rgba(26, 23, 19, 0.12);
         }
 
-        .feature h2 {
-          margin: 0 0 6px;
-          font-size: 0.98rem;
-          line-height: 1.2;
+        .feat:not(:last-child) {
+          padding-right: 28px;
+          border-right: 1px solid rgba(26, 23, 19, 0.12);
         }
 
-        .feature p {
+        .feat:not(:first-child) {
+          padding-left: 28px;
+        }
+
+        .feat-num {
+          display: block;
+          font-size: 0.68rem;
+          letter-spacing: 0.12em;
+          color: #b5936b;
+          font-weight: 500;
+          margin-bottom: 14px;
+        }
+
+        .feat-title {
+          font-size: 0.975rem;
+          font-weight: 500;
+          margin: 0 0 8px;
+          line-height: 1.3;
+        }
+
+        .feat-desc {
+          font-size: 0.85rem;
+          font-weight: 300;
+          color: #706c65;
+          line-height: 1.65;
           margin: 0;
-          font-size: 0.9rem;
-          color: #444;
-          line-height: 1.5;
         }
 
-        .existing-customer-link {
-          text-align: center;
-          font-size: 0.84rem;
-          color: #4f4f4f;
-          text-decoration: none;
-          margin-top: 2px;
-        }
-
-        .existing-customer-link:hover {
-          color: #222;
-          text-decoration: underline;
-          text-underline-offset: 2px;
-        }
-
-        .platforms-section {
-          text-align: center;
-          padding-top: 14px;
-          animation: lift-in 500ms ease-out 200ms both;
+        /* ── Platform strip ──────────────────────── */
+        .platforms {
+          padding: 32px 0 0;
+          display: flex;
+          align-items: center;
+          gap: 20px;
+          flex-wrap: wrap;
         }
 
         .platforms-label {
-          margin: 0 0 12px;
-          font-size: 0.75rem;
+          font-size: 0.7rem;
+          font-weight: 500;
+          letter-spacing: 0.1em;
           text-transform: uppercase;
-          letter-spacing: 0.08em;
-          font-weight: 700;
-          color: #999;
-        }
-
-        .platforms-grid {
-          display: flex;
-          flex-wrap: wrap;
-          gap: 16px;
-          justify-content: center;
-          align-items: center;
-        }
-
-        .platform-item {
-          display: flex;
-          align-items: center;
-          gap: 6px;
-          font-size: 0.85rem;
-          color: #555;
-          height: 32px;
-        }
-
-        .platform-icon {
-          width: 20px;
-          height: 20px;
+          color: #aba590;
+          white-space: nowrap;
           flex-shrink: 0;
-          display: flex;
-          align-items: center;
-          justify-content: center;
         }
 
-        .platform-icon img {
-          width: 20px;
-          height: 20px;
-          object-fit: contain;
+        .platforms-logos {
+          display: flex;
+          gap: 16px;
+          align-items: center;
+          flex-wrap: wrap;
+        }
+
+        .platform-logo {
+          width: auto;
           display: block;
         }
 
-        .platform-icon.platform-icon-xl img {
-          width: 44px;
-          height: 44px;
+        /* ── Footer row ──────────────────────────── */
+        .foot {
+          padding-top: 28px;
+          text-align: right;
         }
 
-        @keyframes lift-in {
-          from {
-            opacity: 0;
-            transform: translateY(10px);
-          }
-          to {
-            opacity: 1;
-            transform: translateY(0);
-          }
+        .foot a {
+          font-size: 0.78rem;
+          color: #aba590;
+          text-decoration: none;
+          transition: color 140ms;
         }
 
-        @media (max-width: 900px) {
-          .feature-grid {
-            grid-template-columns: 1fr;
+        .foot a:hover { color: #1a1713; }
+
+        /* ── Mobile ──────────────────────────────── */
+        @media (max-width: 600px) {
+          .page { padding: 0 20px 44px; }
+          .hero { padding: 44px 0 38px; }
+
+          .features { grid-template-columns: 1fr; }
+          .feat {
+            padding: 28px 0 !important;
+            border-right: none !important;
           }
 
-          .hero {
-            border-radius: 18px;
-          }
-
-          .btn {
-            width: 100%;
-          }
+          .platforms { flex-direction: column; align-items: flex-start; gap: 14px; }
+          .foot { text-align: left; }
         }
       `}</style>
 
-      <div className="start-shell">
-        <nav className="top-nav" aria-label="Top navigation">
-          <Link href="/" className="nav-logo">EmbedBot</Link>
-          <Link href="/login" className="nav-login">Log ind</Link>
-        </nav>
-
-        <section className="hero">
-          <p className="kicker">EMBEDBOT</p>
-          <h1 className="brand">Tilføj en AI-chatbot til din webshop på 5 minutter</h1>
-          <p className="lead">
-            EmbedBot lærer din forretning at kende og svarer dine kunders spørgsmål automatisk
-            - så du ikke skal.
-          </p>
-
-          <div className="cta-row">
-            <Link href="/setup" className="btn btn-primary">
-              Start chatbot opsætning
-            </Link>
-            <Link href="/demo.html" className="btn btn-secondary">
-              Se chatbot demo
-            </Link>
-          </div>
-        </section>
-
-        <section className="feature-grid" aria-label="Fordele ved flowet">
-          <article className="feature">
-            <h2>Klar på 5 minutter</h2>
-            <p>Ingen kodning krævet. Du udfylder en simpel formular, og din chatbot er klar til at blive sat ind på din hjemmeside.</p>
-          </article>
-          <article className="feature">
-            <h2>299kr pr. måned</h2>
-            <p>For 299kr får du en chatbot 24/7, med ingen ansatte.</p>
-          </article>
-          <article className="feature">
-            <h2>Dine kunder får svar med det samme</h2>
-            <p>I stedet for at vente på en mail, får dine kunder svar døgnet rundt - direkte på din side.</p>
-          </article>
-        </section>
-
-        <Link href="/dashboard" className="existing-customer-link">
-          Allerede kunde? Log ind og se dine chatbots →
+      <nav className="nav" aria-label="Primær navigation">
+        <Link href="/" className="nav-logo">
+          <img src={logoImage.src} alt="EmbedBot" />
         </Link>
+        <Link href="/login" className="nav-login">Log ind</Link>
+      </nav>
 
-        <section className="platforms-section" aria-label="Understøttede platforme">
-          <p className="platforms-label">EmbedBot understøtter</p>
-          <div className="platforms-grid">
-            {supportedPlatforms.map((platform) => (
-              <div className="platform-item" key={platform.name}>
-                <div
-                  className={`platform-icon ${
-                    platform.name === "Shopify" || platform.name === "Squarespace"
-                      ? "platform-icon-xl"
-                      : ""
-                  }`}
-                >
-                  <img src={platform.logo} alt={`${platform.name} logo`} loading="lazy" />
-                </div>
-                <span>{platform.name}</span>
-              </div>
-            ))}
+      <section className="hero">
+        <span className="tag">Dansk AI-kundesupport</span>
+        <h1 className="headline">
+          Tilføj en AI-chatbot til din webshop på 5 minutter
+        </h1>
+        <p className="lead">
+          EmbedBot lærer din forretning at kende og svarer dine kunders spørgsmål automatisk — så du ikke skal.
+        </p>
+        <div className="cta-row">
+          <Link href="/setup" className="btn btn-primary">
+            Start opsætning
+          </Link>
+          <button onClick={handleDemoClick} className="btn btn-outline">
+            Se demo
+          </button>
+        </div>
+      </section>
+
+      <div className="features">
+        {features.map((f) => (
+          <div className="feat" key={f.num}>
+            <span className="feat-num">{f.num}</span>
+            <h2 className="feat-title">{f.title}</h2>
+            <p className="feat-desc">{f.desc}</p>
           </div>
-        </section>
+        ))}
+      </div>
+
+      <div className="platforms">
+        <span className="platforms-label">Understøtter</span>
+        <div className="platforms-logos">
+          {supportedPlatforms.map((p) => (
+            <img
+              key={p.name}
+              src={p.logo}
+              alt={p.name}
+              className="platform-logo"
+              style={{ height: p.height }}
+              loading="lazy"
+            />
+          ))}
+        </div>
+      </div>
+
+      <div className="foot">
+        <Link href="/dashboard">Allerede kunde? Log ind her →</Link>
       </div>
     </main>
   );

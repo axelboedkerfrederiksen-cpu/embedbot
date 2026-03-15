@@ -325,10 +325,10 @@ export default function Home() {
 
       .eb-page {
         min-height: 100vh;
-        background: #f5f5f5;
+        background: #f6f3ed;
         padding: 28px 16px;
         font-family: "DM Sans", sans-serif;
-        color: #000;
+        color: #1a1713;
       }
 
       .eb-shell {
@@ -345,10 +345,9 @@ export default function Home() {
 
       .eb-card {
         background: #fff;
-        border: 1px solid #e7e7e7;
-        border-radius: 16px;
+        border: 1px solid rgba(26,23,19,0.1);
+        border-radius: 10px;
         padding: 24px;
-        box-shadow: 0 8px 30px rgba(0, 0, 0, 0.06);
       }
 
       .eb-animate {
@@ -373,12 +372,12 @@ export default function Home() {
       }
 
       .muted {
-        color: #666;
+        color: #706c65;
       }
 
       .tagline {
         text-align: center;
-        color: #666;
+        color: #706c65;
         margin: 0 0 24px;
       }
 
@@ -392,15 +391,15 @@ export default function Home() {
 
       .step-note {
         font-size: 13px;
-        color: #666;
-        font-weight: 500;
+        color: #706c65;
+        font-weight: 400;
       }
 
       .progress-track {
         width: 100%;
-        height: 8px;
+        height: 4px;
         border-radius: 999px;
-        background: #e8e8e8;
+        background: rgba(26,23,19,0.1);
         overflow: hidden;
         margin-bottom: 20px;
       }
@@ -408,7 +407,7 @@ export default function Home() {
       .progress-fill {
         height: 100%;
         border-radius: inherit;
-        background: #000;
+        background: #1a1713;
         transition: width 260ms ease;
       }
 
@@ -443,24 +442,23 @@ export default function Home() {
       .field-input {
         width: 100%;
         background: #fff;
-        border: 1px solid #d9d9d9;
-        border-radius: 10px;
+        border: 1px solid rgba(26,23,19,0.18);
+        border-radius: 6px;
         padding: 11px 12px;
         font-family: "DM Sans", sans-serif;
         font-size: 14px;
         box-sizing: border-box;
-        transition: border-color 150ms ease, box-shadow 150ms ease;
-        color: #000;
+        transition: border-color 150ms ease;
+        color: #1a1713;
       }
 
       .field-input::placeholder {
-        color: #999;
+        color: #aba590;
       }
 
       .field-input:focus {
         outline: none;
-        border-color: #000;
-        box-shadow: 0 0 0 1px #000;
+        border-color: #1a1713;
       }
 
       .field-textarea {
@@ -522,43 +520,38 @@ export default function Home() {
       }
 
       .btn {
-        border-radius: 10px;
-        border: 1px solid #000;
-        padding: 11px 20px;
+        border-radius: 5px;
+        border: 1px solid transparent;
+        padding: 10px 20px;
         font-size: 14px;
-        font-weight: 700;
+        font-weight: 500;
         cursor: pointer;
-        transition: transform 160ms ease, background-color 160ms ease, color 160ms ease, opacity 160ms ease;
+        transition: opacity 140ms, border-color 140ms;
         font-family: "DM Sans", sans-serif;
-      }
-
-      .btn:hover {
-        transform: translateY(-1px);
       }
 
       .btn:disabled {
         cursor: not-allowed;
-        opacity: 0.6;
-        transform: none;
+        opacity: 0.5;
       }
 
       .btn-primary {
-        background: #000;
-        color: #fff;
+        background: #1a1713;
+        color: #f6f3ed;
       }
 
       .btn-primary:hover {
-        background: #111;
+        opacity: 0.8;
       }
 
       .btn-secondary {
-        background: #fff;
-        color: #000;
-        border-color: #d0d0d0;
+        background: transparent;
+        color: #1a1713;
+        border-color: rgba(26,23,19,0.22);
       }
 
       .btn-secondary:hover {
-        border-color: #000;
+        border-color: rgba(26,23,19,0.55);
       }
 
       .btn-full {
@@ -627,28 +620,30 @@ export default function Home() {
       }
 
       .platform-tab {
-        border: 1px solid #d0d0d0;
-        background: #fff;
-        border-radius: 999px;
-        padding: 8px 12px;
+        border: 1px solid rgba(26,23,19,0.18);
+        background: transparent;
+        border-radius: 5px;
+        padding: 7px 12px;
         font-size: 13px;
-        font-weight: 700;
+        font-weight: 400;
         cursor: pointer;
         font-family: "DM Sans", sans-serif;
+        color: #1a1713;
+        transition: border-color 140ms;
       }
 
       .platform-tab:hover {
-        border-color: #000;
+        border-color: rgba(26,23,19,0.55);
       }
 
       .platform-tab.is-active {
-        background: #000;
-        color: #fff;
-        border-color: #000;
+        background: #1a1713;
+        color: #f6f3ed;
+        border-color: #1a1713;
       }
 
       .guide-wrap {
-        border-top: 1px solid #ededed;
+        border-top: 1px solid rgba(26,23,19,0.1);
         padding-top: 6px;
       }
 
@@ -670,15 +665,15 @@ export default function Home() {
         padding-left: 20px;
         display: grid;
         gap: 6px;
-        color: #202020;
+        color: #1a1713;
         font-size: 14px;
       }
 
       .guide-code {
         margin: 10px 0 0;
         background: #fff;
-        border: 1px solid #dfdfdf;
-        border-radius: 10px;
+        border: 1px solid rgba(26,23,19,0.12);
+        border-radius: 6px;
         padding: 10px;
         overflow-x: auto;
         font-size: 13px;

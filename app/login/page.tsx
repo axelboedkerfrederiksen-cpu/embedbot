@@ -39,22 +39,22 @@ export default function LoginPage() {
   }
 
   return (
-    <main style={{ minHeight: "100dvh", display: "grid", placeItems: "center", padding: "16px" }}>
+    <main style={{ minHeight: "100dvh", display: "grid", placeItems: "center", padding: "16px", background: "#f6f3ed", fontFamily: '"DM Sans", sans-serif' }}>
       <form
         onSubmit={handleSubmit}
         style={{
           width: "100%",
-          maxWidth: 420,
+          maxWidth: 400,
           background: "#fff",
-          border: "1px solid #e8e8e8",
-          borderRadius: 14,
-          padding: 20,
+          border: "1px solid rgba(26,23,19,0.1)",
+          borderRadius: 10,
+          padding: 24,
           display: "grid",
           gap: 10,
         }}
       >
-        <h1 style={{ margin: 0, fontSize: 28 }}>Log ind</h1>
-        <p style={{ margin: 0, color: "#555" }}>Fortsat til dit dashboard.</p>
+        <h1 style={{ margin: 0, fontSize: 22, fontWeight: 600, color: "#1a1713" }}>Log ind</h1>
+        <p style={{ margin: 0, color: "#706c65", fontSize: 14, fontWeight: 300 }}>Fortsæt til dit dashboard.</p>
 
         <input
           type="email"
@@ -62,7 +62,7 @@ export default function LoginPage() {
           value={email}
           onChange={(e) => setEmail(e.target.value)}
           required
-          style={{ border: "1px solid #d8d8d8", borderRadius: 10, padding: "11px 12px", fontSize: 14 }}
+          style={{ border: "1px solid rgba(26,23,19,0.18)", borderRadius: 6, padding: "11px 12px", fontSize: 14, fontFamily: '"DM Sans", sans-serif', color: "#1a1713", outline: "none" }}
         />
         <input
           type="password"
@@ -70,27 +70,29 @@ export default function LoginPage() {
           value={password}
           onChange={(e) => setPassword(e.target.value)}
           required
-          style={{ border: "1px solid #d8d8d8", borderRadius: 10, padding: "11px 12px", fontSize: 14 }}
+          style={{ border: "1px solid rgba(26,23,19,0.18)", borderRadius: 6, padding: "11px 12px", fontSize: 14, fontFamily: '"DM Sans", sans-serif', color: "#1a1713", outline: "none" }}
         />
 
         <button
           type="submit"
           disabled={loading}
           style={{
-            border: "1px solid #111",
-            background: "#111",
-            color: "#fff",
-            borderRadius: 999,
+            border: "1px solid transparent",
+            background: "#1a1713",
+            color: "#f6f3ed",
+            borderRadius: 5,
             padding: "10px 14px",
-            fontWeight: 700,
+            fontWeight: 500,
+            fontSize: 14,
             cursor: loading ? "not-allowed" : "pointer",
-            opacity: loading ? 0.7 : 1,
+            opacity: loading ? 0.6 : 1,
+            fontFamily: '"DM Sans", sans-serif',
           }}
         >
           {loading ? "Logger ind..." : "Log ind"}
         </button>
 
-        {error ? <p style={{ margin: 0, color: "#b00020" }}>{error}</p> : null}
+        {error ? <p style={{ margin: 0, color: "#b00020", fontSize: 13 }}>{error}</p> : null}
       </form>
     </main>
   );

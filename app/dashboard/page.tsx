@@ -103,7 +103,9 @@ export default function DashboardPage() {
           minHeight: "100dvh",
           display: "grid",
           placeItems: "center",
-          background: "linear-gradient(135deg, #fff5f0, #f0f4ff)",
+          background: "#f6f3ed",
+          color: "#1a1713",
+          fontFamily: '"DM Sans", sans-serif',
         }}
       >
         Indlæser...
@@ -115,27 +117,28 @@ export default function DashboardPage() {
     <main
       style={{
         minHeight: "100dvh",
-        background: "linear-gradient(135deg, #fff5f0, #f0f4ff)",
-        color: "#18181b",
-        paddingTop: 60,
-        paddingBottom: 48,
-        paddingLeft: 16,
-        paddingRight: 16,
+        background: "#f6f3ed",
+        color: "#1a1713",
+        fontFamily: '"DM Sans", sans-serif',
+        paddingTop: 48,
+        paddingBottom: 56,
+        paddingLeft: 28,
+        paddingRight: 28,
       }}
     >
-      <div style={{ width: "100%", maxWidth: 900, margin: "0 auto", display: "grid", gap: 20 }}>
-        <nav style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 12 }}>
-          <Link href="/" style={{ fontSize: 24, fontWeight: 800, textDecoration: "none", color: "#111" }}>
+      <div style={{ width: "100%", maxWidth: 820, margin: "0 auto", display: "grid", gap: 24 }}>
+        <nav style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 12, paddingBottom: 20, borderBottom: "1px solid rgba(26,23,19,0.12)" }}>
+          <Link href="/" style={{ fontSize: 18, fontWeight: 600, textDecoration: "none", color: "#1a1713" }}>
             EmbedBot
           </Link>
-          <div style={{ display: "flex", alignItems: "center", gap: 10, minWidth: 0 }}>
+          <div style={{ display: "flex", alignItems: "center", gap: 16, minWidth: 0 }}>
             <span
               style={{
                 maxWidth: 220,
                 overflow: "hidden",
                 textOverflow: "ellipsis",
                 whiteSpace: "nowrap",
-                color: "#666",
+                color: "#706c65",
                 fontSize: 13,
               }}
             >
@@ -145,14 +148,15 @@ export default function DashboardPage() {
               type="button"
               onClick={handleLogout}
               style={{
-                borderRadius: 999,
-                border: "1px solid #d4d4d8",
-                background: "#f4f4f5",
-                color: "#52525b",
-                fontSize: 12,
-                fontWeight: 700,
-                padding: "6px 10px",
+                border: "1px solid rgba(26,23,19,0.22)",
+                background: "transparent",
+                color: "#1a1713",
+                fontSize: 13,
+                fontWeight: 500,
+                padding: "6px 12px",
+                borderRadius: 5,
                 cursor: "pointer",
+                fontFamily: '"DM Sans", sans-serif',
               }}
             >
               Log ud
@@ -162,11 +166,6 @@ export default function DashboardPage() {
 
         <section
           style={{
-            background: "#ffffff",
-            border: "1px solid #ececec",
-            borderRadius: 12,
-            boxShadow: "0 8px 24px rgba(0,0,0,0.05)",
-            padding: 24,
             display: "flex",
             alignItems: "flex-end",
             justifyContent: "space-between",
@@ -175,8 +174,8 @@ export default function DashboardPage() {
           }}
         >
           <div>
-            <h1 style={{ margin: 0, fontSize: 36, lineHeight: 1.05, fontWeight: 800 }}>Mine chatbots</h1>
-            <p style={{ margin: "8px 0 0", fontSize: 14, color: "#5f5f5f" }}>
+            <h1 style={{ margin: 0, fontSize: 28, lineHeight: 1.1, fontWeight: 600 }}>Mine chatbots</h1>
+            <p style={{ margin: "6px 0 0", fontSize: 14, color: "#706c65", fontWeight: 300 }}>
               Her kan du se og administrere dine aktive chatbots
             </p>
           </div>
@@ -186,13 +185,14 @@ export default function DashboardPage() {
               display: "inline-flex",
               alignItems: "center",
               justifyContent: "center",
-              borderRadius: 999,
-              background: "#111111",
-              color: "#ffffff",
+              background: "#1a1713",
+              color: "#f6f3ed",
               textDecoration: "none",
               fontSize: 14,
-              fontWeight: 700,
+              fontWeight: 500,
               padding: "10px 18px",
+              borderRadius: 5,
+              border: "1px solid transparent",
             }}
           >
             Opret ny chatbot
@@ -206,7 +206,7 @@ export default function DashboardPage() {
               background: "#fff1f2",
               border: "1px solid #fecdd3",
               color: "#be123c",
-              borderRadius: 12,
+              borderRadius: 5,
               padding: "10px 12px",
               fontSize: 14,
             }}
@@ -218,37 +218,32 @@ export default function DashboardPage() {
         {businesses.length === 0 ? (
           <section
             style={{
-              background: "#ffffff",
-              border: "1px solid #ececec",
-              borderRadius: 12,
-              boxShadow: "0 8px 24px rgba(0,0,0,0.05)",
-              padding: "44px 20px",
+              borderTop: "1px solid rgba(26,23,19,0.12)",
+              padding: "44px 0",
               textAlign: "center",
             }}
           >
-            <div style={{ fontSize: 40 }}>🤖</div>
-            <h2 style={{ margin: "10px 0 0", fontSize: 22 }}>Du har ingen chatbots endnu</h2>
+            <h2 style={{ margin: "0 0 16px", fontSize: 20, fontWeight: 500 }}>Du har ingen chatbots endnu</h2>
             <Link
               href="/onboarding"
               style={{
-                marginTop: 16,
                 display: "inline-flex",
                 alignItems: "center",
                 justifyContent: "center",
-                borderRadius: 999,
-                background: "#111111",
-                color: "#ffffff",
+                background: "#1a1713",
+                color: "#f6f3ed",
                 textDecoration: "none",
                 fontSize: 14,
-                fontWeight: 700,
+                fontWeight: 500,
                 padding: "10px 18px",
+                borderRadius: 5,
               }}
             >
               Opret din første chatbot
             </Link>
           </section>
         ) : (
-          <section style={{ display: "grid", gap: 12 }}>
+          <section style={{ display: "grid", gap: 1, borderTop: "1px solid rgba(26,23,19,0.12)" }}>
             {businesses.map((business) => {
               const displayName = (business.name || "Unavngiven chatbot").trim();
               const website = (business.website_url || "Ingen hjemmeside angivet").trim();
@@ -259,30 +254,29 @@ export default function DashboardPage() {
                 <article
                   key={business.id}
                   style={{
-                    background: "#f9f9f9",
-                    border: "1px solid #ececec",
-                    borderRadius: 12,
-                    boxShadow: "0 8px 24px rgba(0,0,0,0.04)",
-                    padding: 16,
+                    borderBottom: "1px solid rgba(26,23,19,0.12)",
+                    padding: "20px 0",
                   }}
                 >
                   <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 8, flexWrap: "wrap" }}>
-                    <h2 style={{ margin: 0, fontSize: 20, fontWeight: 700 }}>{displayName}</h2>
+                    <h2 style={{ margin: 0, fontSize: 17, fontWeight: 500 }}>{displayName}</h2>
                     <span
                       style={{
-                        borderRadius: 999,
-                        background: "#e4e4e7",
-                        color: "#52525b",
-                        fontSize: 12,
-                        fontWeight: 700,
-                        padding: "5px 10px",
+                        background: "rgba(26,23,19,0.07)",
+                        color: "#5a564f",
+                        fontSize: 11,
+                        fontWeight: 500,
+                        padding: "4px 10px",
+                        borderRadius: 3,
+                        letterSpacing: "0.06em",
+                        textTransform: "uppercase",
                       }}
                     >
                       {industry}
                     </span>
                   </div>
 
-                  <p style={{ margin: "8px 0 0", fontSize: 14, color: "#666" }}>{website}</p>
+                  <p style={{ margin: "6px 0 0", fontSize: 13, color: "#706c65", fontWeight: 300 }}>{website}</p>
 
                   <div style={{ marginTop: 14, display: "flex", gap: 8, flexWrap: "wrap" }}>
                     <button
@@ -292,14 +286,15 @@ export default function DashboardPage() {
                         display: "inline-flex",
                         alignItems: "center",
                         justifyContent: "center",
-                        borderRadius: 999,
-                        border: "1px solid #111",
-                        background: "#111",
-                        color: "#fff",
+                        border: "1px solid transparent",
+                        background: "#1a1713",
+                        color: "#f6f3ed",
                         fontSize: 13,
-                        fontWeight: 700,
-                        padding: "9px 14px",
+                        fontWeight: 500,
+                        padding: "8px 14px",
+                        borderRadius: 5,
                         cursor: "pointer",
+                        fontFamily: '"DM Sans", sans-serif',
                       }}
                     >
                       {copyFeedback ? "Kopieret! ✓" : "Kopiér embed-kode"}
@@ -311,14 +306,14 @@ export default function DashboardPage() {
                         display: "inline-flex",
                         alignItems: "center",
                         justifyContent: "center",
-                        borderRadius: 999,
-                        border: "1px solid #d4d4d8",
-                        background: "#ffffff",
-                        color: "#222",
+                        border: "1px solid rgba(26,23,19,0.22)",
+                        background: "transparent",
+                        color: "#1a1713",
                         textDecoration: "none",
                         fontSize: 13,
-                        fontWeight: 700,
-                        padding: "9px 14px",
+                        fontWeight: 500,
+                        padding: "8px 14px",
+                        borderRadius: 5,
                       }}
                     >
                       Se samtaler
