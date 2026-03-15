@@ -53,7 +53,7 @@ export default function Home() {
     script.src = `${window.location.origin}/widget.js?id=${DEMO_BUSINESS_ID}`;
     script.setAttribute("data-name", "EmbedBot");
     script.setAttribute("data-primary-color", "#000000");
-    script.setAttribute("data-secondary-color", "#d9d9d9");
+    script.setAttribute("data-secondary-color", "#000000");
     script.setAttribute("data-fab-color", "#000000");
     script.setAttribute("data-font", "DM Sans");
     script.onload = () => window.setTimeout(openWidgetIfAvailable, 50);
