@@ -138,6 +138,28 @@ export default function Home() {
   }
 
   useEffect(() => {
+    if (typeof window === "undefined") return;
+    const params = new URLSearchParams(window.location.search);
+    if (params.get("success") !== "true") return;
+
+    try {
+      const stored = localStorage.getItem("embedbot_embed_code");
+      if (stored) {
+        setEmbedCode(stored);
+        localStorage.removeItem("embedbot_embed_code");
+      }
+    } catch {}
+
+    const storedId = getStoredBusinessId();
+    if (storedId) {
+      setBusinessId(storedId);
+      clearPersistedBusinessId();
+    }
+
+    setStep(6);
+  }, []);
+
+  useEffect(() => {
     let isMounted = true;
 
     supabase.auth.getUser().then(({ data }) => {
@@ -278,11 +300,15 @@ export default function Home() {
         throw new Error(data.error || "Noget gik galt.");
       }
 
-      setEmbedCode(`<script src="https://embedbot1.vercel.app/widget.js?id=${stableBusinessId}"></script>`);
+      try {
+        localStorage.setItem(
+          "embedbot_embed_code",
+          `<script src="https://embedbot1.vercel.app/widget.js?id=${stableBusinessId}"></script>`
+        );
+      } catch {}
 
-      clearPersistedBusinessId();
-      setBusinessId("");
-      setStep(6);
+      persistBusinessId(stableBusinessId);
+      window.location.href = "https://buy.stripe.com/eVq00j5l7gew3dj3rIf3a02";
     } catch (error) {
       setMessage(formatSetupError(error));
     } finally {
