@@ -691,6 +691,7 @@ export default function AdminPage() {
                   {filteredBusinesses.map((business) => {
                     const isOpen = Boolean(expanded[business.id]);
                     const isActive = Boolean(business.activated);
+                    const isActivating = activatingId === business.id;
                     const isEditing = editingId === business.id;
                     const draft = editDrafts[business.id] || {};
 
@@ -753,6 +754,14 @@ export default function AdminPage() {
                           </div>
 
                           <div className="flex flex-wrap items-center gap-2">
+                            <button
+                              onClick={() => activateBusiness(business.id)}
+                              disabled={isActive || isActivating || deletingId === business.id || savingId === business.id}
+                              className="rounded-lg border border-slate-700 px-3 py-1.5 text-sm text-slate-200 transition hover:border-slate-500 disabled:cursor-not-allowed disabled:opacity-60"
+                            >
+                              {isActive ? "Aktiv" : isActivating ? "Aktiverer..." : "Aktivér"}
+                            </button>
+
                             <button
                               onClick={() => toggleExpand(business.id)}
                               className="rounded-lg border border-slate-700 px-3 py-1.5 text-sm text-slate-200 transition hover:border-slate-500"
