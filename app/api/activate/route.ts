@@ -14,7 +14,9 @@ const supabase = createClient(
   process.env.SUPABASE_SERVICE_KEY!
 );
 
-const resend = new Resend(process.env.RESEND_API_KEY);
+const resend = process.env.RESEND_API_KEY
+  ? new Resend(process.env.RESEND_API_KEY)
+  : null;
 
 function buildCustomerEmailHtml(
   businessId: string,
@@ -59,6 +61,13 @@ export async function POST(req: NextRequest) {
     if (!process.env.SUPABASE_URL || !process.env.SUPABASE_SERVICE_KEY || !process.env.RESEND_API_KEY) {
       return NextResponse.json(
         { success: false, error: "Serveren mangler environment variables." },
+        { status: 500 }
+      );
+    }
+
+    if (!resend) {
+      return NextResponse.json(
+        { success: false, error: "Resend-klient kunne ikke initialiseres." },
         { status: 500 }
       );
     }
