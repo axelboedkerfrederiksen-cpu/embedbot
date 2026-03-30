@@ -59,8 +59,9 @@ export async function POST(req: NextRequest) {
     );
   }
 
-  const { message, business_id } = await req.json();
+  const { message, business_id, page_url } = await req.json();
   const stableBusinessId = typeof business_id === "string" ? business_id.trim() : "";
+  const stablePageUrl = typeof page_url === "string" && page_url.trim() ? page_url.trim() : "";
 
   if (!stableBusinessId) {
     return NextResponse.json(
@@ -93,7 +94,10 @@ export async function POST(req: NextRequest) {
     match_count: 5,
   });
 
-  const context = docs?.map((d: any) => d.content).join("\n\n");
+  const context = (docs as Array<{ content?: string }> | null | undefined)
+    ?.map((doc) => (typeof doc.content === "string" ? doc.content : ""))
+    .filter(Boolean)
+    .join("\n\n");
 
   const businessInfo = `
 VIRKSOMHED: ${business?.name || ""}
@@ -169,6 +173,7 @@ Følg disse regler STRENGT:
         messages: [
           { role: "user", content: message },
           { role: "assistant", content: answer },
+          ...(stablePageUrl ? [{ role: "meta", page_url: stablePageUrl }] : []),
         ],
       });
   } catch {

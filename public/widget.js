@@ -261,7 +261,7 @@
       const res = await fetch(API_URL, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ message: text, business_id: businessId }),
+        body: JSON.stringify({ message: text, business_id: businessId, page_url: window.location.href }),
       });
 
       const data = await res.json().catch(() => ({}));

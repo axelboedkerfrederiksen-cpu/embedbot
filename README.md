@@ -1,36 +1,135 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# EmbedBot
 
-## Getting Started
+EmbedBot er en Next.js-app, der lader virksomheder oprette og indlejre en AI-kundeservicechatbot på deres egen hjemmeside.
 
-First, run the development server:
+Den indeholder:
+
+- Onboarding- og opsætningsflow for virksomheder
+- Supabase-baseret lagring af virksomhedsdata og samtaler
+- OpenAI-drevet ingest og chatsvar
+- Indlejrbar widget-script (`/widget.js`) til eksterne sider
+- API-endpoints til admin- og virksomhedsadministration
+
+## Teknologistak
+
+- Next.js 16 (App Router)
+- React 19 + TypeScript
+- Supabase (`@supabase/supabase-js`, `@supabase/ssr`)
+- OpenAI API
+- Resend (transaktionelle e-mails)
+- Tailwind CSS 4
+
+## Lokal udvikling
+
+1. Installer afhængigheder:
+
+```bash
+npm install
+```
+
+2. Opret `.env.local` i projektets rodmappe:
+
+```env
+# Klient + auth
+NEXT_PUBLIC_SUPABASE_URL=
+NEXT_PUBLIC_SUPABASE_ANON_KEY=
+
+# Server-side Supabase-adgang
+SUPABASE_URL=
+SUPABASE_SERVICE_KEY=
+
+# AI
+OPENAI_API_KEY=
+
+# E-mail
+RESEND_API_KEY=
+
+# Valgfri fallback til admin-login
+ADMIN_PASSWORD=
+NEXT_PUBLIC_ADMIN_PASSWORD=
+```
+
+3. Start udviklingsserveren:
 
 ```bash
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+4. Åbn:
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+`http://localhost:3000`
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+## Tilgængelige scripts
 
-## Learn More
+- `npm run dev` - start lokal udviklingsserver
+- `npm run build` - lav produktionsbuild
+- `npm run start` - kør produktionsserver
+- `npm run lint` - kør ESLint
 
-To learn more about Next.js, take a look at the following resources:
+## Kerneflow
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+1. Virksomheden udfylder opsætningsformularen i appen.
+2. Data gemmes i Supabase (`businesses`) via API-ruter.
+3. Aktivering udløser website-ingest (`/api/ingest`) og embeddings i `documents`.
+4. Hjemmesiden indsætter embed-script:
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+```html
+<script src="https://YOUR_DOMAIN/widget.js?id=BUSINESS_ID"></script>
+```
 
-## Deploy on Vercel
+5. Widgeten sender brugerbeskeder til `/api/chat` med `business_id`.
+6. Chat-ruten laver vector-opslag via Supabase RPC (`match_documents`) og spørger OpenAI om det endelige svar.
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+## Krav til Supabase
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+Dette repository indeholder SQL til `conversations` i [sql/create_conversations_table.sql](sql/create_conversations_table.sql).
+
+Du skal også have følgende databaseobjekter, som appen bruger:
+
+- `businesses`-tabel
+- `documents`-tabel med vector/embedding-lagring
+- `match_documents` RPC-funktion til lighedssøgning
+
+Chat-ruten indsætter bruger/bot-udvekslinger i `conversations`, så dashboardet kan vise historik.
+
+## Vigtige endpoints
+
+- `POST /api/business-draft` - gem onboarding-kladde
+- `POST /api/submit` - færdiggør onboarding + send intern ordremail
+- `POST /api/activate` - ingest virksomhedens hjemmeside og markér som aktiveret
+- `POST /api/ingest` - hent websitets tekst og gem embeddings
+- `POST /api/chat` - svar fra chatbot under brug
+- `GET /api/widget-config?id=...` - hent branding/velkomst-konfiguration til widget
+- `GET|PUT|DELETE /api/admin/businesses` - adminstyring af virksomheder
+
+## Bemærkninger om widget
+
+- Hovedscriptet til indlejring leveres fra `public/widget.js`.
+- `widget.js` læser business-id fra URL-query-parameteren `id`.
+- Den understøtter valgfrie script-attributter:
+	- `data-name`
+	- `data-primary-color`
+	- `data-secondary-color`
+	- `data-fab-color`
+	- `data-font`
+- Hvis de er til stede, kan API-konfigurationen fra `/api/widget-config` overskrive standardværdier.
+
+## CORS og headers
+
+`next.config.ts` sætter:
+
+- `Access-Control-Allow-Origin: *` for `/widget.js` og `/api/:path*`
+- JavaScript content-type-header for `/widget.js`
+
+Det gør det muligt at indlejre widgeten og kalde API'et fra eksterne domæner.
+
+## Deployment
+
+Deploy på Vercel (anbefalet):
+
+1. Importér repository i Vercel
+2. Tilføj alle environment variables fra `.env.local`
+3. Sørg for at Supabase-skema og RPC er oprettet
+4. Deploy
+
+Efter deploy skal du bruge dit deployede domæne i embed-scriptet.
