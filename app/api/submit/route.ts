@@ -223,6 +223,8 @@ export async function POST(req: NextRequest) {
       <p><b>Velkomst:</b> ${form.welcome_message}</p>
       <p><b>Tone:</b> ${form.tone}</p>
       <p><b>Sprog:</b> ${form.language}</p>
+      <p><b>Custom instrukser:</b></p>
+      <pre>${form.custom_instructions || "-"}</pre>
       <hr/>
       <h3>FAQ</h3>
       <pre>${form.faq}</pre>

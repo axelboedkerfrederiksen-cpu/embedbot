@@ -7,16 +7,31 @@ const ONBOARDING_BUSINESS_ID_KEY = "onboarding_business_id";
 
 export default function Home() {
   type PlatformKey = "html" | "wordpress" | "shopify" | "squarespace" | "wix" | "webflow";
+  type SetupUser = { id: string; email?: string | null } | null;
   type GuideBlock = {
     heading?: string;
     steps: string[];
     codeSample?: string;
   };
 
+  const initialForm = {
+    name: "", website_url: "", industry: "", description: "",
+    support_email: "", phone: "", address: "", city: "",
+    hours_weekday: "", hours_saturday: "", hours_sunday: "",
+    response_time: "", fallback_action: "", complaint_action: "",
+    products_services: "", delivery_time: "", return_policy: "", payment_methods: "",
+    welcome_message: "", tone: "uformel", language: "dansk",
+    custom_instructions: "",
+    faq: "", cvr: "", social_media: "", current_offers: "", warranty: "", size_guide: "",
+    primary_color: "#000000", secondary_color: "#f1f1f1", chat_icon_color: "#000000",
+    font_choice: "DM Sans", logo_data_url: "", logo_file_name: ""
+  };
+  type FormState = typeof initialForm;
+
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [isLogin, setIsLogin] = useState(true);
-  const [user, setUser] = useState<any>(null);
+  const [user, setUser] = useState<SetupUser>(null);
   const [loading, setLoading] = useState(false);
   const [embedCode, setEmbedCode] = useState("");
   const [message, setMessage] = useState("");
@@ -25,17 +40,7 @@ export default function Home() {
   const [selectedPlatform, setSelectedPlatform] = useState<PlatformKey>("html");
   const [savingDraft, setSavingDraft] = useState(false);
 
-  const [form, setForm] = useState({
-    name: "", website_url: "", industry: "", description: "",
-    support_email: "", phone: "", address: "", city: "",
-    hours_weekday: "", hours_saturday: "", hours_sunday: "",
-    response_time: "", fallback_action: "", complaint_action: "",
-    products_services: "", delivery_time: "", return_policy: "", payment_methods: "",
-    welcome_message: "", tone: "uformel", language: "dansk",
-    faq: "", cvr: "", social_media: "", current_offers: "", warranty: "", size_guide: "",
-    primary_color: "#000000", secondary_color: "#f1f1f1", chat_icon_color: "#000000",
-    font_choice: "DM Sans", logo_data_url: "", logo_file_name: ""
-  });
+  const [form, setForm] = useState<FormState>(initialForm);
 
   const [supabase] = useState(() => createClient());
 
@@ -157,7 +162,7 @@ export default function Home() {
       clearPersistedBusinessId();
     }
 
-    setStep(6);
+    setStep(7);
   }, []);
 
   useEffect(() => {
@@ -186,7 +191,7 @@ export default function Home() {
     resetBusinessIdForStepOne();
   }, [user, step]);
 
-  const update = (key: string, value: string) => setForm(f => ({ ...f, [key]: value }));
+  const update = (key: keyof FormState, value: string) => setForm(f => ({ ...f, [key]: value }));
 
   const previewFontFamily: Record<string, string> = {
     "DM Sans": '"DM Sans", sans-serif',
@@ -270,7 +275,7 @@ export default function Home() {
 
     try {
       await saveBusinessDraft();
-      setStep(s => Math.min(s + 1, 5));
+      setStep(s => Math.min(s + 1, 6));
     } catch (error) {
       setMessage(formatSetupError(error));
     } finally {
@@ -317,13 +322,13 @@ export default function Home() {
     }
   }
 
-  const input = (label: string, key: string, placeholder = "", required = false) => (
+  const input = (label: string, key: keyof FormState, placeholder = "", required = false) => (
     <div className="field">
       <label className="field-label">
         {label}{required && <span className="required"> *</span>}
       </label>
       <input
-        value={(form as any)[key]}
+        value={form[key]}
         onChange={e => update(key, e.target.value)}
         placeholder={placeholder}
         className="field-input"
@@ -331,13 +336,13 @@ export default function Home() {
     </div>
   );
 
-  const textarea = (label: string, key: string, placeholder = "", required = false) => (
+  const textarea = (label: string, key: keyof FormState, placeholder = "", required = false) => (
     <div className="field">
       <label className="field-label">
         {label}{required && <span className="required"> *</span>}
       </label>
       <textarea
-        value={(form as any)[key]}
+        value={form[key]}
         onChange={e => update(key, e.target.value)}
         placeholder={placeholder}
         rows={3}
@@ -491,6 +496,10 @@ export default function Home() {
       .field-textarea {
         resize: vertical;
         min-height: 92px;
+      }
+
+      .field-textarea-large {
+        min-height: 260px;
       }
 
       .color-grid {
@@ -943,6 +952,23 @@ export default function Home() {
         </div>
       </div>
     ),
+    6: (
+      <div>
+        <h2 className="section-title">6. Custom instrukser</h2>
+        <p className="muted" style={{ marginTop: -8, marginBottom: 14 }}>
+          Her kan du skrive ekstra regler eller viden, som chatbotten altid skal tage hensyn til.
+        </p>
+        <div className="field">
+          <label className="field-label">Andet chatbotten skal vide</label>
+          <textarea
+            value={form.custom_instructions}
+            onChange={e => update("custom_instructions", e.target.value)}
+            placeholder={"Eksempler:\n- Svar altid kort og i punktform\n- Nævn altid leveringstid hvis kunden spørger om pris\n- Brug aldrig engelske svar\n- Ved tvivl, bed kunden kontakte os på support@..."}
+            className="field-input field-textarea field-textarea-large"
+          />
+        </div>
+      </div>
+    ),
   };
 
   const embedScript = embedCode || `<script src="https://embedbot1.vercel.app/widget.js?id=${businessId || "DIN_BUSINESS_ID"}"></script>`;
@@ -1058,7 +1084,7 @@ export default function Home() {
 
   const platformKeys: PlatformKey[] = ["html", "wordpress", "shopify", "squarespace", "wix", "webflow"];
 
-  if (step === 6) {
+  if (step === 7) {
     const selectedGuide = installGuides[selectedPlatform];
 
     return (
@@ -1128,10 +1154,10 @@ export default function Home() {
       <div className="eb-shell eb-animate">
         <div className="header-row">
           <h1 className="brand brand-main">Opsæt din chatbot</h1>
-          <span className="step-note">Trin {step} af 5</span>
+          <span className="step-note">Trin {Math.min(step, 6)} af 6</span>
         </div>
         <div className="progress-track">
-          <div className="progress-fill" style={{ width: `${(Math.min(step, 5) / 5) * 100}%` }} />
+          <div className="progress-fill" style={{ width: `${(Math.min(step, 6) / 6) * 100}%` }} />
         </div>
 
         <div className="eb-card">{sections[step]}</div>
@@ -1144,7 +1170,7 @@ export default function Home() {
             ← Tilbage
           </button>
         )}
-        {step < 5 ? (
+        {step < 6 ? (
           <button onClick={handleNextStep} disabled={savingDraft || loading} className="btn btn-primary" style={{ marginLeft: "auto" }}>
             {savingDraft ? "Gemmer..." : "Næste →"}
           </button>

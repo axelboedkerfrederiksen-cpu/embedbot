@@ -133,6 +133,9 @@ VALGFRIT:
 - Sociale medier: ${business?.social_media || ""}
 - Tilbud: ${business?.current_offers || ""}
 - Garanti: ${business?.warranty || ""}
+
+EKSTRA INSTRUKSER FRA VIRKSOMHEDEN:
+${business?.custom_instructions || "Ingen"}
 `;
 
   const completion = await openai.chat.completions.create({
