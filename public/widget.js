@@ -25,9 +25,9 @@
   const scriptName = (scriptTag.getAttribute("data-name") || "").trim();
 
   const defaultConfig = {
-    primary_color: "#000000",
-    secondary_color: "#000000",
-    fab_color: "#000000",
+    primary_color: "#3b82f6",
+    secondary_color: "#111827",
+    fab_color: "#3b82f6",
     logo_url: "",
     font_choice: "sans-serif",
     name: "",
@@ -88,19 +88,19 @@
   
   const container = document.createElement("div");
   container.innerHTML = `
-    <button type="button" id="eb-bubble" aria-label="Open support chat" style="position:fixed;bottom:24px;right:24px;width:56px;height:56px;background:#000;border-radius:50%;border:none;cursor:pointer;display:flex;align-items:center;justify-content:center;z-index:9999;">${OPEN_ICON}</button>
-    <div id="eb-box" style="display:none;position:fixed;bottom:90px;right:24px;width:340px;height:480px;background:white;border-radius:16px;box-shadow:0 8px 32px rgba(0,0,0,0.15);z-index:9999;flex-direction:column;overflow:hidden;">
-      <div id="eb-header" style="background:#000;color:white;padding:16px;font-weight:bold;display:flex;align-items:center;gap:10px;">
-        <img id="eb-logo" alt="Company logo" style="display:none;height:24px;width:auto;max-width:120px;object-fit:contain;" />
+    <button type="button" id="eb-bubble" aria-label="Open support chat" style="position:fixed;bottom:24px;right:24px;width:56px;height:56px;background:#3b82f6;border-radius:50%;border:none;cursor:pointer;display:flex;align-items:center;justify-content:center;z-index:9999;box-shadow:0 8px 22px rgba(59,130,246,0.25);">${OPEN_ICON}</button>
+    <div id="eb-box" style="display:none;position:fixed;bottom:90px;right:24px;width:340px;height:480px;background:#030712;border:1px solid rgba(255,255,255,0.05);border-radius:16px;box-shadow:0 8px 32px rgba(0,0,0,0.15);z-index:9999;flex-direction:column;overflow:hidden;color:#fff;">
+      <div id="eb-header" style="background:#3b82f6;color:white;padding:16px;font-weight:bold;display:flex;align-items:center;gap:10px;">
+        <img id="eb-logo" alt="Company logo" style="display:none;height:24px;width:auto;max-width:120px;object-fit:contain;filter:brightness(0) invert(1);" />
         <div style="display:flex;flex-direction:column;line-height:1.1;">
           <span id="eb-title">Support Chat</span>
           <span style="font-size:12px;font-weight:500;opacity:0.85;">Online</span>
         </div>
       </div>
       <div id="eb-messages" style="flex:1;overflow-y:auto;padding:14px 14px 12px 14px;display:flex;flex-direction:column;gap:2px;height:340px"></div>
-      <div style="padding:12px;border-top:1px solid #eee;display:flex;gap:8px;align-items:center;">
-        <input id="eb-input" aria-label="Message input" type="text" placeholder="Skriv dit spørgsmål..." style="flex:1;padding:11px 14px;border:1px solid #ddd;border-radius:999px;outline:none;pointer-events:all;position:relative;z-index:99999;color:black;background:white;cursor:text;user-select:text;-webkit-user-select:text;font-size:14px;font-family:inherit;caret-color:black;"/>
-        <button id="eb-send" aria-label="Send message" style="background:#000;color:white;border:none;padding:10px 16px;border-radius:999px;cursor:pointer;white-space:nowrap;">Send</button>
+      <div style="padding:12px;border-top:1px solid rgba(255,255,255,0.05);display:flex;gap:8px;align-items:center;background:#111827;">
+        <input id="eb-input" aria-label="Message input" type="text" placeholder="Skriv dit spørgsmål..." style="flex:1;padding:11px 14px;border:1px solid rgba(255,255,255,0.1);border-radius:999px;outline:none;pointer-events:all;position:relative;z-index:99999;color:#fff;background:#111827;cursor:text;user-select:text;-webkit-user-select:text;font-size:14px;font-family:inherit;caret-color:#fff;"/>
+        <button id="eb-send" aria-label="Send message" style="background:#3b82f6;color:white;border:none;padding:10px 16px;border-radius:999px;cursor:pointer;white-space:nowrap;">Send</button>
       </div>
     </div>
   `;
@@ -209,11 +209,11 @@
 
     const msg = document.createElement("div");
     const userBubbleColor = widgetConfig.secondary_color || defaultConfig.secondary_color;
-    msg.style.cssText = `background:${isUser ? userBubbleColor : "#f1f1f1"};color:${isUser ? "white" : "black"};padding:10px 14px;border-radius:14px;display:inline-block;max-width:100%;font-size:14px;line-height:1.35;word-break:break-word;`;
+    msg.style.cssText = `background:${isUser ? userBubbleColor : "rgba(255,255,255,0.05)"};color:white;padding:10px 14px;border-radius:14px;display:inline-block;max-width:100%;font-size:14px;line-height:1.35;word-break:break-word;`;
     msg.textContent = text;
 
     const meta = document.createElement("div");
-    meta.style.cssText = "display:flex;gap:6px;margin-top:4px;font-size:11px;color:#8a8a8a;align-items:center;";
+    meta.style.cssText = "display:flex;gap:6px;margin-top:4px;font-size:11px;color:#6b7280;align-items:center;";
 
     const time = document.createElement("span");
     time.textContent = timestamp;

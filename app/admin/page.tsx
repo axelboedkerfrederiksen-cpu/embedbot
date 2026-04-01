@@ -43,7 +43,7 @@ type Toast = {
 };
 
 const statsCardClass =
-  "rounded-2xl border border-slate-800/80 bg-slate-900/70 p-4 shadow-[0_10px_30px_rgba(2,6,23,0.45)] backdrop-blur";
+  "rounded-2xl border border-white/5 bg-[rgba(17,24,39,0.70)] p-4 shadow-[0_10px_30px_rgba(2,6,23,0.45)] backdrop-blur";
 
 function getFirstNumericField(row: Business, keys: string[]): number {
   for (const key of keys) {
@@ -419,14 +419,14 @@ export default function AdminPage() {
 
   if (!isAuthenticated) {
     return (
-      <main className="min-h-screen bg-[radial-gradient(circle_at_top_left,_#1f2937,_#020617_55%)] px-4 py-16 text-slate-100">
-        <div className="mx-auto w-full max-w-md rounded-3xl border border-slate-700/60 bg-slate-900/80 p-8 shadow-2xl backdrop-blur">
+      <main className="min-h-screen bg-[#030712] px-4 py-16 text-white">
+        <div className="mx-auto w-full max-w-md rounded-3xl border border-white/10 bg-[rgba(17,24,39,0.80)] p-8 shadow-2xl backdrop-blur">
           <h1 className="text-3xl font-semibold tracking-tight">EmbedBot Admin</h1>
-          <p className="mt-2 text-sm text-slate-300">Indtast adgangskoden for at fortsatte.</p>
+          <p className="mt-2 text-sm text-gray-400">Indtast adgangskoden for at fortsatte.</p>
 
           <form onSubmit={handleLogin} className="mt-6 space-y-4">
             <div>
-              <label className="mb-2 block text-xs font-medium uppercase tracking-[0.16em] text-slate-400">
+              <label className="mb-2 block text-xs font-medium uppercase tracking-[0.16em] text-gray-500">
                 Adgangskode
               </label>
               <input
@@ -434,18 +434,18 @@ export default function AdminPage() {
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 placeholder="••••••••"
-                className="w-full rounded-xl border border-slate-700 bg-slate-950/70 px-3 py-2.5 text-sm text-slate-100 placeholder:text-slate-500 focus:border-slate-500 focus:outline-none"
+                className="w-full rounded-xl border border-white/10 bg-[rgba(3,7,18,0.70)] px-3 py-2.5 text-sm text-white placeholder:text-gray-600 focus:border-blue-500 focus:outline-none"
               />
             </div>
 
             <button
               type="submit"
-              className="w-full rounded-xl bg-white px-4 py-2.5 text-sm font-semibold text-slate-900 transition hover:bg-slate-200"
+              className="w-full rounded-xl bg-blue-500 px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-blue-400"
             >
               Log ind
             </button>
 
-            {authError ? <p className="text-sm text-slate-300">{authError}</p> : null}
+            {authError ? <p className="text-sm text-gray-400">{authError}</p> : null}
           </form>
         </div>
       </main>
@@ -453,7 +453,7 @@ export default function AdminPage() {
   }
 
   return (
-    <main className="min-h-screen bg-slate-950 text-slate-100">
+    <main className="min-h-screen bg-[#030712] text-white">
       <div className="pointer-events-none fixed inset-0 -z-10 bg-[radial-gradient(circle_at_20%_10%,rgba(255,255,255,0.08),transparent_35%),radial-gradient(circle_at_80%_20%,rgba(148,163,184,0.08),transparent_30%),radial-gradient(circle_at_50%_80%,rgba(255,255,255,0.06),transparent_35%)]" />
 
       <div className="flex min-h-screen">
@@ -464,7 +464,7 @@ export default function AdminPage() {
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
               onClick={() => setSidebarOpen(false)}
-              className="fixed inset-0 z-20 bg-slate-950/70 lg:hidden"
+              className="fixed inset-0 z-20 bg-[rgba(3,7,18,0.70)] lg:hidden"
               aria-label="Luk menu"
             />
           ) : null}
@@ -474,22 +474,22 @@ export default function AdminPage() {
           initial={{ x: -40, opacity: 0 }}
           animate={{ x: 0, opacity: 1 }}
           transition={{ duration: 0.35 }}
-          className={`fixed inset-y-0 left-0 z-30 w-72 border-r border-slate-800 bg-slate-950/95 p-5 backdrop-blur lg:static lg:translate-x-0 ${sidebarOpen ? "translate-x-0" : "-translate-x-full lg:translate-x-0"} transition-transform duration-300`}
+          className={`fixed inset-y-0 left-0 z-30 w-72 border-r border-white/5 bg-[rgba(3,7,18,0.95)] p-5 backdrop-blur lg:static lg:translate-x-0 ${sidebarOpen ? "translate-x-0" : "-translate-x-full lg:translate-x-0"} transition-transform duration-300`}
         >
           <div className="flex items-center justify-between gap-2">
             <div className="flex items-center gap-3">
-              <div className="grid h-10 w-10 place-items-center rounded-xl bg-white/20 text-slate-200">
+              <div className="grid h-10 w-10 place-items-center rounded-xl bg-blue-500/20 text-gray-300">
                 <Bot size={20} />
               </div>
               <div>
                 <p className="text-sm font-semibold">EmbedBot</p>
-                <p className="text-xs text-slate-400">Admin Console</p>
+                <p className="text-xs text-gray-500">Admin Console</p>
               </div>
             </div>
 
             <button
               onClick={() => setSidebarOpen(false)}
-              className="rounded-lg border border-slate-700 p-1.5 text-slate-300 lg:hidden"
+              className="rounded-lg border border-white/10 p-1.5 text-gray-400 lg:hidden"
               aria-label="Luk sidebar"
             >
               <X size={16} />
@@ -497,33 +497,33 @@ export default function AdminPage() {
           </div>
 
           <nav className="mt-8 space-y-1">
-            <button className="flex w-full items-center gap-3 rounded-xl bg-white/15 px-3 py-2 text-sm font-medium text-slate-200">
+            <button className="flex w-full items-center gap-3 rounded-xl bg-blue-500/20 px-3 py-2 text-sm font-medium text-gray-300">
               <LayoutDashboard size={16} />
               Overblik
             </button>
-            <button className="flex w-full items-center gap-3 rounded-xl px-3 py-2 text-sm text-slate-300 transition hover:bg-slate-900">
+            <button className="flex w-full items-center gap-3 rounded-xl px-3 py-2 text-sm text-gray-400 transition hover:bg-[#111827]">
               <Building2 size={16} />
               Virksomheder
             </button>
-            <button className="flex w-full items-center gap-3 rounded-xl px-3 py-2 text-sm text-slate-300 transition hover:bg-slate-900">
+            <button className="flex w-full items-center gap-3 rounded-xl px-3 py-2 text-sm text-gray-400 transition hover:bg-[#111827]">
               <BarChart3 size={16} />
               Analytics
             </button>
-            <button className="flex w-full items-center gap-3 rounded-xl px-3 py-2 text-sm text-slate-300 transition hover:bg-slate-900">
+            <button className="flex w-full items-center gap-3 rounded-xl px-3 py-2 text-sm text-gray-400 transition hover:bg-[#111827]">
               <Activity size={16} />
               Driftstatus
             </button>
           </nav>
 
-          <div className="mt-8 rounded-xl border border-slate-800 bg-slate-900/70 p-3">
-            <p className="text-xs uppercase tracking-[0.15em] text-slate-500">System</p>
+          <div className="mt-8 rounded-xl border border-white/5 bg-[rgba(17,24,39,0.70)] p-3">
+            <p className="text-xs uppercase tracking-[0.15em] text-gray-600">System</p>
             <div className="mt-2 flex items-center justify-between">
-              <span className="text-sm text-slate-300">Embed API</span>
+              <span className="text-sm text-gray-400">Embed API</span>
               <span
                 className={`rounded-full px-2.5 py-0.5 text-xs font-medium ${
                   systemOnline
-                    ? "bg-slate-700 text-slate-100"
-                    : "bg-slate-800 text-slate-300"
+                    ? "bg-blue-500/20 text-white"
+                    : "bg-[rgba(17,24,39,0.9)] text-gray-400"
                 }`}
               >
                 {systemOnline ? "Online" : "Offline"}
@@ -533,19 +533,19 @@ export default function AdminPage() {
         </motion.aside>
 
         <section className="w-full lg:pl-0">
-          <header className="sticky top-0 z-10 border-b border-slate-800/80 bg-slate-950/85 backdrop-blur">
+          <header className="sticky top-0 z-10 border-b border-white/5 bg-[rgba(3,7,18,0.80)] backdrop-blur">
             <div className="mx-auto flex w-full max-w-7xl items-center justify-between gap-3 px-4 py-3 sm:px-6">
               <div className="flex items-center gap-3">
                 <button
                   onClick={() => setSidebarOpen(true)}
-                  className="rounded-xl border border-slate-700 p-2 text-slate-300 lg:hidden"
+                  className="rounded-xl border border-white/10 p-2 text-gray-400 lg:hidden"
                   aria-label="Aabn sidebar"
                 >
                   <Menu size={18} />
                 </button>
 
                 <div>
-                  <p className="text-xs text-slate-400">Dashboard / Admin</p>
+                  <p className="text-xs text-gray-500">Dashboard / Admin</p>
                   <h1 className="text-base font-semibold sm:text-lg">Virksomheds-overblik</h1>
                 </div>
               </div>
@@ -553,7 +553,7 @@ export default function AdminPage() {
               <button
                 onClick={fetchBusinesses}
                 disabled={loading}
-                className="inline-flex items-center gap-2 rounded-xl border border-slate-700 bg-slate-900 px-3 py-2 text-sm font-medium text-slate-200 transition hover:border-slate-500 hover:text-white disabled:opacity-60"
+                className="inline-flex items-center gap-2 rounded-xl border border-white/10 bg-[#111827] px-3 py-2 text-sm font-medium text-gray-300 transition hover:border-white/20 hover:text-white disabled:opacity-60"
               >
                 <RefreshCcw size={15} className={loading ? "animate-spin" : ""} />
                 {loading ? "Henter" : "Opdater liste"}
@@ -569,7 +569,7 @@ export default function AdminPage() {
               className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-5"
             >
               <article className={statsCardClass}>
-                <div className="flex items-center justify-between text-slate-400">
+                <div className="flex items-center justify-between text-gray-500">
                   <p className="text-xs uppercase tracking-[0.15em]">Aktive chatbots</p>
                   <Bot size={16} />
                 </div>
@@ -577,7 +577,7 @@ export default function AdminPage() {
               </article>
 
               <article className={statsCardClass}>
-                <div className="flex items-center justify-between text-slate-400">
+                <div className="flex items-center justify-between text-gray-500">
                   <p className="text-xs uppercase tracking-[0.15em]">Virksomheder</p>
                   <Building2 size={16} />
                 </div>
@@ -585,7 +585,7 @@ export default function AdminPage() {
               </article>
 
               <article className={statsCardClass}>
-                <div className="flex items-center justify-between text-slate-400">
+                <div className="flex items-center justify-between text-gray-500">
                   <p className="text-xs uppercase tracking-[0.15em]">Beskeder besvaret</p>
                   <BarChart3 size={16} />
                 </div>
@@ -593,7 +593,7 @@ export default function AdminPage() {
               </article>
 
               <article className={statsCardClass}>
-                <div className="flex items-center justify-between text-slate-400">
+                <div className="flex items-center justify-between text-gray-500">
                   <p className="text-xs uppercase tracking-[0.15em]">Gns. svartid</p>
                   <Gauge size={16} />
                 </div>
@@ -601,45 +601,45 @@ export default function AdminPage() {
               </article>
 
               <article className={statsCardClass}>
-                <div className="flex items-center justify-between text-slate-400">
+                <div className="flex items-center justify-between text-gray-500">
                   <p className="text-xs uppercase tracking-[0.15em]">System status</p>
                   <Server size={16} />
                 </div>
-                <p className={`mt-2 text-2xl font-semibold ${systemOnline ? "text-slate-100" : "text-slate-300"}`}>
+                <p className={`mt-2 text-2xl font-semibold ${systemOnline ? "text-white" : "text-gray-400"}`}>
                   {systemOnline ? "Online" : "Offline"}
                 </p>
               </article>
             </motion.section>
 
-            <section className="rounded-2xl border border-slate-800/90 bg-slate-900/70 p-4 backdrop-blur sm:p-5">
+            <section className="rounded-2xl border border-white/5 bg-[rgba(17,24,39,0.70)] p-4 backdrop-blur sm:p-5">
               <div className="mb-4 flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
                 <h2 className="text-lg font-semibold">Virksomheder</h2>
 
                 <div className="flex flex-col gap-2 sm:flex-row">
                   <label className="relative">
-                    <Search className="pointer-events-none absolute left-3 top-2.5 text-slate-500" size={16} />
+                    <Search className="pointer-events-none absolute left-3 top-2.5 text-gray-600" size={16} />
                     <input
                       value={searchTerm}
                       onChange={(e) => setSearchTerm(e.target.value)}
                       placeholder="Soeg navn, email, website"
-                      className="w-full rounded-xl border border-slate-700 bg-slate-950/70 py-2 pl-9 pr-3 text-sm text-slate-100 placeholder:text-slate-500 focus:border-slate-500 focus:outline-none"
+                      className="w-full rounded-xl border border-white/10 bg-[rgba(3,7,18,0.70)] py-2 pl-9 pr-3 text-sm text-white placeholder:text-gray-600 focus:border-blue-500 focus:outline-none"
                     />
                   </label>
 
-                  <div className="flex items-center gap-2 rounded-xl border border-slate-700 bg-slate-950/70 px-3 py-2 text-sm text-slate-300">
+                  <div className="flex items-center gap-2 rounded-xl border border-white/10 bg-[rgba(3,7,18,0.70)] px-3 py-2 text-sm text-gray-400">
                     <Filter size={15} />
                     <select
                       value={statusFilter}
                       onChange={(e) => setStatusFilter(e.target.value as "all" | "active" | "inactive")}
                       className="bg-transparent text-sm outline-none"
                     >
-                      <option value="all" className="bg-slate-900">
+                      <option value="all" className="bg-[#111827]">
                         Alle
                       </option>
-                      <option value="active" className="bg-slate-900">
+                      <option value="active" className="bg-[#111827]">
                         Aktiv
                       </option>
-                      <option value="inactive" className="bg-slate-900">
+                      <option value="inactive" className="bg-[#111827]">
                         Inaktiv
                       </option>
                     </select>
@@ -648,7 +648,7 @@ export default function AdminPage() {
                   <select
                     value={sortBy}
                     onChange={(e) => setSortBy(e.target.value as "date" | "name" | "status")}
-                    className="rounded-xl border border-slate-700 bg-slate-950/70 px-3 py-2 text-sm text-slate-300 outline-none focus:border-slate-500"
+                    className="rounded-xl border border-white/10 bg-[rgba(3,7,18,0.70)] px-3 py-2 text-sm text-gray-400 outline-none focus:border-blue-500"
                   >
                     <option value="date">Sorter: Dato</option>
                     <option value="name">Sorter: Navn</option>
@@ -658,31 +658,31 @@ export default function AdminPage() {
               </div>
 
               {error ? (
-                <p className="mb-4 rounded-xl border border-slate-700 bg-slate-900 px-3 py-2 text-sm text-slate-300">
+                <p className="mb-4 rounded-xl border border-white/10 bg-[#111827] px-3 py-2 text-sm text-gray-400">
                   {error}
                 </p>
               ) : null}
 
               {lastUpdatedAt ? (
-                <p className="mb-3 text-xs text-slate-500">Sidst opdateret: {lastUpdatedAt.toLocaleString("da-DK")}</p>
+                <p className="mb-3 text-xs text-gray-600">Sidst opdateret: {lastUpdatedAt.toLocaleString("da-DK")}</p>
               ) : null}
 
               {loading ? (
                 <div className="grid gap-3">
                   {Array.from({ length: 4 }).map((_, index) => (
-                    <div key={`skeleton-${index}`} className="animate-pulse rounded-xl border border-slate-800 bg-slate-900/80 p-4">
-                      <div className="h-4 w-40 rounded bg-slate-700" />
-                      <div className="mt-3 h-3 w-56 rounded bg-slate-800" />
-                      <div className="mt-2 h-3 w-44 rounded bg-slate-800" />
+                    <div key={`skeleton-${index}`} className="animate-pulse rounded-xl border border-white/5 bg-[rgba(17,24,39,0.80)] p-4">
+                      <div className="h-4 w-40 rounded bg-blue-500/20" />
+                      <div className="mt-3 h-3 w-56 rounded bg-[rgba(17,24,39,0.9)]" />
+                      <div className="mt-2 h-3 w-44 rounded bg-[rgba(17,24,39,0.9)]" />
                     </div>
                   ))}
                 </div>
               ) : null}
 
               {!loading && filteredBusinesses.length === 0 ? (
-                <div className="rounded-2xl border border-dashed border-slate-700 bg-slate-950/60 px-6 py-14 text-center">
-                  <p className="text-base font-medium text-slate-200">Ingen virksomheder matcher dit filter</p>
-                  <p className="mt-1 text-sm text-slate-500">Proev en anden soegning eller opdater listen.</p>
+                <div className="rounded-2xl border border-dashed border-white/10 bg-[rgba(3,7,18,0.60)] px-6 py-14 text-center">
+                  <p className="text-base font-medium text-gray-300">Ingen virksomheder matcher dit filter</p>
+                  <p className="mt-1 text-sm text-gray-600">Proev en anden soegning eller opdater listen.</p>
                 </div>
               ) : null}
 
@@ -722,7 +722,7 @@ export default function AdminPage() {
                         initial={{ opacity: 0, y: 10 }}
                         animate={{ opacity: 1, y: 0 }}
                         transition={{ duration: 0.2 }}
-                        className="rounded-xl border border-slate-800 bg-slate-950/70 p-4"
+                        className="rounded-xl border border-white/5 bg-[rgba(3,7,18,0.70)] p-4"
                       >
                         <div className="flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between">
                           <div className="min-w-0">
@@ -731,15 +731,15 @@ export default function AdminPage() {
                               <span
                                 className={`rounded-full px-2.5 py-0.5 text-xs font-semibold ${
                                   isActive
-                                    ? "bg-slate-700 text-slate-100"
-                                    : "bg-slate-800 text-slate-300"
+                                    ? "bg-blue-500/20 text-white"
+                                    : "bg-[rgba(17,24,39,0.9)] text-gray-400"
                                 }`}
                               >
                                 {isActive ? "Aktiv" : "Inaktiv"}
                               </span>
                             </div>
 
-                            <div className="mt-2 flex flex-wrap gap-x-4 gap-y-1 text-sm text-slate-400">
+                            <div className="mt-2 flex flex-wrap gap-x-4 gap-y-1 text-sm text-gray-500">
                               <p>Website: {business.website_url || "-"}</p>
                               <p>Email: {business.support_email || "-"}</p>
                               <p>
@@ -757,14 +757,14 @@ export default function AdminPage() {
                             <button
                               onClick={() => activateBusiness(business.id)}
                               disabled={isActive || isActivating || deletingId === business.id || savingId === business.id}
-                              className="rounded-lg border border-slate-700 px-3 py-1.5 text-sm text-slate-200 transition hover:border-slate-500 disabled:cursor-not-allowed disabled:opacity-60"
+                              className="rounded-lg border border-white/10 px-3 py-1.5 text-sm text-gray-300 transition hover:border-white/20 disabled:cursor-not-allowed disabled:opacity-60"
                             >
                               {isActive ? "Aktiv" : isActivating ? "Aktiverer..." : "Aktivér"}
                             </button>
 
                             <button
                               onClick={() => toggleExpand(business.id)}
-                              className="rounded-lg border border-slate-700 px-3 py-1.5 text-sm text-slate-200 transition hover:border-slate-500"
+                              className="rounded-lg border border-white/10 px-3 py-1.5 text-sm text-gray-300 transition hover:border-white/20"
                             >
                               {isOpen ? "Skjul" : "Se info"}
                             </button>
@@ -783,7 +783,7 @@ export default function AdminPage() {
                                   setPendingDeleteBusiness(business);
                                 }
                               }}
-                              className="rounded-lg border border-slate-700 bg-slate-900 px-3 py-1.5 text-sm text-slate-200 outline-none"
+                              className="rounded-lg border border-white/10 bg-[#111827] px-3 py-1.5 text-sm text-gray-300 outline-none"
                               disabled={
                                 activatingId === business.id ||
                                 deletingId === business.id ||
@@ -798,7 +798,7 @@ export default function AdminPage() {
 
                             <Link
                               href={`/dashboard/${business.id}/samtaler`}
-                              className="rounded-lg border border-slate-700 px-3 py-1.5 text-sm text-slate-200 transition hover:border-slate-500"
+                              className="rounded-lg border border-white/10 px-3 py-1.5 text-sm text-gray-300 transition hover:border-white/20"
                             >
                               Samtaler
                             </Link>
@@ -812,20 +812,20 @@ export default function AdminPage() {
                               animate={{ opacity: 1, height: "auto" }}
                               exit={{ opacity: 0, height: 0 }}
                               transition={{ duration: 0.2 }}
-                              className="mt-4 overflow-hidden border-t border-slate-800 pt-4"
+                              className="mt-4 overflow-hidden border-t border-white/5 pt-4"
                             >
                               {isActive ? (
-                                <div className="rounded-xl border border-slate-800 bg-slate-900/70 p-3">
+                                <div className="rounded-xl border border-white/5 bg-[rgba(17,24,39,0.70)] p-3">
                                   <div className="mb-2 flex items-center justify-between gap-2">
-                                    <p className="text-xs uppercase tracking-[0.16em] text-slate-500">Install script</p>
+                                    <p className="text-xs uppercase tracking-[0.16em] text-gray-600">Install script</p>
                                     <button
                                       onClick={() => copyScript(installScript)}
-                                      className="inline-flex items-center gap-1 rounded-md border border-slate-700 px-2 py-1 text-xs text-slate-300 transition hover:border-slate-500 hover:text-slate-200"
+                                      className="inline-flex items-center gap-1 rounded-md border border-white/10 px-2 py-1 text-xs text-gray-400 transition hover:border-white/20 hover:text-gray-300"
                                     >
                                       <Copy size={12} /> Kopier
                                     </button>
                                   </div>
-                                  <pre className="overflow-x-auto whitespace-pre-wrap break-all rounded-lg bg-slate-950 p-3 text-xs text-slate-200">
+                                  <pre className="overflow-x-auto whitespace-pre-wrap break-all rounded-lg bg-[#030712] p-3 text-xs text-gray-300">
                                     {installScript}
                                   </pre>
                                 </div>
@@ -837,13 +837,13 @@ export default function AdminPage() {
                                     <button
                                       onClick={() => saveBusinessEdit(business)}
                                       disabled={savingId === business.id}
-                                      className="inline-flex items-center gap-1 rounded-lg bg-white px-3 py-1.5 text-sm font-semibold text-slate-900 transition hover:bg-slate-200 disabled:opacity-60"
+                                      className="inline-flex items-center gap-1 rounded-lg bg-blue-500 px-3 py-1.5 text-sm font-semibold text-white transition hover:bg-blue-400 disabled:opacity-60"
                                     >
                                       <Pencil size={14} /> {savingId === business.id ? "Gemmer" : "Gem"}
                                     </button>
                                     <button
                                       onClick={cancelEditing}
-                                      className="rounded-lg border border-slate-700 px-3 py-1.5 text-sm"
+                                      className="rounded-lg border border-white/10 px-3 py-1.5 text-sm"
                                     >
                                       Annuller
                                     </button>
@@ -852,7 +852,7 @@ export default function AdminPage() {
 
                                 <button
                                   onClick={() => setPendingDeleteBusiness(business)}
-                                  className="inline-flex items-center gap-1 rounded-lg border border-slate-600 px-3 py-1.5 text-sm text-slate-200 transition hover:bg-slate-800"
+                                  className="inline-flex items-center gap-1 rounded-lg border border-white/10 px-3 py-1.5 text-sm text-gray-300 transition hover:bg-[rgba(17,24,39,0.9)]"
                                 >
                                   <Trash2 size={14} /> Slet
                                 </button>
@@ -873,22 +873,22 @@ export default function AdminPage() {
                                   return (
                                     <div
                                       key={`${business.id}-${key}`}
-                                      className="grid grid-cols-1 gap-1 rounded-lg border border-slate-800/80 bg-slate-900/40 p-2 text-sm md:grid-cols-[220px_1fr]"
+                                      className="grid grid-cols-1 gap-1 rounded-lg border border-white/5 bg-[rgba(17,24,39,0.40)] p-2 text-sm md:grid-cols-[220px_1fr]"
                                     >
-                                      <span className="font-medium text-slate-400">{key}</span>
-                                      <span className="text-slate-200">
+                                      <span className="font-medium text-gray-500">{key}</span>
+                                      <span className="text-gray-300">
                                         {isEditing && !isReadOnlyKey ? (
                                           isTextareaField(key) ? (
                                             <textarea
                                               value={draft[key] ?? ""}
                                               onChange={(e) => updateDraftValue(business.id, key, e.target.value)}
-                                              className="min-h-[84px] w-full rounded-md border border-slate-700 bg-slate-950 px-2 py-1.5 text-sm text-slate-100 outline-none focus:border-slate-500"
+                                              className="min-h-[84px] w-full rounded-md border border-white/10 bg-[#030712] px-2 py-1.5 text-sm text-white outline-none focus:border-blue-500"
                                             />
                                           ) : (
                                             <input
                                               value={draft[key] ?? ""}
                                               onChange={(e) => updateDraftValue(business.id, key, e.target.value)}
-                                              className="w-full rounded-md border border-slate-700 bg-slate-950 px-2 py-1.5 text-sm text-slate-100 outline-none focus:border-slate-500"
+                                              className="w-full rounded-md border border-white/10 bg-[#030712] px-2 py-1.5 text-sm text-white outline-none focus:border-blue-500"
                                             />
                                           )
                                         ) : (
@@ -918,30 +918,30 @@ export default function AdminPage() {
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            className="fixed inset-0 z-40 grid place-items-center bg-slate-950/75 p-4"
+            className="fixed inset-0 z-40 grid place-items-center bg-[rgba(3,7,18,0.75)] p-4"
           >
             <motion.div
               initial={{ scale: 0.95, y: 8 }}
               animate={{ scale: 1, y: 0 }}
               exit={{ scale: 0.95, y: 8 }}
-              className="w-full max-w-md rounded-2xl border border-slate-800 bg-slate-900 p-5"
+              className="w-full max-w-md rounded-2xl border border-white/5 bg-[#111827] p-5"
             >
               <h3 className="text-lg font-semibold">Slet virksomhed</h3>
-              <p className="mt-2 text-sm text-slate-300">
+              <p className="mt-2 text-sm text-gray-400">
                 Er du sikker pa at du vil slette <strong>{pendingDeleteBusiness.name || "denne virksomhed"}</strong>? Denne handling kan ikke fortrydes.
               </p>
 
               <div className="mt-5 flex justify-end gap-2">
                 <button
                   onClick={() => setPendingDeleteBusiness(null)}
-                  className="rounded-lg border border-slate-700 px-3 py-1.5 text-sm text-slate-200"
+                  className="rounded-lg border border-white/10 px-3 py-1.5 text-sm text-gray-300"
                 >
                   Annuller
                 </button>
                 <button
                   onClick={() => deleteBusiness(pendingDeleteBusiness.id)}
                   disabled={deletingId === pendingDeleteBusiness.id}
-                  className="rounded-lg bg-white px-3 py-1.5 text-sm font-semibold text-slate-900 transition hover:bg-slate-200 disabled:opacity-60"
+                  className="rounded-lg bg-blue-500 px-3 py-1.5 text-sm font-semibold text-white transition hover:bg-blue-400 disabled:opacity-60"
                 >
                   {deletingId === pendingDeleteBusiness.id ? "Sletter" : "Slet"}
                 </button>
@@ -961,10 +961,10 @@ export default function AdminPage() {
               exit={{ opacity: 0, x: 20 }}
               className={`rounded-xl border px-3 py-2 text-sm shadow-xl ${
                 toast.type === "success"
-                  ? "border-slate-600 bg-slate-900 text-slate-100"
+                  ? "border-white/10 bg-[#111827] text-white"
                   : toast.type === "error"
-                    ? "border-slate-700 bg-slate-900 text-slate-200"
-                    : "border-slate-600 bg-slate-800 text-slate-200"
+                    ? "border-white/10 bg-[#111827] text-gray-300"
+                    : "border-white/10 bg-[rgba(17,24,39,0.9)] text-gray-300"
               }`}
             >
               {toast.message}

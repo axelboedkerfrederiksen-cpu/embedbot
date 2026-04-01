@@ -423,8 +423,8 @@ export default function DashboardPage() {
           minHeight: "100dvh",
           display: "grid",
           placeItems: "center",
-          background: "#f6f3ed",
-          color: "#1a1713",
+          background: "#030712",
+          color: "#ffffff",
           fontFamily: '"DM Sans", sans-serif',
         }}
       >
@@ -437,8 +437,8 @@ export default function DashboardPage() {
     <main
       style={{
         minHeight: "100dvh",
-        background: "#f6f3ed",
-        color: "#1a1713",
+        background: "#030712",
+        color: "#ffffff",
         fontFamily: '"DM Sans", sans-serif',
         paddingTop: 48,
         paddingBottom: 56,
@@ -447,8 +447,8 @@ export default function DashboardPage() {
       }}
     >
       <div style={{ width: "100%", maxWidth: 960, margin: "0 auto", display: "grid", gap: 20 }}>
-        <nav style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 12, paddingBottom: 20, borderBottom: "1px solid rgba(26,23,19,0.12)" }}>
-          <Link href="/" style={{ fontSize: 18, fontWeight: 600, textDecoration: "none", color: "#1a1713" }}>
+        <nav style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 12, paddingBottom: 20, borderBottom: "1px solid rgba(255,255,255,0.05)" }}>
+          <Link href="/" style={{ fontSize: 18, fontWeight: 600, textDecoration: "none", color: "#ffffff" }}>
             EmbedBot
           </Link>
           <div style={{ display: "flex", alignItems: "center", gap: 16, minWidth: 0 }}>
@@ -458,7 +458,7 @@ export default function DashboardPage() {
                 overflow: "hidden",
                 textOverflow: "ellipsis",
                 whiteSpace: "nowrap",
-                color: "#706c65",
+                color: "#9ca3af",
                 fontSize: 13,
               }}
             >
@@ -468,9 +468,9 @@ export default function DashboardPage() {
               type="button"
               onClick={handleLogout}
               style={{
-                border: "1px solid rgba(26,23,19,0.22)",
+                border: "1px solid rgba(255,255,255,0.10)",
                 background: "transparent",
-                color: "#1a1713",
+                color: "#ffffff",
                 fontSize: 13,
                 fontWeight: 500,
                 padding: "6px 12px",
@@ -495,7 +495,7 @@ export default function DashboardPage() {
         >
           <div>
             <h1 style={{ margin: 0, fontSize: 28, lineHeight: 1.1, fontWeight: 600 }}>Overblik</h1>
-            <p style={{ margin: "6px 0 0", fontSize: 14, color: "#706c65", fontWeight: 300 }}>
+            <p style={{ margin: "6px 0 0", fontSize: 14, color: "#9ca3af", fontWeight: 300 }}>
               Her er hvorfor det betyder noget for din forretning
             </p>
           </div>
@@ -505,8 +505,8 @@ export default function DashboardPage() {
               display: "inline-flex",
               alignItems: "center",
               justifyContent: "center",
-              background: "#1a1713",
-              color: "#f6f3ed",
+              background: "#3b82f6",
+              color: "#ffffff",
               textDecoration: "none",
               fontSize: 14,
               fontWeight: 500,
@@ -523,9 +523,9 @@ export default function DashboardPage() {
           <p
             style={{
               margin: 0,
-              background: "#fff1f2",
-              border: "1px solid #fecdd3",
-              color: "#be123c",
+              background: "rgba(59,130,246,0.12)",
+              border: "1px solid rgba(96,165,250,0.35)",
+              color: "#60a5fa",
               borderRadius: 5,
               padding: "10px 12px",
               fontSize: 14,
@@ -537,8 +537,8 @@ export default function DashboardPage() {
 
         <section
           style={{
-            background: "#1a1713",
-            color: "#f6f3ed",
+            background: "#111827",
+            color: "#ffffff",
             borderRadius: 10,
             padding: 18,
             display: "grid",
@@ -573,8 +573,8 @@ export default function DashboardPage() {
 
         <section
           style={{
-            background: "#fff",
-            border: "1px solid rgba(26,23,19,0.12)",
+            background: "#111827",
+            border: "1px solid rgba(255,255,255,0.05)",
             borderRadius: 10,
             padding: 16,
             display: "grid",
@@ -583,7 +583,7 @@ export default function DashboardPage() {
         >
           <div>
             <h2 style={{ margin: 0, fontSize: 18 }}>Udvikling (7 dage)</h2>
-            <p style={{ margin: "6px 0 0", fontSize: 13, color: "#706c65" }}>Sort = samtaler, sand = leads</p>
+            <p style={{ margin: "6px 0 0", fontSize: 13, color: "#9ca3af" }}>Sort = samtaler, sand = leads</p>
           </div>
 
           <div style={{ display: "grid", gridTemplateColumns: "repeat(7, minmax(0, 1fr))", gap: 8, alignItems: "end", height: 132 }}>
@@ -594,10 +594,10 @@ export default function DashboardPage() {
               return (
                 <div key={`${day.label}-${index}`} style={{ display: "grid", gap: 6, justifyItems: "center" }}>
                   <div style={{ display: "flex", alignItems: "end", gap: 4, height: 96 }}>
-                    <div title={`Samtaler: ${day.conversations}`} style={{ width: 12, height: conversationHeight, background: "#1a1713", borderRadius: 4 }} />
-                    <div title={`Leads: ${day.leads}`} style={{ width: 12, height: leadHeight, background: "#b89c73", borderRadius: 4 }} />
+                    <div title={`Samtaler: ${day.conversations}`} style={{ width: 12, height: conversationHeight, background: "#60a5fa", borderRadius: 4 }} />
+                    <div title={`Leads: ${day.leads}`} style={{ width: 12, height: leadHeight, background: "#3b82f6", borderRadius: 4 }} />
                   </div>
-                  <span style={{ fontSize: 11, color: "#706c65", textTransform: "capitalize" }}>{day.label}</span>
+                  <span style={{ fontSize: 11, color: "#9ca3af", textTransform: "capitalize" }}>{day.label}</span>
                 </div>
               );
             })}
@@ -607,8 +607,8 @@ export default function DashboardPage() {
         <section style={{ display: "grid", gap: 12, gridTemplateColumns: "repeat(auto-fit, minmax(280px, 1fr))" }}>
           <article
             style={{
-              background: "#fff",
-              border: "1px solid rgba(26,23,19,0.12)",
+              background: "#111827",
+              border: "1px solid rgba(255,255,255,0.05)",
               borderRadius: 10,
               padding: 16,
               display: "grid",
@@ -617,18 +617,18 @@ export default function DashboardPage() {
           >
             <div>
               <h2 style={{ margin: 0, fontSize: 18 }}>Leads fanget</h2>
-              <p style={{ margin: "6px 0 0", fontSize: 13, color: "#706c65" }}>E-mail, besked og side</p>
+              <p style={{ margin: "6px 0 0", fontSize: 13, color: "#9ca3af" }}>E-mail, besked og side</p>
             </div>
 
             {analytics.leads.length === 0 ? (
-              <p style={{ margin: 0, fontSize: 13, color: "#706c65" }}>Ingen leads fundet endnu.</p>
+              <p style={{ margin: 0, fontSize: 13, color: "#9ca3af" }}>Ingen leads fundet endnu.</p>
             ) : (
               <div style={{ display: "grid", gap: 8 }}>
                 {analytics.leads.map((lead) => (
-                  <div key={`${lead.email}-${lead.createdAt || ""}`} style={{ border: "1px solid rgba(26,23,19,0.12)", borderRadius: 8, padding: 10, display: "grid", gap: 4 }}>
+                  <div key={`${lead.email}-${lead.createdAt || ""}`} style={{ border: "1px solid rgba(255,255,255,0.05)", borderRadius: 8, padding: 10, display: "grid", gap: 4 }}>
                     <p style={{ margin: 0, fontSize: 13, fontWeight: 600 }}>{lead.email}</p>
-                    <p style={{ margin: 0, fontSize: 12, color: "#5a564f" }}>{lead.message}</p>
-                    <p style={{ margin: 0, fontSize: 11, color: "#8a857c" }}>
+                    <p style={{ margin: 0, fontSize: 12, color: "#9ca3af" }}>{lead.message}</p>
+                    <p style={{ margin: 0, fontSize: 11, color: "#6b7280" }}>
                       {lead.businessName} · {lead.pageUrl}
                     </p>
                   </div>
@@ -639,8 +639,8 @@ export default function DashboardPage() {
 
           <article
             style={{
-              background: "#fff",
-              border: "1px solid rgba(26,23,19,0.12)",
+              background: "#111827",
+              border: "1px solid rgba(255,255,255,0.05)",
               borderRadius: 10,
               padding: 16,
               display: "grid",
@@ -649,17 +649,17 @@ export default function DashboardPage() {
           >
             <div>
               <h2 style={{ margin: 0, fontSize: 18 }}>Hvad kunder spørger om</h2>
-              <p style={{ margin: "6px 0 0", fontSize: 13, color: "#706c65" }}>Top-emner fra sidste 7 dage</p>
+              <p style={{ margin: "6px 0 0", fontSize: 13, color: "#9ca3af" }}>Top-emner fra sidste 7 dage</p>
             </div>
 
             {analytics.topicInsights.length === 0 ? (
-              <p style={{ margin: 0, fontSize: 13, color: "#706c65" }}>Ikke nok data endnu.</p>
+              <p style={{ margin: 0, fontSize: 13, color: "#9ca3af" }}>Ikke nok data endnu.</p>
             ) : (
               <div style={{ display: "grid", gap: 8 }}>
                 {analytics.topicInsights.map((topic) => (
-                  <div key={topic.label} style={{ display: "flex", alignItems: "center", justifyContent: "space-between", border: "1px solid rgba(26,23,19,0.12)", borderRadius: 8, padding: "8px 10px" }}>
+                  <div key={topic.label} style={{ display: "flex", alignItems: "center", justifyContent: "space-between", border: "1px solid rgba(255,255,255,0.05)", borderRadius: 8, padding: "8px 10px" }}>
                     <span style={{ fontSize: 13 }}>{topic.label}</span>
-                    <span style={{ fontSize: 12, color: "#706c65" }}>{topic.count}</span>
+                    <span style={{ fontSize: 12, color: "#9ca3af" }}>{topic.count}</span>
                   </div>
                 ))}
               </div>
@@ -669,8 +669,8 @@ export default function DashboardPage() {
 
         <section
           style={{
-            background: "#fff",
-            border: "1px solid rgba(26,23,19,0.12)",
+            background: "#111827",
+            border: "1px solid rgba(255,255,255,0.05)",
             borderRadius: 10,
             padding: 16,
             display: "grid",
@@ -679,18 +679,18 @@ export default function DashboardPage() {
         >
           <div>
             <h2 style={{ margin: 0, fontSize: 18 }}>Ubesvarede spørgsmål</h2>
-            <p style={{ margin: "6px 0 0", fontSize: 13, color: "#706c65" }}>Spørgsmål hvor botten ser ud til at have manglet et godt svar</p>
+            <p style={{ margin: "6px 0 0", fontSize: 13, color: "#9ca3af" }}>Spørgsmål hvor botten ser ud til at have manglet et godt svar</p>
           </div>
 
           {analytics.missedQuestions.length === 0 ? (
-              <p style={{ margin: 0, fontSize: 13, color: "#706c65" }}>Ingen tydelige mangler fundet.</p>
+              <p style={{ margin: 0, fontSize: 13, color: "#9ca3af" }}>Ingen tydelige mangler fundet.</p>
           ) : (
             <div style={{ display: "grid", gap: 8 }}>
               {analytics.missedQuestions.map((row) => (
-                <div key={`missed-${row.id}`} style={{ border: "1px solid #f4c4cc", background: "#fff7f8", borderRadius: 8, padding: 10, display: "grid", gap: 4 }}>
+                <div key={`missed-${row.id}`} style={{ border: "1px solid rgba(96,165,250,0.35)", background: "rgba(59,130,246,0.10)", borderRadius: 8, padding: 10, display: "grid", gap: 4 }}>
                   <p style={{ margin: 0, fontSize: 13, fontWeight: 600 }}>{row.question}</p>
                   <p style={{ margin: 0, fontSize: 12, color: "#6e2b38" }}>{row.answer}</p>
-                  <p style={{ margin: 0, fontSize: 11, color: "#8a857c" }}>{row.businessName}</p>
+                  <p style={{ margin: 0, fontSize: 11, color: "#6b7280" }}>{row.businessName}</p>
                 </div>
               ))}
             </div>
@@ -700,8 +700,8 @@ export default function DashboardPage() {
         <section style={{ display: "grid", gap: 12, gridTemplateColumns: "repeat(auto-fit, minmax(280px, 1fr))" }}>
           <article
             style={{
-              background: "#fff",
-              border: "1px solid rgba(26,23,19,0.12)",
+              background: "#111827",
+              border: "1px solid rgba(255,255,255,0.05)",
               borderRadius: 10,
               padding: 16,
               display: "grid",
@@ -710,14 +710,14 @@ export default function DashboardPage() {
           >
             <h2 style={{ margin: 0, fontSize: 18 }}>Samtalehøjdepunkter (gode)</h2>
             {analytics.goodHighlights.length === 0 ? (
-              <p style={{ margin: 0, fontSize: 13, color: "#706c65" }}>Ingen højdepunkter endnu.</p>
+              <p style={{ margin: 0, fontSize: 13, color: "#9ca3af" }}>Ingen højdepunkter endnu.</p>
             ) : (
               <div style={{ display: "grid", gap: 8 }}>
                 {analytics.goodHighlights.map((item) => (
-                  <div key={`good-${item.id}`} style={{ border: "1px solid rgba(26,23,19,0.12)", borderRadius: 8, padding: 10 }}>
-                    <p style={{ margin: 0, fontSize: 12, color: "#706c65" }}>{item.businessName}</p>
+                  <div key={`good-${item.id}`} style={{ border: "1px solid rgba(255,255,255,0.05)", borderRadius: 8, padding: 10 }}>
+                    <p style={{ margin: 0, fontSize: 12, color: "#9ca3af" }}>{item.businessName}</p>
                     <p style={{ margin: "4px 0 0", fontSize: 13, fontWeight: 600 }}>Q: {item.question}</p>
-                    <p style={{ margin: "4px 0 0", fontSize: 12, color: "#5a564f" }}>A: {item.answer}</p>
+                    <p style={{ margin: "4px 0 0", fontSize: 12, color: "#9ca3af" }}>A: {item.answer}</p>
                   </div>
                 ))}
               </div>
@@ -726,8 +726,8 @@ export default function DashboardPage() {
 
           <article
             style={{
-              background: "#fff",
-              border: "1px solid rgba(26,23,19,0.12)",
+              background: "#111827",
+              border: "1px solid rgba(255,255,255,0.05)",
               borderRadius: 10,
               padding: 16,
               display: "grid",
@@ -736,11 +736,11 @@ export default function DashboardPage() {
           >
             <h2 style={{ margin: 0, fontSize: 18 }}>Forbedringsforslag til botten</h2>
             {analytics.suggestions.length === 0 ? (
-              <p style={{ margin: 0, fontSize: 13, color: "#706c65" }}>Ingen presserende forslag lige nu.</p>
+              <p style={{ margin: 0, fontSize: 13, color: "#9ca3af" }}>Ingen presserende forslag lige nu.</p>
             ) : (
               <div style={{ display: "grid", gap: 8 }}>
                 {analytics.suggestions.map((suggestion) => (
-                  <div key={suggestion} style={{ border: "1px solid rgba(26,23,19,0.12)", borderRadius: 8, padding: 10, fontSize: 13 }}>
+                  <div key={suggestion} style={{ border: "1px solid rgba(255,255,255,0.05)", borderRadius: 8, padding: 10, fontSize: 13 }}>
                     {suggestion}
                   </div>
                 ))}
@@ -752,7 +752,7 @@ export default function DashboardPage() {
         {businesses.length === 0 ? (
           <section
             style={{
-              borderTop: "1px solid rgba(26,23,19,0.12)",
+              borderTop: "1px solid rgba(255,255,255,0.05)",
               padding: "44px 0",
               textAlign: "center",
             }}
@@ -764,8 +764,8 @@ export default function DashboardPage() {
                 display: "inline-flex",
                 alignItems: "center",
                 justifyContent: "center",
-                background: "#1a1713",
-                color: "#f6f3ed",
+                background: "#3b82f6",
+                color: "#ffffff",
                 textDecoration: "none",
                 fontSize: 14,
                 fontWeight: 500,
@@ -777,7 +777,7 @@ export default function DashboardPage() {
             </Link>
           </section>
         ) : (
-          <section style={{ display: "grid", gap: 1, borderTop: "1px solid rgba(26,23,19,0.12)", paddingTop: 6 }}>
+          <section style={{ display: "grid", gap: 1, borderTop: "1px solid rgba(255,255,255,0.05)", paddingTop: 6 }}>
             <h2 style={{ margin: "8px 0 6px", fontSize: 18 }}>Dine aktive bots</h2>
             {businesses.map((business) => {
               const displayName = (business.name || "Unavngiven chatbot").trim();
@@ -786,15 +786,15 @@ export default function DashboardPage() {
               const copyFeedback = copiedBusinessId === business.id;
 
               return (
-                <article key={business.id} style={{ borderBottom: "1px solid rgba(26,23,19,0.12)", padding: "20px 0" }}>
+                <article key={business.id} style={{ borderBottom: "1px solid rgba(255,255,255,0.05)", padding: "20px 0" }}>
                   <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 8, flexWrap: "wrap" }}>
                     <h2 style={{ margin: 0, fontSize: 17, fontWeight: 500 }}>{displayName}</h2>
-                    <span style={{ background: "rgba(26,23,19,0.07)", color: "#5a564f", fontSize: 11, fontWeight: 500, padding: "4px 10px", borderRadius: 3, letterSpacing: "0.06em", textTransform: "uppercase" }}>
+                    <span style={{ background: "rgba(59,130,246,0.12)", color: "#9ca3af", fontSize: 11, fontWeight: 500, padding: "4px 10px", borderRadius: 3, letterSpacing: "0.06em", textTransform: "uppercase" }}>
                       {industry}
                     </span>
                   </div>
 
-                  <p style={{ margin: "6px 0 0", fontSize: 13, color: "#706c65", fontWeight: 300 }}>{website}</p>
+                  <p style={{ margin: "6px 0 0", fontSize: 13, color: "#9ca3af", fontWeight: 300 }}>{website}</p>
 
                   <div style={{ marginTop: 14, display: "flex", gap: 8, flexWrap: "wrap" }}>
                     <button
@@ -805,8 +805,8 @@ export default function DashboardPage() {
                         alignItems: "center",
                         justifyContent: "center",
                         border: "1px solid transparent",
-                        background: "#1a1713",
-                        color: "#f6f3ed",
+                        background: "#3b82f6",
+                        color: "#ffffff",
                         fontSize: 13,
                         fontWeight: 500,
                         padding: "8px 14px",
@@ -824,9 +824,9 @@ export default function DashboardPage() {
                         display: "inline-flex",
                         alignItems: "center",
                         justifyContent: "center",
-                        border: "1px solid rgba(26,23,19,0.22)",
+                        border: "1px solid rgba(255,255,255,0.10)",
                         background: "transparent",
-                        color: "#1a1713",
+                        color: "#ffffff",
                         textDecoration: "none",
                         fontSize: 13,
                         fontWeight: 500,

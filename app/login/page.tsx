@@ -39,22 +39,22 @@ export default function LoginPage() {
   }
 
   return (
-    <main style={{ minHeight: "100dvh", display: "grid", placeItems: "center", padding: "16px", background: "#f6f3ed", fontFamily: '"DM Sans", sans-serif' }}>
+    <main style={{ minHeight: "100dvh", display: "grid", placeItems: "center", padding: "16px", background: "#030712", fontFamily: '"DM Sans", sans-serif', color: "#ffffff" }}>
       <form
         onSubmit={handleSubmit}
         style={{
           width: "100%",
           maxWidth: 400,
-          background: "#fff",
-          border: "1px solid rgba(26,23,19,0.1)",
+          background: "#111827",
+          border: "1px solid rgba(255,255,255,0.05)",
           borderRadius: 10,
           padding: 24,
           display: "grid",
           gap: 10,
         }}
       >
-        <h1 style={{ margin: 0, fontSize: 22, fontWeight: 600, color: "#1a1713" }}>Log ind</h1>
-        <p style={{ margin: 0, color: "#706c65", fontSize: 14, fontWeight: 300 }}>Fortsæt til dit dashboard.</p>
+        <h1 style={{ margin: 0, fontSize: 22, fontWeight: 600, color: "#ffffff" }}>Log ind</h1>
+        <p style={{ margin: 0, color: "#9ca3af", fontSize: 14, fontWeight: 300 }}>Fortsæt til dit dashboard.</p>
 
         <input
           type="email"
@@ -62,7 +62,7 @@ export default function LoginPage() {
           value={email}
           onChange={(e) => setEmail(e.target.value)}
           required
-          style={{ border: "1px solid rgba(26,23,19,0.18)", borderRadius: 6, padding: "11px 12px", fontSize: 14, fontFamily: '"DM Sans", sans-serif', color: "#1a1713", outline: "none" }}
+          style={{ border: "1px solid rgba(255,255,255,0.1)", background: "#111827", borderRadius: 6, padding: "11px 12px", fontSize: 14, fontFamily: '"DM Sans", sans-serif', color: "#ffffff", outline: "none" }}
         />
         <input
           type="password"
@@ -70,7 +70,7 @@ export default function LoginPage() {
           value={password}
           onChange={(e) => setPassword(e.target.value)}
           required
-          style={{ border: "1px solid rgba(26,23,19,0.18)", borderRadius: 6, padding: "11px 12px", fontSize: 14, fontFamily: '"DM Sans", sans-serif', color: "#1a1713", outline: "none" }}
+          style={{ border: "1px solid rgba(255,255,255,0.1)", background: "#111827", borderRadius: 6, padding: "11px 12px", fontSize: 14, fontFamily: '"DM Sans", sans-serif', color: "#ffffff", outline: "none" }}
         />
 
         <button
@@ -78,8 +78,8 @@ export default function LoginPage() {
           disabled={loading}
           style={{
             border: "1px solid transparent",
-            background: "#1a1713",
-            color: "#f6f3ed",
+            background: "#3b82f6",
+            color: "#ffffff",
             borderRadius: 5,
             padding: "10px 14px",
             fontWeight: 500,
@@ -92,7 +92,7 @@ export default function LoginPage() {
           {loading ? "Logger ind..." : "Log ind"}
         </button>
 
-        {error ? <p style={{ margin: 0, color: "#b00020", fontSize: 13 }}>{error}</p> : null}
+        {error ? <p style={{ margin: 0, color: "#60a5fa", fontSize: 13 }}>{error}</p> : null}
       </form>
     </main>
   );

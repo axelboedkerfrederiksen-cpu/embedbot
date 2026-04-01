@@ -23,7 +23,7 @@ export default function Home() {
     welcome_message: "", tone: "uformel", language: "dansk",
     custom_instructions: "",
     faq: "", cvr: "", social_media: "", current_offers: "", warranty: "", size_guide: "",
-    primary_color: "#000000", secondary_color: "#f1f1f1", chat_icon_color: "#000000",
+    primary_color: "#3b82f6", secondary_color: "#111827", chat_icon_color: "#3b82f6",
     font_choice: "DM Sans", logo_data_url: "", logo_file_name: ""
   };
   type FormState = typeof initialForm;
@@ -314,7 +314,7 @@ export default function Home() {
       } catch {}
 
       persistBusinessId(stableBusinessId);
-      window.location.href = "https://buy.stripe.com/eVq00j5l7gew3dj3rIf3a02";
+      window.location.href = "https://buy.stripe.com/eVqeVd7tf5zS29f5zQf3a03";
     } catch (error) {
       setMessage(formatSetupError(error));
     } finally {
@@ -357,10 +357,10 @@ export default function Home() {
 
       .eb-page {
         min-height: 100vh;
-        background: #f6f3ed;
+        background: #030712;
         padding: 28px 16px;
         font-family: "DM Sans", sans-serif;
-        color: #1a1713;
+        color: #ffffff;
       }
 
       .eb-shell {
@@ -376,8 +376,8 @@ export default function Home() {
       }
 
       .eb-card {
-        background: #fff;
-        border: 1px solid rgba(26,23,19,0.1);
+        background: #111827;
+        border: 1px solid rgba(255,255,255,0.05);
         border-radius: 10px;
         padding: 24px;
       }
@@ -404,12 +404,12 @@ export default function Home() {
       }
 
       .muted {
-        color: #706c65;
+        color: #9ca3af;
       }
 
       .tagline {
         text-align: center;
-        color: #706c65;
+        color: #9ca3af;
         margin: 0 0 24px;
       }
 
@@ -423,7 +423,7 @@ export default function Home() {
 
       .step-note {
         font-size: 13px;
-        color: #706c65;
+        color: #9ca3af;
         font-weight: 400;
       }
 
@@ -431,7 +431,7 @@ export default function Home() {
         width: 100%;
         height: 4px;
         border-radius: 999px;
-        background: rgba(26,23,19,0.1);
+        background: rgba(255,255,255,0.05);
         overflow: hidden;
         margin-bottom: 20px;
       }
@@ -439,7 +439,7 @@ export default function Home() {
       .progress-fill {
         height: 100%;
         border-radius: inherit;
-        background: #1a1713;
+        background: #3b82f6;
         transition: width 260ms ease;
       }
 
@@ -468,29 +468,29 @@ export default function Home() {
       }
 
       .required {
-        color: #000;
+        color: #60a5fa;
       }
 
       .field-input {
         width: 100%;
-        background: #fff;
-        border: 1px solid rgba(26,23,19,0.18);
+        background: #111827;
+        border: 1px solid rgba(255,255,255,0.1);
         border-radius: 6px;
         padding: 11px 12px;
         font-family: "DM Sans", sans-serif;
         font-size: 14px;
         box-sizing: border-box;
         transition: border-color 150ms ease;
-        color: #1a1713;
+        color: #ffffff;
       }
 
       .field-input::placeholder {
-        color: #aba590;
+        color: #6b7280;
       }
 
       .field-input:focus {
         outline: none;
-        border-color: #1a1713;
+        border-color: #3b82f6;
       }
 
       .field-textarea {
@@ -517,9 +517,9 @@ export default function Home() {
       .color-input {
         width: 46px;
         height: 38px;
-        border: 1px solid #d9d9d9;
+        border: 1px solid rgba(255,255,255,0.1);
         border-radius: 10px;
-        background: #fff;
+        background: #111827;
         padding: 2px;
         cursor: pointer;
       }
@@ -530,10 +530,10 @@ export default function Home() {
 
       .logo-preview {
         margin-top: 10px;
-        border: 1px dashed #d0d0d0;
+        border: 1px dashed rgba(255,255,255,0.2);
         border-radius: 10px;
         padding: 10px;
-        background: #fafafa;
+        background: rgba(17,24,39,0.5);
       }
 
       .logo-preview img {
@@ -541,12 +541,13 @@ export default function Home() {
         max-height: 56px;
         width: auto;
         max-width: 180px;
+        filter: brightness(0) invert(1);
       }
 
       .font-preview {
         margin-top: 8px;
         font-size: 14px;
-        color: #444;
+        color: #9ca3af;
       }
 
       .actions {
@@ -572,22 +573,23 @@ export default function Home() {
       }
 
       .btn-primary {
-        background: #1a1713;
-        color: #f6f3ed;
+        background: #3b82f6;
+        color: #ffffff;
+        box-shadow: 0 8px 22px rgba(59, 130, 246, 0.25);
       }
 
       .btn-primary:hover {
-        opacity: 0.8;
+        background: #60a5fa;
       }
 
       .btn-secondary {
         background: transparent;
-        color: #1a1713;
-        border-color: rgba(26,23,19,0.22);
+        color: #ffffff;
+        border-color: rgba(255,255,255,0.1);
       }
 
       .btn-secondary:hover {
-        border-color: rgba(26,23,19,0.55);
+        border-color: rgba(255,255,255,0.2);
       }
 
       .btn-full {
@@ -595,7 +597,7 @@ export default function Home() {
       }
 
       .message-error {
-        color: #b00020;
+        color: #60a5fa;
         margin: 12px 0 0;
         font-size: 14px;
       }
@@ -603,7 +605,7 @@ export default function Home() {
       .toggle-auth {
         margin: 14px 0 0;
         text-align: center;
-        color: #666;
+        color: #9ca3af;
         font-size: 14px;
         cursor: pointer;
         text-decoration: underline;
@@ -620,7 +622,7 @@ export default function Home() {
         height: 68px;
         margin: 0 auto 16px;
         border-radius: 999px;
-        border: 2px solid #000;
+        border: 2px solid #3b82f6;
         display: grid;
         place-items: center;
         font-size: 34px;
@@ -634,7 +636,7 @@ export default function Home() {
 
       .thanks-text {
         margin: 0;
-        color: #666;
+        color: #9ca3af;
         max-width: 520px;
         margin-inline: auto;
       }
@@ -656,7 +658,7 @@ export default function Home() {
       }
 
       .platform-tab {
-        border: 1px solid rgba(26,23,19,0.18);
+        border: 1px solid rgba(255,255,255,0.1);
         background: transparent;
         border-radius: 5px;
         padding: 7px 12px;
@@ -664,22 +666,22 @@ export default function Home() {
         font-weight: 400;
         cursor: pointer;
         font-family: "DM Sans", sans-serif;
-        color: #1a1713;
+        color: #ffffff;
         transition: border-color 140ms;
       }
 
       .platform-tab:hover {
-        border-color: rgba(26,23,19,0.55);
+        border-color: rgba(255,255,255,0.2);
       }
 
       .platform-tab.is-active {
-        background: #1a1713;
-        color: #f6f3ed;
-        border-color: #1a1713;
+        background: #3b82f6;
+        color: #ffffff;
+        border-color: #3b82f6;
       }
 
       .guide-wrap {
-        border-top: 1px solid rgba(26,23,19,0.1);
+        border-top: 1px solid rgba(255,255,255,0.05);
         padding-top: 6px;
       }
 
@@ -701,14 +703,14 @@ export default function Home() {
         padding-left: 20px;
         display: grid;
         gap: 6px;
-        color: #1a1713;
+        color: #ffffff;
         font-size: 14px;
       }
 
       .guide-code {
         margin: 10px 0 0;
-        background: #fff;
-        border: 1px solid rgba(26,23,19,0.12);
+        background: rgba(17,24,39,0.7);
+        border: 1px solid rgba(255,255,255,0.05);
         border-radius: 6px;
         padding: 10px;
         overflow-x: auto;
@@ -873,7 +875,7 @@ export default function Home() {
                 value={form.primary_color}
                 onChange={e => update("primary_color", e.target.value)}
                 className="field-input color-text"
-                placeholder="#000000"
+                placeholder="#3b82f6"
               />
             </div>
             <p className="font-preview">Bruges til chat-header + send-knap.</p>
@@ -892,7 +894,7 @@ export default function Home() {
                 value={form.secondary_color}
                 onChange={e => update("secondary_color", e.target.value)}
                 className="field-input color-text"
-                placeholder="#f1f1f1"
+                placeholder="#111827"
               />
             </div>
             <p className="font-preview">Bruges til brugerens beskedbobler.</p>
@@ -912,7 +914,7 @@ export default function Home() {
               value={form.chat_icon_color}
               onChange={e => update("chat_icon_color", e.target.value)}
               className="field-input color-text"
-              placeholder="#000000"
+              placeholder="#3b82f6"
             />
           </div>
           <p className="font-preview">Farven på FAB-knappen i hjørnet.</p>

@@ -1,20 +1,14 @@
 "use client";
 import Link from "next/link";
-import wordpressLogo from "@/media/download.jpeg";
-import shopifyLogo from "@/media/Shopify-Logo-PNG.png";
-import squarespaceLogo from "@/media/Squarespace_Logo.png";
-import wixLogo from "@/media/WIX-Logo.png";
-import webflowLogo from "@/media/webflow_logo_icon_169218.png";
-import html5Logo from "@/media/html5_logo.png";
 import logoImage from "@/media/86a91d6a-f484-4e7d-a05c-55ab0979c3b1.png";
 
 const supportedPlatforms = [
-  { name: "HTML",        logo: html5Logo.src,        height: 21 },
-  { name: "WordPress",   logo: wordpressLogo.src,    height: 26 },
-  { name: "Shopify",     logo: shopifyLogo.src,      height: 27 },
-  { name: "Squarespace", logo: squarespaceLogo.src,  height: 19 },
-  { name: "Wix",         logo: wixLogo.src,          height: 15 },
-  { name: "Webflow",     logo: webflowLogo.src,      height: 15 },
+  { name: "HTML",        logo: "https://cdn.simpleicons.org/html5/ffffff", scale: 0.92 },
+  { name: "WordPress",   logo: "https://cdn.simpleicons.org/wordpress/ffffff", scale: 0.9 },
+  { name: "Shopify",     logo: "https://cdn.simpleicons.org/shopify/ffffff", scale: 1 },
+  { name: "Squarespace", logo: "https://cdn.simpleicons.org/squarespace/ffffff", scale: 1.02 },
+  { name: "Wix",         logo: "https://cdn.simpleicons.org/wix/ffffff", scale: 1.15 },
+  { name: "Webflow",     logo: "https://cdn.simpleicons.org/webflow/ffffff", scale: 1.08 },
 ];
 
 const features = [
@@ -52,9 +46,9 @@ export default function Home() {
     script.id = "embedbot-demo-script";
     script.src = `${window.location.origin}/widget.js?id=${DEMO_BUSINESS_ID}`;
     script.setAttribute("data-name", "EmbedBot");
-    script.setAttribute("data-primary-color", "#000000");
-    script.setAttribute("data-secondary-color", "#000000");
-    script.setAttribute("data-fab-color", "#000000");
+    script.setAttribute("data-primary-color", "#3b82f6");
+    script.setAttribute("data-secondary-color", "#111827");
+    script.setAttribute("data-fab-color", "#3b82f6");
     script.setAttribute("data-font", "DM Sans");
     script.onload = () => window.setTimeout(openWidgetIfAvailable, 50);
     document.body.appendChild(script);
@@ -70,35 +64,44 @@ export default function Home() {
         html, body {
           margin: 0;
           padding: 0;
-          background: #f6f3ed;
+          background: #030712;
         }
 
         .page {
           min-height: 100dvh;
           font-family: "DM Sans", sans-serif;
-          color: #1a1713;
+          color: #ffffff;
           max-width: 820px;
           margin: 0 auto;
           padding: 0 28px 56px;
-          background: #f6f3ed;
+          background: #030712;
         }
 
         /* ── Nav ─────────────────────────────────── */
         .nav {
+          position: sticky;
+          top: 0;
+          z-index: 20;
           display: flex;
           align-items: center;
           justify-content: space-between;
           padding: 22px 0;
-          border-bottom: 1px solid rgba(26, 23, 19, 0.12);
+          border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+          background: rgba(3, 7, 18, 0.8);
+          backdrop-filter: blur(24px);
         }
 
         .nav-logo { display: block; line-height: 0; text-decoration: none; }
-        .nav-logo img { height: 26px; width: auto; }
+        .nav-logo img {
+          height: 26px;
+          width: auto;
+          filter: brightness(0) invert(1);
+        }
 
         .nav-login {
           font-size: 0.85rem;
           font-weight: 400;
-          color: #1a1713;
+          color: #9ca3af;
           text-decoration: none;
           opacity: 0.5;
           transition: opacity 140ms;
@@ -108,7 +111,7 @@ export default function Home() {
         /* ── Hero ────────────────────────────────── */
         .hero {
           padding: 64px 0 52px;
-          border-bottom: 1px solid rgba(26, 23, 19, 0.12);
+          border-bottom: 1px solid rgba(255, 255, 255, 0.05);
         }
 
         .tag {
@@ -117,7 +120,7 @@ export default function Home() {
           font-weight: 500;
           letter-spacing: 0.14em;
           text-transform: uppercase;
-          color: #9c7248;
+          color: #60a5fa;
           margin-bottom: 18px;
         }
 
@@ -134,7 +137,7 @@ export default function Home() {
           font-size: clamp(0.95rem, 2.2vw, 1.075rem);
           font-weight: 300;
           line-height: 1.7;
-          color: #5a564f;
+          color: #9ca3af;
           margin: 0 0 30px;
           max-width: 52ch;
         }
@@ -159,15 +162,19 @@ export default function Home() {
           align-items: center;
         }
 
-        .btn-primary { background: #1a1713; color: #f6f3ed; }
-        .btn-primary:hover { opacity: 0.78; }
+        .btn-primary {
+          background: #3b82f6;
+          color: #ffffff;
+          box-shadow: 0 8px 22px rgba(59, 130, 246, 0.25);
+        }
+        .btn-primary:hover { background: #60a5fa; }
 
         .btn-outline {
           background: transparent;
-          color: #1a1713;
-          border-color: rgba(26, 23, 19, 0.22);
+          color: #ffffff;
+          border-color: rgba(255, 255, 255, 0.1);
         }
-        .btn-outline:hover { border-color: rgba(26, 23, 19, 0.55); }
+        .btn-outline:hover { border-color: rgba(255, 255, 255, 0.2); color: #60a5fa; }
 
         /* ── Features ────────────────────────────── */
         .features {
@@ -177,12 +184,12 @@ export default function Home() {
 
         .feat {
           padding: 36px 0;
-          border-bottom: 1px solid rgba(26, 23, 19, 0.12);
+          border-bottom: 1px solid rgba(255, 255, 255, 0.05);
         }
 
         .feat:not(:last-child) {
           padding-right: 28px;
-          border-right: 1px solid rgba(26, 23, 19, 0.12);
+          border-right: 1px solid rgba(255, 255, 255, 0.05);
         }
 
         .feat:not(:first-child) {
@@ -193,7 +200,7 @@ export default function Home() {
           display: block;
           font-size: 0.68rem;
           letter-spacing: 0.12em;
-          color: #b5936b;
+          color: #60a5fa;
           font-weight: 500;
           margin-bottom: 14px;
         }
@@ -208,7 +215,7 @@ export default function Home() {
         .feat-desc {
           font-size: 0.85rem;
           font-weight: 300;
-          color: #706c65;
+          color: #9ca3af;
           line-height: 1.65;
           margin: 0;
         }
@@ -227,7 +234,7 @@ export default function Home() {
           font-weight: 500;
           letter-spacing: 0.1em;
           text-transform: uppercase;
-          color: #aba590;
+          color: #6b7280;
           white-space: nowrap;
           flex-shrink: 0;
         }
@@ -239,9 +246,20 @@ export default function Home() {
           flex-wrap: wrap;
         }
 
+        .platform-logo-wrap {
+          width: 34px;
+          height: 24px;
+          display: inline-flex;
+          align-items: center;
+          justify-content: center;
+        }
+
         .platform-logo {
-          width: auto;
+          max-width: 100%;
+          max-height: 100%;
           display: block;
+          opacity: 0.9;
+          transform-origin: center;
         }
 
         /* ── Footer row ──────────────────────────── */
@@ -252,12 +270,12 @@ export default function Home() {
 
         .foot a {
           font-size: 0.78rem;
-          color: #aba590;
+          color: #6b7280;
           text-decoration: none;
           transition: color 140ms;
         }
 
-        .foot a:hover { color: #1a1713; }
+        .foot a:hover { color: #60a5fa; }
 
         /* ── Mobile ──────────────────────────────── */
         @media (max-width: 600px) {
@@ -314,14 +332,15 @@ export default function Home() {
         <span className="platforms-label">Understøtter</span>
         <div className="platforms-logos">
           {supportedPlatforms.map((p) => (
-            <img
-              key={p.name}
-              src={p.logo}
-              alt={p.name}
-              className="platform-logo"
-              style={{ height: p.height }}
-              loading="lazy"
-            />
+            <span className="platform-logo-wrap" key={p.name}>
+              <img
+                src={p.logo}
+                alt={p.name}
+                className="platform-logo"
+                style={{ transform: `scale(${p.scale})` }}
+                loading="lazy"
+              />
+            </span>
           ))}
         </div>
       </div>
