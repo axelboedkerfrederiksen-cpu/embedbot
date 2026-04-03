@@ -380,8 +380,6 @@
 
       const reader = res.body.getReader();
       const decoder = new TextDecoder();
-      let sseBuffer = "";
-      let sawDone = false;
 
       while (true) {
         const { value, done } = await reader.read();
@@ -389,46 +387,8 @@
           break;
         }
 
-        sseBuffer += decoder.decode(value, { stream: true });
-        const events = sseBuffer.split("\n\n");
-        sseBuffer = events.pop() || "";
-
-        for (const event of events) {
-          const lines = event.split("\n");
-          for (const line of lines) {
-            if (!line.startsWith("data:")) {
-              continue;
-            }
-
-            const payloadRaw = line.slice(5);
-            const payload = payloadRaw.startsWith(" ") ? payloadRaw.slice(1) : payloadRaw;
-            if (payload === "[DONE]") {
-              sawDone = true;
-              break;
-            }
-
-            let chunk = payload;
-            try {
-              const parsedPayload = JSON.parse(payload);
-              if (parsedPayload && typeof parsedPayload.token === "string") {
-                chunk = parsedPayload.token;
-              }
-            } catch {
-              // Fallback for non-JSON payloads.
-            }
-
-            botMessage.msg.textContent += chunk;
-            messages.scrollTop = messages.scrollHeight;
-          }
-
-          if (sawDone) {
-            break;
-          }
-        }
-
-        if (sawDone) {
-          break;
-        }
+        botMessage.msg.textContent += decoder.decode(value, { stream: true });
+        messages.scrollTop = messages.scrollHeight;
       }
 
       if (!botMessage.msg.textContent) {

@@ -179,12 +179,10 @@ Følg disse regler STRENGT:
           }
 
           answer += token;
-          controller.enqueue(encoder.encode(`data: ${JSON.stringify({ token })}\n\n`));
+          controller.enqueue(encoder.encode(token));
         }
-
-        controller.enqueue(encoder.encode("data: [DONE]\n\n"));
       } catch {
-        controller.enqueue(encoder.encode("data: [DONE]\n\n"));
+        // Stream ends on error.
       } finally {
         // Save each user/bot exchange so the dashboard can render historical conversations.
         try {
@@ -209,7 +207,7 @@ Følg disse regler STRENGT:
 
   return new Response(stream, {
     headers: {
-      "Content-Type": "text/event-stream; charset=utf-8",
+      "Content-Type": "text/plain; charset=utf-8",
       "Cache-Control": "no-cache, no-transform",
       Connection: "keep-alive",
     },
