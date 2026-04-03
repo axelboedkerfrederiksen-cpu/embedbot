@@ -2,11 +2,11 @@ import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@supabase/supabase-js";
 
 const DEFAULT_WIDGET_CONFIG = {
-  primary_color: "#000000",
-  secondary_color: "#000000",
-  fab_color: "#000000",
+  primary_color: "#ffffff",
+  secondary_color: "#f6f3ed",
+  fab_color: "#ffffff",
   logo_url: "",
-  font_choice: "sans-serif",
+  font_choice: "Poppins",
   name: "",
   welcome_message: "",
 };

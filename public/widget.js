@@ -6,17 +6,18 @@
   const CONFIG_URL = `${apiOrigin}/api/widget-config?id=${encodeURIComponent(businessId || "")}`;
   const OPEN_ICON = `
     <svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 24 24" fill="none" aria-hidden="true">
-      <path d="M5 4.75h14a2.75 2.75 0 0 1 2.75 2.75v7A2.75 2.75 0 0 1 19 17.25h-6.23l-2.9 2.6a.75.75 0 0 1-1.24-.65l.33-1.95H5A2.75 2.75 0 0 1 2.25 14.5v-7A2.75 2.75 0 0 1 5 4.75Z" stroke="#fff" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
-      <circle cx="8.5" cy="11" r="1.05" fill="#fff"/>
-      <circle cx="12" cy="11" r="1.05" fill="#fff"/>
-      <circle cx="15.5" cy="11" r="1.05" fill="#fff"/>
+      <path d="M5 4.75h14a2.75 2.75 0 0 1 2.75 2.75v7A2.75 2.75 0 0 1 19 17.25h-6.23l-2.9 2.6a.75.75 0 0 1-1.24-.65l.33-1.95H5A2.75 2.75 0 0 1 2.25 14.5v-7A2.75 2.75 0 0 1 5 4.75Z" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
+      <circle cx="8.5" cy="11" r="1.05" fill="currentColor"/>
+      <circle cx="12" cy="11" r="1.05" fill="currentColor"/>
+      <circle cx="15.5" cy="11" r="1.05" fill="currentColor"/>
     </svg>
   `;
   const CLOSE_ICON = `
     <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" aria-hidden="true">
-      <path d="M6 6l12 12M18 6L6 18" stroke="#fff" stroke-width="2" stroke-linecap="round"/>
+      <path d="M6 6l12 12M18 6L6 18" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
     </svg>
   `;
+  const SOFT_SURFACE = "#f9f9f9";
 
   const hasPrimaryColorAttr = scriptTag.getAttribute("data-primary-color") !== null;
   const hasSecondaryColorAttr = scriptTag.getAttribute("data-secondary-color") !== null;
@@ -25,11 +26,11 @@
   const scriptName = (scriptTag.getAttribute("data-name") || "").trim();
 
   const defaultConfig = {
-    primary_color: "#3b82f6",
-    secondary_color: "#111827",
-    fab_color: "#3b82f6",
+    primary_color: "#ffffff",
+    secondary_color: "#f6f3ed",
+    fab_color: "#ffffff",
     logo_url: "",
-    font_choice: "sans-serif",
+    font_choice: "Poppins",
     name: "",
     header_title: "Support Chat",
     welcome_message: "",
@@ -170,9 +171,9 @@
   
   const container = document.createElement("div");
   container.innerHTML = `
-    <button type="button" id="eb-bubble" aria-label="Open support chat" style="position:fixed;bottom:24px;right:24px;width:56px;height:56px;background:#3b82f6;border-radius:50%;border:none;cursor:pointer;display:flex;align-items:center;justify-content:center;z-index:9999;box-shadow:0 8px 22px rgba(59,130,246,0.25);opacity:0;transition:opacity 0.15s;">${OPEN_ICON}</button>
+    <button type="button" id="eb-bubble" aria-label="Open support chat" style="position:fixed;bottom:24px;right:24px;width:56px;height:56px;background:#ffffff;color:#1a1a1a;border-radius:50%;border:none;cursor:pointer;display:flex;align-items:center;justify-content:center;z-index:9999;box-shadow:0 8px 22px rgba(0,0,0,0.12);opacity:0;transition:opacity 0.15s;">${OPEN_ICON}</button>
     <div id="eb-box" style="display:none;position:fixed;bottom:90px;right:24px;width:340px;height:480px;background:#ffffff;border:none;border-radius:16px;box-shadow:0 8px 32px rgba(0,0,0,0.15);z-index:9999;flex-direction:column;overflow:hidden;color:#1a1a1a;">
-      <div id="eb-header" style="background:#3b82f6;color:white;padding:16px;font-weight:bold;display:flex;align-items:center;gap:10px;">
+      <div id="eb-header" style="background:#f9f9f9;color:#1a1a1a;padding:16px;font-weight:bold;display:flex;align-items:center;gap:10px;">
         <img id="eb-logo" alt="Company logo" style="display:none;height:24px;width:auto;max-width:120px;object-fit:contain;filter:brightness(0) invert(1);" />
         <div style="display:flex;flex-direction:column;line-height:1.1;">
           <span id="eb-title">Support Chat</span>
@@ -180,9 +181,9 @@
         </div>
       </div>
       <div id="eb-messages" style="flex:1;overflow-y:auto;padding:14px 14px 12px 14px;display:flex;flex-direction:column;gap:2px;height:340px"></div>
-      <div style="padding:12px;border-top:1px solid rgba(255,255,255,0.05);display:flex;gap:8px;align-items:center;background:#f9f9f9;">
-        <input id="eb-input" aria-label="Message input" type="text" placeholder="Skriv dit spørgsmål..." style="flex:1;padding:11px 14px;border:1px solid rgba(255,255,255,0.1);border-radius:999px;outline:none;pointer-events:all;position:relative;z-index:99999;color:#1a1a1a;background:#f9f9f9;cursor:text;user-select:text;-webkit-user-select:text;font-size:14px;font-family:inherit;caret-color:#1a1a1a;"/>
-        <button id="eb-send" aria-label="Send message" style="background:#3b82f6;color:white;border:none;padding:10px 16px;border-radius:999px;cursor:pointer;white-space:nowrap;">Send</button>
+      <div style="padding:12px;border-top:1px solid rgba(17,17,17,0.06);display:flex;gap:8px;align-items:center;background:#f9f9f9;">
+        <input id="eb-input" aria-label="Message input" type="text" placeholder="Skriv dit spørgsmål..." style="flex:1;padding:11px 14px;border:1px solid rgba(17,17,17,0.08);border-radius:999px;outline:none;pointer-events:all;position:relative;z-index:99999;color:#1a1a1a;background:#f9f9f9;cursor:text;user-select:text;-webkit-user-select:text;font-size:14px;font-family:inherit;caret-color:#1a1a1a;"/>
+        <button id="eb-send" aria-label="Send message" style="background:#ffffff;color:#1a1a1a;border:none;padding:10px 16px;border-radius:999px;cursor:pointer;white-space:nowrap;">Send</button>
       </div>
     </div>
   `;
@@ -229,10 +230,23 @@
   function applyWidgetStyles() {
     const fontStack = getFontStack(widgetConfig.font_choice || defaultConfig.font_choice);
     ensureFontLoaded(widgetConfig.font_choice || defaultConfig.font_choice);
+    const fabBackground = widgetConfig.fab_color || defaultConfig.fab_color;
+    const primaryBackground = widgetConfig.primary_color || defaultConfig.primary_color;
+    const headerBackground = getBubbleTextColor(primaryBackground) === "#1a1a1a" ? SOFT_SURFACE : primaryBackground;
+    const fabTextColor = getBubbleTextColor(fabBackground);
+    const primaryTextColor = getBubbleTextColor(primaryBackground);
+    const headerTextColor = getBubbleTextColor(headerBackground);
 
-    bubble.style.background = widgetConfig.fab_color || defaultConfig.fab_color;
-    send.style.background = widgetConfig.primary_color || defaultConfig.primary_color;
-    header.style.background = widgetConfig.primary_color || defaultConfig.primary_color;
+    bubble.style.background = fabBackground;
+    bubble.style.color = fabTextColor;
+    bubble.style.boxShadow = fabTextColor === "#ffffff"
+      ? "0 8px 22px rgba(0,0,0,0.22)"
+      : "0 8px 22px rgba(0,0,0,0.12)";
+    send.style.background = primaryBackground;
+    send.style.color = primaryTextColor;
+    header.style.background = headerBackground;
+    header.style.color = headerTextColor;
+    header.style.borderBottom = "1px solid rgba(17,17,17,0.06)";
     title.textContent = widgetConfig.header_title || defaultConfig.header_title;
 
     setFontImportant(box, fontStack);
@@ -245,6 +259,7 @@
     if (widgetConfig.logo_url) {
       logo.src = widgetConfig.logo_url;
       logo.style.display = "block";
+      logo.style.filter = headerTextColor === "#ffffff" ? "brightness(0) invert(1)" : "none";
     } else {
       logo.style.display = "none";
     }

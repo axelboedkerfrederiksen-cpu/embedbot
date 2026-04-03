@@ -423,9 +423,10 @@ export default function DashboardPage() {
           minHeight: "100dvh",
           display: "grid",
           placeItems: "center",
-          background: "#030712",
-          color: "#ffffff",
-          fontFamily: '"DM Sans", sans-serif',
+          background:
+            "radial-gradient(circle at 12% 18%, rgba(246, 243, 237, 0.92) 0%, rgba(246, 243, 237, 0) 24%), radial-gradient(circle at 88% 14%, rgba(246, 243, 237, 0.9) 0%, rgba(246, 243, 237, 0) 22%), linear-gradient(180deg, #ffffff 0%, #fcfaf6 55%, #f8f4ee 100%)",
+          color: "#111111",
+          fontFamily: '"Poppins", sans-serif',
         }}
       >
         Indlæser...
@@ -437,9 +438,10 @@ export default function DashboardPage() {
     <main
       style={{
         minHeight: "100dvh",
-        background: "#030712",
-        color: "#ffffff",
-        fontFamily: '"DM Sans", sans-serif',
+        background:
+          "radial-gradient(circle at 12% 18%, rgba(246, 243, 237, 0.92) 0%, rgba(246, 243, 237, 0) 24%), radial-gradient(circle at 88% 14%, rgba(246, 243, 237, 0.9) 0%, rgba(246, 243, 237, 0) 22%), linear-gradient(180deg, #ffffff 0%, #fcfaf6 55%, #f8f4ee 100%)",
+        color: "#111111",
+        fontFamily: '"Poppins", sans-serif',
         paddingTop: 48,
         paddingBottom: 56,
         paddingLeft: 28,
@@ -447,8 +449,8 @@ export default function DashboardPage() {
       }}
     >
       <div style={{ width: "100%", maxWidth: 960, margin: "0 auto", display: "grid", gap: 20 }}>
-        <nav style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 12, paddingBottom: 20, borderBottom: "1px solid rgba(255,255,255,0.05)" }}>
-          <Link href="/" style={{ fontSize: 18, fontWeight: 600, textDecoration: "none", color: "#ffffff" }}>
+        <nav style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 12, padding: "18px 20px", border: "1px solid rgba(17,17,17,0.08)", borderRadius: 22, background: "rgba(255,255,255,0.86)", boxShadow: "0 16px 38px rgba(17,17,17,0.05)", backdropFilter: "blur(12px)" }}>
+          <Link href="/" style={{ fontSize: 18, fontWeight: 700, textDecoration: "none", color: "#111111", letterSpacing: "-0.03em" }}>
             EmbedBot
           </Link>
           <div style={{ display: "flex", alignItems: "center", gap: 16, minWidth: 0 }}>
@@ -458,7 +460,7 @@ export default function DashboardPage() {
                 overflow: "hidden",
                 textOverflow: "ellipsis",
                 whiteSpace: "nowrap",
-                color: "#9ca3af",
+                color: "#6b6258",
                 fontSize: 13,
               }}
             >
@@ -468,15 +470,16 @@ export default function DashboardPage() {
               type="button"
               onClick={handleLogout}
               style={{
-                border: "1px solid rgba(255,255,255,0.10)",
-                background: "transparent",
-                color: "#ffffff",
+                border: "1px solid rgba(17,17,17,0.10)",
+                background: "#ffffff",
+                color: "#111111",
                 fontSize: 13,
-                fontWeight: 500,
-                padding: "6px 12px",
-                borderRadius: 5,
+                fontWeight: 600,
+                padding: "8px 14px",
+                borderRadius: 999,
                 cursor: "pointer",
-                fontFamily: '"DM Sans", sans-serif',
+                fontFamily: '"Poppins", sans-serif',
+                boxShadow: "0 8px 18px rgba(17,17,17,0.06)",
               }}
             >
               Log ud
@@ -494,8 +497,8 @@ export default function DashboardPage() {
           }}
         >
           <div>
-            <h1 style={{ margin: 0, fontSize: 28, lineHeight: 1.1, fontWeight: 600 }}>Overblik</h1>
-            <p style={{ margin: "6px 0 0", fontSize: 14, color: "#9ca3af", fontWeight: 300 }}>
+            <h1 style={{ margin: 0, fontSize: 32, lineHeight: 1.05, fontWeight: 700, letterSpacing: "-0.04em" }}>Overblik</h1>
+            <p style={{ margin: "6px 0 0", fontSize: 14, color: "#6b6258", fontWeight: 400 }}>
               Her er hvorfor det betyder noget for din forretning
             </p>
           </div>
@@ -505,14 +508,15 @@ export default function DashboardPage() {
               display: "inline-flex",
               alignItems: "center",
               justifyContent: "center",
-              background: "#3b82f6",
-              color: "#ffffff",
+              background: "#ffffff",
+              color: "#111111",
               textDecoration: "none",
               fontSize: 14,
-              fontWeight: 500,
-              padding: "10px 18px",
-              borderRadius: 5,
-              border: "1px solid transparent",
+              fontWeight: 600,
+              padding: "12px 18px",
+              borderRadius: 999,
+              border: "1px solid rgba(17,17,17,0.08)",
+              boxShadow: "0 12px 28px rgba(17,17,17,0.08)",
             }}
           >
             Opret ny chatbot
@@ -523,10 +527,10 @@ export default function DashboardPage() {
           <p
             style={{
               margin: 0,
-              background: "rgba(59,130,246,0.12)",
-              border: "1px solid rgba(96,165,250,0.35)",
-              color: "#60a5fa",
-              borderRadius: 5,
+              background: "rgba(246,243,237,0.72)",
+              border: "1px solid rgba(17,17,17,0.08)",
+              color: "#9b3d2f",
+              borderRadius: 16,
               padding: "10px 12px",
               fontSize: 14,
             }}
@@ -537,35 +541,37 @@ export default function DashboardPage() {
 
         <section
           style={{
-            background: "#111827",
-            color: "#ffffff",
-            borderRadius: 10,
-            padding: 18,
+            background: "rgba(255,255,255,0.94)",
+            color: "#111111",
+            borderRadius: 24,
+            padding: 20,
+            border: "1px solid rgba(17,17,17,0.08)",
+            boxShadow: "0 18px 40px rgba(17,17,17,0.05)",
             display: "grid",
             gap: 14,
           }}
         >
           <div>
             <h2 style={{ margin: 0, fontSize: 20, fontWeight: 600 }}>Værdioverblik (7 dage)</h2>
-            <p style={{ margin: "6px 0 0", fontSize: 13, color: "rgba(246,243,237,0.75)" }}>
+            <p style={{ margin: "6px 0 0", fontSize: 13, color: "#6b6258" }}>
               Samtaler, estimeret tidsbesparelse, leads og løsningsgrad
             </p>
           </div>
           <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(150px, 1fr))", gap: 10 }}>
-            <article style={{ background: "rgba(246,243,237,0.08)", borderRadius: 8, padding: 12 }}>
-              <p style={{ margin: 0, fontSize: 12, color: "rgba(246,243,237,0.72)" }}>Samtaler håndteret</p>
+            <article style={{ background: "#ffffff", border: "1px solid rgba(17,17,17,0.07)", borderRadius: 16, padding: 12, boxShadow: "0 10px 24px rgba(17,17,17,0.04)" }}>
+              <p style={{ margin: 0, fontSize: 12, color: "#6b6258" }}>Samtaler håndteret</p>
               <p style={{ margin: "8px 0 0", fontSize: 24, fontWeight: 700 }}>{analytics.conversationsThisWeek}</p>
             </article>
-            <article style={{ background: "rgba(246,243,237,0.08)", borderRadius: 8, padding: 12 }}>
-              <p style={{ margin: 0, fontSize: 12, color: "rgba(246,243,237,0.72)" }}>Estimeret tid sparet</p>
+            <article style={{ background: "#ffffff", border: "1px solid rgba(17,17,17,0.07)", borderRadius: 16, padding: 12, boxShadow: "0 10px 24px rgba(17,17,17,0.04)" }}>
+              <p style={{ margin: 0, fontSize: 12, color: "#6b6258" }}>Estimeret tid sparet</p>
               <p style={{ margin: "8px 0 0", fontSize: 24, fontWeight: 700 }}>~{formatHours(analytics.estimatedHoursSaved)} t</p>
             </article>
-            <article style={{ background: "rgba(246,243,237,0.08)", borderRadius: 8, padding: 12 }}>
-              <p style={{ margin: 0, fontSize: 12, color: "rgba(246,243,237,0.72)" }}>Leads fanget</p>
+            <article style={{ background: "#ffffff", border: "1px solid rgba(17,17,17,0.07)", borderRadius: 16, padding: 12, boxShadow: "0 10px 24px rgba(17,17,17,0.04)" }}>
+              <p style={{ margin: 0, fontSize: 12, color: "#6b6258" }}>Leads fanget</p>
               <p style={{ margin: "8px 0 0", fontSize: 24, fontWeight: 700 }}>{analytics.leadsThisWeek}</p>
             </article>
-            <article style={{ background: "rgba(246,243,237,0.08)", borderRadius: 8, padding: 12 }}>
-              <p style={{ margin: 0, fontSize: 12, color: "rgba(246,243,237,0.72)" }}>Løsningsgrad</p>
+            <article style={{ background: "#ffffff", border: "1px solid rgba(17,17,17,0.07)", borderRadius: 16, padding: 12, boxShadow: "0 10px 24px rgba(17,17,17,0.04)" }}>
+              <p style={{ margin: 0, fontSize: 12, color: "#6b6258" }}>Løsningsgrad</p>
               <p style={{ margin: "8px 0 0", fontSize: 24, fontWeight: 700 }}>{formatPercent(analytics.resolutionRate)}</p>
             </article>
           </div>
@@ -573,17 +579,18 @@ export default function DashboardPage() {
 
         <section
           style={{
-            background: "#111827",
-            border: "1px solid rgba(255,255,255,0.05)",
-            borderRadius: 10,
+            background: "rgba(255,255,255,0.94)",
+            border: "1px solid rgba(17,17,17,0.08)",
+            borderRadius: 24,
             padding: 16,
             display: "grid",
             gap: 12,
+            boxShadow: "0 18px 40px rgba(17,17,17,0.05)",
           }}
         >
           <div>
             <h2 style={{ margin: 0, fontSize: 18 }}>Udvikling (7 dage)</h2>
-            <p style={{ margin: "6px 0 0", fontSize: 13, color: "#9ca3af" }}>Sort = samtaler, sand = leads</p>
+            <p style={{ margin: "6px 0 0", fontSize: 13, color: "#6b6258" }}>Mørk = samtaler, sand = leads</p>
           </div>
 
           <div style={{ display: "grid", gridTemplateColumns: "repeat(7, minmax(0, 1fr))", gap: 8, alignItems: "end", height: 132 }}>
@@ -594,10 +601,10 @@ export default function DashboardPage() {
               return (
                 <div key={`${day.label}-${index}`} style={{ display: "grid", gap: 6, justifyItems: "center" }}>
                   <div style={{ display: "flex", alignItems: "end", gap: 4, height: 96 }}>
-                    <div title={`Samtaler: ${day.conversations}`} style={{ width: 12, height: conversationHeight, background: "#60a5fa", borderRadius: 4 }} />
-                    <div title={`Leads: ${day.leads}`} style={{ width: 12, height: leadHeight, background: "#3b82f6", borderRadius: 4 }} />
+                    <div title={`Samtaler: ${day.conversations}`} style={{ width: 12, height: conversationHeight, background: "#111111", borderRadius: 4 }} />
+                    <div title={`Leads: ${day.leads}`} style={{ width: 12, height: leadHeight, background: "#d9c7a6", borderRadius: 4 }} />
                   </div>
-                  <span style={{ fontSize: 11, color: "#9ca3af", textTransform: "capitalize" }}>{day.label}</span>
+                  <span style={{ fontSize: 11, color: "#6b6258", textTransform: "capitalize" }}>{day.label}</span>
                 </div>
               );
             })}
@@ -607,28 +614,29 @@ export default function DashboardPage() {
         <section style={{ display: "grid", gap: 12, gridTemplateColumns: "repeat(auto-fit, minmax(280px, 1fr))" }}>
           <article
             style={{
-              background: "#111827",
-              border: "1px solid rgba(255,255,255,0.05)",
-              borderRadius: 10,
+              background: "rgba(255,255,255,0.94)",
+              border: "1px solid rgba(17,17,17,0.08)",
+              borderRadius: 24,
               padding: 16,
               display: "grid",
               gap: 10,
+              boxShadow: "0 18px 40px rgba(17,17,17,0.05)",
             }}
           >
             <div>
               <h2 style={{ margin: 0, fontSize: 18 }}>Leads fanget</h2>
-              <p style={{ margin: "6px 0 0", fontSize: 13, color: "#9ca3af" }}>E-mail, besked og side</p>
+              <p style={{ margin: "6px 0 0", fontSize: 13, color: "#6b6258" }}>E-mail, besked og side</p>
             </div>
 
             {analytics.leads.length === 0 ? (
-              <p style={{ margin: 0, fontSize: 13, color: "#9ca3af" }}>Ingen leads fundet endnu.</p>
+              <p style={{ margin: 0, fontSize: 13, color: "#6b6258" }}>Ingen leads fundet endnu.</p>
             ) : (
               <div style={{ display: "grid", gap: 8 }}>
                 {analytics.leads.map((lead) => (
-                  <div key={`${lead.email}-${lead.createdAt || ""}`} style={{ border: "1px solid rgba(255,255,255,0.05)", borderRadius: 8, padding: 10, display: "grid", gap: 4 }}>
+                  <div key={`${lead.email}-${lead.createdAt || ""}`} style={{ border: "1px solid rgba(17,17,17,0.08)", background: "#ffffff", borderRadius: 16, padding: 10, display: "grid", gap: 4 }}>
                     <p style={{ margin: 0, fontSize: 13, fontWeight: 600 }}>{lead.email}</p>
-                    <p style={{ margin: 0, fontSize: 12, color: "#9ca3af" }}>{lead.message}</p>
-                    <p style={{ margin: 0, fontSize: 11, color: "#6b7280" }}>
+                    <p style={{ margin: 0, fontSize: 12, color: "#6b6258" }}>{lead.message}</p>
+                    <p style={{ margin: 0, fontSize: 11, color: "#8a7e70" }}>
                       {lead.businessName} · {lead.pageUrl}
                     </p>
                   </div>
@@ -639,27 +647,28 @@ export default function DashboardPage() {
 
           <article
             style={{
-              background: "#111827",
-              border: "1px solid rgba(255,255,255,0.05)",
-              borderRadius: 10,
+              background: "rgba(255,255,255,0.94)",
+              border: "1px solid rgba(17,17,17,0.08)",
+              borderRadius: 24,
               padding: 16,
               display: "grid",
               gap: 10,
+              boxShadow: "0 18px 40px rgba(17,17,17,0.05)",
             }}
           >
             <div>
               <h2 style={{ margin: 0, fontSize: 18 }}>Hvad kunder spørger om</h2>
-              <p style={{ margin: "6px 0 0", fontSize: 13, color: "#9ca3af" }}>Top-emner fra sidste 7 dage</p>
+              <p style={{ margin: "6px 0 0", fontSize: 13, color: "#6b6258" }}>Top-emner fra sidste 7 dage</p>
             </div>
 
             {analytics.topicInsights.length === 0 ? (
-              <p style={{ margin: 0, fontSize: 13, color: "#9ca3af" }}>Ikke nok data endnu.</p>
+              <p style={{ margin: 0, fontSize: 13, color: "#6b6258" }}>Ikke nok data endnu.</p>
             ) : (
               <div style={{ display: "grid", gap: 8 }}>
                 {analytics.topicInsights.map((topic) => (
-                  <div key={topic.label} style={{ display: "flex", alignItems: "center", justifyContent: "space-between", border: "1px solid rgba(255,255,255,0.05)", borderRadius: 8, padding: "8px 10px" }}>
+                  <div key={topic.label} style={{ display: "flex", alignItems: "center", justifyContent: "space-between", border: "1px solid rgba(17,17,17,0.08)", background: "#ffffff", borderRadius: 16, padding: "8px 10px" }}>
                     <span style={{ fontSize: 13 }}>{topic.label}</span>
-                    <span style={{ fontSize: 12, color: "#9ca3af" }}>{topic.count}</span>
+                    <span style={{ fontSize: 12, color: "#6b6258" }}>{topic.count}</span>
                   </div>
                 ))}
               </div>
@@ -669,28 +678,29 @@ export default function DashboardPage() {
 
         <section
           style={{
-            background: "#111827",
-            border: "1px solid rgba(255,255,255,0.05)",
-            borderRadius: 10,
+            background: "rgba(255,255,255,0.94)",
+            border: "1px solid rgba(17,17,17,0.08)",
+            borderRadius: 24,
             padding: 16,
             display: "grid",
             gap: 10,
+            boxShadow: "0 18px 40px rgba(17,17,17,0.05)",
           }}
         >
           <div>
             <h2 style={{ margin: 0, fontSize: 18 }}>Ubesvarede spørgsmål</h2>
-            <p style={{ margin: "6px 0 0", fontSize: 13, color: "#9ca3af" }}>Spørgsmål hvor botten ser ud til at have manglet et godt svar</p>
+            <p style={{ margin: "6px 0 0", fontSize: 13, color: "#6b6258" }}>Spørgsmål hvor botten ser ud til at have manglet et godt svar</p>
           </div>
 
           {analytics.missedQuestions.length === 0 ? (
-              <p style={{ margin: 0, fontSize: 13, color: "#9ca3af" }}>Ingen tydelige mangler fundet.</p>
+              <p style={{ margin: 0, fontSize: 13, color: "#6b6258" }}>Ingen tydelige mangler fundet.</p>
           ) : (
             <div style={{ display: "grid", gap: 8 }}>
               {analytics.missedQuestions.map((row) => (
-                <div key={`missed-${row.id}`} style={{ border: "1px solid rgba(96,165,250,0.35)", background: "rgba(59,130,246,0.10)", borderRadius: 8, padding: 10, display: "grid", gap: 4 }}>
+                <div key={`missed-${row.id}`} style={{ border: "1px solid rgba(17,17,17,0.08)", background: "#ffffff", borderRadius: 16, padding: 10, display: "grid", gap: 4 }}>
                   <p style={{ margin: 0, fontSize: 13, fontWeight: 600 }}>{row.question}</p>
-                  <p style={{ margin: 0, fontSize: 12, color: "#6e2b38" }}>{row.answer}</p>
-                  <p style={{ margin: 0, fontSize: 11, color: "#6b7280" }}>{row.businessName}</p>
+                  <p style={{ margin: 0, fontSize: 12, color: "#9b3d2f" }}>{row.answer}</p>
+                  <p style={{ margin: 0, fontSize: 11, color: "#8a7e70" }}>{row.businessName}</p>
                 </div>
               ))}
             </div>
@@ -700,24 +710,25 @@ export default function DashboardPage() {
         <section style={{ display: "grid", gap: 12, gridTemplateColumns: "repeat(auto-fit, minmax(280px, 1fr))" }}>
           <article
             style={{
-              background: "#111827",
-              border: "1px solid rgba(255,255,255,0.05)",
-              borderRadius: 10,
+              background: "rgba(255,255,255,0.94)",
+              border: "1px solid rgba(17,17,17,0.08)",
+              borderRadius: 24,
               padding: 16,
               display: "grid",
               gap: 10,
+              boxShadow: "0 18px 40px rgba(17,17,17,0.05)",
             }}
           >
             <h2 style={{ margin: 0, fontSize: 18 }}>Samtalehøjdepunkter (gode)</h2>
             {analytics.goodHighlights.length === 0 ? (
-              <p style={{ margin: 0, fontSize: 13, color: "#9ca3af" }}>Ingen højdepunkter endnu.</p>
+              <p style={{ margin: 0, fontSize: 13, color: "#6b6258" }}>Ingen højdepunkter endnu.</p>
             ) : (
               <div style={{ display: "grid", gap: 8 }}>
                 {analytics.goodHighlights.map((item) => (
-                  <div key={`good-${item.id}`} style={{ border: "1px solid rgba(255,255,255,0.05)", borderRadius: 8, padding: 10 }}>
-                    <p style={{ margin: 0, fontSize: 12, color: "#9ca3af" }}>{item.businessName}</p>
+                  <div key={`good-${item.id}`} style={{ border: "1px solid rgba(17,17,17,0.08)", background: "#ffffff", borderRadius: 16, padding: 10 }}>
+                    <p style={{ margin: 0, fontSize: 12, color: "#6b6258" }}>{item.businessName}</p>
                     <p style={{ margin: "4px 0 0", fontSize: 13, fontWeight: 600 }}>Q: {item.question}</p>
-                    <p style={{ margin: "4px 0 0", fontSize: 12, color: "#9ca3af" }}>A: {item.answer}</p>
+                    <p style={{ margin: "4px 0 0", fontSize: 12, color: "#6b6258" }}>A: {item.answer}</p>
                   </div>
                 ))}
               </div>
@@ -726,21 +737,22 @@ export default function DashboardPage() {
 
           <article
             style={{
-              background: "#111827",
-              border: "1px solid rgba(255,255,255,0.05)",
-              borderRadius: 10,
+              background: "rgba(255,255,255,0.94)",
+              border: "1px solid rgba(17,17,17,0.08)",
+              borderRadius: 24,
               padding: 16,
               display: "grid",
               gap: 10,
+              boxShadow: "0 18px 40px rgba(17,17,17,0.05)",
             }}
           >
             <h2 style={{ margin: 0, fontSize: 18 }}>Forbedringsforslag til botten</h2>
             {analytics.suggestions.length === 0 ? (
-              <p style={{ margin: 0, fontSize: 13, color: "#9ca3af" }}>Ingen presserende forslag lige nu.</p>
+              <p style={{ margin: 0, fontSize: 13, color: "#6b6258" }}>Ingen presserende forslag lige nu.</p>
             ) : (
               <div style={{ display: "grid", gap: 8 }}>
                 {analytics.suggestions.map((suggestion) => (
-                  <div key={suggestion} style={{ border: "1px solid rgba(255,255,255,0.05)", borderRadius: 8, padding: 10, fontSize: 13 }}>
+                  <div key={suggestion} style={{ border: "1px solid rgba(17,17,17,0.08)", background: "#ffffff", borderRadius: 16, padding: 10, fontSize: 13 }}>
                     {suggestion}
                   </div>
                 ))}
@@ -752,7 +764,7 @@ export default function DashboardPage() {
         {businesses.length === 0 ? (
           <section
             style={{
-              borderTop: "1px solid rgba(255,255,255,0.05)",
+              borderTop: "1px solid rgba(17,17,17,0.08)",
               padding: "44px 0",
               textAlign: "center",
             }}
@@ -764,20 +776,22 @@ export default function DashboardPage() {
                 display: "inline-flex",
                 alignItems: "center",
                 justifyContent: "center",
-                background: "#3b82f6",
-                color: "#ffffff",
+                background: "#ffffff",
+                color: "#111111",
                 textDecoration: "none",
                 fontSize: 14,
-                fontWeight: 500,
-                padding: "10px 18px",
-                borderRadius: 5,
+                fontWeight: 600,
+                padding: "12px 18px",
+                borderRadius: 999,
+                border: "1px solid rgba(17,17,17,0.08)",
+                boxShadow: "0 12px 28px rgba(17,17,17,0.08)",
               }}
             >
               Opret din første chatbot
             </Link>
           </section>
         ) : (
-          <section style={{ display: "grid", gap: 1, borderTop: "1px solid rgba(255,255,255,0.05)", paddingTop: 6 }}>
+          <section style={{ display: "grid", gap: 1, borderTop: "1px solid rgba(17,17,17,0.08)", paddingTop: 6 }}>
             <h2 style={{ margin: "8px 0 6px", fontSize: 18 }}>Dine aktive bots</h2>
             {businesses.map((business) => {
               const displayName = (business.name || "Unavngiven chatbot").trim();
@@ -786,15 +800,15 @@ export default function DashboardPage() {
               const copyFeedback = copiedBusinessId === business.id;
 
               return (
-                <article key={business.id} style={{ borderBottom: "1px solid rgba(255,255,255,0.05)", padding: "20px 0" }}>
+                <article key={business.id} style={{ borderBottom: "1px solid rgba(17,17,17,0.08)", padding: "20px 0" }}>
                   <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 8, flexWrap: "wrap" }}>
                     <h2 style={{ margin: 0, fontSize: 17, fontWeight: 500 }}>{displayName}</h2>
-                    <span style={{ background: "rgba(59,130,246,0.12)", color: "#9ca3af", fontSize: 11, fontWeight: 500, padding: "4px 10px", borderRadius: 3, letterSpacing: "0.06em", textTransform: "uppercase" }}>
+                    <span style={{ background: "#ffffff", color: "#6b6258", border: "1px solid rgba(17,17,17,0.08)", fontSize: 11, fontWeight: 600, padding: "6px 12px", borderRadius: 999, letterSpacing: "0.06em", textTransform: "uppercase" }}>
                       {industry}
                     </span>
                   </div>
 
-                  <p style={{ margin: "6px 0 0", fontSize: 13, color: "#9ca3af", fontWeight: 300 }}>{website}</p>
+                  <p style={{ margin: "6px 0 0", fontSize: 13, color: "#6b6258", fontWeight: 400 }}>{website}</p>
 
                   <div style={{ marginTop: 14, display: "flex", gap: 8, flexWrap: "wrap" }}>
                     <button
@@ -804,15 +818,16 @@ export default function DashboardPage() {
                         display: "inline-flex",
                         alignItems: "center",
                         justifyContent: "center",
-                        border: "1px solid transparent",
-                        background: "#3b82f6",
-                        color: "#ffffff",
+                        border: "1px solid rgba(17,17,17,0.08)",
+                        background: "#ffffff",
+                        color: "#111111",
                         fontSize: 13,
-                        fontWeight: 500,
-                        padding: "8px 14px",
-                        borderRadius: 5,
+                        fontWeight: 600,
+                        padding: "10px 14px",
+                        borderRadius: 999,
                         cursor: "pointer",
-                        fontFamily: '"DM Sans", sans-serif',
+                        fontFamily: '"Poppins", sans-serif',
+                        boxShadow: "0 10px 24px rgba(17,17,17,0.06)",
                       }}
                     >
                       {copyFeedback ? "Kopieret! ✓" : "Kopier embed-kode"}
@@ -824,14 +839,14 @@ export default function DashboardPage() {
                         display: "inline-flex",
                         alignItems: "center",
                         justifyContent: "center",
-                        border: "1px solid rgba(255,255,255,0.10)",
+                        border: "1px solid rgba(17,17,17,0.10)",
                         background: "transparent",
-                        color: "#ffffff",
+                        color: "#111111",
                         textDecoration: "none",
                         fontSize: 13,
-                        fontWeight: 500,
-                        padding: "8px 14px",
-                        borderRadius: 5,
+                        fontWeight: 600,
+                        padding: "10px 14px",
+                        borderRadius: 999,
                       }}
                     >
                       Se samtaler

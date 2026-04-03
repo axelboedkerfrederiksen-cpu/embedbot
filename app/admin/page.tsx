@@ -698,7 +698,7 @@ export default function AdminPage() {
                     const primaryColor = (business.primary_color || "").trim() || "#111111";
                     const secondaryColor = (business.secondary_color || "").trim() || "#f5f5f5";
                     const fabColor = (business.fab_color || "").trim() || (business.chat_icon_color || "").trim() || "#111111";
-                    const fontChoice = (business.font_choice || "").trim() || "DM Sans";
+                    const fontChoice = (business.font_choice || "").trim() || "Poppins";
 
                     const installScript = `<script\n  src=\"https://embedbot1.vercel.app/widget.js?id=${business.id}\"\n  data-name=\"${business.name || "Support"}\"\n  data-primary-color=\"${primaryColor}\"\n  data-secondary-color=\"${secondaryColor}\"\n  data-fab-color=\"${fabColor}\"\n  data-font=\"${fontChoice}\">\n<\\/script>`;
 

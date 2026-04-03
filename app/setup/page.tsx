@@ -5,6 +5,15 @@ import { createClient } from "@/lib/supabase";
 
 const ONBOARDING_BUSINESS_ID_KEY = "onboarding_business_id";
 
+const GENERATING_MESSAGES = [
+  "Analyserer din virksomhed...",
+  "Konfigurerer AI-modellen...",
+  "Tilpasser chatbottens tone...",
+  "Opsætter supportflows...",
+  "Designer brugergrænsefladen...",
+  "Næsten klar...",
+];
+
 export default function Home() {
   type PlatformKey = "html" | "wordpress" | "shopify" | "squarespace" | "wix" | "webflow";
   type SetupUser = { id: string; email?: string | null } | null;
@@ -23,8 +32,8 @@ export default function Home() {
     welcome_message: "", tone: "uformel", language: "dansk",
     custom_instructions: "",
     faq: "", cvr: "", social_media: "", current_offers: "", warranty: "", size_guide: "",
-    primary_color: "#3b82f6", secondary_color: "#111827", chat_icon_color: "#3b82f6",
-    font_choice: "DM Sans", logo_data_url: "", logo_file_name: ""
+    primary_color: "#ffffff", secondary_color: "#f6f3ed", chat_icon_color: "#ffffff",
+    font_choice: "Poppins", logo_data_url: "", logo_file_name: ""
   };
   type FormState = typeof initialForm;
 
@@ -39,6 +48,7 @@ export default function Home() {
   const [businessId, setBusinessId] = useState("");
   const [selectedPlatform, setSelectedPlatform] = useState<PlatformKey>("html");
   const [savingDraft, setSavingDraft] = useState(false);
+  const [generatingPhase, setGeneratingPhase] = useState(0);
 
   const [form, setForm] = useState<FormState>(initialForm);
 
@@ -190,6 +200,17 @@ export default function Home() {
     // Every arrival at step 1 starts a new onboarding session ID.
     resetBusinessIdForStepOne();
   }, [user, step]);
+
+  useEffect(() => {
+    if (!loading) {
+      setGeneratingPhase(0);
+      return;
+    }
+    const interval = setInterval(() => {
+      setGeneratingPhase(p => p + 1);
+    }, 1800);
+    return () => clearInterval(interval);
+  }, [loading]);
 
   const update = (key: keyof FormState, value: string) => setForm(f => ({ ...f, [key]: value }));
 
@@ -357,10 +378,13 @@ export default function Home() {
 
       .eb-page {
         min-height: 100vh;
-        background: #030712;
+        background:
+          radial-gradient(circle at 12% 18%, rgba(246, 243, 237, 0.92) 0%, rgba(246, 243, 237, 0) 24%),
+          radial-gradient(circle at 88% 14%, rgba(246, 243, 237, 0.9) 0%, rgba(246, 243, 237, 0) 22%),
+          linear-gradient(180deg, #ffffff 0%, #fcfaf6 55%, #f8f4ee 100%);
         padding: 28px 16px;
-        font-family: "DM Sans", sans-serif;
-        color: #ffffff;
+        font-family: "Poppins", sans-serif;
+        color: #111111;
       }
 
       .eb-shell {
@@ -376,10 +400,12 @@ export default function Home() {
       }
 
       .eb-card {
-        background: #111827;
-        border: 1px solid rgba(255,255,255,0.05);
-        border-radius: 10px;
-        padding: 24px;
+        background: rgba(255,255,255,0.94);
+        border: 1px solid rgba(17,17,17,0.08);
+        border-radius: 24px;
+        padding: 28px;
+        box-shadow: 0 20px 50px rgba(17,17,17,0.08);
+        backdrop-filter: blur(10px);
       }
 
       .eb-animate {
@@ -387,8 +413,9 @@ export default function Home() {
       }
 
       .brand {
-        font-family: "DM Serif Display", serif;
-        letter-spacing: 0.4px;
+        font-family: "Poppins", sans-serif;
+        font-weight: 700;
+        letter-spacing: -0.04em;
         line-height: 1.05;
         margin: 0;
       }
@@ -404,12 +431,12 @@ export default function Home() {
       }
 
       .muted {
-        color: #9ca3af;
+        color: #6b6258;
       }
 
       .tagline {
         text-align: center;
-        color: #9ca3af;
+        color: #6b6258;
         margin: 0 0 24px;
       }
 
@@ -423,15 +450,15 @@ export default function Home() {
 
       .step-note {
         font-size: 13px;
-        color: #9ca3af;
-        font-weight: 400;
+        color: #6b6258;
+        font-weight: 500;
       }
 
       .progress-track {
         width: 100%;
         height: 4px;
         border-radius: 999px;
-        background: rgba(255,255,255,0.05);
+        background: rgba(17,17,17,0.08);
         overflow: hidden;
         margin-bottom: 20px;
       }
@@ -439,7 +466,7 @@ export default function Home() {
       .progress-fill {
         height: 100%;
         border-radius: inherit;
-        background: #3b82f6;
+        background: #111111;
         transition: width 260ms ease;
       }
 
@@ -468,29 +495,29 @@ export default function Home() {
       }
 
       .required {
-        color: #60a5fa;
+        color: #8a7e70;
       }
 
       .field-input {
         width: 100%;
-        background: #111827;
-        border: 1px solid rgba(255,255,255,0.1);
-        border-radius: 6px;
-        padding: 11px 12px;
-        font-family: "DM Sans", sans-serif;
+        background: #ffffff;
+        border: 1px solid rgba(17,17,17,0.1);
+        border-radius: 14px;
+        padding: 13px 14px;
+        font-family: "Poppins", sans-serif;
         font-size: 14px;
         box-sizing: border-box;
         transition: border-color 150ms ease;
-        color: #ffffff;
+        color: #111111;
       }
 
       .field-input::placeholder {
-        color: #6b7280;
+        color: #8a7e70;
       }
 
       .field-input:focus {
         outline: none;
-        border-color: #3b82f6;
+        border-color: rgba(17,17,17,0.22);
       }
 
       .field-textarea {
@@ -517,9 +544,9 @@ export default function Home() {
       .color-input {
         width: 46px;
         height: 38px;
-        border: 1px solid rgba(255,255,255,0.1);
+        border: 1px solid rgba(17,17,17,0.1);
         border-radius: 10px;
-        background: #111827;
+        background: #ffffff;
         padding: 2px;
         cursor: pointer;
       }
@@ -530,10 +557,10 @@ export default function Home() {
 
       .logo-preview {
         margin-top: 10px;
-        border: 1px dashed rgba(255,255,255,0.2);
+        border: 1px dashed rgba(17,17,17,0.16);
         border-radius: 10px;
         padding: 10px;
-        background: rgba(17,24,39,0.5);
+        background: rgba(246,243,237,0.55);
       }
 
       .logo-preview img {
@@ -541,13 +568,12 @@ export default function Home() {
         max-height: 56px;
         width: auto;
         max-width: 180px;
-        filter: brightness(0) invert(1);
       }
 
       .font-preview {
         margin-top: 8px;
         font-size: 14px;
-        color: #9ca3af;
+        color: #6b6258;
       }
 
       .actions {
@@ -557,14 +583,14 @@ export default function Home() {
       }
 
       .btn {
-        border-radius: 5px;
-        border: 1px solid transparent;
-        padding: 10px 20px;
+        border-radius: 999px;
+        border: 1px solid rgba(17,17,17,0.08);
+        padding: 12px 20px;
         font-size: 14px;
-        font-weight: 500;
+        font-weight: 600;
         cursor: pointer;
-        transition: opacity 140ms, border-color 140ms;
-        font-family: "DM Sans", sans-serif;
+        transition: opacity 140ms, border-color 140ms, background 140ms, box-shadow 140ms;
+        font-family: "Poppins", sans-serif;
       }
 
       .btn:disabled {
@@ -573,23 +599,24 @@ export default function Home() {
       }
 
       .btn-primary {
-        background: #3b82f6;
-        color: #ffffff;
-        box-shadow: 0 8px 22px rgba(59, 130, 246, 0.25);
+        background: #ffffff;
+        color: #111111;
+        box-shadow: 0 12px 28px rgba(17,17,17,0.08);
       }
 
       .btn-primary:hover {
-        background: #60a5fa;
+        background: #f8f4ee;
       }
 
       .btn-secondary {
         background: transparent;
-        color: #ffffff;
-        border-color: rgba(255,255,255,0.1);
+        color: #111111;
+        border-color: rgba(17,17,17,0.12);
       }
 
       .btn-secondary:hover {
-        border-color: rgba(255,255,255,0.2);
+        background: rgba(255,255,255,0.72);
+        border-color: rgba(17,17,17,0.16);
       }
 
       .btn-full {
@@ -597,7 +624,7 @@ export default function Home() {
       }
 
       .message-error {
-        color: #60a5fa;
+        color: #9b3d2f;
         margin: 12px 0 0;
         font-size: 14px;
       }
@@ -605,7 +632,7 @@ export default function Home() {
       .toggle-auth {
         margin: 14px 0 0;
         text-align: center;
-        color: #9ca3af;
+        color: #6b6258;
         font-size: 14px;
         cursor: pointer;
         text-decoration: underline;
@@ -622,7 +649,7 @@ export default function Home() {
         height: 68px;
         margin: 0 auto 16px;
         border-radius: 999px;
-        border: 2px solid #3b82f6;
+        border: 2px solid rgba(17,17,17,0.14);
         display: grid;
         place-items: center;
         font-size: 34px;
@@ -636,7 +663,7 @@ export default function Home() {
 
       .thanks-text {
         margin: 0;
-        color: #9ca3af;
+        color: #6b6258;
         max-width: 520px;
         margin-inline: auto;
       }
@@ -658,30 +685,31 @@ export default function Home() {
       }
 
       .platform-tab {
-        border: 1px solid rgba(255,255,255,0.1);
-        background: transparent;
-        border-radius: 5px;
+        border: 1px solid rgba(17,17,17,0.1);
+        background: #ffffff;
+        border-radius: 999px;
         padding: 7px 12px;
         font-size: 13px;
-        font-weight: 400;
+        font-weight: 500;
         cursor: pointer;
-        font-family: "DM Sans", sans-serif;
-        color: #ffffff;
-        transition: border-color 140ms;
+        font-family: "Poppins", sans-serif;
+        color: #111111;
+        transition: border-color 140ms, background 140ms;
       }
 
       .platform-tab:hover {
-        border-color: rgba(255,255,255,0.2);
+        background: #f8f4ee;
+        border-color: rgba(17,17,17,0.14);
       }
 
       .platform-tab.is-active {
-        background: #3b82f6;
+        background: #111111;
         color: #ffffff;
-        border-color: #3b82f6;
+        border-color: #111111;
       }
 
       .guide-wrap {
-        border-top: 1px solid rgba(255,255,255,0.05);
+        border-top: 1px solid rgba(17,17,17,0.08);
         padding-top: 6px;
       }
 
@@ -703,19 +731,20 @@ export default function Home() {
         padding-left: 20px;
         display: grid;
         gap: 6px;
-        color: #ffffff;
+        color: #111111;
         font-size: 14px;
       }
 
       .guide-code {
         margin: 10px 0 0;
-        background: rgba(17,24,39,0.7);
-        border: 1px solid rgba(255,255,255,0.05);
-        border-radius: 6px;
+        background: rgba(246,243,237,0.75);
+        border: 1px solid rgba(17,17,17,0.08);
+        border-radius: 14px;
         padding: 10px;
         overflow-x: auto;
         font-size: 13px;
         line-height: 1.45;
+        color: #111111;
       }
 
       @keyframes eb-fade-up {
@@ -875,7 +904,7 @@ export default function Home() {
                 value={form.primary_color}
                 onChange={e => update("primary_color", e.target.value)}
                 className="field-input color-text"
-                placeholder="#3b82f6"
+                placeholder="#ffffff"
               />
             </div>
             <p className="font-preview">Bruges til chat-header + send-knap.</p>
@@ -894,7 +923,7 @@ export default function Home() {
                 value={form.secondary_color}
                 onChange={e => update("secondary_color", e.target.value)}
                 className="field-input color-text"
-                placeholder="#111827"
+                placeholder="#f6f3ed"
               />
             </div>
             <p className="font-preview">Bruges til brugerens beskedbobler.</p>
@@ -914,7 +943,7 @@ export default function Home() {
               value={form.chat_icon_color}
               onChange={e => update("chat_icon_color", e.target.value)}
               className="field-input color-text"
-              placeholder="#3b82f6"
+              placeholder="#ffffff"
             />
           </div>
           <p className="font-preview">Farven på FAB-knappen i hjørnet.</p>
@@ -948,7 +977,7 @@ export default function Home() {
             <option value="Poppins">Poppins</option>
             <option value="Lora">Lora</option>
           </select>
-          <p className="font-preview" style={{ fontFamily: previewFontFamily[form.font_choice] || '"DM Sans", sans-serif' }}>
+          <p className="font-preview" style={{ fontFamily: previewFontFamily[form.font_choice] || '"Poppins", sans-serif' }}>
             Preview: Sådan kan teksten se ud i chatten.
           </p>
         </div>
