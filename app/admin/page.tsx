@@ -43,7 +43,7 @@ type Toast = {
 };
 
 const statsCardClass =
-  "rounded-2xl border border-white/5 bg-[rgba(17,24,39,0.70)] p-4 shadow-[0_10px_30px_rgba(2,6,23,0.45)] backdrop-blur";
+  "rounded-2xl border border-[rgba(17,17,17,0.08)] bg-[rgba(255,255,255,0.94)] p-4 shadow-[0_18px_40px_rgba(17,17,17,0.05)] backdrop-blur text-[#111111]";
 
 function getFirstNumericField(row: Business, keys: string[]): number {
   for (const key of keys) {
@@ -419,14 +419,14 @@ export default function AdminPage() {
 
   if (!isAuthenticated) {
     return (
-      <main className="min-h-screen bg-[#030712] px-4 py-16 text-white">
-        <div className="mx-auto w-full max-w-md rounded-3xl border border-white/10 bg-[rgba(17,24,39,0.80)] p-8 shadow-2xl backdrop-blur">
+      <main className="min-h-screen bg-[radial-gradient(circle_at_12%_18%,rgba(246,243,237,0.92)_0%,rgba(246,243,237,0)_24%),radial-gradient(circle_at_88%_14%,rgba(246,243,237,0.9)_0%,rgba(246,243,237,0)_22%),linear-gradient(180deg,#ffffff_0%,#fcfaf6_55%,#f8f4ee_100%)] px-4 py-16 text-[#111111]">
+        <div className="mx-auto w-full max-w-md rounded-3xl border border-[rgba(17,17,17,0.08)] bg-[rgba(255,255,255,0.94)] p-8 shadow-[0_20px_50px_rgba(17,17,17,0.08)] backdrop-blur">
           <h1 className="text-3xl font-semibold tracking-tight">EmbedBot Admin</h1>
-          <p className="mt-2 text-sm text-gray-400">Indtast adgangskoden for at fortsatte.</p>
+          <p className="mt-2 text-sm text-[#6b6258]">Indtast adgangskoden for at fortsatte.</p>
 
           <form onSubmit={handleLogin} className="mt-6 space-y-4">
             <div>
-              <label className="mb-2 block text-xs font-medium uppercase tracking-[0.16em] text-gray-500">
+              <label className="mb-2 block text-xs font-medium uppercase tracking-[0.16em] text-[#8a7e70]">
                 Adgangskode
               </label>
               <input
@@ -434,18 +434,18 @@ export default function AdminPage() {
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 placeholder="••••••••"
-                className="w-full rounded-xl border border-white/10 bg-[rgba(3,7,18,0.70)] px-3 py-2.5 text-sm text-white placeholder:text-gray-600 focus:border-blue-500 focus:outline-none"
+                className="w-full rounded-xl border border-[rgba(17,17,17,0.10)] bg-white px-3 py-2.5 text-sm text-[#111111] placeholder:text-[#8a7e70] focus:border-[rgba(17,17,17,0.22)] focus:outline-none"
               />
             </div>
 
             <button
               type="submit"
-              className="w-full rounded-xl bg-blue-500 px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-blue-400"
+              className="w-full rounded-xl border border-[rgba(17,17,17,0.08)] bg-[#111111] px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-[#2a2a2a]"
             >
               Log ind
             </button>
 
-            {authError ? <p className="text-sm text-gray-400">{authError}</p> : null}
+            {authError ? <p className="text-sm text-[#9b3d2f]">{authError}</p> : null}
           </form>
         </div>
       </main>
@@ -453,8 +453,8 @@ export default function AdminPage() {
   }
 
   return (
-    <main className="min-h-screen bg-[#030712] text-white">
-      <div className="pointer-events-none fixed inset-0 -z-10 bg-[radial-gradient(circle_at_20%_10%,rgba(255,255,255,0.08),transparent_35%),radial-gradient(circle_at_80%_20%,rgba(148,163,184,0.08),transparent_30%),radial-gradient(circle_at_50%_80%,rgba(255,255,255,0.06),transparent_35%)]" />
+    <main className="min-h-screen bg-[radial-gradient(circle_at_12%_18%,rgba(246,243,237,0.92)_0%,rgba(246,243,237,0)_24%),radial-gradient(circle_at_88%_14%,rgba(246,243,237,0.9)_0%,rgba(246,243,237,0)_22%),linear-gradient(180deg,#ffffff_0%,#fcfaf6_55%,#f8f4ee_100%)] text-[#111111]">
+      <div className="pointer-events-none fixed inset-0 -z-10 bg-[radial-gradient(circle_at_20%_10%,rgba(246,243,237,0.55),transparent_35%),radial-gradient(circle_at_80%_20%,rgba(17,17,17,0.03),transparent_30%),radial-gradient(circle_at_50%_80%,rgba(246,243,237,0.35),transparent_35%)]" />
 
       <div className="flex min-h-screen">
         <AnimatePresence>
@@ -464,7 +464,7 @@ export default function AdminPage() {
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
               onClick={() => setSidebarOpen(false)}
-              className="fixed inset-0 z-20 bg-[rgba(3,7,18,0.70)] lg:hidden"
+              className="fixed inset-0 z-20 bg-[rgba(17,17,17,0.14)] lg:hidden"
               aria-label="Luk menu"
             />
           ) : null}
@@ -474,22 +474,22 @@ export default function AdminPage() {
           initial={{ x: -40, opacity: 0 }}
           animate={{ x: 0, opacity: 1 }}
           transition={{ duration: 0.35 }}
-          className={`fixed inset-y-0 left-0 z-30 w-72 border-r border-white/5 bg-[rgba(3,7,18,0.95)] p-5 backdrop-blur lg:static lg:translate-x-0 ${sidebarOpen ? "translate-x-0" : "-translate-x-full lg:translate-x-0"} transition-transform duration-300`}
+          className={`fixed inset-y-0 left-0 z-30 w-72 border-r border-[rgba(17,17,17,0.08)] bg-[rgba(255,255,255,0.92)] p-5 backdrop-blur lg:static lg:translate-x-0 ${sidebarOpen ? "translate-x-0" : "-translate-x-full lg:translate-x-0"} transition-transform duration-300`}
         >
           <div className="flex items-center justify-between gap-2">
             <div className="flex items-center gap-3">
-              <div className="grid h-10 w-10 place-items-center rounded-xl bg-blue-500/20 text-gray-300">
+              <div className="grid h-10 w-10 place-items-center rounded-xl border border-[rgba(17,17,17,0.08)] bg-white text-[#111111] shadow-[0_10px_24px_rgba(17,17,17,0.06)]">
                 <Bot size={20} />
               </div>
               <div>
                 <p className="text-sm font-semibold">EmbedBot</p>
-                <p className="text-xs text-gray-500">Admin Console</p>
+                <p className="text-xs text-[#8a7e70]">Admin Console</p>
               </div>
             </div>
 
             <button
               onClick={() => setSidebarOpen(false)}
-              className="rounded-lg border border-white/10 p-1.5 text-gray-400 lg:hidden"
+              className="rounded-lg border border-[rgba(17,17,17,0.10)] p-1.5 text-[#6b6258] lg:hidden"
               aria-label="Luk sidebar"
             >
               <X size={16} />
@@ -497,33 +497,33 @@ export default function AdminPage() {
           </div>
 
           <nav className="mt-8 space-y-1">
-            <button className="flex w-full items-center gap-3 rounded-xl bg-blue-500/20 px-3 py-2 text-sm font-medium text-gray-300">
+            <button className="flex w-full items-center gap-3 rounded-xl border border-[rgba(17,17,17,0.08)] bg-white px-3 py-2 text-sm font-medium text-[#111111] shadow-[0_8px_18px_rgba(17,17,17,0.05)]">
               <LayoutDashboard size={16} />
               Overblik
             </button>
-            <button className="flex w-full items-center gap-3 rounded-xl px-3 py-2 text-sm text-gray-400 transition hover:bg-[#111827]">
+            <button className="flex w-full items-center gap-3 rounded-xl px-3 py-2 text-sm text-[#6b6258] transition hover:bg-[rgba(246,243,237,0.85)]">
               <Building2 size={16} />
               Virksomheder
             </button>
-            <button className="flex w-full items-center gap-3 rounded-xl px-3 py-2 text-sm text-gray-400 transition hover:bg-[#111827]">
+            <button className="flex w-full items-center gap-3 rounded-xl px-3 py-2 text-sm text-[#6b6258] transition hover:bg-[rgba(246,243,237,0.85)]">
               <BarChart3 size={16} />
               Analytics
             </button>
-            <button className="flex w-full items-center gap-3 rounded-xl px-3 py-2 text-sm text-gray-400 transition hover:bg-[#111827]">
+            <button className="flex w-full items-center gap-3 rounded-xl px-3 py-2 text-sm text-[#6b6258] transition hover:bg-[rgba(246,243,237,0.85)]">
               <Activity size={16} />
               Driftstatus
             </button>
           </nav>
 
-          <div className="mt-8 rounded-xl border border-white/5 bg-[rgba(17,24,39,0.70)] p-3">
-            <p className="text-xs uppercase tracking-[0.15em] text-gray-600">System</p>
+          <div className="mt-8 rounded-xl border border-[rgba(17,17,17,0.08)] bg-[rgba(255,255,255,0.94)] p-3 shadow-[0_12px_28px_rgba(17,17,17,0.04)]">
+            <p className="text-xs uppercase tracking-[0.15em] text-[#8a7e70]">System</p>
             <div className="mt-2 flex items-center justify-between">
-              <span className="text-sm text-gray-400">Embed API</span>
+              <span className="text-sm text-[#6b6258]">Embed API</span>
               <span
                 className={`rounded-full px-2.5 py-0.5 text-xs font-medium ${
                   systemOnline
-                    ? "bg-blue-500/20 text-white"
-                    : "bg-[rgba(17,24,39,0.9)] text-gray-400"
+                    ? "bg-[#111111] text-white"
+                    : "border border-[rgba(17,17,17,0.08)] bg-white text-[#6b6258]"
                 }`}
               >
                 {systemOnline ? "Online" : "Offline"}
@@ -533,19 +533,19 @@ export default function AdminPage() {
         </motion.aside>
 
         <section className="w-full lg:pl-0">
-          <header className="sticky top-0 z-10 border-b border-white/5 bg-[rgba(3,7,18,0.80)] backdrop-blur">
+          <header className="sticky top-0 z-10 border-b border-[rgba(17,17,17,0.08)] bg-[rgba(255,255,255,0.86)] backdrop-blur">
             <div className="mx-auto flex w-full max-w-7xl items-center justify-between gap-3 px-4 py-3 sm:px-6">
               <div className="flex items-center gap-3">
                 <button
                   onClick={() => setSidebarOpen(true)}
-                  className="rounded-xl border border-white/10 p-2 text-gray-400 lg:hidden"
+                  className="rounded-xl border border-[rgba(17,17,17,0.10)] p-2 text-[#6b6258] lg:hidden"
                   aria-label="Aabn sidebar"
                 >
                   <Menu size={18} />
                 </button>
 
                 <div>
-                  <p className="text-xs text-gray-500">Dashboard / Admin</p>
+                  <p className="text-xs text-[#8a7e70]">Dashboard / Admin</p>
                   <h1 className="text-base font-semibold sm:text-lg">Virksomheds-overblik</h1>
                 </div>
               </div>
@@ -553,7 +553,7 @@ export default function AdminPage() {
               <button
                 onClick={fetchBusinesses}
                 disabled={loading}
-                className="inline-flex items-center gap-2 rounded-xl border border-white/10 bg-[#111827] px-3 py-2 text-sm font-medium text-gray-300 transition hover:border-white/20 hover:text-white disabled:opacity-60"
+                className="inline-flex items-center gap-2 rounded-xl border border-[rgba(17,17,17,0.08)] bg-white px-3 py-2 text-sm font-medium text-[#111111] shadow-[0_10px_24px_rgba(17,17,17,0.05)] transition hover:bg-[rgba(246,243,237,0.9)] disabled:opacity-60"
               >
                 <RefreshCcw size={15} className={loading ? "animate-spin" : ""} />
                 {loading ? "Henter" : "Opdater liste"}
@@ -569,7 +569,7 @@ export default function AdminPage() {
               className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-5"
             >
               <article className={statsCardClass}>
-                <div className="flex items-center justify-between text-gray-500">
+                <div className="flex items-center justify-between text-[#8a7e70]">
                   <p className="text-xs uppercase tracking-[0.15em]">Aktive chatbots</p>
                   <Bot size={16} />
                 </div>
@@ -577,7 +577,7 @@ export default function AdminPage() {
               </article>
 
               <article className={statsCardClass}>
-                <div className="flex items-center justify-between text-gray-500">
+                <div className="flex items-center justify-between text-[#8a7e70]">
                   <p className="text-xs uppercase tracking-[0.15em]">Virksomheder</p>
                   <Building2 size={16} />
                 </div>
@@ -585,7 +585,7 @@ export default function AdminPage() {
               </article>
 
               <article className={statsCardClass}>
-                <div className="flex items-center justify-between text-gray-500">
+                <div className="flex items-center justify-between text-[#8a7e70]">
                   <p className="text-xs uppercase tracking-[0.15em]">Beskeder besvaret</p>
                   <BarChart3 size={16} />
                 </div>
@@ -593,7 +593,7 @@ export default function AdminPage() {
               </article>
 
               <article className={statsCardClass}>
-                <div className="flex items-center justify-between text-gray-500">
+                <div className="flex items-center justify-between text-[#8a7e70]">
                   <p className="text-xs uppercase tracking-[0.15em]">Gns. svartid</p>
                   <Gauge size={16} />
                 </div>
@@ -601,45 +601,45 @@ export default function AdminPage() {
               </article>
 
               <article className={statsCardClass}>
-                <div className="flex items-center justify-between text-gray-500">
+                <div className="flex items-center justify-between text-[#8a7e70]">
                   <p className="text-xs uppercase tracking-[0.15em]">System status</p>
                   <Server size={16} />
                 </div>
-                <p className={`mt-2 text-2xl font-semibold ${systemOnline ? "text-white" : "text-gray-400"}`}>
+                <p className={`mt-2 text-2xl font-semibold ${systemOnline ? "text-[#111111]" : "text-[#6b6258]"}`}>
                   {systemOnline ? "Online" : "Offline"}
                 </p>
               </article>
             </motion.section>
 
-            <section className="rounded-2xl border border-white/5 bg-[rgba(17,24,39,0.70)] p-4 backdrop-blur sm:p-5">
+            <section className="rounded-2xl border border-[rgba(17,17,17,0.08)] bg-[rgba(255,255,255,0.94)] p-4 shadow-[0_18px_40px_rgba(17,17,17,0.05)] backdrop-blur sm:p-5">
               <div className="mb-4 flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
                 <h2 className="text-lg font-semibold">Virksomheder</h2>
 
                 <div className="flex flex-col gap-2 sm:flex-row">
                   <label className="relative">
-                    <Search className="pointer-events-none absolute left-3 top-2.5 text-gray-600" size={16} />
+                    <Search className="pointer-events-none absolute left-3 top-2.5 text-[#8a7e70]" size={16} />
                     <input
                       value={searchTerm}
                       onChange={(e) => setSearchTerm(e.target.value)}
                       placeholder="Soeg navn, email, website"
-                      className="w-full rounded-xl border border-white/10 bg-[rgba(3,7,18,0.70)] py-2 pl-9 pr-3 text-sm text-white placeholder:text-gray-600 focus:border-blue-500 focus:outline-none"
+                      className="w-full rounded-xl border border-[rgba(17,17,17,0.10)] bg-white py-2 pl-9 pr-3 text-sm text-[#111111] placeholder:text-[#8a7e70] focus:border-[rgba(17,17,17,0.22)] focus:outline-none"
                     />
                   </label>
 
-                  <div className="flex items-center gap-2 rounded-xl border border-white/10 bg-[rgba(3,7,18,0.70)] px-3 py-2 text-sm text-gray-400">
+                  <div className="flex items-center gap-2 rounded-xl border border-[rgba(17,17,17,0.10)] bg-white px-3 py-2 text-sm text-[#6b6258]">
                     <Filter size={15} />
                     <select
                       value={statusFilter}
                       onChange={(e) => setStatusFilter(e.target.value as "all" | "active" | "inactive")}
                       className="bg-transparent text-sm outline-none"
                     >
-                      <option value="all" className="bg-[#111827]">
+                      <option value="all" className="bg-white text-[#111111]">
                         Alle
                       </option>
-                      <option value="active" className="bg-[#111827]">
+                      <option value="active" className="bg-white text-[#111111]">
                         Aktiv
                       </option>
-                      <option value="inactive" className="bg-[#111827]">
+                      <option value="inactive" className="bg-white text-[#111111]">
                         Inaktiv
                       </option>
                     </select>
@@ -648,7 +648,7 @@ export default function AdminPage() {
                   <select
                     value={sortBy}
                     onChange={(e) => setSortBy(e.target.value as "date" | "name" | "status")}
-                    className="rounded-xl border border-white/10 bg-[rgba(3,7,18,0.70)] px-3 py-2 text-sm text-gray-400 outline-none focus:border-blue-500"
+                    className="rounded-xl border border-[rgba(17,17,17,0.10)] bg-white px-3 py-2 text-sm text-[#6b6258] outline-none focus:border-[rgba(17,17,17,0.22)]"
                   >
                     <option value="date">Sorter: Dato</option>
                     <option value="name">Sorter: Navn</option>
@@ -658,31 +658,29 @@ export default function AdminPage() {
               </div>
 
               {error ? (
-                <p className="mb-4 rounded-xl border border-white/10 bg-[#111827] px-3 py-2 text-sm text-gray-400">
+                <p className="mb-4 rounded-xl border border-[rgba(17,17,17,0.08)] bg-[rgba(246,243,237,0.72)] px-3 py-2 text-sm text-[#9b3d2f]">
                   {error}
                 </p>
               ) : null}
 
-              {lastUpdatedAt ? (
-                <p className="mb-3 text-xs text-gray-600">Sidst opdateret: {lastUpdatedAt.toLocaleString("da-DK")}</p>
-              ) : null}
+              {lastUpdatedAt ? <p className="mb-3 text-xs text-[#8a7e70]">Sidst opdateret: {lastUpdatedAt.toLocaleString("da-DK")}</p> : null}
 
               {loading ? (
                 <div className="grid gap-3">
                   {Array.from({ length: 4 }).map((_, index) => (
-                    <div key={`skeleton-${index}`} className="animate-pulse rounded-xl border border-white/5 bg-[rgba(17,24,39,0.80)] p-4">
-                      <div className="h-4 w-40 rounded bg-blue-500/20" />
-                      <div className="mt-3 h-3 w-56 rounded bg-[rgba(17,24,39,0.9)]" />
-                      <div className="mt-2 h-3 w-44 rounded bg-[rgba(17,24,39,0.9)]" />
+                    <div key={`skeleton-${index}`} className="animate-pulse rounded-xl border border-[rgba(17,17,17,0.08)] bg-[rgba(255,255,255,0.94)] p-4">
+                      <div className="h-4 w-40 rounded bg-[rgba(17,17,17,0.10)]" />
+                      <div className="mt-3 h-3 w-56 rounded bg-[rgba(17,17,17,0.08)]" />
+                      <div className="mt-2 h-3 w-44 rounded bg-[rgba(17,17,17,0.08)]" />
                     </div>
                   ))}
                 </div>
               ) : null}
 
               {!loading && filteredBusinesses.length === 0 ? (
-                <div className="rounded-2xl border border-dashed border-white/10 bg-[rgba(3,7,18,0.60)] px-6 py-14 text-center">
-                  <p className="text-base font-medium text-gray-300">Ingen virksomheder matcher dit filter</p>
-                  <p className="mt-1 text-sm text-gray-600">Proev en anden soegning eller opdater listen.</p>
+                <div className="rounded-2xl border border-dashed border-[rgba(17,17,17,0.10)] bg-[rgba(255,255,255,0.76)] px-6 py-14 text-center">
+                  <p className="text-base font-medium text-[#111111]">Ingen virksomheder matcher dit filter</p>
+                  <p className="mt-1 text-sm text-[#8a7e70]">Proev en anden soegning eller opdater listen.</p>
                 </div>
               ) : null}
 
@@ -722,7 +720,7 @@ export default function AdminPage() {
                         initial={{ opacity: 0, y: 10 }}
                         animate={{ opacity: 1, y: 0 }}
                         transition={{ duration: 0.2 }}
-                        className="rounded-xl border border-white/5 bg-[rgba(3,7,18,0.70)] p-4"
+                        className="rounded-xl border border-[rgba(17,17,17,0.08)] bg-[rgba(255,255,255,0.94)] p-4 shadow-[0_14px_30px_rgba(17,17,17,0.04)]"
                       >
                         <div className="flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between">
                           <div className="min-w-0">
@@ -731,15 +729,15 @@ export default function AdminPage() {
                               <span
                                 className={`rounded-full px-2.5 py-0.5 text-xs font-semibold ${
                                   isActive
-                                    ? "bg-blue-500/20 text-white"
-                                    : "bg-[rgba(17,24,39,0.9)] text-gray-400"
+                                    ? "bg-[#111111] text-white"
+                                    : "border border-[rgba(17,17,17,0.08)] bg-white text-[#6b6258]"
                                 }`}
                               >
                                 {isActive ? "Aktiv" : "Inaktiv"}
                               </span>
                             </div>
 
-                            <div className="mt-2 flex flex-wrap gap-x-4 gap-y-1 text-sm text-gray-500">
+                            <div className="mt-2 flex flex-wrap gap-x-4 gap-y-1 text-sm text-[#8a7e70]">
                               <p>Website: {business.website_url || "-"}</p>
                               <p>Email: {business.support_email || "-"}</p>
                               <p>
@@ -757,14 +755,14 @@ export default function AdminPage() {
                             <button
                               onClick={() => activateBusiness(business.id)}
                               disabled={isActive || isActivating || deletingId === business.id || savingId === business.id}
-                              className="rounded-lg border border-white/10 px-3 py-1.5 text-sm text-gray-300 transition hover:border-white/20 disabled:cursor-not-allowed disabled:opacity-60"
+                              className="rounded-lg border border-[rgba(17,17,17,0.10)] bg-white px-3 py-1.5 text-sm text-[#111111] transition hover:bg-[rgba(246,243,237,0.9)] disabled:cursor-not-allowed disabled:opacity-60"
                             >
                               {isActive ? "Aktiv" : isActivating ? "Aktiverer..." : "Aktivér"}
                             </button>
 
                             <button
                               onClick={() => toggleExpand(business.id)}
-                              className="rounded-lg border border-white/10 px-3 py-1.5 text-sm text-gray-300 transition hover:border-white/20"
+                              className="rounded-lg border border-[rgba(17,17,17,0.10)] bg-white px-3 py-1.5 text-sm text-[#111111] transition hover:bg-[rgba(246,243,237,0.9)]"
                             >
                               {isOpen ? "Skjul" : "Se info"}
                             </button>
@@ -783,7 +781,7 @@ export default function AdminPage() {
                                   setPendingDeleteBusiness(business);
                                 }
                               }}
-                              className="rounded-lg border border-white/10 bg-[#111827] px-3 py-1.5 text-sm text-gray-300 outline-none"
+                              className="rounded-lg border border-[rgba(17,17,17,0.10)] bg-white px-3 py-1.5 text-sm text-[#111111] outline-none"
                               disabled={
                                 activatingId === business.id ||
                                 deletingId === business.id ||
@@ -798,7 +796,7 @@ export default function AdminPage() {
 
                             <Link
                               href={`/dashboard/${business.id}/samtaler`}
-                              className="rounded-lg border border-white/10 px-3 py-1.5 text-sm text-gray-300 transition hover:border-white/20"
+                              className="rounded-lg border border-[rgba(17,17,17,0.10)] bg-white px-3 py-1.5 text-sm text-[#111111] transition hover:bg-[rgba(246,243,237,0.9)]"
                             >
                               Samtaler
                             </Link>
@@ -812,20 +810,20 @@ export default function AdminPage() {
                               animate={{ opacity: 1, height: "auto" }}
                               exit={{ opacity: 0, height: 0 }}
                               transition={{ duration: 0.2 }}
-                              className="mt-4 overflow-hidden border-t border-white/5 pt-4"
+                              className="mt-4 overflow-hidden border-t border-[rgba(17,17,17,0.08)] pt-4"
                             >
                               {isActive ? (
-                                <div className="rounded-xl border border-white/5 bg-[rgba(17,24,39,0.70)] p-3">
+                                <div className="rounded-xl border border-[rgba(17,17,17,0.08)] bg-[rgba(255,255,255,0.94)] p-3">
                                   <div className="mb-2 flex items-center justify-between gap-2">
-                                    <p className="text-xs uppercase tracking-[0.16em] text-gray-600">Install script</p>
+                                    <p className="text-xs uppercase tracking-[0.16em] text-[#8a7e70]">Install script</p>
                                     <button
                                       onClick={() => copyScript(installScript)}
-                                      className="inline-flex items-center gap-1 rounded-md border border-white/10 px-2 py-1 text-xs text-gray-400 transition hover:border-white/20 hover:text-gray-300"
+                                      className="inline-flex items-center gap-1 rounded-md border border-[rgba(17,17,17,0.10)] bg-white px-2 py-1 text-xs text-[#6b6258] transition hover:bg-[rgba(246,243,237,0.9)] hover:text-[#111111]"
                                     >
                                       <Copy size={12} /> Kopier
                                     </button>
                                   </div>
-                                  <pre className="overflow-x-auto whitespace-pre-wrap break-all rounded-lg bg-[#030712] p-3 text-xs text-gray-300">
+                                  <pre className="overflow-x-auto whitespace-pre-wrap break-all rounded-lg border border-[rgba(17,17,17,0.08)] bg-[rgba(246,243,237,0.72)] p-3 text-xs text-[#111111]">
                                     {installScript}
                                   </pre>
                                 </div>
@@ -837,13 +835,13 @@ export default function AdminPage() {
                                     <button
                                       onClick={() => saveBusinessEdit(business)}
                                       disabled={savingId === business.id}
-                                      className="inline-flex items-center gap-1 rounded-lg bg-blue-500 px-3 py-1.5 text-sm font-semibold text-white transition hover:bg-blue-400 disabled:opacity-60"
+                                      className="inline-flex items-center gap-1 rounded-lg border border-[rgba(17,17,17,0.08)] bg-[#111111] px-3 py-1.5 text-sm font-semibold text-white transition hover:bg-[#2a2a2a] disabled:opacity-60"
                                     >
                                       <Pencil size={14} /> {savingId === business.id ? "Gemmer" : "Gem"}
                                     </button>
                                     <button
                                       onClick={cancelEditing}
-                                      className="rounded-lg border border-white/10 px-3 py-1.5 text-sm"
+                                      className="rounded-lg border border-[rgba(17,17,17,0.10)] bg-white px-3 py-1.5 text-sm text-[#111111]"
                                     >
                                       Annuller
                                     </button>
@@ -852,7 +850,7 @@ export default function AdminPage() {
 
                                 <button
                                   onClick={() => setPendingDeleteBusiness(business)}
-                                  className="inline-flex items-center gap-1 rounded-lg border border-white/10 px-3 py-1.5 text-sm text-gray-300 transition hover:bg-[rgba(17,24,39,0.9)]"
+                                  className="inline-flex items-center gap-1 rounded-lg border border-[rgba(17,17,17,0.10)] bg-white px-3 py-1.5 text-sm text-[#111111] transition hover:bg-[rgba(246,243,237,0.9)]"
                                 >
                                   <Trash2 size={14} /> Slet
                                 </button>
@@ -873,22 +871,22 @@ export default function AdminPage() {
                                   return (
                                     <div
                                       key={`${business.id}-${key}`}
-                                      className="grid grid-cols-1 gap-1 rounded-lg border border-white/5 bg-[rgba(17,24,39,0.40)] p-2 text-sm md:grid-cols-[220px_1fr]"
+                                      className="grid grid-cols-1 gap-1 rounded-lg border border-[rgba(17,17,17,0.08)] bg-[rgba(255,255,255,0.9)] p-2 text-sm md:grid-cols-[220px_1fr]"
                                     >
-                                      <span className="font-medium text-gray-500">{key}</span>
-                                      <span className="text-gray-300">
+                                      <span className="font-medium text-[#8a7e70]">{key}</span>
+                                      <span className="text-[#111111]">
                                         {isEditing && !isReadOnlyKey ? (
                                           isTextareaField(key) ? (
                                             <textarea
                                               value={draft[key] ?? ""}
                                               onChange={(e) => updateDraftValue(business.id, key, e.target.value)}
-                                              className="min-h-[84px] w-full rounded-md border border-white/10 bg-[#030712] px-2 py-1.5 text-sm text-white outline-none focus:border-blue-500"
+                                              className="min-h-[84px] w-full rounded-md border border-[rgba(17,17,17,0.10)] bg-white px-2 py-1.5 text-sm text-[#111111] outline-none focus:border-[rgba(17,17,17,0.22)]"
                                             />
                                           ) : (
                                             <input
                                               value={draft[key] ?? ""}
                                               onChange={(e) => updateDraftValue(business.id, key, e.target.value)}
-                                              className="w-full rounded-md border border-white/10 bg-[#030712] px-2 py-1.5 text-sm text-white outline-none focus:border-blue-500"
+                                              className="w-full rounded-md border border-[rgba(17,17,17,0.10)] bg-white px-2 py-1.5 text-sm text-[#111111] outline-none focus:border-[rgba(17,17,17,0.22)]"
                                             />
                                           )
                                         ) : (
@@ -918,30 +916,30 @@ export default function AdminPage() {
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            className="fixed inset-0 z-40 grid place-items-center bg-[rgba(3,7,18,0.75)] p-4"
+            className="fixed inset-0 z-40 grid place-items-center bg-[rgba(17,17,17,0.18)] p-4"
           >
             <motion.div
               initial={{ scale: 0.95, y: 8 }}
               animate={{ scale: 1, y: 0 }}
               exit={{ scale: 0.95, y: 8 }}
-              className="w-full max-w-md rounded-2xl border border-white/5 bg-[#111827] p-5"
+              className="w-full max-w-md rounded-2xl border border-[rgba(17,17,17,0.08)] bg-[rgba(255,255,255,0.96)] p-5 text-[#111111] shadow-[0_20px_50px_rgba(17,17,17,0.10)]"
             >
               <h3 className="text-lg font-semibold">Slet virksomhed</h3>
-              <p className="mt-2 text-sm text-gray-400">
+              <p className="mt-2 text-sm text-[#6b6258]">
                 Er du sikker pa at du vil slette <strong>{pendingDeleteBusiness.name || "denne virksomhed"}</strong>? Denne handling kan ikke fortrydes.
               </p>
 
               <div className="mt-5 flex justify-end gap-2">
                 <button
                   onClick={() => setPendingDeleteBusiness(null)}
-                  className="rounded-lg border border-white/10 px-3 py-1.5 text-sm text-gray-300"
+                  className="rounded-lg border border-[rgba(17,17,17,0.10)] bg-white px-3 py-1.5 text-sm text-[#111111]"
                 >
                   Annuller
                 </button>
                 <button
                   onClick={() => deleteBusiness(pendingDeleteBusiness.id)}
                   disabled={deletingId === pendingDeleteBusiness.id}
-                  className="rounded-lg bg-blue-500 px-3 py-1.5 text-sm font-semibold text-white transition hover:bg-blue-400 disabled:opacity-60"
+                  className="rounded-lg border border-[rgba(17,17,17,0.08)] bg-[#111111] px-3 py-1.5 text-sm font-semibold text-white transition hover:bg-[#2a2a2a] disabled:opacity-60"
                 >
                   {deletingId === pendingDeleteBusiness.id ? "Sletter" : "Slet"}
                 </button>
@@ -961,10 +959,10 @@ export default function AdminPage() {
               exit={{ opacity: 0, x: 20 }}
               className={`rounded-xl border px-3 py-2 text-sm shadow-xl ${
                 toast.type === "success"
-                  ? "border-white/10 bg-[#111827] text-white"
+                  ? "border-[rgba(17,17,17,0.08)] bg-white text-[#111111]"
                   : toast.type === "error"
-                    ? "border-white/10 bg-[#111827] text-gray-300"
-                    : "border-white/10 bg-[rgba(17,24,39,0.9)] text-gray-300"
+                    ? "border-[rgba(17,17,17,0.08)] bg-[rgba(246,243,237,0.78)] text-[#9b3d2f]"
+                    : "border-[rgba(17,17,17,0.08)] bg-white text-[#6b6258]"
               }`}
             >
               {toast.message}
