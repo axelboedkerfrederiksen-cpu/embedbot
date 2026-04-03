@@ -89,7 +89,7 @@
   const container = document.createElement("div");
   container.innerHTML = `
     <button type="button" id="eb-bubble" aria-label="Open support chat" style="position:fixed;bottom:24px;right:24px;width:56px;height:56px;background:#3b82f6;border-radius:50%;border:none;cursor:pointer;display:flex;align-items:center;justify-content:center;z-index:9999;box-shadow:0 8px 22px rgba(59,130,246,0.25);opacity:0;transition:opacity 0.15s;">${OPEN_ICON}</button>
-    <div id="eb-box" style="display:none;position:fixed;bottom:90px;right:24px;width:340px;height:480px;background:#ffffff;border:1px solid rgba(0,0,0,0.08);border-radius:16px;box-shadow:0 8px 32px rgba(0,0,0,0.15);z-index:9999;flex-direction:column;overflow:hidden;color:#1a1a1a;">
+    <div id="eb-box" style="display:none;position:fixed;bottom:90px;right:24px;width:340px;height:480px;background:#ffffff;border:none;border-radius:16px;box-shadow:0 8px 32px rgba(0,0,0,0.15);z-index:9999;flex-direction:column;overflow:hidden;color:#1a1a1a;">
       <div id="eb-header" style="background:#3b82f6;color:white;padding:16px;font-weight:bold;display:flex;align-items:center;gap:10px;">
         <img id="eb-logo" alt="Company logo" style="display:none;height:24px;width:auto;max-width:120px;object-fit:contain;filter:brightness(0) invert(1);" />
         <div style="display:flex;flex-direction:column;line-height:1.1;">
