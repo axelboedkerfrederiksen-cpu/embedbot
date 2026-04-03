@@ -138,6 +138,35 @@
     }
     return "da";
   }
+
+  function normalizeHexColor(color) {
+    const trimmedColor = (color || "").trim();
+    const hexMatch = trimmedColor.match(/^#([0-9a-f]{3}|[0-9a-f]{6})$/i);
+    if (!hexMatch) {
+      return null;
+    }
+
+    const hexValue = hexMatch[1];
+    if (hexValue.length === 3) {
+      return hexValue.split("").map((char) => char + char).join("");
+    }
+
+    return hexValue;
+  }
+
+  function getBubbleTextColor(backgroundColor) {
+    const normalizedHex = normalizeHexColor(backgroundColor);
+    if (!normalizedHex) {
+      return "#1a1a1a";
+    }
+
+    const red = parseInt(normalizedHex.slice(0, 2), 16);
+    const green = parseInt(normalizedHex.slice(2, 4), 16);
+    const blue = parseInt(normalizedHex.slice(4, 6), 16);
+    const brightness = ((red * 299) + (green * 587) + (blue * 114)) / 1000;
+
+    return brightness < 150 ? "#ffffff" : "#1a1a1a";
+  }
   
   const container = document.createElement("div");
   container.innerHTML = `
@@ -302,7 +331,9 @@
 
     const msg = document.createElement("div");
     const userBubbleColor = widgetConfig.secondary_color || defaultConfig.secondary_color;
-    msg.style.cssText = `background:${isUser ? userBubbleColor : "#f0f0f0"};color:#1a1a1a;padding:10px 14px;border-radius:14px;display:inline-block;max-width:100%;font-size:14px;line-height:1.35;word-break:break-word;`;
+    const bubbleBackgroundColor = isUser ? userBubbleColor : "#f0f0f0";
+    const bubbleTextColor = getBubbleTextColor(bubbleBackgroundColor);
+    msg.style.cssText = `background:${bubbleBackgroundColor};color:${bubbleTextColor};padding:10px 14px;border-radius:14px;display:inline-block;max-width:100%;font-size:14px;line-height:1.35;word-break:break-word;`;
     msg.textContent = text;
 
     const meta = document.createElement("div");
