@@ -140,6 +140,7 @@ ${business?.custom_instructions || "Ingen"}
 
   const completion = await openai.chat.completions.create({
     model: "gpt-4o-mini",
+    stream: true,
     messages: [
       {
         role: "system",
@@ -165,25 +166,52 @@ Følg disse regler STRENGT:
     ],
   });
 
-  const answer = completion.choices[0].message.content || "";
+  const encoder = new TextEncoder();
+  let answer = "";
 
-  // Save each user/bot exchange so the dashboard can render historical conversations.
-  try {
-    await supabase
-      .from("conversations")
-      .insert({
-        business_id: stableBusinessId,
-        messages: [
-          { role: "user", content: message },
-          { role: "assistant", content: answer },
-          ...(stablePageUrl ? [{ role: "meta", page_url: stablePageUrl }] : []),
-        ],
-      });
-  } catch {
-    // Do not block chat replies if persistence fails.
-  }
+  const stream = new ReadableStream<Uint8Array>({
+    async start(controller) {
+      try {
+        for await (const chunk of completion) {
+          const token = chunk.choices?.[0]?.delta?.content;
+          if (!token) {
+            continue;
+          }
 
-  return NextResponse.json({
-    answer,
+          answer += token;
+          controller.enqueue(encoder.encode(`data: ${token}\n\n`));
+        }
+
+        controller.enqueue(encoder.encode("data: [DONE]\n\n"));
+      } catch {
+        controller.enqueue(encoder.encode("data: [DONE]\n\n"));
+      } finally {
+        // Save each user/bot exchange so the dashboard can render historical conversations.
+        try {
+          await supabase
+            .from("conversations")
+            .insert({
+              business_id: stableBusinessId,
+              messages: [
+                { role: "user", content: message },
+                { role: "assistant", content: answer },
+                ...(stablePageUrl ? [{ role: "meta", page_url: stablePageUrl }] : []),
+              ],
+            });
+        } catch {
+          // Do not block chat replies if persistence fails.
+        }
+
+        controller.close();
+      }
+    },
+  });
+
+  return new Response(stream, {
+    headers: {
+      "Content-Type": "text/event-stream; charset=utf-8",
+      "Cache-Control": "no-cache, no-transform",
+      Connection: "keep-alive",
+    },
   });
 }

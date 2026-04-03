@@ -168,6 +168,34 @@
   const send = document.getElementById("eb-send");
   const messages = document.getElementById("eb-messages");
 
+  function ensureStreamingCursorStyles() {
+    if (document.getElementById("eb-streaming-cursor-style")) {
+      return;
+    }
+
+    const style = document.createElement("style");
+    style.id = "eb-streaming-cursor-style";
+    style.textContent = `
+      @keyframes eb-cursor-blink {
+        0%, 49% { opacity: 1; }
+        50%, 100% { opacity: 0; }
+      }
+      .eb-streaming::after {
+        content: "";
+        display: inline-block;
+        width: 2px;
+        height: 1em;
+        margin-left: 3px;
+        vertical-align: -0.1em;
+        background: currentColor;
+        animation: eb-cursor-blink 0.9s steps(1, end) infinite;
+      }
+    `;
+    document.head.appendChild(style);
+  }
+
+  ensureStreamingCursorStyles();
+
   function applyWidgetStyles() {
     const fontStack = getFontStack(widgetConfig.font_choice || defaultConfig.font_choice);
     ensureFontLoaded(widgetConfig.font_choice || defaultConfig.font_choice);
@@ -323,12 +351,13 @@
 
     const language = detectLanguage(text);
     const labels = language === "en"
-      ? { typing: "Typing...", sending: "Sending...", sent: "Sent", failed: "Failed", errorReply: "Sorry, there was an error. Please try again." }
-      : { typing: "Skriver...", sending: "Sender...", sent: "Sendt", failed: "Fejl", errorReply: "Beklager, der opstod en fejl. Proev igen." };
+      ? { sending: "Sending...", sent: "Sent", failed: "Failed", errorReply: "Sorry, there was an error. Please try again." }
+      : { sending: "Sender...", sent: "Sendt", failed: "Fejl", errorReply: "Beklager, der opstod en fejl. Proev igen." };
 
     input.value = "";
     const userMessage = addMessage(text, true, { showStatus: true, statusText: labels.sending });
-    const typingMessage = addMessage(labels.typing, false);
+    const botMessage = addMessage("", false);
+    botMessage.msg.classList.add("eb-streaming");
 
     try {
       const res = await fetch(API_URL, {
@@ -337,17 +366,66 @@
         body: JSON.stringify({ message: text, business_id: businessId, page_url: window.location.href }),
       });
 
-      const data = await res.json().catch(() => ({}));
-
       if (!res.ok) {
+        const data = await res.json().catch(() => ({}));
         const apiError = typeof data.error === "string" && data.error.trim()
           ? data.error.trim()
           : "Failed to send message";
         throw new Error(apiError);
       }
 
-      typingMessage.msg.textContent = data.answer || labels.errorReply;
-      typingMessage.time.textContent = nowAsTime();
+      if (!res.body) {
+        throw new Error(labels.errorReply);
+      }
+
+      const reader = res.body.getReader();
+      const decoder = new TextDecoder();
+      let sseBuffer = "";
+      let sawDone = false;
+
+      while (true) {
+        const { value, done } = await reader.read();
+        if (done) {
+          break;
+        }
+
+        sseBuffer += decoder.decode(value, { stream: true });
+        const events = sseBuffer.split("\n\n");
+        sseBuffer = events.pop() || "";
+
+        for (const event of events) {
+          const lines = event.split("\n");
+          for (const line of lines) {
+            if (!line.startsWith("data:")) {
+              continue;
+            }
+
+            const chunk = line.slice(5).trimStart();
+            if (chunk === "[DONE]") {
+              sawDone = true;
+              break;
+            }
+
+            botMessage.msg.textContent += chunk;
+            messages.scrollTop = messages.scrollHeight;
+          }
+
+          if (sawDone) {
+            break;
+          }
+        }
+
+        if (sawDone) {
+          break;
+        }
+      }
+
+      if (!botMessage.msg.textContent) {
+        botMessage.msg.textContent = labels.errorReply;
+      }
+
+      botMessage.msg.classList.remove("eb-streaming");
+      botMessage.time.textContent = nowAsTime();
       if (userMessage.status) {
         userMessage.status.textContent = labels.sent;
       }
@@ -355,8 +433,9 @@
       const errorMessage = error instanceof Error && error.message
         ? error.message
         : labels.errorReply;
-      typingMessage.msg.textContent = errorMessage;
-      typingMessage.time.textContent = nowAsTime();
+      botMessage.msg.textContent = errorMessage;
+      botMessage.msg.classList.remove("eb-streaming");
+      botMessage.time.textContent = nowAsTime();
       if (userMessage.status) {
         userMessage.status.textContent = labels.failed;
       }
