@@ -1,6 +1,19 @@
 "use client";
 import Link from "next/link";
 import logoImage from "@/media/86a91d6a-f484-4e7d-a05c-55ab0979c3b1.png";
+import { motion } from "framer-motion";
+
+const ease = [0.22, 1, 0.36, 1] as const;
+
+const fadeUp = {
+  hidden: { opacity: 0, y: 22 },
+  show: { opacity: 1, y: 0, transition: { duration: 0.6, ease } },
+};
+
+const stagger = {
+  hidden: {},
+  show: { transition: { staggerChildren: 0.11 } },
+};
 
 const supportedPlatforms = [
   { name: "HTML",        logo: "https://cdn.simpleicons.org/html5/ffffff", scale: 0.92 },
@@ -75,6 +88,21 @@ export default function Home() {
           margin: 0 auto;
           padding: 0 28px 56px;
           background: #030712;
+          position: relative;
+        }
+
+        /* Subtle ambient glow */
+        .page::before {
+          content: "";
+          position: fixed;
+          top: -10%;
+          left: 50%;
+          transform: translateX(-50%);
+          width: 700px;
+          height: 500px;
+          background: radial-gradient(ellipse at 50% 30%, rgba(59, 130, 246, 0.055) 0%, transparent 68%);
+          pointer-events: none;
+          z-index: 0;
         }
 
         /* ── Nav ─────────────────────────────────── */
@@ -87,8 +115,9 @@ export default function Home() {
           justify-content: space-between;
           padding: 22px 0;
           border-bottom: 1px solid rgba(255, 255, 255, 0.05);
-          background: rgba(3, 7, 18, 0.8);
+          background: rgba(3, 7, 18, 0.85);
           backdrop-filter: blur(24px);
+          -webkit-backdrop-filter: blur(24px);
         }
 
         .nav-logo { display: block; line-height: 0; text-decoration: none; }
@@ -103,25 +132,27 @@ export default function Home() {
           font-weight: 400;
           color: #9ca3af;
           text-decoration: none;
-          opacity: 0.5;
-          transition: opacity 140ms;
+          opacity: 0.45;
+          transition: opacity 200ms ease;
         }
         .nav-login:hover { opacity: 1; }
 
         /* ── Hero ────────────────────────────────── */
         .hero {
-          padding: 64px 0 52px;
+          padding: 76px 0 60px;
           border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+          position: relative;
+          z-index: 1;
         }
 
         .tag {
           display: block;
-          font-size: 0.7rem;
+          font-size: 0.68rem;
           font-weight: 500;
-          letter-spacing: 0.14em;
+          letter-spacing: 0.15em;
           text-transform: uppercase;
           color: #60a5fa;
-          margin-bottom: 18px;
+          margin-bottom: 20px;
         }
 
         .headline {
@@ -129,23 +160,23 @@ export default function Home() {
           font-size: clamp(2rem, 5vw, 3.4rem);
           line-height: 1.06;
           letter-spacing: -0.015em;
-          margin: 0 0 22px;
+          margin: 0 0 24px;
           max-width: 16ch;
         }
 
         .lead {
           font-size: clamp(0.95rem, 2.2vw, 1.075rem);
           font-weight: 300;
-          line-height: 1.7;
+          line-height: 1.78;
           color: #9ca3af;
-          margin: 0 0 30px;
+          margin: 0 0 34px;
           max-width: 52ch;
         }
 
         .cta-row {
           display: flex;
           flex-wrap: wrap;
-          gap: 8px;
+          gap: 10px;
         }
 
         .btn {
@@ -153,11 +184,11 @@ export default function Home() {
           font-size: 0.875rem;
           font-weight: 500;
           text-decoration: none;
-          padding: 10px 20px;
-          border-radius: 5px;
+          padding: 11px 22px;
+          border-radius: 6px;
           border: 1px solid transparent;
           cursor: pointer;
-          transition: opacity 140ms, border-color 140ms;
+          transition: background 200ms ease, box-shadow 200ms ease, border-color 200ms ease, color 200ms ease;
           display: inline-flex;
           align-items: center;
         }
@@ -165,25 +196,33 @@ export default function Home() {
         .btn-primary {
           background: #3b82f6;
           color: #ffffff;
-          box-shadow: 0 8px 22px rgba(59, 130, 246, 0.25);
+          box-shadow: 0 4px 20px rgba(59, 130, 246, 0.22), inset 0 1px 0 rgba(255,255,255,0.08);
         }
-        .btn-primary:hover { background: #60a5fa; }
+        .btn-primary:hover {
+          background: #60a5fa;
+          box-shadow: 0 6px 28px rgba(59, 130, 246, 0.38);
+        }
 
         .btn-outline {
           background: transparent;
-          color: #ffffff;
-          border-color: rgba(255, 255, 255, 0.1);
+          color: #9ca3af;
+          border-color: rgba(255, 255, 255, 0.08);
         }
-        .btn-outline:hover { border-color: rgba(255, 255, 255, 0.2); color: #60a5fa; }
+        .btn-outline:hover {
+          border-color: rgba(255, 255, 255, 0.16);
+          color: #ffffff;
+        }
 
         /* ── Features ────────────────────────────── */
         .features {
           display: grid;
           grid-template-columns: repeat(3, 1fr);
+          position: relative;
+          z-index: 1;
         }
 
         .feat {
-          padding: 36px 0;
+          padding: 38px 0;
           border-bottom: 1px solid rgba(255, 255, 255, 0.05);
         }
 
@@ -198,17 +237,18 @@ export default function Home() {
 
         .feat-num {
           display: block;
-          font-size: 0.68rem;
-          letter-spacing: 0.12em;
-          color: #60a5fa;
+          font-size: 0.63rem;
+          letter-spacing: 0.15em;
+          color: #3b82f6;
           font-weight: 500;
-          margin-bottom: 14px;
+          margin-bottom: 16px;
+          opacity: 0.75;
         }
 
         .feat-title {
           font-size: 0.975rem;
           font-weight: 500;
-          margin: 0 0 8px;
+          margin: 0 0 10px;
           line-height: 1.3;
         }
 
@@ -216,32 +256,34 @@ export default function Home() {
           font-size: 0.85rem;
           font-weight: 300;
           color: #9ca3af;
-          line-height: 1.65;
+          line-height: 1.7;
           margin: 0;
         }
 
         /* ── Platform strip ──────────────────────── */
         .platforms {
-          padding: 32px 0 0;
+          padding: 38px 0 0;
           display: flex;
           align-items: center;
           gap: 20px;
           flex-wrap: wrap;
+          position: relative;
+          z-index: 1;
         }
 
         .platforms-label {
-          font-size: 0.7rem;
+          font-size: 0.67rem;
           font-weight: 500;
-          letter-spacing: 0.1em;
+          letter-spacing: 0.13em;
           text-transform: uppercase;
-          color: #6b7280;
+          color: #4b5563;
           white-space: nowrap;
           flex-shrink: 0;
         }
 
         .platforms-logos {
           display: flex;
-          gap: 16px;
+          gap: 18px;
           align-items: center;
           flex-wrap: wrap;
         }
@@ -258,21 +300,22 @@ export default function Home() {
           max-width: 100%;
           max-height: 100%;
           display: block;
-          opacity: 0.9;
           transform-origin: center;
         }
 
         /* ── Footer row ──────────────────────────── */
         .foot {
-          padding-top: 28px;
+          padding-top: 32px;
           text-align: right;
+          position: relative;
+          z-index: 1;
         }
 
         .foot a {
           font-size: 0.78rem;
-          color: #6b7280;
+          color: #4b5563;
           text-decoration: none;
-          transition: color 140ms;
+          transition: color 200ms ease;
         }
 
         .foot a:hover { color: #60a5fa; }
@@ -280,7 +323,7 @@ export default function Home() {
         /* ── Mobile ──────────────────────────────── */
         @media (max-width: 600px) {
           .page { padding: 0 20px 44px; }
-          .hero { padding: 44px 0 38px; }
+          .hero { padding: 50px 0 42px; }
 
           .features { grid-template-columns: 1fr; }
           .feat {
@@ -293,46 +336,92 @@ export default function Home() {
         }
       `}</style>
 
-      <nav className="nav" aria-label="Primær navigation">
+      {/* Nav — slides in from top */}
+      <motion.nav
+        className="nav"
+        aria-label="Primær navigation"
+        initial={{ opacity: 0, y: -8 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.5, ease }}
+      >
         <Link href="/" className="nav-logo">
           <img src={logoImage.src} alt="EmbedBot" />
         </Link>
         <Link href="/login" className="nav-login">Log ind</Link>
-      </nav>
+      </motion.nav>
 
-      <section className="hero">
-        <span className="tag">Dansk AI-kundesupport</span>
-        <h1 className="headline">
+      {/* Hero — staggered children on load */}
+      <motion.section
+        className="hero"
+        variants={stagger}
+        initial="hidden"
+        animate="show"
+      >
+        <motion.span className="tag" variants={fadeUp}>
+          Dansk AI-kundesupport
+        </motion.span>
+        <motion.h1 className="headline" variants={fadeUp}>
           Tilføj en AI-chatbot til din webshop på 5 minutter
-        </h1>
-        <p className="lead">
+        </motion.h1>
+        <motion.p className="lead" variants={fadeUp}>
           EmbedBot lærer din forretning at kende og svarer dine kunders spørgsmål automatisk — så du ikke skal.
-        </p>
-        <div className="cta-row">
+        </motion.p>
+        <motion.div className="cta-row" variants={fadeUp}>
           <Link href="/setup" className="btn btn-primary">
             Start opsætning
           </Link>
           <button onClick={handleDemoClick} className="btn btn-outline">
             Se demo
           </button>
-        </div>
-      </section>
+        </motion.div>
+      </motion.section>
 
-      <div className="features">
+      {/* Features — scroll-triggered stagger */}
+      <motion.div
+        className="features"
+        variants={stagger}
+        initial="hidden"
+        whileInView="show"
+        viewport={{ once: true, margin: "-60px" }}
+      >
         {features.map((f) => (
-          <div className="feat" key={f.num}>
+          <motion.div className="feat" key={f.num} variants={fadeUp}>
             <span className="feat-num">{f.num}</span>
             <h2 className="feat-title">{f.title}</h2>
             <p className="feat-desc">{f.desc}</p>
-          </div>
+          </motion.div>
         ))}
-      </div>
+      </motion.div>
 
-      <div className="platforms">
-        <span className="platforms-label">Understøtter</span>
-        <div className="platforms-logos">
+      {/* Platforms — scroll-triggered with logo stagger */}
+      <motion.div
+        className="platforms"
+        initial="hidden"
+        whileInView="show"
+        viewport={{ once: true, margin: "-40px" }}
+        variants={{ hidden: {}, show: { transition: { staggerChildren: 0.08 } } }}
+      >
+        <motion.span className="platforms-label" variants={fadeUp}>
+          Understøtter
+        </motion.span>
+        <motion.div
+          className="platforms-logos"
+          variants={{ hidden: {}, show: { transition: { staggerChildren: 0.07 } } }}
+        >
           {supportedPlatforms.map((p) => (
-            <span className="platform-logo-wrap" key={p.name}>
+            <motion.span
+              className="platform-logo-wrap"
+              key={p.name}
+              variants={{
+                hidden: { opacity: 0, scale: 0.75 },
+                show: {
+                  opacity: 0.45,
+                  scale: 1,
+                  transition: { duration: 0.45, ease },
+                },
+              }}
+              whileHover={{ opacity: 0.95, transition: { duration: 0.15 } }}
+            >
               <img
                 src={p.logo}
                 alt={p.name}
@@ -340,14 +429,21 @@ export default function Home() {
                 style={{ transform: `scale(${p.scale})` }}
                 loading="lazy"
               />
-            </span>
+            </motion.span>
           ))}
-        </div>
-      </div>
+        </motion.div>
+      </motion.div>
 
-      <div className="foot">
+      {/* Footer */}
+      <motion.div
+        className="foot"
+        initial={{ opacity: 0 }}
+        whileInView={{ opacity: 1 }}
+        viewport={{ once: true }}
+        transition={{ duration: 0.7, delay: 0.15 }}
+      >
         <Link href="/dashboard">Allerede kunde? Log ind her →</Link>
-      </div>
+      </motion.div>
     </main>
   );
 }

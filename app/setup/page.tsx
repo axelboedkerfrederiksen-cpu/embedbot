@@ -314,7 +314,7 @@ export default function Home() {
       } catch {}
 
       persistBusinessId(stableBusinessId);
-      window.location.href = "https://buy.stripe.com/eVqeVd7tf5zS29f5zQf3a03";
+      window.location.href = "https://buy.stripe.com/eVq00j5l7gew3dj3rIf3a02?locale=da";
     } catch (error) {
       setMessage(formatSetupError(error));
     } finally {
@@ -956,7 +956,7 @@ export default function Home() {
     ),
     6: (
       <div>
-        <h2 className="section-title">6. Custom instrukser</h2>
+        <h2 className="section-title">6. Custom prompt til din AI</h2>
         <p className="muted" style={{ marginTop: -8, marginBottom: 14 }}>
           Her kan du skrive ekstra regler eller viden, som chatbotten altid skal tage hensyn til.
         </p>
