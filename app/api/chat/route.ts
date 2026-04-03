@@ -179,7 +179,7 @@ Følg disse regler STRENGT:
           }
 
           answer += token;
-          controller.enqueue(encoder.encode(`data: ${token}\n\n`));
+          controller.enqueue(encoder.encode(`data: ${JSON.stringify({ token })}\n\n`));
         }
 
         controller.enqueue(encoder.encode("data: [DONE]\n\n"));

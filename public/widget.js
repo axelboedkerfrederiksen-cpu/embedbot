@@ -400,10 +400,21 @@
               continue;
             }
 
-            const chunk = line.slice(5).trimStart();
-            if (chunk === "[DONE]") {
+            const payloadRaw = line.slice(5);
+            const payload = payloadRaw.startsWith(" ") ? payloadRaw.slice(1) : payloadRaw;
+            if (payload === "[DONE]") {
               sawDone = true;
               break;
+            }
+
+            let chunk = payload;
+            try {
+              const parsedPayload = JSON.parse(payload);
+              if (parsedPayload && typeof parsedPayload.token === "string") {
+                chunk = parsedPayload.token;
+              }
+            } catch {
+              // Fallback for non-JSON payloads.
             }
 
             botMessage.msg.textContent += chunk;
