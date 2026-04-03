@@ -49,6 +49,7 @@ export default function Home() {
   const [selectedPlatform, setSelectedPlatform] = useState<PlatformKey>("html");
   const [savingDraft, setSavingDraft] = useState(false);
   const [generatingPhase, setGeneratingPhase] = useState(0);
+  const [stepDirection, setStepDirection] = useState<"forward" | "backward">("forward");
 
   const [form, setForm] = useState<FormState>(initialForm);
 
@@ -293,6 +294,7 @@ export default function Home() {
   async function handleNextStep() {
     setMessage("");
     setSavingDraft(true);
+    setStepDirection("forward");
 
     try {
       await saveBusinessDraft();
@@ -302,6 +304,11 @@ export default function Home() {
     } finally {
       setSavingDraft(false);
     }
+  }
+
+  function handlePrevStep() {
+    setStepDirection("backward");
+    setStep(s => s - 1);
   }
 
   async function handleSetup() {
@@ -758,6 +765,219 @@ export default function Home() {
         }
       }
 
+      /* ── Step slide transitions ── */
+      .step-slide {
+        animation: step-fwd-in 320ms cubic-bezier(0.22, 1, 0.36, 1) both;
+      }
+
+      .step-slide-forward {
+        animation: step-fwd-in 320ms cubic-bezier(0.22, 1, 0.36, 1) both;
+      }
+
+      .step-slide-backward {
+        animation: step-bwd-in 320ms cubic-bezier(0.22, 1, 0.36, 1) both;
+      }
+
+      @keyframes step-fwd-in {
+        from { opacity: 0; transform: translateX(28px); }
+        to   { opacity: 1; transform: translateX(0); }
+      }
+
+      @keyframes step-bwd-in {
+        from { opacity: 0; transform: translateX(-28px); }
+        to   { opacity: 1; transform: translateX(0); }
+      }
+
+      /* ── Generation overlay ── */
+      .gen-overlay {
+        position: fixed;
+        inset: 0;
+        z-index: 1000;
+        background:
+          radial-gradient(circle at 20% 20%, rgba(246,243,237,0.95) 0%, transparent 50%),
+          radial-gradient(circle at 80% 80%, rgba(246,243,237,0.9) 0%, transparent 50%),
+          linear-gradient(180deg, #ffffff 0%, #fcfaf6 55%, #f8f4ee 100%);
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        overflow: hidden;
+        animation: gen-in 380ms cubic-bezier(0.22, 1, 0.36, 1);
+      }
+
+      @keyframes gen-in {
+        from { opacity: 0; }
+        to   { opacity: 1; }
+      }
+
+      .gen-brand {
+        position: absolute;
+        top: 28px;
+        font-family: "Poppins", sans-serif;
+        font-weight: 700;
+        font-size: 1.1rem;
+        letter-spacing: -0.04em;
+        color: rgba(17,17,17,0.18);
+        pointer-events: none;
+        animation: gen-brand-in 700ms 200ms both ease-out;
+      }
+
+      @keyframes gen-brand-in {
+        from { opacity: 0; transform: translateY(-4px); }
+        to   { opacity: 1; transform: translateY(0); }
+      }
+
+      .gen-orb-wrap {
+        position: relative;
+        width: 160px;
+        height: 160px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+      }
+
+      .gen-ring {
+        position: absolute;
+        border-radius: 50%;
+        border: 1.5px solid rgba(17,17,17,0.1);
+        animation: gen-ring-pulse 2.6s ease-in-out infinite;
+      }
+
+      .gen-ring-1 {
+        width: 160px; height: 160px;
+        animation-delay: 0s;
+      }
+      .gen-ring-2 {
+        width: 112px; height: 112px;
+        animation-delay: 0.5s;
+        border-color: rgba(17,17,17,0.14);
+      }
+      .gen-ring-3 {
+        width: 68px; height: 68px;
+        animation-delay: 1s;
+        border-color: rgba(17,17,17,0.2);
+      }
+
+      @keyframes gen-ring-pulse {
+        0%, 100% { transform: scale(1);    opacity: 0.35; }
+        50%       { transform: scale(1.07); opacity: 1;    }
+      }
+
+      .gen-core {
+        position: relative;
+        width: 44px;
+        height: 44px;
+      }
+
+      .gen-center-dot {
+        position: absolute;
+        top: 50%; left: 50%;
+        width: 10px; height: 10px;
+        background: #111111;
+        border-radius: 50%;
+        transform: translate(-50%, -50%);
+        animation: gen-core-pulse 1.4s ease-in-out infinite;
+        box-shadow: 0 0 0 0 rgba(17,17,17,0.15);
+      }
+
+      @keyframes gen-core-pulse {
+        0%, 100% { transform: translate(-50%, -50%) scale(1);   box-shadow: 0 0 0 0 rgba(17,17,17,0.15); }
+        50%       { transform: translate(-50%, -50%) scale(1.25); box-shadow: 0 0 0 8px rgba(17,17,17,0); }
+      }
+
+      .gen-dot {
+        position: absolute;
+        top: 50%; left: 50%;
+        width: 6px; height: 6px;
+        background: #111111;
+        border-radius: 50%;
+        margin: -3px 0 0 -3px;
+      }
+
+      .gen-dot-1 { animation: gen-orbit 2.2s linear infinite;        opacity: 0.7; }
+      .gen-dot-2 { animation: gen-orbit 2.2s linear infinite -0.73s; opacity: 0.45; }
+      .gen-dot-3 { animation: gen-orbit 2.2s linear infinite -1.47s; opacity: 0.25; }
+
+      @keyframes gen-orbit {
+        from { transform: rotate(0deg)   translateX(22px) rotate(0deg); }
+        to   { transform: rotate(360deg) translateX(22px) rotate(-360deg); }
+      }
+
+      .gen-text-wrap {
+        margin-top: 44px;
+        text-align: center;
+        min-height: 60px;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 16px;
+      }
+
+      .gen-status {
+        font-family: "Poppins", sans-serif;
+        font-size: 15px;
+        font-weight: 500;
+        color: #111111;
+        margin: 0;
+        animation: gen-msg-in 500ms cubic-bezier(0.22, 1, 0.36, 1) both;
+      }
+
+      @keyframes gen-msg-in {
+        from { opacity: 0; transform: translateY(8px); }
+        to   { opacity: 1; transform: translateY(0); }
+      }
+
+      .gen-dots-row {
+        display: flex;
+        gap: 7px;
+      }
+
+      .gen-bounce-dot {
+        display: block;
+        width: 5px; height: 5px;
+        background: #111111;
+        border-radius: 50%;
+        opacity: 0.4;
+        animation: gen-bounce 1.1s ease-in-out infinite;
+      }
+
+      .gen-bounce-dot:nth-child(1) { animation-delay: 0s; }
+      .gen-bounce-dot:nth-child(2) { animation-delay: 0.18s; }
+      .gen-bounce-dot:nth-child(3) { animation-delay: 0.36s; }
+
+      @keyframes gen-bounce {
+        0%, 100% { transform: translateY(0);   opacity: 0.4; }
+        50%       { transform: translateY(-7px); opacity: 0.9; }
+      }
+
+      .gen-particle {
+        position: absolute;
+        width: 4px; height: 4px;
+        background: rgba(17,17,17,0.12);
+        border-radius: 50%;
+        bottom: -4px;
+        animation: gen-float-up linear infinite;
+        pointer-events: none;
+      }
+
+      .gen-particle:nth-child(1)  { left: 8%;  animation-duration: 3.2s; animation-delay: 0s;    width: 3px; height: 3px; }
+      .gen-particle:nth-child(2)  { left: 18%; animation-duration: 4.1s; animation-delay: 0.6s; }
+      .gen-particle:nth-child(3)  { left: 28%; animation-duration: 3.7s; animation-delay: 1.3s; width: 3px; height: 3px; }
+      .gen-particle:nth-child(4)  { left: 38%; animation-duration: 2.9s; animation-delay: 0.4s; }
+      .gen-particle:nth-child(5)  { left: 50%; animation-duration: 3.5s; animation-delay: 1.8s; width: 3px; height: 3px; }
+      .gen-particle:nth-child(6)  { left: 62%; animation-duration: 4.3s; animation-delay: 0.9s; }
+      .gen-particle:nth-child(7)  { left: 73%; animation-duration: 3.1s; animation-delay: 1.1s; width: 3px; height: 3px; }
+      .gen-particle:nth-child(8)  { left: 82%; animation-duration: 3.8s; animation-delay: 0.2s; }
+      .gen-particle:nth-child(9)  { left: 91%; animation-duration: 2.7s; animation-delay: 1.5s; width: 3px; height: 3px; }
+      .gen-particle:nth-child(10) { left: 45%; animation-duration: 4.6s; animation-delay: 0.7s; }
+
+      @keyframes gen-float-up {
+        0%   { transform: translateY(0)     scale(1);   opacity: 0; }
+        8%   { opacity: 0.9; }
+        85%  { opacity: 0.5; }
+        100% { transform: translateY(-100vh) scale(0.4); opacity: 0; }
+      }
+
       @media (max-width: 640px) {
         .eb-card {
           padding: 18px;
@@ -1182,6 +1402,37 @@ export default function Home() {
   return (
     <main className="eb-page">
       {styles}
+
+      {loading && (
+        <div className="gen-overlay">
+          <span className="gen-brand">EmbedBot</span>
+          <div className="gen-orb-wrap">
+            <div className="gen-ring gen-ring-1" />
+            <div className="gen-ring gen-ring-2" />
+            <div className="gen-ring gen-ring-3" />
+            <div className="gen-core">
+              <div className="gen-dot gen-dot-1" />
+              <div className="gen-dot gen-dot-2" />
+              <div className="gen-dot gen-dot-3" />
+              <div className="gen-center-dot" />
+            </div>
+          </div>
+          <div className="gen-text-wrap">
+            <p className="gen-status" key={generatingPhase}>
+              {GENERATING_MESSAGES[generatingPhase % GENERATING_MESSAGES.length]}
+            </p>
+            <div className="gen-dots-row">
+              <span className="gen-bounce-dot" />
+              <span className="gen-bounce-dot" />
+              <span className="gen-bounce-dot" />
+            </div>
+          </div>
+          {[...Array(10)].map((_, i) => (
+            <div key={i} className="gen-particle" />
+          ))}
+        </div>
+      )}
+
       <div className="eb-shell eb-animate">
         <div className="header-row">
           <h1 className="brand brand-main">Opsæt din chatbot</h1>
@@ -1191,13 +1442,17 @@ export default function Home() {
           <div className="progress-fill" style={{ width: `${(Math.min(step, 6) / 6) * 100}%` }} />
         </div>
 
-        <div className="eb-card">{sections[step]}</div>
+        <div className="eb-card" style={{ overflow: "hidden" }}>
+          <div key={step} className={`step-slide step-slide-${stepDirection}`}>
+            {sections[step]}
+          </div>
+        </div>
 
         {message && <p className="message-error">{message}</p>}
 
         <div className="actions" style={{ marginTop: 20 }}>
         {step > 1 && (
-          <button onClick={() => setStep(s => s - 1)} className="btn btn-secondary">
+          <button onClick={handlePrevStep} className="btn btn-secondary">
             ← Tilbage
           </button>
         )}
