@@ -139,7 +139,7 @@ ${business?.custom_instructions || "Ingen"}
 `;
 
   const completion = await openai.chat.completions.create({
-    model: "gpt-4o-mini",
+    model: "gpt-4.1-nano",
     stream: true,
     messages: [
       {
