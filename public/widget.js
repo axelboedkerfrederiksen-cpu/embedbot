@@ -184,9 +184,10 @@
         content: "";
         display: inline-block;
         width: 2px;
-        height: 1em;
+        height: 0.9em;
         margin-left: 3px;
-        vertical-align: -0.1em;
+        vertical-align: middle;
+        transform: translateY(-0.02em);
         background: currentColor;
         animation: eb-cursor-blink 0.9s steps(1, end) infinite;
       }
