@@ -35,6 +35,59 @@
     welcome_message: "",
   };
 
+  const GENERIC_FONTS = new Set([
+    "serif",
+    "sans-serif",
+    "monospace",
+    "cursive",
+    "fantasy",
+    "system-ui",
+    "ui-sans-serif",
+    "ui-serif",
+    "ui-monospace",
+  ]);
+
+  function getFontStack(fontChoice) {
+    const cleanFont = (fontChoice || "").trim();
+    if (!cleanFont) return defaultConfig.font_choice;
+
+    const primaryFamily = cleanFont.split(",")[0].trim().replace(/^['\"]|['\"]$/g, "");
+    const normalized = primaryFamily.toLowerCase();
+    if (GENERIC_FONTS.has(normalized)) {
+      return normalized;
+    }
+
+    const escapedFont = primaryFamily.replace(/"/g, '\\"');
+    return `"${escapedFont}", sans-serif`;
+  }
+
+  function ensureFontLoaded(fontChoice) {
+    const cleanFont = (fontChoice || "").trim();
+    if (!cleanFont) return;
+
+    const primaryFamily = cleanFont.split(",")[0].trim().replace(/^['\"]|['\"]$/g, "");
+    const normalized = primaryFamily.toLowerCase();
+    if (GENERIC_FONTS.has(normalized)) {
+      return;
+    }
+
+    const fontId = `eb-font-${normalized.replace(/[^a-z0-9-]/g, "-")}`;
+    if (document.getElementById(fontId)) {
+      return;
+    }
+
+    const link = document.createElement("link");
+    link.id = fontId;
+    link.rel = "stylesheet";
+    link.href = `https://fonts.googleapis.com/css2?family=${encodeURIComponent(primaryFamily).replace(/%20/g, "+")}:wght@400;500;600;700&display=swap`;
+    document.head.appendChild(link);
+  }
+
+  function setFontImportant(element, fontStack) {
+    if (!element) return;
+    element.style.setProperty("font-family", fontStack, "important");
+  }
+
   function formatHeaderTitle(name) {
     const cleanName = (name || "").trim();
     return cleanName ? `${cleanName} ChatBot` : defaultConfig.header_title;
@@ -116,11 +169,20 @@
   const messages = document.getElementById("eb-messages");
 
   function applyWidgetStyles() {
+    const fontStack = getFontStack(widgetConfig.font_choice || defaultConfig.font_choice);
+    ensureFontLoaded(widgetConfig.font_choice || defaultConfig.font_choice);
+
     bubble.style.background = widgetConfig.fab_color || defaultConfig.fab_color;
     send.style.background = widgetConfig.primary_color || defaultConfig.primary_color;
     header.style.background = widgetConfig.primary_color || defaultConfig.primary_color;
-    box.style.fontFamily = widgetConfig.font_choice || defaultConfig.font_choice;
     title.textContent = widgetConfig.header_title || defaultConfig.header_title;
+
+    setFontImportant(box, fontStack);
+    setFontImportant(header, fontStack);
+    setFontImportant(title, fontStack);
+    setFontImportant(messages, fontStack);
+    setFontImportant(input, fontStack);
+    setFontImportant(send, fontStack);
 
     if (widgetConfig.logo_url) {
       logo.src = widgetConfig.logo_url;
@@ -211,7 +273,7 @@
 
     const msg = document.createElement("div");
     const userBubbleColor = widgetConfig.secondary_color || defaultConfig.secondary_color;
-    msg.style.cssText = `background:${isUser ? userBubbleColor : "#f0f0f0"};color:${isUser ? "white" : "#1a1a1a"};padding:10px 14px;border-radius:14px;display:inline-block;max-width:100%;font-size:14px;line-height:1.35;word-break:break-word;`;
+    msg.style.cssText = `background:${isUser ? userBubbleColor : "#f0f0f0"};color:#1a1a1a;padding:10px 14px;border-radius:14px;display:inline-block;max-width:100%;font-size:14px;line-height:1.35;word-break:break-word;`;
     msg.textContent = text;
 
     const meta = document.createElement("div");
@@ -221,10 +283,19 @@
     time.textContent = timestamp;
     meta.appendChild(time);
 
+    const fontStack = getFontStack(widgetConfig.font_choice || defaultConfig.font_choice);
+    setFontImportant(row, fontStack);
+    setFontImportant(icon, fontStack);
+    setFontImportant(bubbleWrap, fontStack);
+    setFontImportant(msg, fontStack);
+    setFontImportant(meta, fontStack);
+    setFontImportant(time, fontStack);
+
     let status = null;
     if (isUser && showStatus) {
       status = document.createElement("span");
       status.textContent = options.statusText || "Sender...";
+      setFontImportant(status, fontStack);
       meta.appendChild(status);
     }
 
