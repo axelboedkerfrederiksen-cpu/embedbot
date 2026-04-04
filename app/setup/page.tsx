@@ -587,6 +587,11 @@ export default function Home() {
         opacity: 0.5;
       }
 
+      .btn:focus-visible {
+        outline: 2px solid #111111;
+        outline-offset: 3px;
+      }
+
       .btn-primary {
         background: #ffffff;
         color: #111111;
@@ -631,6 +636,170 @@ export default function Home() {
       .thanks-wrap {
         text-align: center;
         padding: 38px 22px;
+      }
+
+      .success-stack {
+        display: grid;
+        gap: 14px;
+      }
+
+      .success-hero {
+        position: relative;
+        overflow: hidden;
+        text-align: center;
+        padding: 42px 30px 30px;
+        border: 1px solid rgba(17,17,17,0.08);
+        box-shadow:
+          inset 0 1px 0 rgba(255,255,255,0.84),
+          0 22px 54px rgba(17,17,17,0.09);
+      }
+
+      .success-hero::before {
+        content: "";
+        position: absolute;
+        inset: -60% auto auto -18%;
+        width: 230px;
+        height: 230px;
+        border-radius: 999px;
+        background: radial-gradient(circle, rgba(246,243,237,0.95) 0%, rgba(246,243,237,0) 70%);
+        pointer-events: none;
+      }
+
+      .success-hero::after {
+        content: "";
+        position: absolute;
+        inset: auto -12% -52% auto;
+        width: 280px;
+        height: 280px;
+        border-radius: 999px;
+        background: radial-gradient(circle, rgba(246,243,237,0.92) 0%, rgba(246,243,237,0) 70%);
+        pointer-events: none;
+      }
+
+      .success-badge {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        border-radius: 999px;
+        border: 1px solid rgba(17,17,17,0.1);
+        background: rgba(255,255,255,0.9);
+        padding: 7px 12px;
+        font-size: 11px;
+        font-weight: 700;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+        color: #6b6258;
+      }
+
+      .checkmark-premium {
+        margin: 16px auto 18px;
+        width: 76px;
+        height: 76px;
+        border: 1.6px solid rgba(17,17,17,0.14);
+        background: rgba(255,255,255,0.88);
+        box-shadow: 0 14px 34px rgba(17,17,17,0.1);
+      }
+
+      .checkmark-premium span {
+        display: inline-block;
+        transform: translateY(-1px);
+      }
+
+      .status-chip {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        margin-top: 14px;
+        border: 1px solid rgba(17,17,17,0.1);
+        border-radius: 999px;
+        padding: 8px 14px;
+        font-size: 12px;
+        font-weight: 600;
+        color: #111111;
+        background: rgba(246,243,237,0.8);
+      }
+
+      .next-steps {
+        margin-top: 20px;
+        padding: 16px;
+        border-radius: 16px;
+        border: 1px solid rgba(17,17,17,0.08);
+        background: rgba(255,255,255,0.72);
+        text-align: left;
+      }
+
+      .next-steps-title {
+        margin: 0 0 8px;
+        font-size: 13px;
+        font-weight: 700;
+        letter-spacing: 0.04em;
+        text-transform: uppercase;
+        color: #6b6258;
+      }
+
+      .next-steps-list {
+        margin: 0;
+        padding-left: 18px;
+        color: #4d463f;
+      }
+
+      .next-steps-list li {
+        margin: 0 0 6px;
+        line-height: 1.5;
+      }
+
+      .next-steps-list li:last-child {
+        margin-bottom: 0;
+      }
+
+      .success-actions {
+        text-align: left;
+        padding: 26px;
+        box-shadow: 0 16px 40px rgba(17,17,17,0.08);
+      }
+
+      .success-actions-header {
+        margin: 0 0 4px;
+        font-family: "DM Serif Display", serif;
+        font-size: clamp(1.3rem, 3.8vw, 1.6rem);
+      }
+
+      .success-actions-sub {
+        margin: 0;
+        color: #5f584f;
+      }
+
+      .success-cta-row {
+        display: grid;
+        grid-template-columns: 1fr;
+        gap: 10px;
+        margin-top: 18px;
+      }
+
+      .btn-primary-strong {
+        display: inline-flex;
+        justify-content: center;
+        align-items: center;
+        width: 100%;
+        text-decoration: none;
+        padding: 13px 22px;
+        background: #111111;
+        border-color: #111111;
+        color: #ffffff;
+        box-shadow: 0 16px 34px rgba(17,17,17,0.16);
+      }
+
+      .btn-primary-strong:hover {
+        background: #2b2722;
+        border-color: #2b2722;
+      }
+
+      .btn-link-block {
+        display: inline-flex;
+        justify-content: center;
+        align-items: center;
+        width: 100%;
+        text-decoration: none;
       }
 
       .checkmark {
@@ -912,6 +1081,23 @@ export default function Home() {
         .install-card {
           text-align: left;
         }
+
+        .success-hero {
+          padding: 28px 18px 20px;
+        }
+
+        .next-steps {
+          padding: 12px;
+        }
+
+        .success-actions {
+          padding: 18px;
+        }
+
+        .btn-primary-strong,
+        .btn-link-block {
+          font-size: 13px;
+        }
       }
     `}</style>
   );
@@ -1139,34 +1325,53 @@ export default function Home() {
       <main className="eb-page">
         {styles}
         <div className="eb-shell">
-          <div className="eb-card eb-animate thanks-wrap">
-            <div className="checkmark">✓</div>
-            <h1 className="brand thanks-title">Tak for din ordre!</h1>
-            <p className="thanks-text">Din chatbot er i gang med at blive behandlet. Vi vender tilbage inden for 24 timer med dit embed script.</p>
-          </div>
+          <div className="success-stack">
+            <section className="eb-card eb-animate success-hero">
+              <div className="success-badge">Ordre modtaget</div>
+              <div className="checkmark checkmark-premium" aria-hidden="true">
+                <span>✓</span>
+              </div>
+              <h1 className="brand thanks-title">Tak for din ordre!</h1>
+              <p className="thanks-text">
+                Din chatbot er nu sat i produktion. Vi finjusterer den med dine svar og sender embed-scriptet,
+                så du hurtigt kan gå live.
+              </p>
+              <div className="status-chip">Svar inden for 24 timer</div>
 
-          <div className="eb-card eb-animate install-card">
-            <h2 className="section-title">Download din installationsguide</h2>
-            <p className="thanks-text install-intro">
-              Download PDF-guiden med trin-for-trin instrukser til opsætning af EmbedBot.
-            </p>
-            <a
-              href={SETUP_GUIDE_PDF_PATH}
-              download
-              className="btn btn-primary"
-              style={{ textDecoration: "none", display: "inline-block", marginTop: 16 }}
-            >
-              Download PDF guide
-            </a>
-          </div>
+              <div className="next-steps">
+                <p className="next-steps-title">Hvad sker der nu?</p>
+                <ul className="next-steps-list">
+                  <li>Vi gennemgår din opsætning og kvalitetssikrer chatbotten.</li>
+                  <li>Du modtager embed-script og korte instrukser på mail.</li>
+                  <li>Hvis noget mangler, kontakter vi dig med det samme.</li>
+                </ul>
+              </div>
+            </section>
 
-          <Link
-            href="/dashboard"
-            className="btn btn-primary"
-            style={{ textDecoration: "none", textAlign: "center", marginTop: 8 }}
-          >
-            Se og administrer mine chatbots →
-          </Link>
+            <section className="eb-card eb-animate success-actions" aria-label="Næste handlinger">
+              <h2 className="success-actions-header">Næste skridt</h2>
+              <p className="success-actions-sub">
+                Download installationsguiden nu, så du er klar til at aktivere EmbedBot på dit site med det samme.
+              </p>
+
+              <div className="success-cta-row">
+                <a
+                  href={SETUP_GUIDE_PDF_PATH}
+                  download
+                  className="btn btn-primary-strong"
+                >
+                  Download installationsguide (PDF)
+                </a>
+
+                <Link
+                  href="/dashboard"
+                  className="btn btn-secondary btn-link-block"
+                >
+                  Gå til dashboard og administrer chatbots
+                </Link>
+              </div>
+            </section>
+          </div>
         </div>
       </main>
     );
