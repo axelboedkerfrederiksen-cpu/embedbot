@@ -50,7 +50,7 @@ export async function POST(req: NextRequest) {
   const clientIp = getClientIp(req);
   if (await isRateLimited(clientIp)) {
     return NextResponse.json(
-      { error: "Rate limit ramt i demo: maks 15 beskeder pr. dag." },
+      { error: "Rate limit ramt: maks 15 beskeder pr. dag." },
       { status: 429 }
     );
   }
