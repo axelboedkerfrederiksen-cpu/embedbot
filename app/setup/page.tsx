@@ -14,7 +14,7 @@ const GENERATING_MESSAGES = [
   "Næsten klar...",
 ];
 
-const SETUP_GUIDE_PDF_PATH = "/embedbot-setup-guide.pdf";
+const SETUP_GUIDE_PDF_PATH = "/EmbedBot_Installationsguide.pdf";
 
 export default function Home() {
   type SetupUser = { id: string; email?: string | null } | null;
