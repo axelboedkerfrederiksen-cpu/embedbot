@@ -503,7 +503,7 @@ export default function DashboardPage() {
             </p>
           </div>
           <Link
-            href="/onboarding"
+            href="/setup"
             style={{
               display: "inline-flex",
               alignItems: "center",
@@ -771,7 +771,7 @@ export default function DashboardPage() {
           >
             <h2 style={{ margin: "0 0 16px", fontSize: 20, fontWeight: 500 }}>Du har ingen chatbots endnu</h2>
             <Link
-              href="/onboarding"
+              href="/setup"
               style={{
                 display: "inline-flex",
                 alignItems: "center",
