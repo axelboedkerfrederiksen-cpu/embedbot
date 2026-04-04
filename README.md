@@ -43,10 +43,17 @@ OPENAI_API_KEY=
 
 # E-mail
 RESEND_API_KEY=
+ADMIN_EMAIL=
+
+# App URL (bruges af server routes)
+NEXT_PUBLIC_APP_URL=
 
 # Valgfri fallback til admin-login
 ADMIN_PASSWORD=
 NEXT_PUBLIC_ADMIN_PASSWORD=
+
+# Valgfri salt til hashing af rate-limit IP
+RATE_LIMIT_SALT=
 ```
 
 3. Start udviklingsserveren:
@@ -83,6 +90,7 @@ npm run dev
 ## Krav til Supabase
 
 Dette repository indeholder SQL til `conversations` i [sql/create_conversations_table.sql](sql/create_conversations_table.sql).
+Rate limiting til chat kræver også [sql/create_chat_rate_limit.sql](sql/create_chat_rate_limit.sql).
 
 Du skal også have følgende databaseobjekter, som appen bruger:
 

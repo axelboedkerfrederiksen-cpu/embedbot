@@ -95,6 +95,7 @@ function formatRelativeDate(input?: string | null): string {
 
 export default function AdminPage() {
   const [password, setPassword] = useState("");
+  const [adminToken, setAdminToken] = useState("");
   const [authError, setAuthError] = useState("");
   const [isAuthenticated, setIsAuthenticated] = useState(false);
 
@@ -123,14 +124,27 @@ export default function AdminPage() {
     }, 2800);
   }
 
-  async function fetchBusinesses() {
+  function buildAdminHeaders(tokenOverride?: string) {
+    const stableToken = (tokenOverride ?? adminToken).trim();
+    const headers: Record<string, string> = {
+      "Content-Type": "application/json",
+    };
+
+    if (stableToken) {
+      headers["x-admin-token"] = stableToken;
+    }
+
+    return headers;
+  }
+
+  async function fetchBusinesses(tokenOverride?: string) {
     setLoading(true);
     setError("");
 
     try {
       const res = await fetch("/api/admin/businesses", {
         method: "GET",
-        headers: { "Content-Type": "application/json" },
+        headers: buildAdminHeaders(tokenOverride),
       });
 
       const data = await res.json();
@@ -169,8 +183,9 @@ export default function AdminPage() {
       return;
     }
 
+    setAdminToken(password);
     setIsAuthenticated(true);
-    await fetchBusinesses();
+    await fetchBusinesses(password);
   }
 
   function toggleExpand(id: string) {
@@ -241,7 +256,7 @@ export default function AdminPage() {
     try {
       const res = await fetch("/api/admin/businesses", {
         method: "PUT",
-        headers: { "Content-Type": "application/json" },
+        headers: buildAdminHeaders(),
         body: JSON.stringify({ business_id: stableBusinessId, updates }),
       });
 
@@ -320,7 +335,7 @@ export default function AdminPage() {
     try {
       const res = await fetch("/api/admin/businesses", {
         method: "DELETE",
-        headers: { "Content-Type": "application/json" },
+        headers: buildAdminHeaders(),
         body: JSON.stringify({ business_id: id }),
       });
 
@@ -551,7 +566,9 @@ export default function AdminPage() {
               </div>
 
               <button
-                onClick={fetchBusinesses}
+                onClick={() => {
+                  void fetchBusinesses();
+                }}
                 disabled={loading}
                 className="inline-flex items-center gap-2 rounded-xl border border-[rgba(17,17,17,0.08)] bg-white px-3 py-2 text-sm font-medium text-[#111111] shadow-[0_10px_24px_rgba(17,17,17,0.05)] transition hover:bg-[rgba(246,243,237,0.9)] disabled:opacity-60"
               >

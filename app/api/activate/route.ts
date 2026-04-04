@@ -65,6 +65,26 @@ export async function POST(req: NextRequest) {
       );
     }
 
+    const appUrl = process.env.NEXT_PUBLIC_APP_URL?.trim();
+    const adminEmail = process.env.ADMIN_EMAIL?.trim();
+
+    if (!appUrl || !adminEmail) {
+      return NextResponse.json(
+        { success: false, error: "Serveren mangler NEXT_PUBLIC_APP_URL eller ADMIN_EMAIL." },
+        { status: 500 }
+      );
+    }
+
+    let ingestEndpoint = "";
+    try {
+      ingestEndpoint = new URL("/api/ingest", appUrl).toString();
+    } catch {
+      return NextResponse.json(
+        { success: false, error: "NEXT_PUBLIC_APP_URL er ugyldig." },
+        { status: 500 }
+      );
+    }
+
     if (!resend) {
       return NextResponse.json(
         { success: false, error: "Resend-klient kunne ikke initialiseres." },
@@ -103,7 +123,7 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    const ingestRes = await fetch("https://embedbot1.vercel.app/api/ingest", {
+    const ingestRes = await fetch(ingestEndpoint, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ url: business.website_url, business_id }),
@@ -119,7 +139,7 @@ export async function POST(req: NextRequest) {
 
     await resend.emails.send({
       from: "onboarding@resend.dev",
-      to: "axel.boedker.frederiksen@gmail.com",
+      to: adminEmail,
       subject: `Ny aktivering: ${business.name || "Ukendt virksomhed"}`,
       html: buildCustomerEmailHtml(business_id, business.name, business.support_email),
     });

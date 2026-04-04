@@ -125,6 +125,14 @@ export async function POST(req: NextRequest) {
       );
     }
 
+    const adminEmail = process.env.ADMIN_EMAIL?.trim();
+    if (!adminEmail) {
+      return NextResponse.json(
+        { success: false, error: "Serveren mangler ADMIN_EMAIL." },
+        { status: 500 }
+      );
+    }
+
     const cookieStore = await cookies();
     const authSupabase = createServerClient(
       process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -190,7 +198,7 @@ export async function POST(req: NextRequest) {
 
     const mailResult = await resend.emails.send({
       from: "onboarding@resend.dev",
-      to: "axel.boedker.frederiksen@gmail.com",
+      to: adminEmail,
       subject: `Ny chatbot ordre: ${form.name}`,
       html: `
       <h2>Ny chatbot ordre fra ${form.name}</h2>

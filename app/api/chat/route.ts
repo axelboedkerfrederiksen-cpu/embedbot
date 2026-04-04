@@ -1,16 +1,10 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@supabase/supabase-js";
 import OpenAI from "openai";
+import { createHash } from "node:crypto";
 
 const RATE_LIMIT_MAX = 15;
-const RATE_LIMIT_WINDOW_MS = 24 * 60 * 60 * 1000;
-
-type RateLimitEntry = {
-  count: number;
-  resetAt: number;
-};
-
-const ipRateLimit = new Map<string, RateLimitEntry>();
+const RATE_LIMIT_WINDOW_SECONDS = 24 * 60 * 60;
 
 function getClientIp(req: NextRequest): string {
   const forwardedFor = req.headers.get("x-forwarded-for");
@@ -26,22 +20,9 @@ function getClientIp(req: NextRequest): string {
   return "unknown";
 }
 
-function isRateLimited(ip: string): boolean {
-  const now = Date.now();
-  const current = ipRateLimit.get(ip);
-
-  if (!current || now >= current.resetAt) {
-    ipRateLimit.set(ip, { count: 1, resetAt: now + RATE_LIMIT_WINDOW_MS });
-    return false;
-  }
-
-  if (current.count >= RATE_LIMIT_MAX) {
-    return true;
-  }
-
-  current.count += 1;
-  ipRateLimit.set(ip, current);
-  return false;
+function hashClientIp(ip: string) {
+  const salt = process.env.RATE_LIMIT_SALT || process.env.SUPABASE_SERVICE_KEY || "embedbot";
+  return createHash("sha256").update(`${salt}:${ip}`).digest("hex");
 }
 
 const supabase = createClient(
@@ -50,9 +31,24 @@ const supabase = createClient(
 );
 const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY! });
 
+async function isRateLimited(ip: string) {
+  const ipHash = hashClientIp(ip);
+  const { data, error } = await supabase.rpc("enforce_chat_rate_limit", {
+    p_ip_hash: ipHash,
+    p_limit: RATE_LIMIT_MAX,
+    p_window_seconds: RATE_LIMIT_WINDOW_SECONDS,
+  });
+
+  if (error) {
+    return false;
+  }
+
+  return data === true;
+}
+
 export async function POST(req: NextRequest) {
   const clientIp = getClientIp(req);
-  if (isRateLimited(clientIp)) {
+  if (await isRateLimited(clientIp)) {
     return NextResponse.json(
       { error: "Rate limit ramt i demo: maks 15 beskeder pr. dag." },
       { status: 429 }

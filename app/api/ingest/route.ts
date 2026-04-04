@@ -2,8 +2,8 @@ import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@supabase/supabase-js";
 import OpenAI from "openai";
 import * as cheerio from "cheerio";
-
-process.env.NODE_TLS_REJECT_UNAUTHORIZED = "0";
+import { lookup } from "node:dns/promises";
+import { isIP } from "node:net";
 
 const supabase = createClient(
   process.env.SUPABASE_URL!,
@@ -55,6 +55,105 @@ function formatIngestError(error: unknown, url?: string) {
   };
 }
 
+function isPrivateOrReservedIpv4(ip: string) {
+  const octets = ip.split(".").map((part) => Number(part));
+  if (octets.length !== 4 || octets.some((part) => !Number.isInteger(part) || part < 0 || part > 255)) {
+    return false;
+  }
+
+  const [a, b] = octets;
+
+  if (a === 10 || a === 127) {
+    return true;
+  }
+
+  if (a === 169 && b === 254) {
+    return true;
+  }
+
+  if (a === 172 && b >= 16 && b <= 31) {
+    return true;
+  }
+
+  if (a === 192 && b === 168) {
+    return true;
+  }
+
+  if (a === 0 || a >= 224) {
+    return true;
+  }
+
+  return false;
+}
+
+function isPrivateOrReservedIpv6(ip: string) {
+  const normalized = ip.toLowerCase();
+
+  if (normalized === "::" || normalized === "::1") {
+    return true;
+  }
+
+  if (normalized.startsWith("fc") || normalized.startsWith("fd")) {
+    return true;
+  }
+
+  if (
+    normalized.startsWith("fe8") ||
+    normalized.startsWith("fe9") ||
+    normalized.startsWith("fea") ||
+    normalized.startsWith("feb")
+  ) {
+    return true;
+  }
+
+  if (normalized.startsWith("ff")) {
+    return true;
+  }
+
+  const mappedIpv4Match = normalized.match(/::ffff:(\d+\.\d+\.\d+\.\d+)$/);
+  if (mappedIpv4Match?.[1]) {
+    return isPrivateOrReservedIpv4(mappedIpv4Match[1]);
+  }
+
+  return false;
+}
+
+function isPrivateOrReservedIp(ip: string) {
+  const family = isIP(ip);
+  if (family === 4) {
+    return isPrivateOrReservedIpv4(ip);
+  }
+
+  if (family === 6) {
+    return isPrivateOrReservedIpv6(ip);
+  }
+
+  return false;
+}
+
+async function isBlockedIngestTarget(hostname: string) {
+  const normalized = hostname.trim().toLowerCase();
+
+  if (!normalized) {
+    return true;
+  }
+
+  if (normalized === "localhost" || normalized.endsWith(".localhost")) {
+    return true;
+  }
+
+  if (isPrivateOrReservedIp(normalized)) {
+    return true;
+  }
+
+  try {
+    const records = await lookup(normalized, { all: true, verbatim: true });
+    return records.some((record) => isPrivateOrReservedIp(record.address));
+  } catch {
+    return false;
+  }
+}
+
 export async function POST(req: NextRequest) {
   try {
     const { url, business_id } = await req.json();
@@ -63,8 +162,9 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ success: false, error: "Mangler url eller business_id." }, { status: 400 });
     }
 
+    let parsedUrl: URL;
     try {
-      const parsedUrl = new URL(url);
+      parsedUrl = new URL(url);
       if (!parsedUrl.hostname || !["http:", "https:"].includes(parsedUrl.protocol)) {
         return NextResponse.json(
           { success: false, error: "URL'en skal starte med http:// eller https:// og pege på en gyldig hjemmeside." },
@@ -74,6 +174,13 @@ export async function POST(req: NextRequest) {
     } catch {
       return NextResponse.json(
         { success: false, error: "URL'en er ugyldig. Indtast en fuld adresse som fx https://example.com." },
+        { status: 400 }
+      );
+    }
+
+    if (await isBlockedIngestTarget(parsedUrl.hostname)) {
+      return NextResponse.json(
+        { success: false, error: "URL'en peger på et privat eller reserveret netværk, som ikke er tilladt." },
         { status: 400 }
       );
     }
@@ -91,7 +198,7 @@ export async function POST(req: NextRequest) {
     let html = "";
 
     try {
-      const res = await fetch(url, {
+      const res = await fetch(parsedUrl.toString(), {
         signal: controller.signal,
         headers: {
           "User-Agent": "Mozilla/5.0 (compatible; EmbedBot/1.0)",

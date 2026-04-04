@@ -1,13 +1,47 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@supabase/supabase-js";
+import { timingSafeEqual } from "node:crypto";
 
 const supabase = createClient(
   process.env.SUPABASE_URL!,
   process.env.SUPABASE_SERVICE_KEY!
 );
 
-export async function GET() {
+function isMatchingAdminToken(expectedToken: string, providedToken: string) {
+  const expectedBuffer = Buffer.from(expectedToken);
+  const providedBuffer = Buffer.from(providedToken);
+
+  if (expectedBuffer.length !== providedBuffer.length) {
+    return false;
+  }
+
+  return timingSafeEqual(expectedBuffer, providedBuffer);
+}
+
+function verifyAdminRequest(req: NextRequest) {
+  const expectedToken = process.env.ADMIN_PASSWORD || process.env.NEXT_PUBLIC_ADMIN_PASSWORD;
+  if (!expectedToken) {
+    return NextResponse.json(
+      { error: "Serveren mangler ADMIN_PASSWORD eller NEXT_PUBLIC_ADMIN_PASSWORD." },
+      { status: 500 }
+    );
+  }
+
+  const providedToken = req.headers.get("x-admin-token")?.trim();
+  if (!providedToken || !isMatchingAdminToken(expectedToken, providedToken)) {
+    return NextResponse.json({ error: "Ikke autoriseret." }, { status: 401 });
+  }
+
+  return null;
+}
+
+export async function GET(req: NextRequest) {
   try {
+    const authError = verifyAdminRequest(req);
+    if (authError) {
+      return authError;
+    }
+
     if (!process.env.SUPABASE_URL || !process.env.SUPABASE_SERVICE_KEY) {
       return NextResponse.json(
         { error: "Serveren mangler Supabase environment variables." },
@@ -36,6 +70,11 @@ export async function GET() {
 
 export async function DELETE(req: NextRequest) {
   try {
+    const authError = verifyAdminRequest(req);
+    if (authError) {
+      return authError;
+    }
+
     if (!process.env.SUPABASE_URL || !process.env.SUPABASE_SERVICE_KEY) {
       return NextResponse.json(
         { error: "Serveren mangler Supabase environment variables." },
@@ -80,6 +119,11 @@ export async function DELETE(req: NextRequest) {
 
 export async function PUT(req: NextRequest) {
   try {
+    const authError = verifyAdminRequest(req);
+    if (authError) {
+      return authError;
+    }
+
     if (!process.env.SUPABASE_URL || !process.env.SUPABASE_SERVICE_KEY) {
       return NextResponse.json(
         { error: "Serveren mangler Supabase environment variables." },
