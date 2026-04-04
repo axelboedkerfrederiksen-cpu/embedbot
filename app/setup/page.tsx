@@ -689,10 +689,11 @@ export default function Home() {
         letter-spacing: 0.08em;
         text-transform: uppercase;
         color: #6b6258;
+        margin: 0 auto 18px;
       }
 
       .checkmark-premium {
-        margin: 16px auto 18px;
+        margin: 0 auto 18px;
         width: 76px;
         height: 76px;
         border: 1.6px solid rgba(17,17,17,0.14);
