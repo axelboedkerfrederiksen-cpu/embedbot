@@ -742,7 +742,7 @@ export default function AdminPage() {
                         transition={{ duration: 0.2 }}
                         className="rounded-xl border border-[rgba(17,17,17,0.08)] bg-[rgba(255,255,255,0.94)] p-4 shadow-[0_14px_30px_rgba(17,17,17,0.04)]"
                       >
-                        <div className="flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between">
+                        <div className="grid gap-3 lg:grid-cols-[minmax(0,1fr)_auto] lg:items-start">
                           <div className="min-w-0 flex-1">
                             <div className="flex flex-wrap items-center gap-2">
                               <h3 className="truncate text-base font-semibold">{business.name || "Uden navn"}</h3>
@@ -764,7 +764,12 @@ export default function AdminPage() {
                                   {business.website_url || "-"}
                                 </span>
                               </p>
-                              <p>Email: {business.support_email || "-"}</p>
+                              <p className="min-w-0">
+                                Email:{" "}
+                                <span className="inline-block max-w-full truncate align-bottom lg:max-w-[20rem]">
+                                  {business.support_email || "-"}
+                                </span>
+                              </p>
                               <p>
                                 Oprettet:{" "}
                                 {business.created_at
@@ -899,7 +904,7 @@ export default function AdminPage() {
                                       className="grid grid-cols-1 gap-1 rounded-lg border border-[rgba(17,17,17,0.08)] bg-[rgba(255,255,255,0.9)] p-2 text-sm md:grid-cols-[220px_1fr]"
                                     >
                                       <span className="font-medium text-[#8a7e70]">{key}</span>
-                                      <span className="text-[#111111]">
+                                      <span className="min-w-0 break-words text-[#111111]">
                                         {isEditing && !isReadOnlyKey ? (
                                           isTextareaField(key) ? (
                                             <textarea
