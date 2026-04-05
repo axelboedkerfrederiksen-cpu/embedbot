@@ -48,9 +48,8 @@ ADMIN_EMAIL=
 # App URL (bruges af server routes)
 NEXT_PUBLIC_APP_URL=
 
-# Valgfri fallback til admin-login
+# Admin-login (server-only)
 ADMIN_PASSWORD=
-NEXT_PUBLIC_ADMIN_PASSWORD=
 
 # Valgfri salt til hashing af rate-limit IP
 RATE_LIMIT_SALT=

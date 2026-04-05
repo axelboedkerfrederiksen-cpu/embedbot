@@ -154,6 +154,7 @@ export default function AdminPage() {
 
       setBusinesses((data.businesses || []) as Business[]);
       setLastUpdatedAt(new Date());
+      return true;
     } catch (fetchError) {
       if (fetchError instanceof Error) {
         setError(fetchError.message || "Kunne ikke hente virksomheder.");
@@ -162,6 +163,7 @@ export default function AdminPage() {
         setError("Kunne ikke hente virksomheder.");
         pushToast("Kunne ikke hente virksomheder.", "error");
       }
+      return false;
     } finally {
       setLoading(false);
     }
@@ -171,21 +173,22 @@ export default function AdminPage() {
     e.preventDefault();
     setAuthError("");
 
-    const expected = process.env.NEXT_PUBLIC_ADMIN_PASSWORD || process.env.ADMIN_PASSWORD;
-
-    if (!expected) {
-      setAuthError("NEXT_PUBLIC_ADMIN_PASSWORD eller ADMIN_PASSWORD mangler i miljoevariabler.");
+    const stablePassword = password.trim();
+    if (!stablePassword) {
+      setAuthError("Indtast adgangskode.");
       return;
     }
 
-    if (password !== expected) {
-      setAuthError("Forkert adgangskode.");
+    setAdminToken(stablePassword);
+    const isAuthorized = await fetchBusinesses(stablePassword);
+    if (!isAuthorized) {
+      setAdminToken("");
+      setIsAuthenticated(false);
+      setAuthError("Forkert adgangskode eller manglende serverkonfiguration.");
       return;
     }
 
-    setAdminToken(password);
     setIsAuthenticated(true);
-    await fetchBusinesses(password);
   }
 
   function toggleExpand(id: string) {
