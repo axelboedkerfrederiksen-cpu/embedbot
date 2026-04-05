@@ -19,7 +19,8 @@ function isMatchingAdminToken(expectedToken: string, providedToken: string) {
 }
 
 function verifyAdminRequest(req: NextRequest) {
-  const expectedToken = process.env.ADMIN_PASSWORD || process.env.NEXT_PUBLIC_ADMIN_PASSWORD;
+  const expectedToken =
+    process.env.NEXT_PUBLIC_ADMIN_PASSWORD?.trim() || process.env.ADMIN_PASSWORD?.trim();
   if (!expectedToken) {
     return NextResponse.json(
       { error: "Serveren mangler ADMIN_PASSWORD eller NEXT_PUBLIC_ADMIN_PASSWORD." },

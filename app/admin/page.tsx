@@ -740,7 +740,7 @@ export default function AdminPage() {
                         className="rounded-xl border border-[rgba(17,17,17,0.08)] bg-[rgba(255,255,255,0.94)] p-4 shadow-[0_14px_30px_rgba(17,17,17,0.04)]"
                       >
                         <div className="flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between">
-                          <div className="min-w-0">
+                          <div className="min-w-0 flex-1">
                             <div className="flex flex-wrap items-center gap-2">
                               <h3 className="truncate text-base font-semibold">{business.name || "Uden navn"}</h3>
                               <span
@@ -754,8 +754,13 @@ export default function AdminPage() {
                               </span>
                             </div>
 
-                            <div className="mt-2 flex flex-wrap gap-x-4 gap-y-1 text-sm text-[#8a7e70]">
-                              <p>Website: {business.website_url || "-"}</p>
+                            <div className="mt-2 flex min-w-0 flex-wrap gap-x-4 gap-y-1 text-sm text-[#8a7e70]">
+                              <p className="min-w-0">
+                                Website:{" "}
+                                <span className="inline-block max-w-full truncate align-bottom lg:max-w-[42rem]">
+                                  {business.website_url || "-"}
+                                </span>
+                              </p>
                               <p>Email: {business.support_email || "-"}</p>
                               <p>
                                 Oprettet:{" "}
@@ -768,7 +773,7 @@ export default function AdminPage() {
                             </div>
                           </div>
 
-                          <div className="flex flex-wrap items-center gap-2">
+                          <div className="flex shrink-0 flex-wrap items-center gap-2 lg:justify-end">
                             <button
                               onClick={() => activateBusiness(business.id)}
                               disabled={isActive || isActivating || deletingId === business.id || savingId === business.id}
