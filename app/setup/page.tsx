@@ -39,6 +39,9 @@ export default function Home() {
   const [user, setUser] = useState<SetupUser>(null);
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState("");
+  const [messageTone, setMessageTone] = useState<"error" | "info">("error");
+  const [confirmationEmail, setConfirmationEmail] = useState("");
+  const [canResendConfirmation, setCanResendConfirmation] = useState(false);
   const [step, setStep] = useState(1);
   const [businessId, setBusinessId] = useState("");
   const [savingDraft, setSavingDraft] = useState(false);
@@ -240,9 +243,19 @@ export default function Home() {
     return error.message;
   }
 
+  function getAuthCallbackUrl() {
+    if (typeof window === "undefined") {
+      return undefined;
+    }
+
+    return `${window.location.origin}/auth/callback`;
+  }
+
   async function handleAuth() {
     setLoading(true);
     setMessage("");
+    setMessageTone("error");
+    setCanResendConfirmation(false);
     if (isLogin) {
       const { data, error } = await supabase.auth.signInWithPassword({ email, password });
       if (error) setMessage(error.message);
@@ -251,10 +264,53 @@ export default function Home() {
         startNewOnboardingSessionFromFrontpage();
       }
     } else {
-      const { data, error } = await supabase.auth.signUp({ email, password });
+      const normalizedEmail = email.trim().toLowerCase();
+      const { data, error } = await supabase.auth.signUp({
+        email: normalizedEmail,
+        password,
+        options: {
+          emailRedirectTo: getAuthCallbackUrl(),
+        },
+      });
       if (error) setMessage(error.message);
-      else setMessage("Tjek din email for at bekræfte din konto!");
+      else {
+        setConfirmationEmail(normalizedEmail);
+        setCanResendConfirmation(true);
+        setMessageTone("info");
+        setMessage("Tjek din email for at bekræfte din konto. Kig også i spam/uønsket.");
+      }
     }
+    setLoading(false);
+  }
+
+  async function handleResendConfirmation() {
+    const normalizedEmail = (confirmationEmail || email).trim().toLowerCase();
+    if (!normalizedEmail) {
+      setMessageTone("error");
+      setMessage("Mangler email til gensendelse.");
+      return;
+    }
+
+    setLoading(true);
+    setMessage("");
+    setMessageTone("error");
+
+    const { error } = await supabase.auth.resend({
+      type: "signup",
+      email: normalizedEmail,
+      options: {
+        emailRedirectTo: getAuthCallbackUrl(),
+      },
+    });
+
+    if (error) {
+      setMessageTone("error");
+      setMessage(error.message || "Kunne ikke gensende bekræftelsesmail.");
+    } else {
+      setMessageTone("info");
+      setMessage("Bekræftelsesmail sendt igen. Tjek spam/uønsket, hvis den ikke er i indbakken.");
+    }
+
     setLoading(false);
   }
 
@@ -619,6 +675,12 @@ export default function Home() {
 
       .message-error {
         color: #9b3d2f;
+        margin: 12px 0 0;
+        font-size: 14px;
+      }
+
+      .message-info {
+        color: #2f6f53;
         margin: 12px 0 0;
         font-size: 14px;
       }
@@ -1134,7 +1196,12 @@ export default function Home() {
             <p className="toggle-auth" onClick={() => setIsLogin(!isLogin)}>
               {isLogin ? "Har du ikke en konto? Opret en" : "Har du allerede en konto? Log ind"}
             </p>
-            {message && <p className="message-error">{message}</p>}
+            {message && <p className={messageTone === "info" ? "message-info" : "message-error"}>{message}</p>}
+            {!isLogin && canResendConfirmation && (
+              <button onClick={handleResendConfirmation} disabled={loading} className="btn btn-secondary btn-full" style={{ marginTop: 10 }}>
+                {loading ? "Sender igen..." : "Send bekræftelsesmail igen"}
+              </button>
+            )}
           </div>
         </div>
       </main>
