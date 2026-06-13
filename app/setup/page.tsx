@@ -1334,8 +1334,8 @@ export default function Home() {
               </div>
               <h1 className="brand thanks-title">Tak for din ordre!</h1>
               <p className="thanks-text">
-                Din chatbot er nu sat i produktion. Vi finjusterer den med dine svar og sender embed-scriptet,
-                så du hurtigt kan gå live.
+                Din EmbedBot er blevet oprettet! Tjek din indbakke — vi har sendt dit embed-script
+                til dig med det samme.
               </p>
               <div className="status-chip">Svar inden for 24 timer</div>
 

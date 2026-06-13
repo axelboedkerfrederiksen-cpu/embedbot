@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@supabase/supabase-js";
 import { timingSafeEqual } from "node:crypto";
+import { checkCsrfSafety } from "@/lib/csrf";
 
 const supabase = createClient(
   process.env.SUPABASE_URL!,
@@ -70,6 +71,12 @@ export async function GET(req: NextRequest) {
 
 export async function DELETE(req: NextRequest) {
   try {
+    // Check CSRF protection
+    const csrfCheck = await checkCsrfSafety(req, false); // Admin uses token auth instead
+    if (!csrfCheck.safe) {
+      return NextResponse.json({ error: csrfCheck.error }, { status: 403 });
+    }
+
     const authError = verifyAdminRequest(req);
     if (authError) {
       return authError;
@@ -119,6 +126,12 @@ export async function DELETE(req: NextRequest) {
 
 export async function PUT(req: NextRequest) {
   try {
+    // Check CSRF protection
+    const csrfCheck = await checkCsrfSafety(req, false); // Admin uses token auth instead
+    if (!csrfCheck.safe) {
+      return NextResponse.json({ error: csrfCheck.error }, { status: 403 });
+    }
+
     const authError = verifyAdminRequest(req);
     if (authError) {
       return authError;

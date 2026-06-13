@@ -6,6 +6,17 @@ import { createHash } from "node:crypto";
 const RATE_LIMIT_MAX = 15;
 const RATE_LIMIT_WINDOW_SECONDS = 24 * 60 * 60;
 
+/**
+ * Sanitize output to prevent prompt injection in system prompt
+ */
+function sanitizeOutput(text: string): string {
+  if (!text || typeof text !== "string") return "";
+  return text
+    .trim()
+    .replace(/\n/g, " ")
+    .substring(0, 500);
+}
+
 function getClientIp(req: NextRequest): string {
   const forwardedFor = req.headers.get("x-forwarded-for");
   if (forwardedFor) {
@@ -47,48 +58,103 @@ async function isRateLimited(ip: string) {
 }
 
 export async function POST(req: NextRequest) {
-  const clientIp = getClientIp(req);
-  if (await isRateLimited(clientIp)) {
-    return NextResponse.json(
-      { error: "Rate limit ramt: maks 15 beskeder pr. dag." },
-      { status: 429 }
-    );
-  }
+  try {
+    const clientIp = getClientIp(req);
+    if (await isRateLimited(clientIp)) {
+      return NextResponse.json(
+        { error: "Rate limit ramt: maks 15 beskeder pr. dag." },
+        { status: 429 }
+      );
+    }
 
-  const { message, business_id, page_url } = await req.json();
-  const stableBusinessId = typeof business_id === "string" ? business_id.trim() : "";
-  const stablePageUrl = typeof page_url === "string" && page_url.trim() ? page_url.trim() : "";
+    const { message, business_id, page_url } = await req.json();
+    const stableBusinessId = typeof business_id === "string" ? business_id.trim() : "";
+    const stablePageUrl = typeof page_url === "string" && page_url.trim() ? page_url.trim() : "";
 
-  if (!stableBusinessId) {
-    return NextResponse.json(
-      { error: "Mangler business_id." },
-      { status: 400 }
-    );
-  }
+    if (!stableBusinessId) {
+      return NextResponse.json(
+        { error: "Mangler business_id." },
+        { status: 400 }
+      );
+    }
 
-  const { data: business } = await supabase
-    .from("businesses")
-    .select("*")
-    .eq("id", stableBusinessId)
-    .order("created_at", { ascending: false })
-    .limit(1)
-    .single();
+    // Validate message input
+    if (!message || typeof message !== "string") {
+      return NextResponse.json(
+        { error: "Mangler besked." },
+        { status: 400 }
+      );
+    }
+
+    const trimmedMessage = message.trim();
+    if (trimmedMessage.length === 0) {
+      return NextResponse.json(
+        { error: "Besked kan ikke være tom." },
+        { status: 400 }
+      );
+    }
+
+    if (trimmedMessage.length > 10000) {
+      return NextResponse.json(
+        { error: "Besked er for lang (max 10000 tegn)." },
+        { status: 400 }
+      );
+    }
+
+    // Verify business exists and is not deleted
+    const { data: business, error: businessError } = await supabase
+      .from("businesses")
+      .select("*")
+      .eq("id", stableBusinessId)
+      .eq("is_deleted", false)
+      .order("created_at", { ascending: false })
+      .limit(1)
+      .single();
+
+    if (businessError || !business) {
+      // Log security event but don't expose details to user
+      console.warn(`Chat attempt for non-existent business: ${stableBusinessId}`);
+      return NextResponse.json(
+        { error: "Virksomheden blev ikke fundet." },
+        { status: 404 }
+      );
+    }
 
   const companyName = typeof business?.name === "string" && business.name.trim()
     ? business.name.trim()
     : "denne virksomhed";
 
-  const embeddingRes = await openai.embeddings.create({
-    model: "text-embedding-3-small",
-    input: message,
-  });
-  const queryEmbedding = embeddingRes.data[0].embedding;
+  // Generate embeddings with error handling
+  let queryEmbedding: number[] = [];
+  try {
+    const embeddingRes = await openai.embeddings.create({
+      model: "text-embedding-3-small",
+      input: trimmedMessage,
+    });
+    queryEmbedding = embeddingRes.data[0].embedding;
+  } catch (embeddingError) {
+    console.error("Embedding generation failed:", embeddingError);
+    // Continue without context - graceful degradation
+  }
 
-  const { data: docs } = await supabase.rpc("match_documents", {
-    query_embedding: queryEmbedding,
-    match_business_id: stableBusinessId,
-    match_count: 5,
-  });
+  // Try to fetch context documents
+  let docs: Array<{ content?: string }> = [];
+  if (queryEmbedding.length > 0) {
+    try {
+      const { data, error } = await supabase.rpc("match_documents", {
+        query_embedding: queryEmbedding,
+        match_business_id: stableBusinessId,
+        match_count: 5,
+      });
+
+      if (!error && data) {
+        docs = data;
+      }
+    } catch (matchError) {
+      console.error("Document matching failed:", matchError);
+      // Continue without context
+    }
+  }
 
   const context = (docs as Array<{ content?: string }> | null | undefined)
     ?.map((doc) => (typeof doc.content === "string" ? doc.content : ""))
@@ -96,47 +162,49 @@ export async function POST(req: NextRequest) {
     .join("\n\n");
 
   const businessInfo = `
-VIRKSOMHED: ${business?.name || ""}
-HJEMMESIDE: ${business?.website_url || ""}
-BRANCHE: ${business?.industry || ""}
-BESKRIVELSE: ${business?.description || ""}
+VIRKSOMHED: ${sanitizeOutput(business?.name || "")}
+HJEMMESIDE: ${sanitizeOutput(business?.website_url || "")}
+BRANCHE: ${sanitizeOutput(business?.industry || "")}
+BESKRIVELSE: ${sanitizeOutput(business?.description || "")}
 
 KONTAKT:
-- Email: ${business?.support_email || ""}
-- Telefon: ${business?.phone || ""}
-- Adresse: ${business?.address || ""}, ${business?.city || ""}
+- Email: ${sanitizeOutput(business?.support_email || "")}
+- Telefon: ${sanitizeOutput(business?.phone || "")}
+- Adresse: ${sanitizeOutput(business?.address || "")}, ${sanitizeOutput(business?.city || "")}
 
 ÅBNINGSTIDER:
-- Mandag-fredag: ${business?.hours_weekday || ""}
-- Lørdag: ${business?.hours_saturday || ""}
-- Søndag: ${business?.hours_sunday || ""}
+- Mandag-fredag: ${sanitizeOutput(business?.hours_weekday || "")}
+- Lørdag: ${sanitizeOutput(business?.hours_saturday || "")}
+- Søndag: ${sanitizeOutput(business?.hours_sunday || "")}
 
 SUPPORT:
-- Svartid: ${business?.response_time || ""}
-- Hvis botten ikke kan hjælpe: ${business?.fallback_action || ""}
-- Ved klager: ${business?.complaint_action || ""}
+- Svartid: ${sanitizeOutput(business?.response_time || "")}
+- Hvis botten ikke kan hjælpe: ${sanitizeOutput(business?.fallback_action || "")}
+- Ved klager: ${sanitizeOutput(business?.complaint_action || "")}
 
-PRODUKTER/SERVICES: ${business?.products_services || ""}
-LEVERINGSTID: ${business?.delivery_time || ""}
-RETURPOLITIK: ${business?.return_policy || ""}
-BETALINGSMETODER: ${business?.payment_methods || ""}
+PRODUKTER/SERVICES: ${sanitizeOutput(business?.products_services || "")}
+LEVERINGSTID: ${sanitizeOutput(business?.delivery_time || "")}
+RETURPOLITIK: ${sanitizeOutput(business?.return_policy || "")}
+BETALINGSMETODER: ${sanitizeOutput(business?.payment_methods || "")}
 
 FAQ:
-${business?.faq || ""}
+${sanitizeOutput(business?.faq || "")}
 
 VALGFRIT:
-- CVR: ${business?.cvr || ""}
-- Sociale medier: ${business?.social_media || ""}
-- Tilbud: ${business?.current_offers || ""}
-- Garanti: ${business?.warranty || ""}
+- CVR: ${sanitizeOutput(business?.cvr || "")}
+- Sociale medier: ${sanitizeOutput(business?.social_media || "")}
+- Tilbud: ${sanitizeOutput(business?.current_offers || "")}
+- Garanti: ${sanitizeOutput(business?.warranty || "")}
 
 EKSTRA INSTRUKSER FRA VIRKSOMHEDEN:
-${business?.custom_instructions || "Ingen"}
+${sanitizeOutput(business?.custom_instructions || "Ingen")}
 `;
 
   const completion = await openai.chat.completions.create({
     model: "gpt-4.1-nano",
     stream: true,
+    max_tokens: 500,
+    temperature: 0.7,
     messages: [
       {
         role: "system",
@@ -176,19 +244,20 @@ ${context}
 Følg disse regler STRENGT:
 1. Svar KUN på spørgsmål der er relateret til virksomheden.
 2. Brug ALTID informationen ovenfor når du svarer.
-3. Hvis du ikke kan hjælpe: "${business?.fallback_action || "Kontakt os venligst direkte."}" og giv kontaktinfo.
-4. Ved klager: ${business?.complaint_action || "henvis til telefon eller email"}.
+3. Hvis du ikke kan hjælpe: "${sanitizeOutput(business?.fallback_action || "Kontakt os venligst direkte.")}" og giv kontaktinfo.
+4. Ved klager: ${sanitizeOutput(business?.complaint_action || "henvis til telefon eller email")}.
 5. Svar ${business?.tone === "formel" ? "formelt og professionelt" : "venligt og uformelt"}.
-6. Svar på ${business?.language || "dansk"}.
+6. Svar på ${sanitizeOutput(business?.language || "dansk")}.
 7. Hold svar korte — maks 3-4 sætninger.
 8. Opfind aldrig information.`,
       },
-      { role: "user", content: message },
+      { role: "user", content: trimmedMessage },
     ],
   });
 
   const encoder = new TextEncoder();
   let answer = "";
+  let streamError = false;
 
   const stream = new ReadableStream<Uint8Array>({
     async start(controller) {
@@ -202,23 +271,33 @@ Følg disse regler STRENGT:
           answer += token;
           controller.enqueue(encoder.encode(token));
         }
-      } catch {
-        // Stream ends on error.
+      } catch (streamErrorOuter) {
+        streamError = true;
+        console.error("Stream error:", streamErrorOuter);
+        // Send error message to user
+        const errorMessage = "\n\nBeklager, der opstod et problem med assistenten. Prøv igen om et øjeblik.";
+        controller.enqueue(encoder.encode(errorMessage));
       } finally {
-        // Save each user/bot exchange so the dashboard can render historical conversations.
-        try {
-          await supabase
-            .from("conversations")
-            .insert({
-              business_id: stableBusinessId,
-              messages: [
-                { role: "user", content: message },
-                { role: "assistant", content: answer },
-                ...(stablePageUrl ? [{ role: "meta", page_url: stablePageUrl }] : []),
-              ],
-            });
-        } catch {
-          // Do not block chat replies if persistence fails.
+        // Save conversation if we got some response
+        if (answer || streamError) {
+          try {
+            await supabase
+              .from("conversations")
+              .insert({
+                business_id: stableBusinessId,
+                messages: [
+                  { role: "user", content: trimmedMessage },
+                  { 
+                    role: "assistant", 
+                    content: answer || "(Teknisk fejl - besked blev ikke gemmet)" 
+                  },
+                  ...(stablePageUrl ? [{ role: "meta", page_url: stablePageUrl }] : []),
+                ],
+              });
+          } catch (saveError) {
+            // Do not block chat replies if persistence fails
+            console.error("Failed to save conversation:", saveError);
+          }
         }
 
         controller.close();
@@ -233,4 +312,34 @@ Følg disse regler STRENGT:
       Connection: "keep-alive",
     },
   });
-}
+} catch (error) {
+  console.error("Chat endpoint error:", error);
+  
+  // Gracefully handle OpenAI service errors
+  if (error instanceof OpenAI.APIError) {
+    if (error.status === 429) {
+      return NextResponse.json(
+        { error: "OpenAI service is overloaded. Prøv igen om et øjeblik." },
+        { status: 503 }
+      );
+    }
+    if (error.status === 401 || error.status === 403) {
+      console.error("OpenAI authentication failed");
+      return NextResponse.json(
+        { error: "Assistenten er midlertidigt utilgængelig." },
+        { status: 503 }
+      );
+    }
+  }
+
+  if (error instanceof Error) {
+    return NextResponse.json(
+      { error: "Assistenten er midlertidigt utilgængelig. Prøv igen senere." },
+      { status: 503 }
+    );
+  }
+
+  return NextResponse.json(
+    { error: "En uventet fejl opstod." },
+    { status: 500 }
+  );

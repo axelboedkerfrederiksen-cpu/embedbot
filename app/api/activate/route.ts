@@ -24,23 +24,33 @@ function buildCustomerEmailHtml(
   customerEmail: string | null
 ) {
   const embedScript = `<script src="https://embedbot1.vercel.app/widget.js?id=${businessId}"></script>`;
+  const escapedBusinessName = (businessName || "din virksomhed")
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;");
+  const escapedCustomerEmail = (customerEmail || "")
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;");
 
   return `
     <div style="margin:0;padding:24px;background:#f5f5f5;font-family:Arial,sans-serif;color:#111;">
       <div style="max-width:640px;margin:0 auto;background:#ffffff;border:1px solid #e6e6e6;border-radius:12px;overflow:hidden;">
         <div style="padding:28px 24px 16px;">
-          <h1 style="margin:0 0 12px;font-size:28px;line-height:1.2;color:#000;">Ny aktivering</h1>
+          <h1 style="margin:0 0 12px;font-size:28px;line-height:1.2;color:#000;">Din EmbedBot er klar! 🎉</h1>
           <p style="margin:0 0 16px;font-size:15px;line-height:1.6;color:#333;">
-            En chatbot er blevet aktiveret i EmbedBot.
+            Tillykke! Din EmbedBot er nu oprettet og klar til brug på ${escapedBusinessName}.
           </p>
-          <p style="margin:0 0 12px;font-size:15px;line-height:1.6;color:#333;"><strong>Virksomhed:</strong> ${businessName || "Ukendt"}</p>
-          <p style="margin:0 0 16px;font-size:15px;line-height:1.6;color:#333;"><strong>Kundens email:</strong> ${customerEmail || "-"}</p>
+          <p style="margin:0 0 12px;font-size:15px;line-height:1.6;color:#333;"><strong>Embed-script:</strong></p>
           <div style="background:#111;color:#f9f9f9;border-radius:10px;padding:14px;font-family:Consolas,Monaco,monospace;font-size:13px;line-height:1.5;word-break:break-all;">
             ${embedScript
               .replace(/&/g, "&amp;")
               .replace(/</g, "&lt;")
               .replace(/>/g, "&gt;")}
           </div>
+          <p style="margin:16px 0 0;font-size:14px;line-height:1.6;color:#333;">Indsæt denne kode lige før <code style="font-family:Consolas,Monaco,monospace;">&lt;/body&gt;</code> på din hjemmeside.</p>
+          <p style="margin:16px 0 0;font-size:15px;line-height:1.6;color:#333;">God fornøjelse med din nye chatbot!<br/>Venlig hilsen<br/>EmbedBot</p>
+          ${escapedCustomerEmail ? `<p style="margin:16px 0 0;font-size:12px;line-height:1.5;color:#777;">Sendt til: ${escapedCustomerEmail}</p>` : ""}
         </div>
         <div style="padding:14px 24px;background:#fafafa;border-top:1px solid #ededed;">
           <p style="margin:0;font-size:12px;line-height:1.5;color:#666;">EmbedBot - AI kundeservice til din hjemmeside</p>
@@ -66,11 +76,9 @@ export async function POST(req: NextRequest) {
     }
 
     const appUrl = process.env.NEXT_PUBLIC_APP_URL?.trim();
-    const adminEmail = process.env.ADMIN_EMAIL?.trim();
-
-    if (!appUrl || !adminEmail) {
+    if (!appUrl) {
       return NextResponse.json(
-        { success: false, error: "Serveren mangler NEXT_PUBLIC_APP_URL eller ADMIN_EMAIL." },
+        { success: false, error: "Serveren mangler NEXT_PUBLIC_APP_URL." },
         { status: 500 }
       );
     }
@@ -139,8 +147,8 @@ export async function POST(req: NextRequest) {
 
     await resend.emails.send({
       from: "onboarding@resend.dev",
-      to: adminEmail,
-      subject: `Ny aktivering: ${business.name || "Ukendt virksomhed"}`,
+      to: business.support_email,
+      subject: "Din EmbedBot er klar! 🎉",
       html: buildCustomerEmailHtml(business_id, business.name, business.support_email),
     });
 
