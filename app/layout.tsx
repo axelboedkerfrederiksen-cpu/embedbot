@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { Poppins } from "next/font/google";
+import { Analytics } from "@vercel/analytics/next";
 import "./globals.css";
 import UniversalBackButton from "./components/universal-back-button";
 
@@ -27,6 +28,7 @@ export default function RootLayout({
       >
         <UniversalBackButton />
         {children}
+        <Analytics />
       </body>
     </html>
   );
