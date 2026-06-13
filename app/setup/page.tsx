@@ -163,6 +163,15 @@ export default function Home() {
     if (storedId) {
       setBusinessId(storedId);
       clearPersistedBusinessId();
+
+      // Send embed-script email to customer now that payment is complete
+      fetch("/api/send-embed-email", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ business_id: storedId }),
+      }).catch(() => {
+        // Non-blocking — success screen still shows even if email fails
+      });
     }
 
     setStep(7);
@@ -1404,14 +1413,14 @@ export default function Home() {
                 Din EmbedBot er blevet oprettet! Tjek din indbakke — vi har sendt dit embed-script
                 til dig med det samme.
               </p>
-              <div className="status-chip">Svar inden for 24 timer</div>
+              <div className="status-chip">Email er på vej til dig ✉️</div>
 
               <div className="next-steps">
                 <p className="next-steps-title">Hvad sker der nu?</p>
                 <ul className="next-steps-list">
-                  <li>Vi gennemgår din opsætning og kvalitetssikrer chatbotten.</li>
-                  <li>Du modtager embed-script og korte instrukser på mail.</li>
-                  <li>Hvis noget mangler, kontakter vi dig med det samme.</li>
+                  <li>Tjek din indbakke — embed-scriptet er allerede sendt til dig.</li>
+                  <li>Kig i spam/uønsket, hvis mailen ikke er i indbakken.</li>
+                  <li>Indsæt scriptet lige før &lt;/body&gt; på din hjemmeside, og du er live.</li>
                 </ul>
               </div>
             </section>
@@ -1419,7 +1428,7 @@ export default function Home() {
             <section className="eb-card eb-animate success-actions" aria-label="Næste handlinger">
               <h2 className="success-actions-header">Næste skridt</h2>
               <p className="success-actions-sub">
-                Download installationsguiden nu, så du er klar til at aktivere EmbedBot på dit site med det samme.
+                Download installationsguiden for en hurtig trin-for-trin vejledning til at indsætte dit embed-script.
               </p>
 
               <div className="success-cta-row">

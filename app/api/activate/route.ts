@@ -21,40 +21,27 @@ const resend = process.env.RESEND_API_KEY
 function buildCustomerEmailHtml(
   businessId: string,
   businessName: string | null,
-  customerEmail: string | null
 ) {
   const embedScript = `<script src="https://embedbot1.vercel.app/widget.js?id=${businessId}"></script>`;
-  const escapedBusinessName = (businessName || "din virksomhed")
-    .replace(/&/g, "&amp;")
-    .replace(/</g, "&lt;")
-    .replace(/>/g, "&gt;");
-  const escapedCustomerEmail = (customerEmail || "")
+  const firstName = (businessName || "").split(" ")[0] || "der";
+  const escapedFirstName = firstName.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+  const escapedScript = embedScript
     .replace(/&/g, "&amp;")
     .replace(/</g, "&lt;")
     .replace(/>/g, "&gt;");
 
   return `
-    <div style="margin:0;padding:24px;background:#f5f5f5;font-family:Arial,sans-serif;color:#111;">
-      <div style="max-width:640px;margin:0 auto;background:#ffffff;border:1px solid #e6e6e6;border-radius:12px;overflow:hidden;">
-        <div style="padding:28px 24px 16px;">
-          <h1 style="margin:0 0 12px;font-size:28px;line-height:1.2;color:#000;">Din EmbedBot er klar! 🎉</h1>
-          <p style="margin:0 0 16px;font-size:15px;line-height:1.6;color:#333;">
-            Tillykke! Din EmbedBot er nu oprettet og klar til brug på ${escapedBusinessName}.
-          </p>
-          <p style="margin:0 0 12px;font-size:15px;line-height:1.6;color:#333;"><strong>Embed-script:</strong></p>
-          <div style="background:#111;color:#f9f9f9;border-radius:10px;padding:14px;font-family:Consolas,Monaco,monospace;font-size:13px;line-height:1.5;word-break:break-all;">
-            ${embedScript
-              .replace(/&/g, "&amp;")
-              .replace(/</g, "&lt;")
-              .replace(/>/g, "&gt;")}
-          </div>
-          <p style="margin:16px 0 0;font-size:14px;line-height:1.6;color:#333;">Indsæt denne kode lige før <code style="font-family:Consolas,Monaco,monospace;">&lt;/body&gt;</code> på din hjemmeside.</p>
-          <p style="margin:16px 0 0;font-size:15px;line-height:1.6;color:#333;">God fornøjelse med din nye chatbot!<br/>Venlig hilsen<br/>EmbedBot</p>
-          ${escapedCustomerEmail ? `<p style="margin:16px 0 0;font-size:12px;line-height:1.5;color:#777;">Sendt til: ${escapedCustomerEmail}</p>` : ""}
+    <div style="margin:0;padding:32px 16px;background:#f9f9f9;font-family:Arial,sans-serif;color:#111;">
+      <div style="max-width:560px;margin:0 auto;background:#ffffff;border:1px solid #e6e6e6;border-radius:8px;padding:36px 32px;">
+        <p style="margin:0 0 20px;font-size:15px;line-height:1.7;color:#111;">Hej ${escapedFirstName},</p>
+        <p style="margin:0 0 20px;font-size:15px;line-height:1.7;color:#111;">Din AI-chatbot er nu klar til at gå live på din webshop.</p>
+        <p style="margin:0 0 10px;font-size:15px;line-height:1.7;color:#111;">Indsæt denne kode lige før <code style="font-family:Consolas,Monaco,monospace;font-size:13px;">&lt;/body&gt;</code> på din hjemmeside:</p>
+        <div style="background:#111111;color:#f9f9f9;border-radius:6px;padding:16px;font-family:Consolas,Monaco,monospace;font-size:13px;line-height:1.5;word-break:break-all;margin:0 0 24px;">
+          ${escapedScript}
         </div>
-        <div style="padding:14px 24px;background:#fafafa;border-top:1px solid #ededed;">
-          <p style="margin:0;font-size:12px;line-height:1.5;color:#666;">EmbedBot - AI kundeservice til din hjemmeside</p>
-        </div>
+        <p style="margin:0 0 20px;font-size:15px;line-height:1.7;color:#111;">Det er det hele. Bogstaveligt talt.</p>
+        <p style="margin:0 0 20px;font-size:15px;line-height:1.7;color:#111;">Har du spørgsmål, så svar bare på denne mail.</p>
+        <p style="margin:0;font-size:15px;line-height:1.7;color:#111;">// Axel fra EmbedBot</p>
       </div>
     </div>
   `;
@@ -149,7 +136,7 @@ export async function POST(req: NextRequest) {
       from: "onboarding@resend.dev",
       to: business.support_email,
       subject: "Din EmbedBot er klar! 🎉",
-      html: buildCustomerEmailHtml(business_id, business.name, business.support_email),
+      html: buildCustomerEmailHtml(business_id, business.name),
     });
 
     const { error: updateError } = await supabase
