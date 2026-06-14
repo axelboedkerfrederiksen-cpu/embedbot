@@ -77,12 +77,8 @@ export default function Home() {
         html, body {
           margin: 0;
           padding: 0;
-          background-color: #f6f3ed;
-          background:
-            radial-gradient(circle at 12% 18%, rgba(246, 243, 237, 0.92) 0%, rgba(246, 243, 237, 0) 24%),
-            radial-gradient(circle at 88% 14%, rgba(246, 243, 237, 0.9) 0%, rgba(246, 243, 237, 0) 22%),
-            linear-gradient(180deg, #faf7f1 0%, #f6f3ed 60%, #f2ece3 100%);
-          background-attachment: scroll;
+          min-height: 100%;
+          background: #f6f3ed;
         }
 
         .page {
