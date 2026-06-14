@@ -465,9 +465,23 @@ export default function AdminPage() {
       <main className="min-h-screen bg-[radial-gradient(circle_at_12%_18%,rgba(246,243,237,0.92)_0%,rgba(246,243,237,0)_24%),radial-gradient(circle_at_88%_14%,rgba(246,243,237,0.9)_0%,rgba(246,243,237,0)_22%),linear-gradient(180deg,#ffffff_0%,#fcfaf6_55%,#f8f4ee_100%)] px-4 py-16 text-[#111111]">
         <div className="mx-auto w-full max-w-md rounded-3xl border border-[rgba(17,17,17,0.08)] bg-[rgba(255,255,255,0.94)] p-8 shadow-[0_20px_50px_rgba(17,17,17,0.08)] backdrop-blur">
           <h1 className="text-3xl font-semibold tracking-tight">EmbedBot Admin</h1>
-          <p className="mt-2 text-sm text-[#6b6258]">Indtast adgangskoden for at fortsatte.</p>
+          <p className="mt-2 text-sm text-[#6b6258]">Indtast admin-email og adgangskode for at fortsatte.</p>
 
           <form onSubmit={handleLogin} className="mt-6 space-y-4">
+            <div>
+              <label className="mb-2 block text-xs font-medium uppercase tracking-[0.16em] text-[#8a7e70]">
+                Email
+              </label>
+              <input
+                type="email"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                placeholder="admin@eksempel.dk"
+                autoComplete="email"
+                className="w-full rounded-xl border border-[rgba(17,17,17,0.10)] bg-white px-3 py-2.5 text-sm text-[#111111] placeholder:text-[#8a7e70] focus:border-[rgba(17,17,17,0.22)] focus:outline-none"
+              />
+            </div>
+
             <div>
               <label className="mb-2 block text-xs font-medium uppercase tracking-[0.16em] text-[#8a7e70]">
                 Adgangskode
@@ -477,6 +491,7 @@ export default function AdminPage() {
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 placeholder="••••••••"
+                autoComplete="current-password"
                 className="w-full rounded-xl border border-[rgba(17,17,17,0.10)] bg-white px-3 py-2.5 text-sm text-[#111111] placeholder:text-[#8a7e70] focus:border-[rgba(17,17,17,0.22)] focus:outline-none"
               />
             </div>
