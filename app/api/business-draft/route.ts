@@ -151,6 +151,27 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ success: false, error: "Ikke autoriseret." }, { status: 401 });
     }
 
+    const { data: existingBusiness, error: businessLookupError } = await supabase
+      .from("businesses")
+      .select("user_id")
+      .eq("id", stableBusinessId)
+      .maybeSingle();
+
+    if (businessLookupError) {
+      return NextResponse.json(
+        { success: false, error: `Kunne ikke verificere virksomhedsejerskab: ${businessLookupError.message}` },
+        { status: 500 }
+      );
+    }
+
+    const existingBusinessUserId = typeof existingBusiness?.user_id === "string" ? existingBusiness.user_id.trim() : "";
+    if (existingBusinessUserId && existingBusinessUserId !== user.id) {
+      return NextResponse.json(
+        { success: false, error: "Du har ikke tilladelse til at opdatere denne virksomhed." },
+        { status: 403 }
+      );
+    }
+
     const normalizedForm = {
       ...form,
       fab_color:

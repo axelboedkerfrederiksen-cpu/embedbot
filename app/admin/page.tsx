@@ -1,8 +1,9 @@
 "use client";
 
 import Link from "next/link";
-import { FormEvent, useMemo, useState } from "react";
+import { FormEvent, useEffect, useMemo, useState } from "react";
 import { AnimatePresence, motion } from "framer-motion";
+import { createClient } from "@/lib/supabase";
 import {
   Activity,
   BarChart3,
@@ -94,8 +95,9 @@ function formatRelativeDate(input?: string | null): string {
 }
 
 export default function AdminPage() {
+  const supabase = createClient();
+  const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const [adminToken, setAdminToken] = useState("");
   const [authError, setAuthError] = useState("");
   const [isAuthenticated, setIsAuthenticated] = useState(false);
 
@@ -116,6 +118,23 @@ export default function AdminPage() {
   const [pendingDeleteBusiness, setPendingDeleteBusiness] = useState<Business | null>(null);
   const [lastUpdatedAt, setLastUpdatedAt] = useState<Date | null>(null);
 
+  useEffect(() => {
+    let mounted = true;
+
+    supabase.auth.getUser().then(({ data }) => {
+      if (!mounted || !data.user) {
+        return;
+      }
+
+      setIsAuthenticated(true);
+      void fetchBusinesses();
+    });
+
+    return () => {
+      mounted = false;
+    };
+  }, []);
+
   function pushToast(message: string, type: Toast["type"] = "info") {
     const id = `${Date.now()}-${Math.random().toString(16).slice(2)}`;
     setToasts((prev) => [...prev, { id, message, type }]);
@@ -124,27 +143,23 @@ export default function AdminPage() {
     }, 2800);
   }
 
-  function buildAdminHeaders(tokenOverride?: string) {
-    const stableToken = (tokenOverride ?? adminToken).trim();
+  function buildAdminHeaders() {
     const headers: Record<string, string> = {
       "Content-Type": "application/json",
+      "x-csrf-token": "admin-ui",
     };
-
-    if (stableToken) {
-      headers["x-admin-token"] = stableToken;
-    }
 
     return headers;
   }
 
-  async function fetchBusinesses(tokenOverride?: string) {
+  async function fetchBusinesses() {
     setLoading(true);
     setError("");
 
     try {
       const res = await fetch("/api/admin/businesses", {
         method: "GET",
-        headers: buildAdminHeaders(tokenOverride),
+        headers: { "Content-Type": "application/json" },
       });
 
       const data = await res.json();
@@ -173,18 +188,28 @@ export default function AdminPage() {
     e.preventDefault();
     setAuthError("");
 
+    const stableEmail = email.trim().toLowerCase();
     const stablePassword = password.trim();
-    if (!stablePassword) {
-      setAuthError("Indtast adgangskode.");
+    if (!stableEmail || !stablePassword) {
+      setAuthError("Indtast email og adgangskode.");
       return;
     }
 
-    setAdminToken(stablePassword);
-    const isAuthorized = await fetchBusinesses(stablePassword);
-    if (!isAuthorized) {
-      setAdminToken("");
+    const { error } = await supabase.auth.signInWithPassword({
+      email: stableEmail,
+      password: stablePassword,
+    });
+
+    if (error) {
       setIsAuthenticated(false);
-      setAuthError("Forkert adgangskode eller manglende serverkonfiguration.");
+      setAuthError(error.message || "Kunne ikke logge ind.");
+      return;
+    }
+
+    const isAuthorized = await fetchBusinesses();
+    if (!isAuthorized) {
+      setIsAuthenticated(false);
+      setAuthError("Du har ikke adgang til admin-panelet.");
       return;
     }
 
@@ -307,7 +332,7 @@ export default function AdminPage() {
     try {
       const res = await fetch("/api/activate", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: buildAdminHeaders(),
         body: JSON.stringify({ business_id: id }),
       });
 

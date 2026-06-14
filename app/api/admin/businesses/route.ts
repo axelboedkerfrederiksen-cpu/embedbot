@@ -1,46 +1,18 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@supabase/supabase-js";
-import { timingSafeEqual } from "node:crypto";
 import { checkCsrfSafety } from "@/lib/csrf";
+import { verifyAdminSession } from "@/lib/admin-auth";
 
 const supabase = createClient(
   process.env.SUPABASE_URL!,
   process.env.SUPABASE_SERVICE_KEY!
 );
 
-function isMatchingAdminToken(expectedToken: string, providedToken: string) {
-  const expectedBuffer = Buffer.from(expectedToken);
-  const providedBuffer = Buffer.from(providedToken);
-
-  if (expectedBuffer.length !== providedBuffer.length) {
-    return false;
-  }
-
-  return timingSafeEqual(expectedBuffer, providedBuffer);
-}
-
-function verifyAdminRequest(req: NextRequest) {
-  const expectedToken = process.env.ADMIN_PASSWORD?.trim();
-  if (!expectedToken) {
-    return NextResponse.json(
-      { error: "Serveren mangler ADMIN_PASSWORD." },
-      { status: 500 }
-    );
-  }
-
-  const providedToken = req.headers.get("x-admin-token")?.trim();
-  if (!providedToken || !isMatchingAdminToken(expectedToken, providedToken)) {
-    return NextResponse.json({ error: "Ikke autoriseret." }, { status: 401 });
-  }
-
-  return null;
-}
-
 export async function GET(req: NextRequest) {
   try {
-    const authError = verifyAdminRequest(req);
-    if (authError) {
-      return authError;
+    const authResult = await verifyAdminSession();
+    if ("error" in authResult) {
+      return NextResponse.json({ error: authResult.error }, { status: authResult.status });
     }
 
     if (!process.env.SUPABASE_URL || !process.env.SUPABASE_SERVICE_KEY) {
@@ -72,14 +44,14 @@ export async function GET(req: NextRequest) {
 export async function DELETE(req: NextRequest) {
   try {
     // Check CSRF protection
-    const csrfCheck = await checkCsrfSafety(req, false); // Admin uses token auth instead
+    const csrfCheck = await checkCsrfSafety(req, true);
     if (!csrfCheck.safe) {
       return NextResponse.json({ error: csrfCheck.error }, { status: 403 });
     }
 
-    const authError = verifyAdminRequest(req);
-    if (authError) {
-      return authError;
+    const authResult = await verifyAdminSession();
+    if ("error" in authResult) {
+      return NextResponse.json({ error: authResult.error }, { status: authResult.status });
     }
 
     if (!process.env.SUPABASE_URL || !process.env.SUPABASE_SERVICE_KEY) {
@@ -127,14 +99,14 @@ export async function DELETE(req: NextRequest) {
 export async function PUT(req: NextRequest) {
   try {
     // Check CSRF protection
-    const csrfCheck = await checkCsrfSafety(req, false); // Admin uses token auth instead
+    const csrfCheck = await checkCsrfSafety(req, true);
     if (!csrfCheck.safe) {
       return NextResponse.json({ error: csrfCheck.error }, { status: 403 });
     }
 
-    const authError = verifyAdminRequest(req);
-    if (authError) {
-      return authError;
+    const authResult = await verifyAdminSession();
+    if ("error" in authResult) {
+      return NextResponse.json({ error: authResult.error }, { status: authResult.status });
     }
 
     if (!process.env.SUPABASE_URL || !process.env.SUPABASE_SERVICE_KEY) {

@@ -1,6 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@supabase/supabase-js";
 import { Resend } from "resend";
+import { checkCsrfSafety } from "@/lib/csrf";
+import { verifyAdminSession } from "@/lib/admin-auth";
 
 type BusinessRecord = {
   id: string;
@@ -49,6 +51,16 @@ function buildCustomerEmailHtml(
 
 export async function POST(req: NextRequest) {
   try {
+    const csrfCheck = await checkCsrfSafety(req, true);
+    if (!csrfCheck.safe) {
+      return NextResponse.json({ success: false, error: csrfCheck.error }, { status: 403 });
+    }
+
+    const authResult = await verifyAdminSession();
+    if ("error" in authResult) {
+      return NextResponse.json({ success: false, error: authResult.error }, { status: authResult.status });
+    }
+
     const { business_id } = await req.json();
 
     if (!business_id || typeof business_id !== "string") {
