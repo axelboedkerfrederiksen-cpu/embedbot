@@ -22,8 +22,8 @@ html, body {
   color: var(--text-primary);
   font-family: var(--font-poppins), sans-serif;
   overflow-x: hidden;
-  min-height: 100%;
-  overscroll-behavior-y: none;
+  min-height: 100dvh;
+  overflow-y: auto;
 }
 
 ::selection {
