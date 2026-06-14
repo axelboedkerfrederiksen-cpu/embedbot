@@ -444,19 +444,19 @@ export default function DashboardPage() {
         fontFamily: '"Poppins", sans-serif',
         paddingTop: 48,
         paddingBottom: 56,
-        paddingLeft: 28,
-        paddingRight: 28,
+        paddingLeft: "clamp(14px, 3vw, 28px)",
+        paddingRight: "clamp(14px, 3vw, 28px)",
       }}
     >
-      <div style={{ width: "100%", maxWidth: 960, margin: "0 auto", display: "grid", gap: 20 }}>
-        <nav style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 12, padding: "18px 20px", border: "1px solid rgba(17,17,17,0.08)", borderRadius: 22, background: "rgba(255,255,255,0.86)", boxShadow: "0 16px 38px rgba(17,17,17,0.05)", backdropFilter: "blur(12px)" }}>
+      <div style={{ width: "100%", maxWidth: 1120, margin: "0 auto", display: "grid", gap: 20 }}>
+        <nav style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 12, flexWrap: "wrap", padding: "18px 20px", border: "1px solid rgba(17,17,17,0.08)", borderRadius: 22, background: "rgba(255,255,255,0.86)", boxShadow: "0 16px 38px rgba(17,17,17,0.05)", backdropFilter: "blur(12px)" }}>
           <Link href="/" style={{ fontSize: 18, fontWeight: 700, textDecoration: "none", color: "#111111", letterSpacing: "-0.03em" }}>
             EmbedBot
           </Link>
-          <div style={{ display: "flex", alignItems: "center", gap: 16, minWidth: 0 }}>
+          <div style={{ display: "flex", alignItems: "center", justifyContent: "flex-end", gap: 10, minWidth: 0, flex: "1 1 300px", flexWrap: "wrap" }}>
             <span
               style={{
-                maxWidth: 220,
+                maxWidth: "min(100%, 320px)",
                 overflow: "hidden",
                 textOverflow: "ellipsis",
                 whiteSpace: "nowrap",
