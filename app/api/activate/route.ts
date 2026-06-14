@@ -145,7 +145,7 @@ export async function POST(req: NextRequest) {
     }
 
     await resend.emails.send({
-      from: "onboarding@resend.dev",
+      from: "axel@embedbot.dk",
       to: business.support_email,
       subject: "Din EmbedBot er klar! 🎉",
       html: buildCustomerEmailHtml(business_id, business.name),

@@ -44,7 +44,7 @@ export async function POST(req: NextRequest) {
     const escapedFirstName = firstName.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
 
     const { error: mailError } = await resend.emails.send({
-      from: "onboarding@resend.dev",
+      from: "axel@embedbot.dk",
       to: row.support_email.trim(),
       subject: "Din EmbedBot er klar 🎉",
       html: `

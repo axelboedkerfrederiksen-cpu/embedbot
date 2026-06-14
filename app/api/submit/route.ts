@@ -218,7 +218,7 @@ export async function POST(req: NextRequest) {
     }
 
     const mailResult = await resend.emails.send({
-      from: "onboarding@resend.dev",
+      from: "axel@embedbot.dk",
       to: adminEmail,
       subject: `Ny chatbot ordre: ${form.name}`,
       html: `
