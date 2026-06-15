@@ -122,6 +122,7 @@
     }
 
     addMessage(welcomeMessage, false);
+    conversationHistory.push({ role: "assistant", content: welcomeMessage });
     hasShownWelcomeMessage = true;
     console.log("[EmbedBot] Welcome message shown automatically.");
   }
