@@ -106,7 +106,7 @@ export async function POST(req: NextRequest) {
       .from("businesses")
       .select("*")
       .eq("id", stableBusinessId)
-      .eq("is_deleted", false)
+      .or("is_deleted.eq.false,is_deleted.is.null")
       .order("created_at", { ascending: false })
       .limit(1)
       .single();
