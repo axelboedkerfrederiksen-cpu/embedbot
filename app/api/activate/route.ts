@@ -56,7 +56,7 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ success: false, error: csrfCheck.error }, { status: 403 });
     }
 
-    const authResult = await verifyAdminSession();
+    const authResult = await verifyAdminSession(req);
     if ("error" in authResult) {
       return NextResponse.json({ success: false, error: authResult.error }, { status: authResult.status });
     }

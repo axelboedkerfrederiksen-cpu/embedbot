@@ -10,7 +10,7 @@ const supabase = createClient(
 
 export async function GET(req: NextRequest) {
   try {
-    const authResult = await verifyAdminSession();
+    const authResult = await verifyAdminSession(req);
     if ("error" in authResult) {
       return NextResponse.json({ error: authResult.error }, { status: authResult.status });
     }
@@ -49,7 +49,7 @@ export async function DELETE(req: NextRequest) {
       return NextResponse.json({ error: csrfCheck.error }, { status: 403 });
     }
 
-    const authResult = await verifyAdminSession();
+    const authResult = await verifyAdminSession(req);
     if ("error" in authResult) {
       return NextResponse.json({ error: authResult.error }, { status: authResult.status });
     }
@@ -104,7 +104,7 @@ export async function PUT(req: NextRequest) {
       return NextResponse.json({ error: csrfCheck.error }, { status: 403 });
     }
 
-    const authResult = await verifyAdminSession();
+    const authResult = await verifyAdminSession(req);
     if ("error" in authResult) {
       return NextResponse.json({ error: authResult.error }, { status: authResult.status });
     }

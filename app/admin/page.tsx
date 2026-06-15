@@ -98,6 +98,7 @@ export default function AdminPage() {
   const supabase = createClient();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [adminCode, setAdminCode] = useState("");
   const [authError, setAuthError] = useState("");
   const [isAuthenticated, setIsAuthenticated] = useState(false);
 
@@ -121,13 +122,24 @@ export default function AdminPage() {
   useEffect(() => {
     let mounted = true;
 
-    supabase.auth.getUser().then(({ data }) => {
+    const savedAdminCode = typeof window !== "undefined" ? window.sessionStorage.getItem("embedbot_admin_code") || "" : "";
+    if (savedAdminCode) {
+      setAdminCode(savedAdminCode);
+    }
+
+    supabase.auth.getUser().then(async ({ data }) => {
       if (!mounted || !data.user) {
         return;
       }
 
-      setIsAuthenticated(true);
-      void fetchBusinesses();
+      if (!savedAdminCode) {
+        return;
+      }
+
+      const isAuthorized = await fetchBusinesses(savedAdminCode);
+      if (mounted) {
+        setIsAuthenticated(isAuthorized);
+      }
     });
 
     return () => {
@@ -143,23 +155,28 @@ export default function AdminPage() {
     }, 2800);
   }
 
-  function buildAdminHeaders() {
+  function buildAdminHeaders(adminCodeOverride?: string) {
     const headers: Record<string, string> = {
       "Content-Type": "application/json",
       "x-csrf-token": "admin-ui",
     };
 
+    const stableAdminCode = (adminCodeOverride ?? adminCode).trim();
+    if (stableAdminCode) {
+      headers["x-admin-password"] = stableAdminCode;
+    }
+
     return headers;
   }
 
-  async function fetchBusinesses() {
+  async function fetchBusinesses(adminCodeOverride?: string) {
     setLoading(true);
     setError("");
 
     try {
       const res = await fetch("/api/admin/businesses", {
         method: "GET",
-        headers: { "Content-Type": "application/json" },
+        headers: buildAdminHeaders(adminCodeOverride),
       });
 
       const data = await res.json();
@@ -206,7 +223,12 @@ export default function AdminPage() {
       return;
     }
 
-    const isAuthorized = await fetchBusinesses();
+    setAdminCode(stablePassword);
+    if (typeof window !== "undefined") {
+      window.sessionStorage.setItem("embedbot_admin_code", stablePassword);
+    }
+
+    const isAuthorized = await fetchBusinesses(stablePassword);
     if (!isAuthorized) {
       setIsAuthenticated(false);
       setAuthError("Du har ikke adgang til admin-panelet.");
