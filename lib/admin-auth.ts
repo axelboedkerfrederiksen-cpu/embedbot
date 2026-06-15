@@ -1,10 +1,13 @@
 import { createServerClient } from "@supabase/ssr";
 import { cookies } from "next/headers";
+import { getAdminEmailOrThrow } from "@/lib/admin-email";
 
 export async function verifyAdminSession() {
-  const adminEmail = process.env.ADMIN_EMAIL?.trim().toLowerCase();
-  if (!adminEmail) {
-    return { error: "Serveren mangler ADMIN_EMAIL.", status: 500 as const };
+  let adminEmail: string;
+  try {
+    adminEmail = getAdminEmailOrThrow();
+  } catch (error) {
+    return { error: error instanceof Error ? error.message : "Serveren mangler ADMIN_EMAIL.", status: 500 as const };
   }
 
   const cookieStore = await cookies();

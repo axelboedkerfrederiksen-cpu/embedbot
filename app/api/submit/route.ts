@@ -3,6 +3,7 @@ import { createClient } from "@supabase/supabase-js";
 import { createServerClient } from "@supabase/ssr";
 import { cookies } from "next/headers";
 import { resend } from "@/lib/resend";
+import { getAdminEmailOrThrow, isAdminEmailEnvErrorMessage } from "@/lib/admin-email";
 
 const supabase = createClient(
   process.env.SUPABASE_URL!,
@@ -125,13 +126,7 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    const adminEmail = process.env.ADMIN_EMAIL?.trim();
-    if (!adminEmail) {
-      return NextResponse.json(
-        { success: false, error: "Serveren mangler ADMIN_EMAIL." },
-        { status: 500 }
-      );
-    }
+    const adminEmail = getAdminEmailOrThrow();
 
     const cookieStore = await cookies();
     const authSupabase = createServerClient(
@@ -289,6 +284,10 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ success: true });
   } catch (error) {
     if (error instanceof Error) {
+      if (isAdminEmailEnvErrorMessage(error.message)) {
+        return NextResponse.json({ success: false, error: error.message }, { status: 500 });
+      }
+
       return NextResponse.json({ success: false, error: error.message }, { status: 500 });
     }
 
