@@ -11,7 +11,131 @@ type Business = {
   created_at?: string | null;
   website_url?: string | null;
   industry?: string | null;
+  description?: string | null;
+  support_email?: string | null;
+  phone?: string | null;
+  address?: string | null;
+  city?: string | null;
+  hours_weekday?: string | null;
+  hours_saturday?: string | null;
+  hours_sunday?: string | null;
+  response_time?: string | null;
+  fallback_action?: string | null;
+  complaint_action?: string | null;
+  products_services?: string | null;
+  delivery_time?: string | null;
+  return_policy?: string | null;
+  payment_methods?: string | null;
+  welcome_message?: string | null;
+  tone?: string | null;
+  language?: string | null;
+  custom_instructions?: string | null;
+  faq?: string | null;
+  cvr?: string | null;
+  social_media?: string | null;
+  current_offers?: string | null;
+  warranty?: string | null;
+  size_guide?: string | null;
+  primary_color?: string | null;
+  secondary_color?: string | null;
+  chat_icon_color?: string | null;
+  font_choice?: string | null;
+  [key: string]: unknown;
 };
+
+type BusinessFieldType = "text" | "textarea" | "select" | "color";
+
+type BusinessFieldDefinition = {
+  key: keyof Business;
+  label: string;
+  type: BusinessFieldType;
+  options?: Array<{ label: string; value: string }>;
+  placeholder?: string;
+};
+
+const BUSINESS_FIELD_DEFINITIONS: BusinessFieldDefinition[] = [
+  { key: "name", label: "Virksomhedsnavn", type: "text", placeholder: "Navn på chatbotten eller virksomheden" },
+  { key: "website_url", label: "Hjemmeside", type: "text", placeholder: "https://..." },
+  { key: "industry", label: "Branche", type: "text", placeholder: "Fx webshop, klinik eller rådgivning" },
+  { key: "description", label: "Beskrivelse", type: "textarea", placeholder: "Kort beskrivelse af virksomheden" },
+  { key: "support_email", label: "Support-email", type: "text", placeholder: "kontakt@firma.dk" },
+  { key: "phone", label: "Telefon", type: "text", placeholder: "+45 ..." },
+  { key: "address", label: "Adresse", type: "text", placeholder: "Vejnavn 1" },
+  { key: "city", label: "By", type: "text", placeholder: "København" },
+  { key: "hours_weekday", label: "Åbningstider - hverdag", type: "text", placeholder: "Man-fre 09-17" },
+  { key: "hours_saturday", label: "Åbningstider - lørdag", type: "text", placeholder: "Lør 10-14" },
+  { key: "hours_sunday", label: "Åbningstider - søndag", type: "text", placeholder: "Søn lukket" },
+  { key: "response_time", label: "Svarfrist", type: "text", placeholder: "Typisk svar inden for 24 timer" },
+  { key: "fallback_action", label: "Fallback-handling", type: "textarea", placeholder: "Hvad botten skal gøre, hvis den er i tvivl" },
+  { key: "complaint_action", label: "Klage-handling", type: "textarea", placeholder: "Hvordan klager skal håndteres" },
+  { key: "products_services", label: "Produkter og services", type: "textarea", placeholder: "Hvad chatbotten skal kende til" },
+  { key: "delivery_time", label: "Leveringstid", type: "textarea", placeholder: "Levering, afhentning eller service tid" },
+  { key: "return_policy", label: "Returpolitik", type: "textarea", placeholder: "Retur, ombytning og garanti" },
+  { key: "payment_methods", label: "Betalingsformer", type: "textarea", placeholder: "Kort, MobilePay, faktura osv." },
+  { key: "welcome_message", label: "Velkomstbesked", type: "textarea", placeholder: "Hvad botten skal sige som første besked" },
+  {
+    key: "tone",
+    label: "Tone",
+    type: "select",
+    options: [
+      { label: "Uformel", value: "uformel" },
+      { label: "Formel", value: "formel" },
+      { label: "Venlig", value: "venlig" },
+      { label: "Ekspert", value: "ekspert" },
+    ],
+  },
+  {
+    key: "language",
+    label: "Sprog",
+    type: "select",
+    options: [
+      { label: "Dansk", value: "dansk" },
+      { label: "Engelsk", value: "engelsk" },
+      { label: "Norsk", value: "norsk" },
+      { label: "Svensk", value: "svensk" },
+      { label: "Tysk", value: "tysk" },
+    ],
+  },
+  { key: "custom_instructions", label: "Custom instruktioner", type: "textarea", placeholder: "Ekstra instruktioner til chatbotten" },
+  { key: "faq", label: "FAQ", type: "textarea", placeholder: "Spørgsmål og svar" },
+  { key: "cvr", label: "CVR", type: "text", placeholder: "12345678" },
+  { key: "social_media", label: "Sociale medier", type: "textarea", placeholder: "Links til sociale profiler" },
+  { key: "current_offers", label: "Aktuelle tilbud", type: "textarea", placeholder: "Særlige kampagner eller tilbud" },
+  { key: "warranty", label: "Garanti", type: "textarea", placeholder: "Garanti og reklamation" },
+  { key: "size_guide", label: "Størrelsesguide", type: "textarea", placeholder: "Hvis relevant for webshop" },
+  { key: "primary_color", label: "Primær farve", type: "color" },
+  { key: "secondary_color", label: "Sekundær farve", type: "color" },
+  { key: "chat_icon_color", label: "Chat-ikon farve", type: "color" },
+  {
+    key: "font_choice",
+    label: "Font",
+    type: "select",
+    options: [
+      { label: "Poppins", value: "Poppins" },
+      { label: "DM Sans", value: "DM Sans" },
+      { label: "Inter", value: "Inter" },
+      { label: "Lora", value: "Lora" },
+    ],
+  },
+];
+
+function buildBusinessDraft(business: Business): Record<string, string> {
+  return Object.fromEntries(
+    BUSINESS_FIELD_DEFINITIONS.map((field) => {
+      const value = business[field.key];
+      return [field.key, typeof value === "string" ? value : value ? String(value) : ""];
+    })
+  );
+}
+
+function sanitizeColorValue(value: string, fallback: string): string {
+  const trimmed = value.trim();
+  if (/^#([0-9a-fA-F]{3}|[0-9a-fA-F]{6})$/.test(trimmed)) {
+    return trimmed;
+  }
+
+  return fallback;
+}
 
 type ConversationRow = {
   id: string;
@@ -149,6 +273,10 @@ export default function DashboardPage() {
   const [conversations, setConversations] = useState<ConversationRow[]>([]);
   const [fetchError, setFetchError] = useState("");
   const [copiedBusinessId, setCopiedBusinessId] = useState<string | null>(null);
+  const [editingBusinessId, setEditingBusinessId] = useState<string | null>(null);
+  const [savingBusinessId, setSavingBusinessId] = useState<string | null>(null);
+  const [editDrafts, setEditDrafts] = useState<Record<string, Record<string, string>>>({});
+  const [editError, setEditError] = useState("");
 
   useEffect(() => {
     let mounted = true;
@@ -178,7 +306,7 @@ export default function DashboardPage() {
 
       const { data: businessData, error: businessError } = await supabase
         .from("businesses")
-        .select("id,name,website_url,created_at,industry")
+        .select("*")
         .eq("user_id", userData.user.id)
         .order("created_at", { ascending: false });
 
@@ -247,6 +375,76 @@ export default function DashboardPage() {
       }, 2000);
     } catch {
       setFetchError("Kunne ikke kopiere embed-kode.");
+    }
+  }
+
+  function startEditingBusiness(business: Business) {
+    setEditingBusinessId(business.id);
+    setEditError("");
+    setEditDrafts((current) => ({
+      ...current,
+      [business.id]: buildBusinessDraft(business),
+    }));
+  }
+
+  function cancelEditingBusiness() {
+    setEditingBusinessId(null);
+    setEditError("");
+  }
+
+  function updateDraftValue(businessId: string, key: string, value: string) {
+    setEditDrafts((current) => ({
+      ...current,
+      [businessId]: {
+        ...(current[businessId] || {}),
+        [key]: value,
+      },
+    }));
+  }
+
+  async function saveBusinessEdit(business: Business) {
+    const stableBusinessId = business.id.trim();
+    if (!stableBusinessId) {
+      setEditError("Virksomheden mangler et gyldigt id.");
+      return;
+    }
+
+    const draft = editDrafts[stableBusinessId] || buildBusinessDraft(business);
+    const updates: Record<string, string> = {};
+
+    for (const field of BUSINESS_FIELD_DEFINITIONS) {
+      const rawValue = (draft[String(field.key)] || "").trim();
+
+      if (field.type === "color") {
+        const fallback = field.key === "secondary_color" ? "#f6f3ed" : "#ffffff";
+        updates[String(field.key)] = sanitizeColorValue(rawValue || String(business[field.key] || ""), fallback);
+        continue;
+      }
+
+      updates[String(field.key)] = rawValue;
+    }
+
+    setSavingBusinessId(stableBusinessId);
+    setEditError("");
+
+    try {
+      const { data, error } = await supabase
+        .from("businesses")
+        .update(updates)
+        .eq("id", stableBusinessId)
+        .select("*")
+        .single();
+
+      if (error) {
+        throw new Error(error.message || "Kunne ikke gemme ændringer.");
+      }
+
+      setBusinesses((current) => current.map((row) => (row.id === stableBusinessId ? (data as Business) : row)));
+      setEditingBusinessId(null);
+    } catch (saveError) {
+      setEditError(saveError instanceof Error ? saveError.message : "Kunne ikke gemme ændringer.");
+    } finally {
+      setSavingBusinessId(null);
     }
   }
 
@@ -798,6 +996,8 @@ export default function DashboardPage() {
               const website = (business.website_url || "Ingen hjemmeside angivet").trim();
               const industry = (business.industry || "Ingen branche").trim();
               const copyFeedback = copiedBusinessId === business.id;
+              const isEditing = editingBusinessId === business.id;
+              const draft = editDrafts[business.id] || buildBusinessDraft(business);
 
               return (
                 <article key={business.id} style={{ borderBottom: "1px solid rgba(17,17,17,0.08)", padding: "20px 0" }}>
@@ -811,6 +1011,28 @@ export default function DashboardPage() {
                   <p style={{ margin: "6px 0 0", fontSize: 13, color: "#6b6258", fontWeight: 400 }}>{website}</p>
 
                   <div style={{ marginTop: 14, display: "flex", gap: 8, flexWrap: "wrap" }}>
+                    <button
+                      type="button"
+                      onClick={() => startEditingBusiness(business)}
+                      style={{
+                        display: "inline-flex",
+                        alignItems: "center",
+                        justifyContent: "center",
+                        border: "1px solid rgba(17,17,17,0.08)",
+                        background: "#ffffff",
+                        color: "#111111",
+                        fontSize: 13,
+                        fontWeight: 600,
+                        padding: "10px 14px",
+                        borderRadius: 999,
+                        cursor: "pointer",
+                        fontFamily: '"Poppins", sans-serif',
+                        boxShadow: "0 10px 24px rgba(17,17,17,0.06)",
+                      }}
+                    >
+                      Rediger info
+                    </button>
+
                     <button
                       type="button"
                       onClick={() => handleCopyEmbedCode(business.id)}
@@ -852,6 +1074,152 @@ export default function DashboardPage() {
                       Se samtaler
                     </Link>
                   </div>
+
+                  {isEditing ? (
+                    <div style={{ marginTop: 16, border: "1px solid rgba(17,17,17,0.08)", borderRadius: 18, background: "rgba(246,243,237,0.52)", padding: 14 }}>
+                      <p style={{ margin: 0, fontSize: 12, fontWeight: 600, color: "#6b6258", textTransform: "uppercase", letterSpacing: "0.08em" }}>
+                        Rediger chatbot-info
+                      </p>
+                      <p style={{ margin: "6px 0 0", fontSize: 13, color: "#6b6258" }}>
+                        Ændringerne opdaterer den chatbot, du ejer.
+                      </p>
+
+                      <div style={{ marginTop: 14, display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(220px, 1fr))", gap: 10 }}>
+                        {BUSINESS_FIELD_DEFINITIONS.map((field) => {
+                          const value = draft[String(field.key)] || "";
+                          const spanFullWidth = field.type === "textarea";
+
+                          return (
+                            <label key={`${business.id}-${String(field.key)}`} style={{ display: "grid", gap: 6, gridColumn: spanFullWidth ? "1 / -1" : "auto" }}>
+                              <span style={{ fontSize: 12, fontWeight: 600, color: "#6b6258" }}>{field.label}</span>
+                              {field.type === "textarea" ? (
+                                <textarea
+                                  value={value}
+                                  onChange={(event) => updateDraftValue(business.id, String(field.key), event.target.value)}
+                                  placeholder={field.placeholder}
+                                  rows={3}
+                                  style={{
+                                    width: "100%",
+                                    resize: "vertical",
+                                    borderRadius: 12,
+                                    border: "1px solid rgba(17,17,17,0.10)",
+                                    background: "#ffffff",
+                                    color: "#111111",
+                                    padding: "10px 12px",
+                                    fontFamily: '"Poppins", sans-serif',
+                                    fontSize: 13,
+                                    minHeight: 84,
+                                  }}
+                                />
+                              ) : field.type === "select" ? (
+                                <select
+                                  value={value}
+                                  onChange={(event) => updateDraftValue(business.id, String(field.key), event.target.value)}
+                                  style={{
+                                    width: "100%",
+                                    borderRadius: 12,
+                                    border: "1px solid rgba(17,17,17,0.10)",
+                                    background: "#ffffff",
+                                    color: "#111111",
+                                    padding: "10px 12px",
+                                    fontFamily: '"Poppins", sans-serif',
+                                    fontSize: 13,
+                                  }}
+                                >
+                                  <option value="">Vælg</option>
+                                  {field.options?.map((option) => (
+                                    <option key={option.value} value={option.value}>
+                                      {option.label}
+                                    </option>
+                                  ))}
+                                </select>
+                              ) : field.type === "color" ? (
+                                <input
+                                  type="color"
+                                  value={sanitizeColorValue(value || (field.key === "secondary_color" ? "#f6f3ed" : "#ffffff"), field.key === "secondary_color" ? "#f6f3ed" : "#ffffff")}
+                                  onChange={(event) => updateDraftValue(business.id, String(field.key), event.target.value)}
+                                  style={{
+                                    width: "100%",
+                                    minHeight: 46,
+                                    borderRadius: 12,
+                                    border: "1px solid rgba(17,17,17,0.10)",
+                                    background: "#ffffff",
+                                    padding: 4,
+                                  }}
+                                />
+                              ) : (
+                                <input
+                                  value={value}
+                                  onChange={(event) => updateDraftValue(business.id, String(field.key), event.target.value)}
+                                  placeholder={field.placeholder}
+                                  style={{
+                                    width: "100%",
+                                    borderRadius: 12,
+                                    border: "1px solid rgba(17,17,17,0.10)",
+                                    background: "#ffffff",
+                                    color: "#111111",
+                                    padding: "10px 12px",
+                                    fontFamily: '"Poppins", sans-serif',
+                                    fontSize: 13,
+                                  }}
+                                />
+                              )}
+                            </label>
+                          );
+                        })}
+                      </div>
+
+                      {editError ? (
+                        <p style={{ margin: "12px 0 0", color: "#9b3d2f", fontSize: 13 }}>{editError}</p>
+                      ) : null}
+
+                      <div style={{ marginTop: 14, display: "flex", gap: 8, flexWrap: "wrap" }}>
+                        <button
+                          type="button"
+                          onClick={() => saveBusinessEdit(business)}
+                          disabled={savingBusinessId === business.id}
+                          style={{
+                            display: "inline-flex",
+                            alignItems: "center",
+                            justifyContent: "center",
+                            border: "1px solid rgba(17,17,17,0.08)",
+                            background: "#111111",
+                            color: "#ffffff",
+                            fontSize: 13,
+                            fontWeight: 600,
+                            padding: "10px 14px",
+                            borderRadius: 999,
+                            cursor: "pointer",
+                            fontFamily: '"Poppins", sans-serif',
+                            boxShadow: "0 10px 24px rgba(17,17,17,0.06)",
+                            opacity: savingBusinessId === business.id ? 0.7 : 1,
+                          }}
+                        >
+                          {savingBusinessId === business.id ? "Gemmer..." : "Gem ændringer"}
+                        </button>
+                        <button
+                          type="button"
+                          onClick={cancelEditingBusiness}
+                          style={{
+                            display: "inline-flex",
+                            alignItems: "center",
+                            justifyContent: "center",
+                            border: "1px solid rgba(17,17,17,0.08)",
+                            background: "#ffffff",
+                            color: "#111111",
+                            fontSize: 13,
+                            fontWeight: 600,
+                            padding: "10px 14px",
+                            borderRadius: 999,
+                            cursor: "pointer",
+                            fontFamily: '"Poppins", sans-serif',
+                          }}
+                        >
+                          Annuller
+                        </button>
+                      </div>
+                    </div>
+                  ) : null}
                 </article>
               );
             })}
