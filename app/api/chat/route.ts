@@ -67,7 +67,7 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    const { message, business_id, page_url } = await req.json();
+    const { message, business_id, page_url, history } = await req.json();
     const stableBusinessId = typeof business_id === "string" ? business_id.trim() : "";
     const stablePageUrl = typeof page_url === "string" && page_url.trim() ? page_url.trim() : "";
 
@@ -251,6 +251,17 @@ Følg disse regler STRENGT:
 7. Hold svar korte — maks 3-4 sætninger.
 8. Opfind aldrig information.`,
       },
+      ...(Array.isArray(history)
+        ? history
+            .slice(-10)
+            .filter(
+              (m): m is { role: "user" | "assistant"; content: string } =>
+                (m.role === "user" || m.role === "assistant") &&
+                typeof m.content === "string" &&
+                m.content.trim().length > 0
+            )
+            .map((m) => ({ role: m.role, content: m.content.substring(0, 2000) }))
+        : []),
       { role: "user", content: trimmedMessage },
     ],
   });

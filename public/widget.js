@@ -199,6 +199,8 @@
   const send = document.getElementById("eb-send");
   const messages = document.getElementById("eb-messages");
 
+  const conversationHistory = [];
+
   function ensureStreamingCursorStyles() {
     if (document.getElementById("eb-streaming-cursor-style")) {
       return;
@@ -453,7 +455,7 @@
       const res = await fetch(API_URL, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ message: text, business_id: businessId, page_url: window.location.href }),
+        body: JSON.stringify({ message: text, business_id: businessId, page_url: window.location.href, history: conversationHistory.slice(-10) }),
       });
 
       if (!res.ok) {
@@ -490,6 +492,8 @@
       if (userMessage.status) {
         userMessage.status.textContent = labels.sent;
       }
+      conversationHistory.push({ role: "user", content: text });
+      conversationHistory.push({ role: "assistant", content: botMessage.msg.textContent });
     } catch (error) {
       const errorMessage = error instanceof Error && error.message
         ? error.message
