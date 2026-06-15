@@ -3,7 +3,6 @@
 import Link from "next/link";
 import { FormEvent, useEffect, useMemo, useState } from "react";
 import { AnimatePresence, motion } from "framer-motion";
-import { createClient } from "@/lib/supabase";
 import {
   Activity,
   BarChart3,
@@ -95,7 +94,6 @@ function formatRelativeDate(input?: string | null): string {
 }
 
 export default function AdminPage() {
-  const supabase = createClient();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [adminCode, setAdminCode] = useState("");
@@ -123,24 +121,30 @@ export default function AdminPage() {
     let mounted = true;
 
     const savedAdminCode = typeof window !== "undefined" ? window.sessionStorage.getItem("embedbot_admin_code") || "" : "";
+    const savedAdminEmail = typeof window !== "undefined" ? window.sessionStorage.getItem("embedbot_admin_email") || "" : "";
     if (savedAdminCode) {
       setAdminCode(savedAdminCode);
     }
+    if (savedAdminEmail) {
+      setEmail(savedAdminEmail);
+    }
 
-    supabase.auth.getUser().then(async ({ data }) => {
-      if (!mounted || !data.user) {
+    if (!savedAdminCode || !savedAdminEmail) {
+      return () => {
+        mounted = false;
+      };
+    }
+
+    (async () => {
+      if (!mounted) {
         return;
       }
 
-      if (!savedAdminCode) {
-        return;
-      }
-
-      const isAuthorized = await fetchBusinesses(savedAdminCode);
+      const isAuthorized = await fetchBusinesses(savedAdminCode, savedAdminEmail);
       if (mounted) {
         setIsAuthenticated(isAuthorized);
       }
-    });
+    })();
 
     return () => {
       mounted = false;
@@ -155,28 +159,32 @@ export default function AdminPage() {
     }, 2800);
   }
 
-  function buildAdminHeaders(adminCodeOverride?: string) {
+  function buildAdminHeaders(adminCodeOverride?: string, adminEmailOverride?: string) {
     const headers: Record<string, string> = {
       "Content-Type": "application/json",
       "x-csrf-token": "admin-ui",
     };
 
     const stableAdminCode = (adminCodeOverride ?? adminCode).trim();
+    const stableAdminEmail = (adminEmailOverride ?? email).trim().toLowerCase();
     if (stableAdminCode) {
       headers["x-admin-password"] = stableAdminCode;
+    }
+    if (stableAdminEmail) {
+      headers["x-admin-email"] = stableAdminEmail;
     }
 
     return headers;
   }
 
-  async function fetchBusinesses(adminCodeOverride?: string) {
+  async function fetchBusinesses(adminCodeOverride?: string, adminEmailOverride?: string) {
     setLoading(true);
     setError("");
 
     try {
       const res = await fetch("/api/admin/businesses", {
         method: "GET",
-        headers: buildAdminHeaders(adminCodeOverride),
+        headers: buildAdminHeaders(adminCodeOverride, adminEmailOverride),
       });
 
       const data = await res.json();
@@ -212,26 +220,16 @@ export default function AdminPage() {
       return;
     }
 
-    const { error } = await supabase.auth.signInWithPassword({
-      email: stableEmail,
-      password: stablePassword,
-    });
-
-    if (error) {
-      setIsAuthenticated(false);
-      setAuthError(error.message || "Kunne ikke logge ind.");
-      return;
-    }
-
     setAdminCode(stablePassword);
     if (typeof window !== "undefined") {
       window.sessionStorage.setItem("embedbot_admin_code", stablePassword);
+      window.sessionStorage.setItem("embedbot_admin_email", stableEmail);
     }
 
-    const isAuthorized = await fetchBusinesses(stablePassword);
+    const isAuthorized = await fetchBusinesses(stablePassword, stableEmail);
     if (!isAuthorized) {
       setIsAuthenticated(false);
-      setAuthError("Du har ikke adgang til admin-panelet.");
+      setAuthError("Forkert admin-email eller admin-kode.");
       return;
     }
 
