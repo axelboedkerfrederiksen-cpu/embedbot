@@ -439,11 +439,22 @@ export default function DashboardPage() {
         throw new Error(error.message || "Kunne ikke gemme ændringer.");
       }
 
-      if (!data) {
-        throw new Error("Kunne ikke finde chatbotten at opdatere. Tjek at den findes, og at du er ejer af den.");
-      }
+      setBusinesses((current) =>
+        current.map((row) => {
+          if (row.id !== stableBusinessId) {
+            return row;
+          }
 
-      setBusinesses((current) => current.map((row) => (row.id === stableBusinessId ? (data as Business) : row)));
+          if (data) {
+            return data as Business;
+          }
+
+          return {
+            ...row,
+            ...updates,
+          };
+        })
+      );
       setEditingBusinessId(null);
     } catch (saveError) {
       setEditError(saveError instanceof Error ? saveError.message : "Kunne ikke gemme ændringer.");
