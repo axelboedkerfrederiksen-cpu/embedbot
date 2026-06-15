@@ -4,6 +4,7 @@ import Link from "next/link";
 import { createClient } from "@/lib/supabase";
 
 const ONBOARDING_BUSINESS_ID_KEY = "onboarding_business_id";
+const ONBOARDING_FORM_SNAPSHOT_KEY = "onboarding_form_snapshot";
 
 const GENERATING_MESSAGES = [
   "Analyserer din virksomhed...",
@@ -366,7 +367,6 @@ export default function Home() {
   }
 
   async function handleSetup() {
-    setLoading(true);
     setMessage("");
 
     try {
@@ -376,24 +376,17 @@ export default function Home() {
         throw new Error("Mangler businessId. Log ind igen og prøv på ny.");
       }
 
-      const res = await fetch("/api/submit", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ form, business_id: stableBusinessId }),
-      });
-
-      const data = await res.json();
-
-      if (!res.ok || !data.success) {
-        throw new Error(data.error || "Noget gik galt.");
+      if (typeof window === "undefined") {
+        throw new Error("Browseren understøtter ikke denne navigation.");
       }
 
-      persistBusinessId(stableBusinessId);
-      window.location.href = "https://buy.stripe.com/eVq00j5l7gew3dj3rIf3a02?locale=da";
+      localStorage.setItem(
+        ONBOARDING_FORM_SNAPSHOT_KEY,
+        JSON.stringify({ form, business_id: stableBusinessId })
+      );
+      window.location.href = "/setup/provider";
     } catch (error) {
       setMessage(formatSetupError(error));
-    } finally {
-      setLoading(false);
     }
   }
 

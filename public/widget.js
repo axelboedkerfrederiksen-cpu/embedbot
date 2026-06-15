@@ -4,6 +4,7 @@
   const apiOrigin = new URL(scriptTag.src).origin;
   const API_URL = `${apiOrigin}/api/chat`;
   const CONFIG_URL = `${apiOrigin}/api/widget-config?id=${encodeURIComponent(businessId || "")}`;
+  const CONFIG_CACHE_KEY = `embedbot-config-${businessId}`;
   const OPEN_ICON = `
     <svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 24 24" fill="none" aria-hidden="true">
       <path d="M5 4.75h14a2.75 2.75 0 0 1 2.75 2.75v7A2.75 2.75 0 0 1 19 17.25h-6.23l-2.9 2.6a.75.75 0 0 1-1.24-.65l.33-1.95H5A2.75 2.75 0 0 1 2.25 14.5v-7A2.75 2.75 0 0 1 5 4.75Z" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
@@ -267,16 +268,54 @@
     bubble.style.opacity = "1";
   }
 
+  function getConfigFromCache() {
+    try {
+      if (typeof localStorage === "undefined") {
+        return null;
+      }
+      const cached = localStorage.getItem(CONFIG_CACHE_KEY);
+      return cached ? JSON.parse(cached) : null;
+    } catch (_) {
+      return null;
+    }
+  }
+
+  function saveConfigToCache(config) {
+    try {
+      if (typeof localStorage === "undefined") {
+        return;
+      }
+      localStorage.setItem(CONFIG_CACHE_KEY, JSON.stringify(config));
+    } catch (_) {
+      // Ignore cache write failures
+    }
+  }
+
   async function loadWidgetConfig() {
     if (!businessId) {
       applyWidgetStyles();
       return;
     }
 
+    // Try loading from cache first for instant display
+    const cachedConfig = getConfigFromCache();
+    if (cachedConfig) {
+      console.log("[EmbedBot] Using cached config", cachedConfig);
+      widgetConfig = cachedConfig;
+      applyWidgetStyles();
+      if (chatOpen) {
+        tryShowWelcomeMessage();
+      }
+    }
+
+    // Fetch fresh config in the background
     try {
       const res = await fetch(CONFIG_URL);
       if (!res.ok) {
-        applyWidgetStyles();
+        // If cache wasn't available, at least apply default styles
+        if (!cachedConfig) {
+          applyWidgetStyles();
+        }
         return;
       }
 
@@ -285,7 +324,7 @@
       console.log("[EmbedBot] welcome_message from API:", data.welcome_message);
 
       const resolvedName = (data.name || scriptName || defaultConfig.name || "").trim();
-      widgetConfig = {
+      const freshConfig = {
         primary_color: scriptTag.getAttribute("data-primary-color") || data.primary_color || defaultConfig.primary_color,
         secondary_color: scriptTag.getAttribute("data-secondary-color") || data.secondary_color || defaultConfig.secondary_color,
         fab_color: scriptTag.getAttribute("data-fab-color") || data.fab_color || defaultConfig.fab_color,
@@ -295,19 +334,23 @@
         name: resolvedName,
         header_title: formatHeaderTitle(resolvedName),
       };
+      widgetConfig = freshConfig;
+      saveConfigToCache(freshConfig);
+      applyWidgetStyles();
+      if (chatOpen) {
+        // If chat was opened before config finished loading, try again now.
+        tryShowWelcomeMessage();
+      }
     } catch (_) {
-      widgetConfig = {
-        ...widgetConfig,
-        welcome_message: defaultConfig.welcome_message,
-        header_title: formatHeaderTitle(scriptName),
-      };
-    }
-
-    applyWidgetStyles();
-
-    if (chatOpen) {
-      // If chat was opened before config finished loading, try again now.
-      tryShowWelcomeMessage();
+      // If fetch failed and we have cache, keep using it
+      if (!cachedConfig) {
+        widgetConfig = {
+          ...widgetConfig,
+          welcome_message: defaultConfig.welcome_message,
+          header_title: formatHeaderTitle(scriptName),
+        };
+        applyWidgetStyles();
+      }
     }
   }
 
