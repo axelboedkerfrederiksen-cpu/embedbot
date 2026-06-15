@@ -433,10 +433,14 @@ export default function DashboardPage() {
         .update(updates)
         .eq("id", stableBusinessId)
         .select("*")
-        .single();
+        .maybeSingle();
 
       if (error) {
         throw new Error(error.message || "Kunne ikke gemme ændringer.");
+      }
+
+      if (!data) {
+        throw new Error("Kunne ikke finde chatbotten at opdatere. Tjek at den findes, og at du er ejer af den.");
       }
 
       setBusinesses((current) => current.map((row) => (row.id === stableBusinessId ? (data as Business) : row)));

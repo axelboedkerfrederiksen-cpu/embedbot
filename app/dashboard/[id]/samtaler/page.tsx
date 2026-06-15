@@ -98,7 +98,7 @@ export default function SamtalerPage() {
             .from("businesses")
             .select("id,name,website_url")
             .eq("id", businessId)
-            .single(),
+            .maybeSingle(),
           supabase
             .from("conversations")
             .select("id,business_id,created_at,messages")
@@ -112,6 +112,12 @@ export default function SamtalerPage() {
 
       if (businessError) {
         setError(businessError.message || "Kunne ikke hente chatbot.");
+        setLoading(false);
+        return;
+      }
+
+      if (!businessData) {
+        setError("Chatbotten blev ikke fundet, eller du har ikke adgang til den.");
         setLoading(false);
         return;
       }
