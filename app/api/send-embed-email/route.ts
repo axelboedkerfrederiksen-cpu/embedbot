@@ -38,7 +38,7 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ success: false, error: "Ingen kundemail på virksomheden." }, { status: 400 });
     }
 
-    const embedScript = `<script src="https://embedbot1.vercel.app/widget.js?id=${stableId}"></script>`;
+    const embedScript = `<script src="https://www.embedbot.dk/widget.js?id=${stableId}"></script>`;
     const escapedScript = embedScript.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
     const firstName = (String(row.name || "")).split(" ")[0] || "der";
     const escapedFirstName = firstName.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");

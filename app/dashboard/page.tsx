@@ -365,7 +365,7 @@ export default function DashboardPage() {
   }
 
   async function handleCopyEmbedCode(businessId: string) {
-    const script = `<script src="https://embedbot1.vercel.app/widget.js?id=${businessId}"></script>`;
+    const script = `<script src="https://www.embedbot.dk/widget.js?id=${businessId}"></script>`;
 
     try {
       await navigator.clipboard.writeText(script);

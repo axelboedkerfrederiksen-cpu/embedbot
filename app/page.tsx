@@ -57,7 +57,7 @@ export default function Home() {
     if (existingScript) { openWidgetIfAvailable(); return; }
     const script = document.createElement("script");
     script.id = "embedbot-demo-script";
-    script.src = `https://embedbot1.vercel.app/widget.js?id=${DEMO_BUSINESS_ID}`;
+    script.src = `https://www.embedbot.dk/widget.js?id=${DEMO_BUSINESS_ID}`;
     script.setAttribute("data-name", "EmbedBot");
     script.setAttribute("data-primary-color", "#ffffff");
     script.setAttribute("data-secondary-color", "#f6f3ed");

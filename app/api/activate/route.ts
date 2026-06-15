@@ -24,7 +24,7 @@ function buildCustomerEmailHtml(
   businessId: string,
   businessName: string | null,
 ) {
-  const embedScript = `<script src="https://embedbot1.vercel.app/widget.js?id=${businessId}"></script>`;
+  const embedScript = `<script src="https://www.embedbot.dk/widget.js?id=${businessId}"></script>`;
   const firstName = (businessName || "").split(" ")[0] || "der";
   const escapedFirstName = firstName.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
   const escapedScript = embedScript
