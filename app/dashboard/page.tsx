@@ -411,33 +411,52 @@ export default function DashboardPage() {
 
     const draft = editDrafts[stableBusinessId] || buildBusinessDraft(business);
     const updates: Record<string, string> = {};
+    const existingColumns = new Set(Object.keys(business));
 
     for (const field of BUSINESS_FIELD_DEFINITIONS) {
+      const fieldKey = String(field.key);
+
+      // Only submit columns that exist on this deployment's businesses schema.
+      if (!existingColumns.has(fieldKey)) {
+        continue;
+      }
+
       const rawValue = (draft[String(field.key)] || "").trim();
 
       if (field.type === "color") {
         const fallback = field.key === "secondary_color" ? "#f6f3ed" : "#ffffff";
-        updates[String(field.key)] = sanitizeColorValue(rawValue || String(business[field.key] || ""), fallback);
+        updates[fieldKey] = sanitizeColorValue(rawValue || String(business[field.key] || ""), fallback);
         continue;
       }
 
-      updates[String(field.key)] = rawValue;
+      updates[fieldKey] = rawValue;
     }
 
     setSavingBusinessId(stableBusinessId);
     setEditError("");
 
     try {
-      const { data, error } = await supabase
-        .from("businesses")
-        .update(updates)
-        .eq("id", stableBusinessId)
-        .select("*")
-        .maybeSingle();
+      const saveResponse = await fetch("/api/business-draft", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          business_id: stableBusinessId,
+          form: updates,
+        }),
+      });
 
-      if (error) {
-        throw new Error(error.message || "Kunne ikke gemme ændringer.");
+      const saveResult = (await saveResponse.json()) as { success?: boolean; error?: string };
+      if (!saveResponse.ok || !saveResult.success) {
+        throw new Error(saveResult.error || "Kunne ikke gemme ændringer.");
       }
+
+      const { data } = await supabase
+        .from("businesses")
+        .select("*")
+        .eq("id", stableBusinessId)
+        .maybeSingle();
 
       setBusinesses((current) =>
         current.map((row) => {
