@@ -172,19 +172,18 @@
   
   const container = document.createElement("div");
   container.innerHTML = `
-    <button type="button" id="eb-bubble" aria-label="Open support chat" style="position:fixed;bottom:24px;right:24px;width:56px;height:56px;background:#ffffff;color:#1a1a1a;border-radius:50%;border:none;cursor:pointer;display:flex;align-items:center;justify-content:center;z-index:9999;box-shadow:0 8px 22px rgba(0,0,0,0.12);opacity:0;transition:opacity 0.15s;">${OPEN_ICON}</button>
-    <div id="eb-box" style="display:none;position:fixed;bottom:90px;right:24px;width:340px;height:480px;background:#ffffff;border:none;border-radius:16px;box-shadow:0 8px 32px rgba(0,0,0,0.15);z-index:9999;flex-direction:column;overflow:hidden;color:#1a1a1a;">
-      <div id="eb-header" style="background:#f9f9f9;color:#1a1a1a;padding:16px;font-weight:bold;display:flex;align-items:center;gap:10px;">
+    <button type="button" id="eb-bubble" aria-label="Open support chat" style="position:fixed;bottom:24px;right:24px;width:56px;height:56px;background:#ffffff;color:#1a1a1a;border-radius:50%;border:none;cursor:pointer;display:flex;align-items:center;justify-content:center;z-index:9999;box-shadow:0 6px 18px rgba(0,0,0,0.10);opacity:0;transition:opacity 0.16s ease, transform 0.16s ease, box-shadow 0.16s ease;">${OPEN_ICON}</button>
+    <div id="eb-box" style="position:fixed;bottom:90px;right:24px;width:352px;height:510px;background:#ffffff;border:none;border-radius:18px;box-shadow:0 10px 28px rgba(15,23,42,0.10);z-index:9999;display:flex;flex-direction:column;overflow:hidden;color:#1a1a1a;opacity:0;visibility:hidden;transform:translateY(10px) scale(0.985);pointer-events:none;transition:opacity 0.18s ease, transform 0.18s ease, visibility 0.18s ease;">
+      <div id="eb-header" style="background:#f9f9f9;color:#1a1a1a;padding:12px 14px;font-weight:600;display:flex;align-items:center;gap:10px;">
         <img id="eb-logo" alt="Company logo" style="display:none;height:24px;width:auto;max-width:120px;object-fit:contain;filter:brightness(0) invert(1);" />
-        <div style="display:flex;flex-direction:column;line-height:1.1;">
+        <div style="display:flex;flex-direction:column;line-height:1.2;">
           <span id="eb-title">Support Chat</span>
-          <span style="font-size:12px;font-weight:500;opacity:0.85;">Online</span>
         </div>
       </div>
-      <div id="eb-messages" style="flex:1;overflow-y:auto;padding:14px 14px 12px 14px;display:flex;flex-direction:column;gap:2px;height:340px"></div>
-      <div id="eb-composer" style="padding:12px;border-top:1px solid rgba(17,17,17,0.06);display:flex;gap:8px;align-items:center;background:#f9f9f9;">
-        <input id="eb-input" aria-label="Message input" type="text" placeholder="Skriv dit spørgsmål..." style="flex:1;padding:11px 14px;border:1px solid rgba(17,17,17,0.08);border-radius:999px;outline:none;pointer-events:all;position:relative;z-index:99999;color:#1a1a1a;background:#f9f9f9;cursor:text;user-select:text;-webkit-user-select:text;font-size:14px;font-family:inherit;caret-color:#1a1a1a;"/>
-        <button id="eb-send" aria-label="Send message" style="background:#ffffff;color:#1a1a1a;border:none;padding:10px 16px;border-radius:999px;cursor:pointer;white-space:nowrap;">Send</button>
+      <div id="eb-messages" style="flex:1;overflow-y:auto;padding:20px 18px 16px 18px;display:flex;flex-direction:column;gap:0;height:356px;background:#ffffff;"></div>
+      <div id="eb-composer" style="padding:12px 14px 14px 14px;border-top:1px solid rgba(17,17,17,0.06);display:flex;gap:8px;align-items:center;background:#ffffff;">
+        <input id="eb-input" aria-label="Message input" type="text" placeholder="Skriv dit spørgsmål..." style="flex:1;padding:13px 16px;border:1px solid rgba(17,17,17,0.10);border-radius:15px;outline:none;pointer-events:all;position:relative;z-index:99999;color:#1a1a1a;background:#ffffff;cursor:text;user-select:text;-webkit-user-select:text;font-size:14px;font-family:inherit;line-height:1.45;caret-color:#1a1a1a;transition:border-color 0.18s ease, box-shadow 0.18s ease, background-color 0.18s ease;"/>
+        <button id="eb-send" aria-label="Send message" style="background:#ffffff;color:#1a1a1a;border:1px solid rgba(17,17,17,0.10);padding:11px 15px;border-radius:13px;cursor:pointer;white-space:nowrap;font-weight:600;line-height:1;transition:transform 0.16s ease, box-shadow 0.16s ease, background-color 0.16s ease, border-color 0.16s ease;">Send</button>
       </div>
     </div>
   `;
@@ -202,14 +201,48 @@
 
   const conversationHistory = [];
 
-  function ensureStreamingCursorStyles() {
-    if (document.getElementById("eb-streaming-cursor-style")) {
+  function ensureWidgetStylesheet() {
+    if (document.getElementById("eb-widget-style")) {
       return;
     }
 
     const style = document.createElement("style");
-    style.id = "eb-streaming-cursor-style";
+    style.id = "eb-widget-style";
     style.textContent = `
+      #eb-bubble:hover {
+        transform: translateY(-1px);
+      }
+      #eb-box.eb-open {
+        opacity: 1;
+        visibility: visible;
+        transform: translateY(0) scale(1);
+        pointer-events: auto;
+      }
+      #eb-send:hover {
+        transform: translateY(-1px);
+        box-shadow: 0 4px 10px rgba(15, 23, 42, 0.10);
+      }
+      #eb-send:active {
+        transform: translateY(0);
+      }
+      #eb-input:focus {
+        border-color: rgba(17, 17, 17, 0.28);
+        box-shadow: 0 0 0 4px rgba(17, 17, 17, 0.07);
+        background: #ffffff;
+      }
+      .eb-row {
+        animation: eb-message-in 0.2s ease;
+      }
+      .eb-ai-msg p {
+        margin: 0;
+      }
+      .eb-ai-msg p + p {
+        margin-top: 11px;
+      }
+      @keyframes eb-message-in {
+        0% { opacity: 0; transform: translateY(6px); }
+        100% { opacity: 1; transform: translateY(0); }
+      }
       @keyframes eb-cursor-blink {
         0%, 49% { opacity: 1; }
         50%, 100% { opacity: 0; }
@@ -229,7 +262,7 @@
     document.head.appendChild(style);
   }
 
-  ensureStreamingCursorStyles();
+  ensureWidgetStylesheet();
 
   function applyWidgetStyles() {
     const fontStack = getFontStack(widgetConfig.font_choice || defaultConfig.font_choice);
@@ -244,13 +277,14 @@
     bubble.style.background = fabBackground;
     bubble.style.color = fabTextColor;
     bubble.style.boxShadow = fabTextColor === "#ffffff"
-      ? "0 8px 22px rgba(0,0,0,0.22)"
-      : "0 8px 22px rgba(0,0,0,0.12)";
+      ? "0 6px 16px rgba(0,0,0,0.18)"
+      : "0 6px 16px rgba(15,23,42,0.10)";
     if (composer) {
-      composer.style.background = widgetConfig.secondary_color || defaultConfig.secondary_color;
+      composer.style.background = "#ffffff";
     }
     send.style.background = primaryBackground;
     send.style.color = primaryTextColor;
+    send.style.borderColor = "transparent";
     header.style.background = headerBackground;
     header.style.color = headerTextColor;
     header.style.borderBottom = "1px solid rgba(17,17,17,0.06)";
@@ -363,7 +397,7 @@
   function setChatOpen(isOpen) {
     console.log("[EmbedBot] setChatOpen called:", { isOpen, hasShownWelcomeMessage });
     chatOpen = isOpen;
-    box.style.display = chatOpen ? "flex" : "none";
+    box.classList.toggle("eb-open", chatOpen);
     bubble.innerHTML = chatOpen ? CLOSE_ICON : OPEN_ICON;
     bubble.setAttribute("aria-label", chatOpen ? "Close support chat" : "Open support chat");
     if (chatOpen) {
@@ -376,13 +410,32 @@
     setChatOpen(!chatOpen);
   };
 
+  function renderAssistantText(target, text) {
+    if (!target) return;
+    target.textContent = "";
+
+    const paragraphs = String(text || "").split(/\n\n+/);
+    if (paragraphs.length === 0) {
+      target.textContent = text;
+      return;
+    }
+
+    paragraphs.forEach((paragraphText) => {
+      const paragraph = document.createElement("p");
+      paragraph.style.whiteSpace = "pre-wrap";
+      paragraph.textContent = paragraphText;
+      target.appendChild(paragraph);
+    });
+  }
+
   function addMessage(text, isUser, options = {}) {
     const showStatus = options.showStatus || false;
     const timestamp = options.timestamp || nowAsTime();
     const isGrouped = lastSender === (isUser ? "user" : "bot");
 
     const row = document.createElement("div");
-    row.style.cssText = `display:flex;align-items:flex-end;gap:8px;justify-content:${isUser ? "flex-end" : "flex-start"};margin-top:${isGrouped ? "2px" : "10px"};`;
+    row.className = "eb-row";
+    row.style.cssText = `display:flex;align-items:flex-end;gap:8px;justify-content:${isUser ? "flex-end" : "flex-start"};margin-top:${isGrouped ? "7px" : "18px"};`;
 
     const icon = document.createElement("span");
     icon.style.cssText = `display:flex;align-items:center;justify-content:center;flex:0 0 24px;${isGrouped ? "visibility:hidden;" : ""}`;
@@ -391,17 +444,24 @@
       : '<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="#aaa"><path d="M20 9V7c0-1.1-.9-2-2-2h-3c0-1.66-1.34-3-3-3S9 3.34 9 5H6c-1.1 0-2 .9-2 2v2c-1.66 0-3 1.34-3 3s1.34 3 3 3v4c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2v-4c1.66 0 3-1.34 3-3s-1.34-3-3-3zm-2 10H6V7h12v12zm-9-6c-.83 0-1.5-.67-1.5-1.5S8.17 10 9 10s1.5.67 1.5 1.5S9.83 13 9 13zm6 0c-.83 0-1.5-.67-1.5-1.5S14.17 10 15 10s1.5.67 1.5 1.5S15.83 13 15 13z"/></svg>';
 
     const bubbleWrap = document.createElement("div");
-    bubbleWrap.style.cssText = `display:flex;flex-direction:column;max-width:76%;align-items:${isUser ? "flex-end" : "flex-start"};`;
+    bubbleWrap.style.cssText = `display:flex;flex-direction:column;max-width:${isUser ? "76%" : "85%"};align-items:${isUser ? "flex-end" : "flex-start"};`;
 
     const msg = document.createElement("div");
     const userBubbleColor = widgetConfig.secondary_color || defaultConfig.secondary_color;
-    const bubbleBackgroundColor = isUser ? userBubbleColor : "#f0f0f0";
+    const bubbleBackgroundColor = isUser ? userBubbleColor : "transparent";
     const bubbleTextColor = getBubbleTextColor(bubbleBackgroundColor);
-    msg.style.cssText = `background:${bubbleBackgroundColor};color:${bubbleTextColor};padding:10px 14px;border-radius:14px;display:inline-block;max-width:100%;font-size:14px;line-height:1.35;word-break:break-word;`;
-    msg.textContent = text;
+    const userMsgStyles = `background:${bubbleBackgroundColor};color:${bubbleTextColor};padding:10px 14px;border-radius:16px;display:inline-block;max-width:100%;font-size:14px;line-height:1.48;word-break:break-word;white-space:pre-wrap;`;
+    const botMsgStyles = "background:transparent;color:#1a1a1a;padding:0;border-radius:0;display:block;max-width:min(100%, 60ch);font-size:14px;line-height:1.66;word-break:break-word;white-space:normal;";
+    msg.style.cssText = isUser ? userMsgStyles : botMsgStyles;
+    if (isUser) {
+      msg.textContent = text;
+    } else {
+      msg.classList.add("eb-ai-msg");
+      renderAssistantText(msg, text);
+    }
 
     const meta = document.createElement("div");
-    meta.style.cssText = "display:flex;gap:6px;margin-top:4px;font-size:11px;color:#6b7280;align-items:center;";
+    meta.style.cssText = "display:flex;gap:6px;margin-top:6px;font-size:11px;color:#6b7280;align-items:center;";
 
     const time = document.createElement("span");
     time.textContent = timestamp;
@@ -454,6 +514,7 @@
     const userMessage = addMessage(text, true, { showStatus: true, statusText: labels.sending });
     const botMessage = addMessage("", false);
     botMessage.msg.classList.add("eb-streaming");
+    let botStreamText = "";
 
     try {
       const res = await fetch(API_URL, {
@@ -483,13 +544,16 @@
           break;
         }
 
-        botMessage.msg.textContent += decoder.decode(value, { stream: true });
+        botStreamText += decoder.decode(value, { stream: true });
+        renderAssistantText(botMessage.msg, botStreamText);
         messages.scrollTop = messages.scrollHeight;
       }
 
-      if (!botMessage.msg.textContent) {
-        botMessage.msg.textContent = labels.errorReply;
+      if (!botStreamText.trim()) {
+        botStreamText = labels.errorReply;
       }
+
+      renderAssistantText(botMessage.msg, botStreamText);
 
       botMessage.msg.classList.remove("eb-streaming");
       botMessage.time.textContent = nowAsTime();
@@ -502,7 +566,7 @@
       const errorMessage = error instanceof Error && error.message
         ? error.message
         : labels.errorReply;
-      botMessage.msg.textContent = errorMessage;
+      renderAssistantText(botMessage.msg, errorMessage);
       botMessage.msg.classList.remove("eb-streaming");
       botMessage.time.textContent = nowAsTime();
       if (userMessage.status) {
