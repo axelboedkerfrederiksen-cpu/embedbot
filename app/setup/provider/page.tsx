@@ -86,6 +86,21 @@ export default function ProviderPage() {
 
   const guidance = useMemo(() => getPlatformGuidance(selectedPlatform), [selectedPlatform]);
 
+  function buildCheckoutUrl(businessId: string, supportEmail: string) {
+    try {
+      const url = new URL(CHECKOUT_URL);
+      if (supportEmail.trim()) {
+        url.searchParams.set("prefilled_email", supportEmail.trim());
+      }
+      if (businessId.trim()) {
+        url.searchParams.set("client_reference_id", businessId.trim());
+      }
+      return url.toString();
+    } catch {
+      return CHECKOUT_URL;
+    }
+  }
+
   async function handleContinue() {
     if (!snapshot) {
       setMessage("Mangler onboarding-data. Gå tilbage og prøv igen.");
@@ -114,7 +129,7 @@ export default function ProviderPage() {
       }
 
       localStorage.removeItem(ONBOARDING_FORM_SNAPSHOT_KEY);
-      window.location.href = CHECKOUT_URL;
+      window.location.href = buildCheckoutUrl(snapshot.business_id, String(form.support_email || ""));
     } catch (error) {
       setMessage(error instanceof Error ? error.message : "Noget gik galt.");
       setLoading(false);

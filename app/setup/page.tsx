@@ -164,15 +164,6 @@ export default function Home() {
     if (storedId) {
       setBusinessId(storedId);
       clearPersistedBusinessId();
-
-      // Send embed-script email to customer now that payment is complete
-      fetch("/api/send-embed-email", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ business_id: storedId }),
-      }).catch(() => {
-        // Non-blocking — success screen still shows even if email fails
-      });
     }
 
     setStep(7);

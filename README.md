@@ -45,6 +45,10 @@ OPENAI_API_KEY=
 RESEND_API_KEY=
 ADMIN_EMAIL=
 
+# Stripe (betaling + webhook)
+STRIPE_SECRET_KEY=
+STRIPE_WEBHOOK_SECRET=
+
 # App URL (bruges af server routes)
 NEXT_PUBLIC_APP_URL=
 
@@ -106,8 +110,29 @@ Chat-ruten indsætter bruger/bot-udvekslinger i `conversations`, så dashboardet
 - `POST /api/activate` - ingest virksomhedens hjemmeside og markér som aktiveret
 - `POST /api/ingest` - hent websitets tekst og gem embeddings
 - `POST /api/chat` - svar fra chatbot under brug
+- `POST /api/stripe/webhook` - aktivering + kundemail ved bekræftet Stripe-betaling
 - `GET /api/widget-config?id=...` - hent branding/velkomst-konfiguration til widget
 - `GET|PUT|DELETE /api/admin/businesses` - adminstyring af virksomheder
+
+## Stripe webhook setup
+
+Betalingsflowet bruger `client_reference_id` med `business_id`, og webhooken aktiverer først chatbotten efter bekræftet betaling.
+
+Lokal test med Stripe CLI:
+
+```bash
+stripe listen --forward-to localhost:3000/api/stripe/webhook
+```
+
+Kopier den viste signing secret til `STRIPE_WEBHOOK_SECRET`.
+
+I Stripe Dashboard (produktion):
+
+1. Opret endpoint: `https://DIN-DOMÆNE/api/stripe/webhook`
+2. Vælg events:
+	- `checkout.session.completed`
+	- `checkout.session.async_payment_succeeded`
+3. Gem endpoint secret som `STRIPE_WEBHOOK_SECRET` i Vercel
 
 ## Glemt adgangskode (password reset)
 
