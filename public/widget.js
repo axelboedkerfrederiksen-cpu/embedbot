@@ -174,16 +174,16 @@
   container.innerHTML = `
     <button type="button" id="eb-bubble" aria-label="Open support chat" style="position:fixed;bottom:24px;right:24px;width:56px;height:56px;background:#ffffff;color:#1a1a1a;border-radius:50%;border:none;cursor:pointer;display:flex;align-items:center;justify-content:center;z-index:9999;box-shadow:0 6px 18px rgba(0,0,0,0.10);opacity:0;transition:opacity 0.16s ease, transform 0.16s ease, box-shadow 0.16s ease;">${OPEN_ICON}</button>
     <div id="eb-box" style="position:fixed;bottom:90px;right:24px;width:352px;height:510px;background:#ffffff;border:none;border-radius:18px;box-shadow:0 10px 28px rgba(15,23,42,0.10);z-index:9999;display:flex;flex-direction:column;overflow:hidden;color:#1a1a1a;opacity:0;visibility:hidden;transform:translateY(10px) scale(0.985);pointer-events:none;transition:opacity 0.18s ease, transform 0.18s ease, visibility 0.18s ease;">
-      <div id="eb-header" style="background:#f9f9f9;color:#1a1a1a;padding:10px 14px;font-weight:600;display:flex;align-items:center;gap:10px;">
+      <div id="eb-header" style="background:#f9f9f9;color:#1a1a1a;padding:8px 14px;font-weight:600;display:flex;align-items:center;gap:10px;">
         <img id="eb-logo" alt="Company logo" style="display:none;height:24px;width:auto;max-width:120px;object-fit:contain;filter:brightness(0) invert(1);" />
         <div style="display:flex;flex-direction:column;line-height:1.2;">
           <span id="eb-title">Support Chat</span>
         </div>
       </div>
-      <div id="eb-messages" style="flex:1;overflow-y:auto;padding:6px 16px 12px 16px;display:flex;flex-direction:column;gap:0;height:356px;background:#ffffff;"></div>
+      <div id="eb-messages" style="flex:1;overflow-y:auto;padding:10px 14px 12px 14px;display:flex;flex-direction:column;gap:0;height:356px;background:#ffffff;"></div>
       <div id="eb-composer" style="padding:10px 10px 12px 10px;border-top:1px solid rgba(17,17,17,0.06);display:flex;gap:8px;align-items:center;background:#ffffff;">
-        <div id="eb-input-wrap" style="display:flex;align-items:center;gap:8px;flex:1;border:1px solid rgba(17,17,17,0.10);border-radius:14px;padding:4px 4px 4px 10px;background:#ffffff;transition:border-color 0.18s ease, box-shadow 0.18s ease;">
-          <input id="eb-input" aria-label="Message input" type="text" placeholder="Skriv dit spørgsmål..." style="flex:1;padding:9px 0;border:none;outline:none;pointer-events:all;position:relative;z-index:99999;color:#1a1a1a;background:#ffffff;cursor:text;user-select:text;-webkit-user-select:text;font-size:14px;font-family:inherit;line-height:1.45;caret-color:#1a1a1a;"/>
+        <div id="eb-input-wrap" style="display:flex;align-items:center;gap:8px;flex:1;border:1px solid rgba(17,17,17,0.10);border-radius:15px;padding:6px 6px 6px 12px;background:#ffffff;transition:border-color 0.18s ease, box-shadow 0.18s ease;">
+          <input id="eb-input" aria-label="Message input" type="text" placeholder="Skriv dit spørgsmål..." style="flex:1;padding:10px 0;border:none;outline:none;pointer-events:all;position:relative;z-index:99999;color:#1a1a1a;background:#ffffff;cursor:text;user-select:text;-webkit-user-select:text;font-size:14px;font-family:inherit;line-height:1.45;caret-color:#1a1a1a;"/>
           <button id="eb-send" aria-label="Send message" style="background:#ffffff;color:#1a1a1a;border:none;padding:8px;border-radius:10px;cursor:pointer;white-space:nowrap;font-weight:600;line-height:1;display:flex;align-items:center;justify-content:center;transition:transform 0.16s ease, box-shadow 0.16s ease, background-color 0.16s ease;">
             <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" aria-hidden="true">
               <path d="M4 12h14" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>
@@ -493,10 +493,10 @@
     const row = document.createElement("div");
     const isFirstMessage = messages.childElementCount === 0;
     row.className = "eb-row";
-    row.style.cssText = `display:flex;align-items:flex-end;gap:6px;justify-content:${isUser ? "flex-end" : "flex-start"};margin-top:${isFirstMessage ? "0" : (isGrouped ? "4px" : "10px")};`;
+    row.style.cssText = `display:flex;align-items:flex-end;gap:6px;justify-content:${isUser ? "flex-end" : "flex-start"};margin-top:${isFirstMessage ? "0" : (isGrouped ? "3px" : "7px")};`;
 
     const bubbleWrap = document.createElement("div");
-    bubbleWrap.style.cssText = `display:flex;flex-direction:column;max-width:${isUser ? "74%" : "86%"};align-items:${isUser ? "flex-end" : "flex-start"};${isUser ? "" : "margin-left:-8px;"}`;
+    bubbleWrap.style.cssText = `display:flex;flex-direction:column;max-width:${isUser ? "74%" : "84%"};align-items:${isUser ? "flex-end" : "flex-start"};${isUser ? "margin-right:10px;" : "margin-left:10px;"}`;
 
     const msg = document.createElement("div");
     const userBubbleColor = widgetConfig.secondary_color || defaultConfig.secondary_color;
@@ -514,7 +514,7 @@
 
     const meta = document.createElement("span");
     meta.className = "eb-meta";
-    meta.style.cssText = "all:unset;display:inline-flex;align-items:center;gap:6px;margin-top:4px;color:#9ca3af;font-size:10px;line-height:1;";
+    meta.style.cssText = "all:unset;display:inline-flex;align-items:center;gap:6px;margin-top:3px;color:#9ca3af;font-size:10px;line-height:1;";
 
     const time = document.createElement("span");
     time.className = "eb-time";
