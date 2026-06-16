@@ -7,6 +7,7 @@ import { isBusinessSubscriptionActive } from "@/lib/subscription";
 
 const ONBOARDING_FORM_SNAPSHOT_KEY = "onboarding_form_snapshot";
 const CHECKOUT_URL = "https://buy.stripe.com/eVq00j5l7gew3dj3rIf3a02?locale=da";
+const LOGO_UPLOAD_ENABLED = false;
 
 type OnboardingSnapshot = {
   business_id: string;
@@ -49,6 +50,18 @@ function getPlatformGuidance(platform: string) {
         label: "Du er klar til at fortsætte",
       };
   }
+}
+
+function getFormForSubmit(form: Record<string, string>) {
+  if (LOGO_UPLOAD_ENABLED) {
+    return form;
+  }
+
+  return {
+    ...form,
+    logo_data_url: "",
+    logo_file_name: "",
+  };
 }
 
 export default function ProviderPage() {
@@ -175,7 +188,7 @@ export default function ProviderPage() {
     setMessage("");
 
     try {
-      const form: Record<string, string> = { ...snapshot.form, platform: selectedPlatform };
+      const form: Record<string, string> = getFormForSubmit({ ...snapshot.form, platform: selectedPlatform });
       const res = await fetch("/api/submit", {
         method: "POST",
         headers: { "Content-Type": "application/json" },

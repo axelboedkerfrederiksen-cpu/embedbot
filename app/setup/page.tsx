@@ -7,6 +7,7 @@ import { isBusinessSubscriptionActive } from "@/lib/subscription";
 
 const ONBOARDING_BUSINESS_ID_KEY = "onboarding_business_id";
 const ONBOARDING_FORM_SNAPSHOT_KEY = "onboarding_form_snapshot";
+const LOGO_UPLOAD_ENABLED = false;
 
 const GENERATING_MESSAGES = [
   "Analyserer din virksomhed...",
@@ -263,6 +264,18 @@ export default function Home() {
 
   const update = (key: keyof FormState, value: string) => setForm(f => ({ ...f, [key]: value }));
 
+  function getFormForSubmit() {
+    if (LOGO_UPLOAD_ENABLED) {
+      return form;
+    }
+
+    return {
+      ...form,
+      logo_data_url: "",
+      logo_file_name: "",
+    };
+  }
+
   const previewFontFamily: Record<string, string> = {
     "DM Sans": '"DM Sans", sans-serif',
     Inter: '"Inter", sans-serif',
@@ -319,6 +332,7 @@ export default function Home() {
   const previewOutlineOpacity = clampNumeric(Number.parseFloat(form.chat_outline_opacity), 0, 100, 25);
   const previewWidgetOpacity = clampNumeric(Number.parseFloat(form.widget_opacity), 40, 100, 100);
   const previewOutlineEnabled = (form.chat_outline_enabled || "false") === "true";
+  const outlineControlsDisabled = !previewOutlineEnabled;
 
   const previewOutlineStyle = previewOutlineEnabled
     ? `${previewOutlineWidth}px solid ${hexToRgba(previewOutlineColor, previewOutlineOpacity)}`
@@ -435,7 +449,7 @@ export default function Home() {
     const res = await fetch("/api/business-draft", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ form, business_id: stableBusinessId }),
+      body: JSON.stringify({ form: getFormForSubmit(), business_id: stableBusinessId }),
     });
 
     const data = await res.json();
@@ -483,7 +497,7 @@ export default function Home() {
 
       localStorage.setItem(
         ONBOARDING_FORM_SNAPSHOT_KEY,
-        JSON.stringify({ form, business_id: stableBusinessId })
+        JSON.stringify({ form: getFormForSubmit(), business_id: stableBusinessId })
       );
       window.location.href = "/setup/provider";
     } catch (error) {
@@ -625,6 +639,32 @@ export default function Home() {
         line-height: 1.2;
       }
 
+      .design-step {
+        display: grid;
+        gap: 14px;
+      }
+
+      .design-step-header {
+        display: flex;
+        align-items: end;
+        justify-content: space-between;
+        gap: 14px;
+        padding-bottom: 2px;
+      }
+
+      .design-step-header .section-title {
+        margin-bottom: 0;
+      }
+
+      .step-kicker {
+        margin: 0 0 3px;
+        font-size: 11px;
+        font-weight: 700;
+        color: #8a7e70;
+        letter-spacing: 0.12em;
+        text-transform: uppercase;
+      }
+
       .subsection-title {
         font-size: 0.96rem;
         font-weight: 700;
@@ -683,20 +723,100 @@ export default function Home() {
         gap: 12px;
       }
 
-      .color-swatch-wrap {
+      .design-panel {
+        border: 1px solid rgba(17,17,17,0.08);
+        border-radius: 16px;
+        background: rgba(255,255,255,0.72);
+        padding: 14px;
+      }
+
+      .design-panel-header {
         display: flex;
         align-items: center;
+        justify-content: space-between;
+        gap: 12px;
+        margin-bottom: 12px;
+      }
+
+      .design-panel-header h3 {
+        margin: 0;
+        font-size: 14px;
+        line-height: 1.2;
+      }
+
+      .design-panel .color-grid {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 10px;
+      }
+
+      .design-panel .field {
+        margin-bottom: 0;
+      }
+
+      .color-card,
+      .range-card {
+        min-width: 0;
+        border: 1px solid rgba(17,17,17,0.07);
+        border-radius: 12px;
+        background: #ffffff;
+        padding: 12px;
+        transition: opacity 140ms ease, background 140ms ease, border-color 140ms ease;
+      }
+
+      .control-disabled {
+        opacity: 0.46;
+        background: rgba(246,243,237,0.42);
+      }
+
+      .control-disabled .field-label,
+      .control-disabled .range-value,
+      .control-disabled .font-preview {
+        color: #8a7e70;
+      }
+
+      .control-disabled input {
+        cursor: not-allowed;
+      }
+
+      .color-card:first-child {
+        grid-column: span 2;
+      }
+
+      .font-panel {
+        display: grid;
         gap: 8px;
       }
 
+      .compact-select {
+        width: auto;
+        min-width: 92px;
+        border-radius: 999px;
+        padding: 9px 34px 9px 13px;
+        font-size: 13px;
+        font-weight: 600;
+      }
+
+      .color-swatch-wrap {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+      }
+
       .color-input {
-        width: 46px;
-        height: 38px;
+        flex: 0 0 42px;
+        width: 42px;
+        height: 42px;
         border: 1px solid rgba(17,17,17,0.1);
-        border-radius: 10px;
+        border-radius: 12px;
         background: #ffffff;
-        padding: 2px;
+        padding: 3px;
         cursor: pointer;
+      }
+
+      .color-input:disabled,
+      .field-input:disabled,
+      .range-input:disabled {
+        cursor: not-allowed;
       }
 
       .color-text {
@@ -724,63 +844,98 @@ export default function Home() {
         color: #6b6258;
       }
 
+      .color-card .font-preview,
+      .font-panel .font-preview {
+        margin: 7px 0 0;
+        font-size: 12px;
+      }
+
       .range-label-row {
         display: flex;
         justify-content: space-between;
         gap: 10px;
-        align-items: baseline;
+        align-items: center;
       }
 
       .range-value {
-        font-size: 12px;
-        color: #6b6258;
-        font-weight: 600;
+        min-width: 46px;
+        border-radius: 999px;
+        background: rgba(17,17,17,0.05);
+        padding: 4px 8px;
+        text-align: center;
+        font-size: 11px;
+        color: #4d463f;
+        font-weight: 700;
+      }
+
+      .range-input {
+        width: 100%;
+        height: 26px;
+        margin: 8px 0 0;
+        padding: 0;
+        accent-color: #111111;
       }
 
       .widget-live-preview {
-        margin-top: 16px;
-        padding: 16px;
+        margin-top: 0;
+        padding: 14px;
         border-radius: 16px;
         border: 1px solid rgba(17,17,17,0.08);
-        background: linear-gradient(180deg, rgba(246,243,237,0.5) 0%, rgba(255,255,255,0.95) 100%);
+        background: #ffffff;
+        box-shadow: inset 0 1px 0 rgba(255,255,255,0.9);
       }
 
       .live-preview-title {
-        margin: 0 0 10px;
+        margin: 0 0 12px;
         font-size: 13px;
         font-weight: 700;
-        letter-spacing: 0.04em;
-        text-transform: uppercase;
-        color: #6b6258;
+        color: #111111;
       }
 
       .widget-stage {
         position: relative;
-        height: 276px;
+        height: 300px;
         border-radius: 12px;
-        border: 1px dashed rgba(17,17,17,0.16);
+        border: 1px solid rgba(17,17,17,0.08);
         background:
-          radial-gradient(circle at 10% 20%, rgba(255,255,255,0.95) 0%, rgba(255,255,255,0) 35%),
-          linear-gradient(180deg, rgba(255,255,255,0.92) 0%, rgba(246,243,237,0.55) 100%);
+          linear-gradient(rgba(17,17,17,0.035) 1px, transparent 1px),
+          linear-gradient(90deg, rgba(17,17,17,0.035) 1px, transparent 1px),
+          linear-gradient(180deg, #fbfaf8 0%, #f3efe8 100%);
+        background-size: 28px 28px, 28px 28px, 100% 100%;
         overflow: hidden;
+      }
+
+      .widget-stage::before {
+        content: "";
+        position: absolute;
+        left: 18px;
+        top: 18px;
+        width: 96px;
+        height: 10px;
+        border-radius: 999px;
+        background: rgba(17,17,17,0.07);
+        box-shadow:
+          0 18px 0 rgba(17,17,17,0.045),
+          0 36px 0 rgba(17,17,17,0.035);
       }
 
       .widget-mini {
         position: absolute;
         right: 14px;
         bottom: 14px;
-        width: 246px;
-        border-radius: 16px;
+        width: min(286px, calc(100% - 28px));
+        border-radius: 14px;
         overflow: hidden;
         background: #ffffff;
-        box-shadow: 0 14px 34px rgba(17,17,17,0.14);
+        box-shadow: 0 18px 42px rgba(17,17,17,0.16);
       }
 
       .widget-mini-header {
         display: flex;
         align-items: center;
         gap: 8px;
-        padding: 9px 12px;
+        min-height: 42px;
+        padding: 10px 13px;
         font-size: 12px;
         font-weight: 700;
       }
@@ -820,7 +975,7 @@ export default function Home() {
         display: flex;
         align-items: center;
         gap: 8px;
-        padding: 10px 12px;
+        padding: 11px 12px;
         border-top: 1px solid rgba(17,17,17,0.07);
         background: #ffffff;
       }
@@ -1376,6 +1531,30 @@ export default function Home() {
           grid-template-columns: 1fr;
         }
 
+        .design-step-header {
+          display: block;
+        }
+
+        .design-panel {
+          padding: 12px;
+        }
+
+        .design-panel .color-grid {
+          grid-template-columns: 1fr;
+        }
+
+        .color-card:first-child {
+          grid-column: auto;
+        }
+
+        .design-panel-header {
+          align-items: flex-start;
+        }
+
+        .widget-stage {
+          height: 280px;
+        }
+
         .install-card {
           text-align: left;
         }
@@ -1509,167 +1688,187 @@ export default function Home() {
       </div>
     ),
     5: (
-      <div>
-        <h2 className="section-title">5. Design & Branding</h2>
-        <div className="color-grid">
-          <div className="field">
-            <label className="field-label">🎨 Primærfarve *</label>
-            <div className="color-swatch-wrap">
-              <input
-                type="color"
-                value={previewPrimaryColor}
-                onChange={e => update("primary_color", e.target.value)}
-                className="color-input"
-              />
-              <input
-                value={form.primary_color}
-                onChange={e => update("primary_color", e.target.value)}
-                className="field-input color-text"
-                placeholder="#ffffff"
-              />
-            </div>
-            <p className="font-preview">Bruges til chat-header + send-knap.</p>
-          </div>
+      <div className="design-step">
+        <div className="design-step-header">
+          <p className="step-kicker">Design</p>
+          <h2 className="section-title">5. Branding</h2>
+        </div>
 
-          <div className="field">
-            <label className="field-label">🎨 Sekundærfarve *</label>
-            <div className="color-swatch-wrap">
-              <input
-                type="color"
-                value={previewSecondaryColor}
-                onChange={e => update("secondary_color", e.target.value)}
-                className="color-input"
-              />
-              <input
-                value={form.secondary_color}
-                onChange={e => update("secondary_color", e.target.value)}
-                className="field-input color-text"
-                placeholder="#f6f3ed"
-              />
+        <div className="design-panel">
+          <div className="design-panel-header">
+            <h3>Farver</h3>
+          </div>
+          <div className="color-grid">
+            <div className="field color-card">
+              <label className="field-label">Primærfarve *</label>
+              <div className="color-swatch-wrap">
+                <input
+                  type="color"
+                  value={previewPrimaryColor}
+                  onChange={e => update("primary_color", e.target.value)}
+                  className="color-input"
+                  aria-label="Primærfarve"
+                />
+                <input
+                  value={form.primary_color}
+                  onChange={e => update("primary_color", e.target.value)}
+                  className="field-input color-text"
+                  placeholder="#ffffff"
+                />
+              </div>
+              <p className="font-preview">Header og send-knap</p>
             </div>
-            <p className="font-preview">Bruges til brugerens beskedbobler.</p>
+
+            <div className="field color-card">
+              <label className="field-label">Sekundærfarve *</label>
+              <div className="color-swatch-wrap">
+                <input
+                  type="color"
+                  value={previewSecondaryColor}
+                  onChange={e => update("secondary_color", e.target.value)}
+                  className="color-input"
+                  aria-label="Sekundærfarve"
+                />
+                <input
+                  value={form.secondary_color}
+                  onChange={e => update("secondary_color", e.target.value)}
+                  className="field-input color-text"
+                  placeholder="#f6f3ed"
+                />
+              </div>
+              <p className="font-preview">Kundens beskeder</p>
+            </div>
+
+            <div className="field color-card">
+              <label className="field-label">Chat-ikon *</label>
+              <div className="color-swatch-wrap">
+                <input
+                  type="color"
+                  value={previewIconColor}
+                  onChange={e => update("chat_icon_color", e.target.value)}
+                  className="color-input"
+                  aria-label="Chat-ikon farve"
+                />
+                <input
+                  value={form.chat_icon_color}
+                  onChange={e => update("chat_icon_color", e.target.value)}
+                  className="field-input color-text"
+                  placeholder="#ffffff"
+                />
+              </div>
+              <p className="font-preview">Knappen i hjørnet</p>
+            </div>
           </div>
         </div>
 
-        <div className="field">
-          <label className="field-label">💬 Chat-ikon farve *</label>
-          <div className="color-swatch-wrap">
-            <input
-              type="color"
-              value={previewIconColor}
-              onChange={e => update("chat_icon_color", e.target.value)}
-              className="color-input"
-            />
-            <input
-              value={form.chat_icon_color}
-              onChange={e => update("chat_icon_color", e.target.value)}
-              className="field-input color-text"
-              placeholder="#ffffff"
-            />
+        <div className="design-panel">
+          <div className="design-panel-header">
+            <h3>Ramme</h3>
+            <select
+              value={form.chat_outline_enabled}
+              onChange={e => update("chat_outline_enabled", e.target.value)}
+              className="field-input compact-select"
+              aria-label="Outline på chatvindue"
+            >
+              <option value="false">Fra</option>
+              <option value="true">Til</option>
+            </select>
           </div>
-          <p className="font-preview">Farven på FAB-knappen i hjørnet.</p>
-        </div>
 
-        <div className="field">
-          <label className="field-label">Outline på chatvindue</label>
-          <select
-            value={form.chat_outline_enabled}
-            onChange={e => update("chat_outline_enabled", e.target.value)}
-            className="field-input"
-          >
-            <option value="false">Nej tak</option>
-            <option value="true">Ja, vis outline</option>
-          </select>
-        </div>
+          <div className="color-grid">
+            <div className={`field color-card ${outlineControlsDisabled ? "control-disabled" : ""}`}>
+              <label className="field-label">Outline farve</label>
+              <div className="color-swatch-wrap">
+                <input
+                  type="color"
+                  value={previewOutlineColor}
+                  onChange={e => update("chat_outline_color", e.target.value)}
+                  className="color-input"
+                  aria-label="Outline farve"
+                  disabled={outlineControlsDisabled}
+                />
+                <input
+                  value={form.chat_outline_color}
+                  onChange={e => update("chat_outline_color", e.target.value)}
+                  className="field-input color-text"
+                  placeholder="#111111"
+                  disabled={outlineControlsDisabled}
+                />
+              </div>
+            </div>
 
-        <div className="color-grid">
-          <div className="field">
-            <label className="field-label">Outline farve</label>
-            <div className="color-swatch-wrap">
+            <div className={`field range-card ${outlineControlsDisabled ? "control-disabled" : ""}`}>
+              <div className="range-label-row">
+                <label className="field-label">Tykkelse</label>
+                <span className="range-value">{previewOutlineWidth.toFixed(1)}px</span>
+              </div>
               <input
-                type="color"
-                value={previewOutlineColor}
-                onChange={e => update("chat_outline_color", e.target.value)}
-                className="color-input"
+                type="range"
+                min="0"
+                max="6"
+                step="0.5"
+                value={form.chat_outline_width}
+                onChange={e => update("chat_outline_width", e.target.value)}
+                className="range-input"
+                disabled={outlineControlsDisabled}
               />
+            </div>
+
+            <div className={`field range-card ${outlineControlsDisabled ? "control-disabled" : ""}`}>
+              <div className="range-label-row">
+                <label className="field-label">Outline opacity</label>
+                <span className="range-value">{Math.round(previewOutlineOpacity)}%</span>
+              </div>
               <input
-                value={form.chat_outline_color}
-                onChange={e => update("chat_outline_color", e.target.value)}
-                className="field-input color-text"
-                placeholder="#111111"
+                type="range"
+                min="0"
+                max="100"
+                step="1"
+                value={form.chat_outline_opacity}
+                onChange={e => update("chat_outline_opacity", e.target.value)}
+                className="range-input"
+                disabled={outlineControlsDisabled}
+              />
+            </div>
+
+            <div className="field range-card">
+              <div className="range-label-row">
+                <label className="field-label">Widget opacity</label>
+                <span className="range-value">{Math.round(previewWidgetOpacity)}%</span>
+              </div>
+              <input
+                type="range"
+                min="40"
+                max="100"
+                step="1"
+                value={form.widget_opacity}
+                onChange={e => update("widget_opacity", e.target.value)}
+                className="range-input"
               />
             </div>
           </div>
+        </div>
 
+        {LOGO_UPLOAD_ENABLED && (
           <div className="field">
-            <div className="range-label-row">
-              <label className="field-label">Outline tykkelse</label>
-              <span className="range-value">{previewOutlineWidth.toFixed(1)}px</span>
-            </div>
+            <label className="field-label">Logo upload</label>
             <input
-              type="range"
-              min="0"
-              max="6"
-              step="0.5"
-              value={form.chat_outline_width}
-              onChange={e => update("chat_outline_width", e.target.value)}
+              type="file"
+              accept="image/*"
               className="field-input"
+              onChange={e => handleLogoUpload(e.target.files?.[0] || null)}
             />
+            {form.logo_file_name && <p className="font-preview">Valgt fil: {form.logo_file_name}</p>}
+            {form.logo_data_url && (
+              <div className="logo-preview">
+                <img src={form.logo_data_url} alt="Logo preview" />
+              </div>
+            )}
           </div>
-        </div>
+        )}
 
-        <div className="color-grid">
-          <div className="field">
-            <div className="range-label-row">
-              <label className="field-label">Outline opacity</label>
-              <span className="range-value">{Math.round(previewOutlineOpacity)}%</span>
-            </div>
-            <input
-              type="range"
-              min="0"
-              max="100"
-              step="1"
-              value={form.chat_outline_opacity}
-              onChange={e => update("chat_outline_opacity", e.target.value)}
-              className="field-input"
-            />
-          </div>
-
-          <div className="field">
-            <div className="range-label-row">
-              <label className="field-label">Widget opacity</label>
-              <span className="range-value">{Math.round(previewWidgetOpacity)}%</span>
-            </div>
-            <input
-              type="range"
-              min="40"
-              max="100"
-              step="1"
-              value={form.widget_opacity}
-              onChange={e => update("widget_opacity", e.target.value)}
-              className="field-input"
-            />
-          </div>
-        </div>
-
-        <div className="field">
-          <label className="field-label">🖼️ Logo upload</label>
-          <input
-            type="file"
-            accept="image/*"
-            className="field-input"
-            onChange={e => handleLogoUpload(e.target.files?.[0] || null)}
-          />
-          {form.logo_file_name && <p className="font-preview">Valgt fil: {form.logo_file_name}</p>}
-          {form.logo_data_url && (
-            <div className="logo-preview">
-              <img src={form.logo_data_url} alt="Logo preview" />
-            </div>
-          )}
-        </div>
-
-        <div className="field">
-          <label className="field-label">🔤 Font valg *</label>
+        <div className="field design-panel font-panel">
+          <label className="field-label">Font *</label>
           <select
             value={form.font_choice}
             onChange={e => update("font_choice", e.target.value)}
@@ -1703,7 +1902,7 @@ export default function Home() {
                   color: getReadableTextColor(previewPrimaryColor),
                 }}
               >
-                {form.logo_data_url ? (
+                {LOGO_UPLOAD_ENABLED && form.logo_data_url ? (
                   <img className="widget-mini-logo" src={form.logo_data_url} alt="Logo" />
                 ) : (
                   <div className="widget-mini-logo" aria-hidden="true" />

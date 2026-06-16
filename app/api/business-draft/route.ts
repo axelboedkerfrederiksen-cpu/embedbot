@@ -8,6 +8,8 @@ const supabase = createClient(
   process.env.SUPABASE_SERVICE_KEY!
 );
 
+const LOGO_UPLOAD_ENABLED = false;
+
 function isOnConflictConstraintError(errorMessage: string) {
   return errorMessage.toLowerCase().includes("no unique or exclusion constraint matching the on conflict specification");
 }
@@ -43,6 +45,18 @@ function extractMissingColumnName(errorMessage: string): string | null {
 
 function isLegacyBusinessIdForeignKeyError(errorMessage: string) {
   return errorMessage.toLowerCase().includes("businesses_id_fkey");
+}
+
+function getFormForPersistence(form: Record<string, unknown>) {
+  if (LOGO_UPLOAD_ENABLED) {
+    return form;
+  }
+
+  return {
+    ...form,
+    logo_data_url: "",
+    logo_file_name: "",
+  };
 }
 
 async function persistBusinessPayload(payload: Record<string, unknown> & { id: string }) {
@@ -172,13 +186,14 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    const normalizedForm = {
-      ...form,
+    const formForPersistence = getFormForPersistence(form as Record<string, unknown>);
+    const normalizedForm: Record<string, unknown> = {
+      ...formForPersistence,
       fab_color:
-        typeof form.fab_color === "string" && form.fab_color.trim()
-          ? form.fab_color
-          : typeof form.chat_icon_color === "string"
-          ? form.chat_icon_color
+        typeof formForPersistence.fab_color === "string" && formForPersistence.fab_color.trim()
+          ? formForPersistence.fab_color
+          : typeof formForPersistence.chat_icon_color === "string"
+          ? formForPersistence.chat_icon_color
           : undefined,
     };
 
