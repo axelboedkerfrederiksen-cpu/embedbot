@@ -244,12 +244,31 @@
       #eb-messages .eb-time {
         list-style: none !important;
       }
+      #eb-messages .eb-meta {
+        all: unset;
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        margin-top: 4px;
+        color: #9ca3af;
+        font-size: 10px;
+        line-height: 1;
+      }
+      #eb-messages .eb-time,
+      #eb-messages .eb-status {
+        all: unset;
+        display: inline-block;
+        list-style: none !important;
+      }
       #eb-messages .eb-meta::before,
       #eb-messages .eb-meta::after,
       #eb-messages .eb-time::before,
       #eb-messages .eb-time::after,
+      #eb-messages .eb-status::before,
+      #eb-messages .eb-status::after,
       #eb-messages .eb-meta::marker,
-      #eb-messages .eb-time::marker {
+      #eb-messages .eb-time::marker,
+      #eb-messages .eb-status::marker {
         content: none !important;
         display: none !important;
       }
@@ -493,12 +512,13 @@
       renderAssistantText(msg, text);
     }
 
-    const meta = document.createElement("div");
+    const meta = document.createElement("span");
     meta.className = "eb-meta";
-    meta.style.cssText = "display:flex;gap:6px;margin-top:4px;font-size:10px;color:#9ca3af;align-items:center;";
+    meta.style.cssText = "all:unset;display:inline-flex;align-items:center;gap:6px;margin-top:4px;color:#9ca3af;font-size:10px;line-height:1;";
 
     const time = document.createElement("span");
     time.className = "eb-time";
+    time.style.cssText = "all:unset;display:inline-block;";
     time.textContent = timestamp;
     meta.appendChild(time);
 
@@ -512,6 +532,8 @@
     let status = null;
     if (isUser && showStatus) {
       status = document.createElement("span");
+      status.className = "eb-status";
+      status.style.cssText = "all:unset;display:inline-block;";
       status.textContent = options.statusText || "Sender...";
       setFontImportant(status, fontStack);
       meta.appendChild(status);
