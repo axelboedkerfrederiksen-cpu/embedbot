@@ -180,10 +180,10 @@
           <span id="eb-title">Support Chat</span>
         </div>
       </div>
-      <div id="eb-messages" style="flex:1;overflow-y:auto;padding:10px 14px 12px 14px;display:flex;flex-direction:column;gap:0;height:356px;background:#ffffff;"></div>
-      <div id="eb-composer" style="padding:10px 10px 12px 10px;border-top:1px solid rgba(17,17,17,0.06);display:flex;gap:8px;align-items:center;background:#ffffff;">
-        <div id="eb-input-wrap" style="display:flex;align-items:center;gap:8px;flex:1;border:1px solid rgba(17,17,17,0.10);border-radius:15px;padding:6px 6px 6px 12px;background:#ffffff;transition:border-color 0.18s ease, box-shadow 0.18s ease;">
-          <input id="eb-input" aria-label="Message input" type="text" placeholder="Skriv dit spørgsmål..." style="flex:1;padding:10px 0;border:none;outline:none;pointer-events:all;position:relative;z-index:99999;color:#1a1a1a;background:#ffffff;cursor:text;user-select:text;-webkit-user-select:text;font-size:14px;font-family:inherit;line-height:1.45;caret-color:#1a1a1a;"/>
+      <div id="eb-messages" style="flex:1;overflow-y:auto;padding:28px 24px 16px 24px;display:flex;flex-direction:column;gap:0;height:356px;background:#ffffff;"></div>
+      <div id="eb-composer" style="padding:12px 24px 14px 24px;border-top:1px solid rgba(17,17,17,0.06);display:flex;gap:8px;align-items:center;background:#ffffff;">
+        <div id="eb-input-wrap" style="display:flex;align-items:center;gap:8px;flex:1;border:1px solid rgba(17,17,17,0.10);border-radius:15px;padding:7px 7px 7px 14px;background:#ffffff;transition:border-color 0.18s ease, box-shadow 0.18s ease;">
+          <input id="eb-input" aria-label="Message input" type="text" placeholder="Skriv dit spørgsmål..." style="flex:1;padding:11px 0;border:none;outline:none;pointer-events:all;position:relative;z-index:99999;color:#1a1a1a;background:#ffffff;cursor:text;user-select:text;-webkit-user-select:text;font-size:14px;font-family:inherit;line-height:1.45;caret-color:#1a1a1a;"/>
           <button id="eb-send" aria-label="Send message" style="background:#ffffff;color:#1a1a1a;border:none;padding:8px;border-radius:10px;cursor:pointer;white-space:nowrap;font-weight:600;line-height:1;display:flex;align-items:center;justify-content:center;transition:transform 0.16s ease, box-shadow 0.16s ease, background-color 0.16s ease;">
             <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" aria-hidden="true">
               <path d="M4 12h14" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>
@@ -493,10 +493,10 @@
     const row = document.createElement("div");
     const isFirstMessage = messages.childElementCount === 0;
     row.className = "eb-row";
-    row.style.cssText = `display:flex;align-items:flex-end;gap:6px;justify-content:${isUser ? "flex-end" : "flex-start"};margin-top:${isFirstMessage ? "0" : (isGrouped ? "3px" : "7px")};`;
+    row.style.cssText = `display:flex;align-items:flex-end;gap:6px;justify-content:${isUser ? "flex-end" : "flex-start"};margin-top:${isFirstMessage ? "8px" : (isGrouped ? "3px" : "7px")};`;
 
     const bubbleWrap = document.createElement("div");
-    bubbleWrap.style.cssText = `display:flex;flex-direction:column;max-width:${isUser ? "74%" : "84%"};align-items:${isUser ? "flex-end" : "flex-start"};${isUser ? "margin-right:10px;" : "margin-left:10px;"}`;
+    bubbleWrap.style.cssText = `display:flex;flex-direction:column;max-width:${isUser ? "72%" : "80%"};align-items:${isUser ? "flex-end" : "flex-start"};${isUser ? "margin-right:10px;" : "margin-left:2px;"}`;
 
     const msg = document.createElement("div");
     const userBubbleColor = widgetConfig.secondary_color || defaultConfig.secondary_color;
