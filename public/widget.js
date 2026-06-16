@@ -181,8 +181,8 @@
         </div>
       </div>
       <div id="eb-messages" style="flex:1;overflow-y:auto;padding:6px 16px 12px 16px;display:flex;flex-direction:column;gap:0;height:356px;background:#ffffff;"></div>
-      <div id="eb-composer" style="padding:10px 14px 12px 14px;border-top:1px solid rgba(17,17,17,0.06);display:flex;gap:8px;align-items:center;background:#ffffff;">
-        <div id="eb-input-wrap" style="display:flex;align-items:center;gap:8px;flex:1;border:1px solid rgba(17,17,17,0.10);border-radius:14px;padding:4px 4px 4px 14px;background:#ffffff;transition:border-color 0.18s ease, box-shadow 0.18s ease;">
+      <div id="eb-composer" style="padding:10px 10px 12px 6px;border-top:1px solid rgba(17,17,17,0.06);display:flex;gap:8px;align-items:center;background:#ffffff;">
+        <div id="eb-input-wrap" style="display:flex;align-items:center;gap:8px;flex:1;border:1px solid rgba(17,17,17,0.10);border-radius:14px;padding:4px 4px 4px 8px;background:#ffffff;transition:border-color 0.18s ease, box-shadow 0.18s ease;">
           <input id="eb-input" aria-label="Message input" type="text" placeholder="Skriv dit spørgsmål..." style="flex:1;padding:9px 0;border:none;outline:none;pointer-events:all;position:relative;z-index:99999;color:#1a1a1a;background:#ffffff;cursor:text;user-select:text;-webkit-user-select:text;font-size:14px;font-family:inherit;line-height:1.45;caret-color:#1a1a1a;"/>
           <button id="eb-send" aria-label="Send message" style="background:#ffffff;color:#1a1a1a;border:none;padding:8px;border-radius:10px;cursor:pointer;white-space:nowrap;font-weight:600;line-height:1;display:flex;align-items:center;justify-content:center;transition:transform 0.16s ease, box-shadow 0.16s ease, background-color 0.16s ease;">
             <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" aria-hidden="true">
@@ -239,6 +239,19 @@
       }
       .eb-row {
         animation: eb-message-in 0.2s ease;
+      }
+      #eb-messages .eb-meta,
+      #eb-messages .eb-time {
+        list-style: none !important;
+      }
+      #eb-messages .eb-meta::before,
+      #eb-messages .eb-meta::after,
+      #eb-messages .eb-time::before,
+      #eb-messages .eb-time::after,
+      #eb-messages .eb-meta::marker,
+      #eb-messages .eb-time::marker {
+        content: none !important;
+        display: none !important;
       }
       #eb-box, #eb-box * {
         box-sizing: border-box;
@@ -481,12 +494,11 @@
     }
 
     const meta = document.createElement("div");
+    meta.className = "eb-meta";
     meta.style.cssText = "display:flex;gap:6px;margin-top:4px;font-size:10px;color:#9ca3af;align-items:center;";
-    meta.style.listStyle = "none";
-    meta.style.padding = "0";
-    meta.style.marginLeft = isUser ? "0" : "0";
 
     const time = document.createElement("span");
+    time.className = "eb-time";
     time.textContent = timestamp;
     meta.appendChild(time);
 
