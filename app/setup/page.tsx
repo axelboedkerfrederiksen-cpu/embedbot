@@ -33,7 +33,9 @@ export default function Home() {
     custom_instructions: "",
     faq: "", cvr: "", social_media: "", current_offers: "", warranty: "", size_guide: "",
     primary_color: "#ffffff", secondary_color: "#f6f3ed", chat_icon_color: "#ffffff",
-    font_choice: "Poppins", logo_data_url: "", logo_file_name: ""
+    font_choice: "Poppins", logo_data_url: "", logo_file_name: "",
+    chat_outline_enabled: "false", chat_outline_color: "#111111", chat_outline_width: "1",
+    chat_outline_opacity: "25", widget_opacity: "100"
   };
   type FormState = typeof initialForm;
 
@@ -267,6 +269,60 @@ export default function Home() {
     Poppins: '"Poppins", sans-serif',
     Lora: '"Lora", serif',
   };
+
+  function normalizeHexForPreview(value: string, fallback: string) {
+    const trimmed = value.trim();
+    const shortHex = /^#([0-9a-f]{3})$/i.exec(trimmed);
+    if (shortHex) {
+      const expanded = shortHex[1].split("").map(char => char + char).join("");
+      return `#${expanded.toLowerCase()}`;
+    }
+
+    if (/^#([0-9a-f]{6})$/i.test(trimmed)) {
+      return trimmed.toLowerCase();
+    }
+
+    return fallback;
+  }
+
+  function clampNumeric(value: number, min: number, max: number, fallback: number) {
+    if (!Number.isFinite(value)) {
+      return fallback;
+    }
+
+    return Math.min(max, Math.max(min, value));
+  }
+
+  function hexToRgba(hex: string, opacityPercent: number) {
+    const normalized = normalizeHexForPreview(hex, "#111111");
+    const color = normalized.slice(1);
+    const red = Number.parseInt(color.slice(0, 2), 16);
+    const green = Number.parseInt(color.slice(2, 4), 16);
+    const blue = Number.parseInt(color.slice(4, 6), 16);
+    return `rgba(${red}, ${green}, ${blue}, ${clampNumeric(opacityPercent, 0, 100, 100) / 100})`;
+  }
+
+  function getReadableTextColor(hex: string) {
+    const normalized = normalizeHexForPreview(hex, "#ffffff").slice(1);
+    const red = Number.parseInt(normalized.slice(0, 2), 16);
+    const green = Number.parseInt(normalized.slice(2, 4), 16);
+    const blue = Number.parseInt(normalized.slice(4, 6), 16);
+    const brightness = ((red * 299) + (green * 587) + (blue * 114)) / 1000;
+    return brightness < 150 ? "#ffffff" : "#1a1a1a";
+  }
+
+  const previewPrimaryColor = normalizeHexForPreview(form.primary_color, "#ffffff");
+  const previewSecondaryColor = normalizeHexForPreview(form.secondary_color, "#f6f3ed");
+  const previewIconColor = normalizeHexForPreview(form.chat_icon_color, "#ffffff");
+  const previewOutlineColor = normalizeHexForPreview(form.chat_outline_color, "#111111");
+  const previewOutlineWidth = clampNumeric(Number.parseFloat(form.chat_outline_width), 0, 6, 1);
+  const previewOutlineOpacity = clampNumeric(Number.parseFloat(form.chat_outline_opacity), 0, 100, 25);
+  const previewWidgetOpacity = clampNumeric(Number.parseFloat(form.widget_opacity), 40, 100, 100);
+  const previewOutlineEnabled = (form.chat_outline_enabled || "false") === "true";
+
+  const previewOutlineStyle = previewOutlineEnabled
+    ? `${previewOutlineWidth}px solid ${hexToRgba(previewOutlineColor, previewOutlineOpacity)}`
+    : "none";
 
   function handleLogoUpload(file: File | null) {
     if (!file) {
@@ -666,6 +722,138 @@ export default function Home() {
         margin-top: 8px;
         font-size: 14px;
         color: #6b6258;
+      }
+
+      .range-label-row {
+        display: flex;
+        justify-content: space-between;
+        gap: 10px;
+        align-items: baseline;
+      }
+
+      .range-value {
+        font-size: 12px;
+        color: #6b6258;
+        font-weight: 600;
+      }
+
+      .widget-live-preview {
+        margin-top: 16px;
+        padding: 16px;
+        border-radius: 16px;
+        border: 1px solid rgba(17,17,17,0.08);
+        background: linear-gradient(180deg, rgba(246,243,237,0.5) 0%, rgba(255,255,255,0.95) 100%);
+      }
+
+      .live-preview-title {
+        margin: 0 0 10px;
+        font-size: 13px;
+        font-weight: 700;
+        letter-spacing: 0.04em;
+        text-transform: uppercase;
+        color: #6b6258;
+      }
+
+      .widget-stage {
+        position: relative;
+        height: 276px;
+        border-radius: 12px;
+        border: 1px dashed rgba(17,17,17,0.16);
+        background:
+          radial-gradient(circle at 10% 20%, rgba(255,255,255,0.95) 0%, rgba(255,255,255,0) 35%),
+          linear-gradient(180deg, rgba(255,255,255,0.92) 0%, rgba(246,243,237,0.55) 100%);
+        overflow: hidden;
+      }
+
+      .widget-mini {
+        position: absolute;
+        right: 14px;
+        bottom: 14px;
+        width: 246px;
+        border-radius: 16px;
+        overflow: hidden;
+        background: #ffffff;
+        box-shadow: 0 14px 34px rgba(17,17,17,0.14);
+      }
+
+      .widget-mini-header {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        padding: 9px 12px;
+        font-size: 12px;
+        font-weight: 700;
+      }
+
+      .widget-mini-logo {
+        width: 20px;
+        height: 20px;
+        border-radius: 6px;
+        object-fit: cover;
+        background: rgba(255,255,255,0.8);
+      }
+
+      .widget-mini-body {
+        padding: 12px;
+        display: grid;
+        gap: 8px;
+      }
+
+      .widget-mini-message {
+        border-radius: 12px;
+        padding: 8px 10px;
+        font-size: 12px;
+        line-height: 1.4;
+      }
+
+      .widget-mini-message.bot {
+        background: rgba(17,17,17,0.04);
+        color: #1f2937;
+      }
+
+      .widget-mini-message.user {
+        justify-self: end;
+        max-width: 78%;
+      }
+
+      .widget-mini-composer {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        padding: 10px 12px;
+        border-top: 1px solid rgba(17,17,17,0.07);
+        background: #ffffff;
+      }
+
+      .widget-mini-input {
+        flex: 1;
+        height: 30px;
+        border-radius: 999px;
+        border: 1px solid rgba(17,17,17,0.14);
+        background: #ffffff;
+      }
+
+      .widget-mini-send {
+        width: 30px;
+        height: 30px;
+        border-radius: 999px;
+        display: grid;
+        place-items: center;
+        font-size: 13px;
+        font-weight: 700;
+      }
+
+      .widget-mini-fab {
+        position: absolute;
+        right: 18px;
+        bottom: 18px;
+        width: 42px;
+        height: 42px;
+        border-radius: 999px;
+        display: grid;
+        place-items: center;
+        font-size: 16px;
+        box-shadow: 0 8px 18px rgba(17,17,17,0.14);
       }
 
       .actions {
@@ -1329,7 +1517,7 @@ export default function Home() {
             <div className="color-swatch-wrap">
               <input
                 type="color"
-                value={form.primary_color}
+                value={previewPrimaryColor}
                 onChange={e => update("primary_color", e.target.value)}
                 className="color-input"
               />
@@ -1348,7 +1536,7 @@ export default function Home() {
             <div className="color-swatch-wrap">
               <input
                 type="color"
-                value={form.secondary_color}
+                value={previewSecondaryColor}
                 onChange={e => update("secondary_color", e.target.value)}
                 className="color-input"
               />
@@ -1368,7 +1556,7 @@ export default function Home() {
           <div className="color-swatch-wrap">
             <input
               type="color"
-              value={form.chat_icon_color}
+              value={previewIconColor}
               onChange={e => update("chat_icon_color", e.target.value)}
               className="color-input"
             />
@@ -1380,6 +1568,88 @@ export default function Home() {
             />
           </div>
           <p className="font-preview">Farven på FAB-knappen i hjørnet.</p>
+        </div>
+
+        <div className="field">
+          <label className="field-label">Outline på chatvindue</label>
+          <select
+            value={form.chat_outline_enabled}
+            onChange={e => update("chat_outline_enabled", e.target.value)}
+            className="field-input"
+          >
+            <option value="false">Nej tak</option>
+            <option value="true">Ja, vis outline</option>
+          </select>
+        </div>
+
+        <div className="color-grid">
+          <div className="field">
+            <label className="field-label">Outline farve</label>
+            <div className="color-swatch-wrap">
+              <input
+                type="color"
+                value={previewOutlineColor}
+                onChange={e => update("chat_outline_color", e.target.value)}
+                className="color-input"
+              />
+              <input
+                value={form.chat_outline_color}
+                onChange={e => update("chat_outline_color", e.target.value)}
+                className="field-input color-text"
+                placeholder="#111111"
+              />
+            </div>
+          </div>
+
+          <div className="field">
+            <div className="range-label-row">
+              <label className="field-label">Outline tykkelse</label>
+              <span className="range-value">{previewOutlineWidth.toFixed(1)}px</span>
+            </div>
+            <input
+              type="range"
+              min="0"
+              max="6"
+              step="0.5"
+              value={form.chat_outline_width}
+              onChange={e => update("chat_outline_width", e.target.value)}
+              className="field-input"
+            />
+          </div>
+        </div>
+
+        <div className="color-grid">
+          <div className="field">
+            <div className="range-label-row">
+              <label className="field-label">Outline opacity</label>
+              <span className="range-value">{Math.round(previewOutlineOpacity)}%</span>
+            </div>
+            <input
+              type="range"
+              min="0"
+              max="100"
+              step="1"
+              value={form.chat_outline_opacity}
+              onChange={e => update("chat_outline_opacity", e.target.value)}
+              className="field-input"
+            />
+          </div>
+
+          <div className="field">
+            <div className="range-label-row">
+              <label className="field-label">Widget opacity</label>
+              <span className="range-value">{Math.round(previewWidgetOpacity)}%</span>
+            </div>
+            <input
+              type="range"
+              min="40"
+              max="100"
+              step="1"
+              value={form.widget_opacity}
+              onChange={e => update("widget_opacity", e.target.value)}
+              className="field-input"
+            />
+          </div>
         </div>
 
         <div className="field">
@@ -1413,6 +1683,66 @@ export default function Home() {
           <p className="font-preview" style={{ fontFamily: previewFontFamily[form.font_choice] || '"Poppins", sans-serif' }}>
             Preview: Sådan kan teksten se ud i chatten.
           </p>
+        </div>
+
+        <div className="widget-live-preview">
+          <p className="live-preview-title">Live preview</p>
+          <div className="widget-stage">
+            <div
+              className="widget-mini"
+              style={{
+                border: previewOutlineStyle,
+                opacity: previewWidgetOpacity / 100,
+                fontFamily: previewFontFamily[form.font_choice] || '"Poppins", sans-serif',
+              }}
+            >
+              <div
+                className="widget-mini-header"
+                style={{
+                  background: previewPrimaryColor,
+                  color: getReadableTextColor(previewPrimaryColor),
+                }}
+              >
+                {form.logo_data_url ? (
+                  <img className="widget-mini-logo" src={form.logo_data_url} alt="Logo" />
+                ) : (
+                  <div className="widget-mini-logo" aria-hidden="true" />
+                )}
+                <span>{form.name?.trim() ? `${form.name.trim()} Chat` : "Support Chat"}</span>
+              </div>
+
+              <div className="widget-mini-body">
+                <div className="widget-mini-message bot">
+                  {form.welcome_message?.trim() || "Hej! Hvordan kan jeg hjælpe dig i dag?"}
+                </div>
+                <div
+                  className="widget-mini-message user"
+                  style={{
+                    background: previewSecondaryColor,
+                    color: getReadableTextColor(previewSecondaryColor),
+                  }}
+                >
+                  Har I åbent på lørdag?
+                </div>
+              </div>
+
+              <div className="widget-mini-composer">
+                <div className="widget-mini-input" />
+                <div className="widget-mini-send" style={{ background: previewPrimaryColor }}>➜</div>
+              </div>
+            </div>
+
+            <div
+              className="widget-mini-fab"
+              style={{
+                background: previewIconColor,
+                color: getReadableTextColor(previewIconColor),
+                border: previewOutlineStyle,
+              }}
+            >
+              💬
+            </div>
+          </div>
         </div>
       </div>
     ),

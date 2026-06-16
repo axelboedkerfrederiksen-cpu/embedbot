@@ -265,6 +265,11 @@ export async function POST(req: NextRequest) {
       <p><b>Sekundærfarve:</b> ${form.secondary_color || "-"}</p>
       <p><b>Chat-ikon farve:</b> ${form.chat_icon_color || "-"}</p>
       <p><b>Font:</b> ${form.font_choice || "-"}</p>
+      <p><b>Outline aktiv:</b> ${form.chat_outline_enabled || "false"}</p>
+      <p><b>Outline farve:</b> ${form.chat_outline_color || "-"}</p>
+      <p><b>Outline tykkelse:</b> ${form.chat_outline_width || "-"}px</p>
+      <p><b>Outline opacity:</b> ${form.chat_outline_opacity || "-"}%</p>
+      <p><b>Widget opacity:</b> ${form.widget_opacity || "-"}%</p>
       <p><b>Logo fil:</b> ${form.logo_file_name || "-"}</p>
       <hr/>
       <p><b>Business ID:</b> ${stableBusinessId}</p>

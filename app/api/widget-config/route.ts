@@ -9,6 +9,11 @@ const DEFAULT_WIDGET_CONFIG = {
   font_choice: "Poppins",
   name: "",
   welcome_message: "",
+  chat_outline_enabled: "false",
+  chat_outline_color: "#111111",
+  chat_outline_width: "1",
+  chat_outline_opacity: "25",
+  widget_opacity: "100",
 };
 
 const supabase = createClient(
@@ -29,6 +34,7 @@ function isMissingColumnError(errorMessage: string, columnName: string) {
 
 async function fetchBusinessWidgetConfig(businessId: string) {
   const selectVariants = [
+    "name, primary_color, secondary_color, fab_color, chat_icon_color, logo_url, logo_data_url, font_choice, welcome_message, chat_outline_enabled, chat_outline_color, chat_outline_width, chat_outline_opacity, widget_opacity",
     "name, primary_color, secondary_color, fab_color, chat_icon_color, logo_url, logo_data_url, font_choice, welcome_message",
     "name, primary_color, secondary_color, fab_color, logo_url, logo_data_url, font_choice, welcome_message",
     "name, primary_color, secondary_color, fab_color, logo_url, font_choice, welcome_message",
@@ -109,6 +115,11 @@ export async function GET(req: NextRequest) {
     const logoDataUrl = asString(business?.logo_data_url);
     const fontChoice = asString(business?.font_choice);
     const welcomeMessage = asString(business?.welcome_message);
+    const chatOutlineEnabled = asString(business?.chat_outline_enabled);
+    const chatOutlineColor = asString(business?.chat_outline_color);
+    const chatOutlineWidth = asString(business?.chat_outline_width);
+    const chatOutlineOpacity = asString(business?.chat_outline_opacity);
+    const widgetOpacity = asString(business?.widget_opacity);
 
     return NextResponse.json({
       name: name || DEFAULT_WIDGET_CONFIG.name,
@@ -118,6 +129,11 @@ export async function GET(req: NextRequest) {
       logo_url: logoUrl || logoDataUrl || DEFAULT_WIDGET_CONFIG.logo_url,
       font_choice: fontChoice || DEFAULT_WIDGET_CONFIG.font_choice,
       welcome_message: welcomeMessage || DEFAULT_WIDGET_CONFIG.welcome_message,
+      chat_outline_enabled: chatOutlineEnabled || DEFAULT_WIDGET_CONFIG.chat_outline_enabled,
+      chat_outline_color: chatOutlineColor || DEFAULT_WIDGET_CONFIG.chat_outline_color,
+      chat_outline_width: chatOutlineWidth || DEFAULT_WIDGET_CONFIG.chat_outline_width,
+      chat_outline_opacity: chatOutlineOpacity || DEFAULT_WIDGET_CONFIG.chat_outline_opacity,
+      widget_opacity: widgetOpacity || DEFAULT_WIDGET_CONFIG.widget_opacity,
     });
   } catch (error) {
     if (error instanceof Error) {

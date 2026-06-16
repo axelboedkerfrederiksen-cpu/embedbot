@@ -34,6 +34,11 @@
     name: "",
     header_title: "Support Chat",
     welcome_message: "",
+    chat_outline_enabled: "false",
+    chat_outline_color: "#111111",
+    chat_outline_width: "1",
+    chat_outline_opacity: "25",
+    widget_opacity: "100",
   };
 
   const GENERIC_FONTS = new Set([
@@ -169,6 +174,38 @@
 
     return brightness < 150 ? "#ffffff" : "#1a1a1a";
   }
+
+  function clampNumber(value, min, max, fallback) {
+    const parsed = Number(value);
+    if (!Number.isFinite(parsed)) {
+      return fallback;
+    }
+    return Math.min(max, Math.max(min, parsed));
+  }
+
+  function getOutlineStyle(config) {
+    const outlineEnabled = String(config.chat_outline_enabled || "false").toLowerCase() === "true";
+    if (!outlineEnabled) {
+      return "none";
+    }
+
+    const width = clampNumber(config.chat_outline_width, 0, 6, 1);
+    if (width <= 0) {
+      return "none";
+    }
+
+    const opacity = clampNumber(config.chat_outline_opacity, 0, 100, 25) / 100;
+    const normalizedHex = normalizeHexColor(config.chat_outline_color || "#111111") || normalizeHexColor("#111111");
+    const red = parseInt(normalizedHex.slice(0, 2), 16);
+    const green = parseInt(normalizedHex.slice(2, 4), 16);
+    const blue = parseInt(normalizedHex.slice(4, 6), 16);
+
+    return `${width}px solid rgba(${red}, ${green}, ${blue}, ${opacity})`;
+  }
+
+  function getWidgetOpacity(config) {
+    return clampNumber(config.widget_opacity, 40, 100, 100) / 100;
+  }
   
   const container = document.createElement("div");
   container.innerHTML = `
@@ -208,6 +245,8 @@
   const messages = document.getElementById("eb-messages");
 
   const conversationHistory = [];
+  let activeWidgetOpacity = 1;
+  let activeOutlineStyle = "none";
 
   function ensureWidgetStylesheet() {
     if (document.getElementById("eb-widget-style")) {
@@ -320,12 +359,22 @@
     const fabTextColor = getBubbleTextColor(fabBackground);
     const primaryTextColor = getBubbleTextColor(primaryBackground);
     const headerTextColor = getBubbleTextColor(headerBackground);
+    const resolvedOutline = getOutlineStyle(widgetConfig);
+    const resolvedWidgetOpacity = getWidgetOpacity(widgetConfig);
+
+    activeOutlineStyle = resolvedOutline;
+    activeWidgetOpacity = resolvedWidgetOpacity;
 
     bubble.style.background = fabBackground;
     bubble.style.color = fabTextColor;
+    bubble.style.border = resolvedOutline;
     bubble.style.boxShadow = fabTextColor === "#ffffff"
       ? "0 6px 16px rgba(0,0,0,0.18)"
       : "0 6px 16px rgba(15,23,42,0.10)";
+    box.style.border = resolvedOutline;
+    if (chatOpen) {
+      box.style.opacity = String(activeWidgetOpacity);
+    }
     if (composer) {
       composer.style.background = "#ffffff";
     }
@@ -421,6 +470,11 @@
         logo_url: data.logo_url || defaultConfig.logo_url,
         font_choice: scriptTag.getAttribute("data-font") || data.font_choice || defaultConfig.font_choice,
         welcome_message: data.welcome_message || defaultConfig.welcome_message,
+        chat_outline_enabled: data.chat_outline_enabled || defaultConfig.chat_outline_enabled,
+        chat_outline_color: data.chat_outline_color || defaultConfig.chat_outline_color,
+        chat_outline_width: data.chat_outline_width || defaultConfig.chat_outline_width,
+        chat_outline_opacity: data.chat_outline_opacity || defaultConfig.chat_outline_opacity,
+        widget_opacity: data.widget_opacity || defaultConfig.widget_opacity,
         name: resolvedName,
         header_title: formatHeaderTitle(resolvedName),
       };
@@ -448,7 +502,7 @@
     console.log("[EmbedBot] setChatOpen called:", { isOpen, hasShownWelcomeMessage });
     chatOpen = isOpen;
     box.classList.toggle("eb-open", chatOpen);
-    box.style.opacity = chatOpen ? "1" : "0";
+    box.style.opacity = chatOpen ? String(activeWidgetOpacity) : "0";
     box.style.visibility = chatOpen ? "visible" : "hidden";
     box.style.transform = chatOpen ? "translateY(0) scale(1)" : "translateY(10px) scale(0.985)";
     box.style.pointerEvents = chatOpen ? "auto" : "none";
@@ -502,7 +556,7 @@
     const userBubbleColor = widgetConfig.secondary_color || defaultConfig.secondary_color;
     const bubbleBackgroundColor = isUser ? userBubbleColor : "transparent";
     const bubbleTextColor = getBubbleTextColor(bubbleBackgroundColor);
-    const userMsgStyles = `background:${bubbleBackgroundColor};color:${bubbleTextColor};padding:8px 12px;border-radius:14px;display:inline-block;max-width:100%;font-size:14px;line-height:1.45;word-break:break-word;white-space:pre-wrap;`;
+    const userMsgStyles = `background:${bubbleBackgroundColor};color:${bubbleTextColor};padding:8px 12px;border-radius:14px;display:inline-block;max-width:100%;font-size:14px;line-height:1.45;word-break:break-word;white-space:pre-wrap;border:${activeOutlineStyle};`;
     const botMsgStyles = "background:transparent;color:#1a1a1a;padding:0;border-radius:0;display:block;max-width:min(100%, 58ch);font-size:15px;line-height:1.52;font-weight:400;word-break:break-word;white-space:normal;";
     msg.style.cssText = isUser ? userMsgStyles : botMsgStyles;
     if (isUser) {
