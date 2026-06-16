@@ -109,6 +109,17 @@ Chat-ruten indsætter bruger/bot-udvekslinger i `conversations`, så dashboardet
 - `GET /api/widget-config?id=...` - hent branding/velkomst-konfiguration til widget
 - `GET|PUT|DELETE /api/admin/businesses` - adminstyring af virksomheder
 
+## Glemt adgangskode (password reset)
+
+- Login-siden linker til `/auth/forgot-password`, hvor brugeren kan anmode om reset-link.
+- Supabase sender reset-mail med redirect til `/auth/reset-password`.
+- På reset-siden vælger brugeren ny adgangskode, hvorefter appen sender brugeren tilbage til login.
+
+I Supabase Auth-indstillinger skal du tillade redirect-URL'er for både lokal og produktion, fx:
+
+- `http://localhost:3000/auth/reset-password`
+- `https://DIN-DOMÆNE/auth/reset-password`
+
 ## Bemærkninger om widget
 
 - Hovedscriptet til indlejring leveres fra `public/widget.js`.

@@ -1,17 +1,21 @@
 "use client";
 
 import { FormEvent, useEffect, useState } from "react";
-import { useRouter } from "next/navigation";
+import Link from "next/link";
+import { useRouter, useSearchParams } from "next/navigation";
 import { createClient } from "@/lib/supabase";
 
 export default function LoginPage() {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const supabase = createClient();
 
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
+  const resetStatus = searchParams.get("reset");
+  const showResetSuccess = resetStatus === "success";
 
   useEffect(() => {
     // Force explicit login each time user lands on /login.
@@ -69,6 +73,22 @@ export default function LoginPage() {
         <h1 style={{ margin: 0, fontSize: 28, fontWeight: 700, color: "#111111", letterSpacing: "-0.03em" }}>Log ind</h1>
         <p style={{ margin: 0, color: "#6b6258", fontSize: 14, fontWeight: 400 }}>Fortsæt til dit dashboard.</p>
 
+        {showResetSuccess ? (
+          <p
+            style={{
+              margin: 0,
+              color: "#1b6b45",
+              fontSize: 13,
+              border: "1px solid rgba(27,107,69,0.2)",
+              background: "rgba(27,107,69,0.08)",
+              borderRadius: 10,
+              padding: "10px 12px",
+            }}
+          >
+            Din adgangskode er opdateret. Du kan nu logge ind.
+          </p>
+        ) : null}
+
         <input
           type="email"
           placeholder="Email"
@@ -85,6 +105,13 @@ export default function LoginPage() {
           required
           style={{ border: "1px solid rgba(17,17,17,0.1)", background: "#ffffff", borderRadius: 14, padding: "13px 14px", fontSize: 14, fontFamily: '"Poppins", sans-serif', color: "#111111", outline: "none" }}
         />
+
+        <Link
+          href="/auth/forgot-password"
+          style={{ color: "#6b6258", fontSize: 13, textDecoration: "underline", justifySelf: "start" }}
+        >
+          Glemt adgangskode?
+        </Link>
 
         <button
           type="submit"
