@@ -30,7 +30,7 @@
     secondary_color: "#f6f3ed",
     fab_color: "#ffffff",
     logo_url: "",
-    font_choice: "Poppins",
+    font_choice: "Inter",
     name: "",
     header_title: "Support Chat",
     welcome_message: "",
@@ -174,16 +174,23 @@
   container.innerHTML = `
     <button type="button" id="eb-bubble" aria-label="Open support chat" style="position:fixed;bottom:24px;right:24px;width:56px;height:56px;background:#ffffff;color:#1a1a1a;border-radius:50%;border:none;cursor:pointer;display:flex;align-items:center;justify-content:center;z-index:9999;box-shadow:0 6px 18px rgba(0,0,0,0.10);opacity:0;transition:opacity 0.16s ease, transform 0.16s ease, box-shadow 0.16s ease;">${OPEN_ICON}</button>
     <div id="eb-box" style="position:fixed;bottom:90px;right:24px;width:352px;height:510px;background:#ffffff;border:none;border-radius:18px;box-shadow:0 10px 28px rgba(15,23,42,0.10);z-index:9999;display:flex;flex-direction:column;overflow:hidden;color:#1a1a1a;opacity:0;visibility:hidden;transform:translateY(10px) scale(0.985);pointer-events:none;transition:opacity 0.18s ease, transform 0.18s ease, visibility 0.18s ease;">
-      <div id="eb-header" style="background:#f9f9f9;color:#1a1a1a;padding:12px 14px;font-weight:600;display:flex;align-items:center;gap:10px;">
+      <div id="eb-header" style="background:#f9f9f9;color:#1a1a1a;padding:10px 14px;font-weight:600;display:flex;align-items:center;gap:10px;">
         <img id="eb-logo" alt="Company logo" style="display:none;height:24px;width:auto;max-width:120px;object-fit:contain;filter:brightness(0) invert(1);" />
         <div style="display:flex;flex-direction:column;line-height:1.2;">
           <span id="eb-title">Support Chat</span>
         </div>
       </div>
-      <div id="eb-messages" style="flex:1;overflow-y:auto;padding:20px 18px 16px 18px;display:flex;flex-direction:column;gap:0;height:356px;background:#ffffff;"></div>
-      <div id="eb-composer" style="padding:12px 14px 14px 14px;border-top:1px solid rgba(17,17,17,0.06);display:flex;gap:8px;align-items:center;background:#ffffff;">
-        <input id="eb-input" aria-label="Message input" type="text" placeholder="Skriv dit spørgsmål..." style="flex:1;padding:13px 16px;border:1px solid rgba(17,17,17,0.10);border-radius:15px;outline:none;pointer-events:all;position:relative;z-index:99999;color:#1a1a1a;background:#ffffff;cursor:text;user-select:text;-webkit-user-select:text;font-size:14px;font-family:inherit;line-height:1.45;caret-color:#1a1a1a;transition:border-color 0.18s ease, box-shadow 0.18s ease, background-color 0.18s ease;"/>
-        <button id="eb-send" aria-label="Send message" style="background:#ffffff;color:#1a1a1a;border:1px solid rgba(17,17,17,0.10);padding:11px 15px;border-radius:13px;cursor:pointer;white-space:nowrap;font-weight:600;line-height:1;transition:transform 0.16s ease, box-shadow 0.16s ease, background-color 0.16s ease, border-color 0.16s ease;">Send</button>
+      <div id="eb-messages" style="flex:1;overflow-y:auto;padding:14px 16px 12px 16px;display:flex;flex-direction:column;gap:0;height:356px;background:#ffffff;"></div>
+      <div id="eb-composer" style="padding:10px 14px 12px 14px;border-top:1px solid rgba(17,17,17,0.06);display:flex;gap:8px;align-items:center;background:#ffffff;">
+        <div id="eb-input-wrap" style="display:flex;align-items:center;gap:8px;flex:1;border:1px solid rgba(17,17,17,0.10);border-radius:14px;padding:4px 4px 4px 14px;background:#ffffff;transition:border-color 0.18s ease, box-shadow 0.18s ease;">
+          <input id="eb-input" aria-label="Message input" type="text" placeholder="Skriv dit spørgsmål..." style="flex:1;padding:9px 0;border:none;outline:none;pointer-events:all;position:relative;z-index:99999;color:#1a1a1a;background:#ffffff;cursor:text;user-select:text;-webkit-user-select:text;font-size:14px;font-family:inherit;line-height:1.45;caret-color:#1a1a1a;"/>
+          <button id="eb-send" aria-label="Send message" style="background:#ffffff;color:#1a1a1a;border:none;padding:8px;border-radius:10px;cursor:pointer;white-space:nowrap;font-weight:600;line-height:1;display:flex;align-items:center;justify-content:center;transition:transform 0.16s ease, box-shadow 0.16s ease, background-color 0.16s ease;">
+            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+              <path d="M4 12h14" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>
+              <path d="M13 7l5 5-5 5" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
+            </svg>
+          </button>
+        </div>
       </div>
     </div>
   `;
@@ -195,6 +202,7 @@
   const title = document.getElementById("eb-title");
   const logo = document.getElementById("eb-logo");
   const composer = document.getElementById("eb-composer");
+  const inputWrap = document.getElementById("eb-input-wrap");
   const input = document.getElementById("eb-input");
   const send = document.getElementById("eb-send");
   const messages = document.getElementById("eb-messages");
@@ -220,24 +228,31 @@
       }
       #eb-send:hover {
         transform: translateY(-1px);
-        box-shadow: 0 4px 10px rgba(15, 23, 42, 0.10);
+        background: rgba(15, 23, 42, 0.05);
       }
       #eb-send:active {
         transform: translateY(0);
       }
-      #eb-input:focus {
+      #eb-input-wrap:focus-within {
         border-color: rgba(17, 17, 17, 0.28);
-        box-shadow: 0 0 0 4px rgba(17, 17, 17, 0.07);
-        background: #ffffff;
+        box-shadow: 0 0 0 4px rgba(17, 17, 17, 0.06);
       }
       .eb-row {
         animation: eb-message-in 0.2s ease;
       }
+      #eb-box, #eb-box * {
+        box-sizing: border-box;
+      }
       .eb-ai-msg p {
+        font-size: inherit;
+        line-height: inherit;
+        font-weight: 400;
+        letter-spacing: normal;
+        color: inherit;
         margin: 0;
       }
       .eb-ai-msg p + p {
-        margin-top: 11px;
+        margin-top: 9px;
       }
       @keyframes eb-message-in {
         0% { opacity: 0; transform: translateY(6px); }
@@ -282,9 +297,11 @@
     if (composer) {
       composer.style.background = "#ffffff";
     }
+    if (inputWrap) {
+      inputWrap.style.background = "#ffffff";
+    }
     send.style.background = primaryBackground;
     send.style.color = primaryTextColor;
-    send.style.borderColor = "transparent";
     header.style.background = headerBackground;
     header.style.color = headerTextColor;
     header.style.borderBottom = "1px solid rgba(17,17,17,0.06)";
@@ -294,6 +311,7 @@
     setFontImportant(header, fontStack);
     setFontImportant(title, fontStack);
     setFontImportant(messages, fontStack);
+    setFontImportant(inputWrap, fontStack);
     setFontImportant(input, fontStack);
     setFontImportant(send, fontStack);
 
@@ -427,6 +445,9 @@
     paragraphs.forEach((paragraphText) => {
       const paragraph = document.createElement("p");
       paragraph.style.whiteSpace = "pre-wrap";
+      paragraph.style.fontSize = "inherit";
+      paragraph.style.lineHeight = "inherit";
+      paragraph.style.fontWeight = "400";
       paragraph.textContent = paragraphText;
       target.appendChild(paragraph);
     });
@@ -439,23 +460,21 @@
 
     const row = document.createElement("div");
     row.className = "eb-row";
-    row.style.cssText = `display:flex;align-items:flex-end;gap:8px;justify-content:${isUser ? "flex-end" : "flex-start"};margin-top:${isGrouped ? "7px" : "18px"};`;
+    row.style.cssText = `display:flex;align-items:flex-end;gap:6px;justify-content:${isUser ? "flex-end" : "flex-start"};margin-top:${isGrouped ? "4px" : "10px"};`;
 
     const icon = document.createElement("span");
-    icon.style.cssText = `display:flex;align-items:center;justify-content:center;flex:0 0 24px;${isGrouped ? "visibility:hidden;" : ""}`;
-    icon.innerHTML = isUser
-      ? '<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="#aaa"><path d="M12 12c2.7 0 4.8-2.1 4.8-4.8S14.7 2.4 12 2.4 7.2 4.5 7.2 7.2 9.3 12 12 12zm0 2.4c-3.2 0-9.6 1.6-9.6 4.8v2.4h19.2v-2.4c0-3.2-6.4-4.8-9.6-4.8z"/></svg>'
-      : '<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="#aaa"><path d="M20 9V7c0-1.1-.9-2-2-2h-3c0-1.66-1.34-3-3-3S9 3.34 9 5H6c-1.1 0-2 .9-2 2v2c-1.66 0-3 1.34-3 3s1.34 3 3 3v4c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2v-4c1.66 0 3-1.34 3-3s-1.34-3-3-3zm-2 10H6V7h12v12zm-9-6c-.83 0-1.5-.67-1.5-1.5S8.17 10 9 10s1.5.67 1.5 1.5S9.83 13 9 13zm6 0c-.83 0-1.5-.67-1.5-1.5S14.17 10 15 10s1.5.67 1.5 1.5S15.83 13 15 13z"/></svg>';
+    icon.style.cssText = `display:flex;align-items:center;justify-content:center;flex:0 0 14px;width:14px;height:14px;color:#9ca3af;${isUser || isGrouped ? "visibility:hidden;" : ""}`;
+    icon.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" aria-hidden="true"><circle cx="12" cy="12" r="4.6" fill="currentColor"/></svg>';
 
     const bubbleWrap = document.createElement("div");
-    bubbleWrap.style.cssText = `display:flex;flex-direction:column;max-width:${isUser ? "76%" : "85%"};align-items:${isUser ? "flex-end" : "flex-start"};`;
+    bubbleWrap.style.cssText = `display:flex;flex-direction:column;max-width:${isUser ? "74%" : "86%"};align-items:${isUser ? "flex-end" : "flex-start"};`;
 
     const msg = document.createElement("div");
     const userBubbleColor = widgetConfig.secondary_color || defaultConfig.secondary_color;
     const bubbleBackgroundColor = isUser ? userBubbleColor : "transparent";
     const bubbleTextColor = getBubbleTextColor(bubbleBackgroundColor);
-    const userMsgStyles = `background:${bubbleBackgroundColor};color:${bubbleTextColor};padding:10px 14px;border-radius:16px;display:inline-block;max-width:100%;font-size:14px;line-height:1.48;word-break:break-word;white-space:pre-wrap;`;
-    const botMsgStyles = "background:transparent;color:#1a1a1a;padding:0;border-radius:0;display:block;max-width:min(100%, 60ch);font-size:14px;line-height:1.66;word-break:break-word;white-space:normal;";
+    const userMsgStyles = `background:${bubbleBackgroundColor};color:${bubbleTextColor};padding:8px 12px;border-radius:14px;display:inline-block;max-width:100%;font-size:14px;line-height:1.45;word-break:break-word;white-space:pre-wrap;`;
+    const botMsgStyles = "background:transparent;color:#1a1a1a;padding:0;border-radius:0;display:block;max-width:min(100%, 58ch);font-size:15px;line-height:1.52;font-weight:400;word-break:break-word;white-space:normal;";
     msg.style.cssText = isUser ? userMsgStyles : botMsgStyles;
     if (isUser) {
       msg.textContent = text;
@@ -465,7 +484,7 @@
     }
 
     const meta = document.createElement("div");
-    meta.style.cssText = "display:flex;gap:6px;margin-top:6px;font-size:11px;color:#6b7280;align-items:center;";
+    meta.style.cssText = "display:flex;gap:6px;margin-top:4px;font-size:10px;color:#9ca3af;align-items:center;";
 
     const time = document.createElement("span");
     time.textContent = timestamp;
@@ -492,7 +511,6 @@
 
     if (isUser) {
       row.appendChild(bubbleWrap);
-      row.appendChild(icon);
     } else {
       row.appendChild(icon);
       row.appendChild(bubbleWrap);
@@ -562,10 +580,10 @@
       botMessage.msg.classList.remove("eb-streaming");
       botMessage.time.textContent = nowAsTime();
       if (userMessage.status) {
-        userMessage.status.textContent = labels.sent;
+        userMessage.status.textContent = "";
       }
       conversationHistory.push({ role: "user", content: text });
-      conversationHistory.push({ role: "assistant", content: botMessage.msg.textContent });
+      conversationHistory.push({ role: "assistant", content: botStreamText });
     } catch (error) {
       const errorMessage = error instanceof Error && error.message
         ? error.message
@@ -575,6 +593,7 @@
       botMessage.time.textContent = nowAsTime();
       if (userMessage.status) {
         userMessage.status.textContent = labels.failed;
+        userMessage.status.style.color = "#b91c1c";
       }
     }
   }
