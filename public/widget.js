@@ -455,6 +455,7 @@
 
   function addMessage(text, isUser, options = {}) {
     const showStatus = options.showStatus || false;
+    const timestamp = options.timestamp || nowAsTime();
     const isGrouped = lastSender === (isUser ? "user" : "bot");
 
     const row = document.createElement("div");
@@ -462,11 +463,8 @@
     row.className = "eb-row";
     row.style.cssText = `display:flex;align-items:flex-end;gap:6px;justify-content:${isUser ? "flex-end" : "flex-start"};margin-top:${isFirstMessage ? "0" : (isGrouped ? "4px" : "10px")};`;
 
-    const icon = document.createElement("span");
-    icon.style.display = "none";
-
     const bubbleWrap = document.createElement("div");
-    bubbleWrap.style.cssText = `display:flex;flex-direction:column;max-width:${isUser ? "74%" : "86%"};align-items:${isUser ? "flex-end" : "flex-start"};`;
+    bubbleWrap.style.cssText = `display:flex;flex-direction:column;max-width:${isUser ? "74%" : "86%"};align-items:${isUser ? "flex-end" : "flex-start"};${isUser ? "" : "margin-left:-16px;"}`;
 
     const msg = document.createElement("div");
     const userBubbleColor = widgetConfig.secondary_color || defaultConfig.secondary_color;
@@ -484,13 +482,20 @@
 
     const meta = document.createElement("div");
     meta.style.cssText = "display:flex;gap:6px;margin-top:4px;font-size:10px;color:#9ca3af;align-items:center;";
+    meta.style.listStyle = "none";
+    meta.style.padding = "0";
+    meta.style.marginLeft = isUser ? "0" : "0";
+
+    const time = document.createElement("span");
+    time.textContent = timestamp;
+    meta.appendChild(time);
 
     const fontStack = getFontStack(widgetConfig.font_choice || defaultConfig.font_choice);
     setFontImportant(row, fontStack);
-    setFontImportant(icon, fontStack);
     setFontImportant(bubbleWrap, fontStack);
     setFontImportant(msg, fontStack);
     setFontImportant(meta, fontStack);
+    setFontImportant(time, fontStack);
 
     let status = null;
     if (isUser && showStatus) {
@@ -508,7 +513,6 @@
     if (isUser) {
       row.appendChild(bubbleWrap);
     } else {
-      row.appendChild(icon);
       row.appendChild(bubbleWrap);
     }
 
