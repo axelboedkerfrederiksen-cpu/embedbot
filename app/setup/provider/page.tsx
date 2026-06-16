@@ -175,7 +175,7 @@ export default function ProviderPage() {
     setMessage("");
 
     try {
-      const form = { ...snapshot.form, platform: selectedPlatform };
+      const form: Record<string, string> = { ...snapshot.form, platform: selectedPlatform };
       const res = await fetch("/api/submit", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -188,7 +188,7 @@ export default function ProviderPage() {
       }
 
       localStorage.removeItem(ONBOARDING_FORM_SNAPSHOT_KEY);
-      window.location.href = buildCheckoutUrl(snapshot.business_id, String(form.support_email || ""));
+      window.location.href = buildCheckoutUrl(snapshot.business_id, String(form["support_email"] || ""));
     } catch (error) {
       setMessage(error instanceof Error ? error.message : "Noget gik galt.");
       setLoading(false);

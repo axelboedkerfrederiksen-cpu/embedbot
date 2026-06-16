@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { Poppins } from "next/font/google";
 import { Analytics } from "@vercel/analytics/next";
+import { SpeedInsights } from "@vercel/speed-insights/next";
 import logoImage from "@/media/86a91d6a-f484-4e7d-a05c-55ab0979c3b1.png";
 import "./globals.css";
 import UniversalBackButton from "./components/universal-back-button";
@@ -35,6 +36,7 @@ export default function RootLayout({
         <UniversalBackButton />
         {children}
         <Analytics />
+        <SpeedInsights />
       </body>
     </html>
   );
