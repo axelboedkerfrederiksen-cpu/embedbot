@@ -18,7 +18,6 @@
       <path d="M6 6l12 12M18 6L6 18" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
     </svg>
   `;
-  const SOFT_SURFACE = "#f9f9f9";
 
   const hasPrimaryColorAttr = scriptTag.getAttribute("data-primary-color") !== null;
   const hasSecondaryColorAttr = scriptTag.getAttribute("data-secondary-color") !== null;
@@ -183,7 +182,7 @@
         </div>
       </div>
       <div id="eb-messages" style="flex:1;overflow-y:auto;padding:14px 14px 12px 14px;display:flex;flex-direction:column;gap:2px;height:340px"></div>
-      <div style="padding:12px;border-top:1px solid rgba(17,17,17,0.06);display:flex;gap:8px;align-items:center;background:#f9f9f9;">
+      <div id="eb-composer" style="padding:12px;border-top:1px solid rgba(17,17,17,0.06);display:flex;gap:8px;align-items:center;background:#f9f9f9;">
         <input id="eb-input" aria-label="Message input" type="text" placeholder="Skriv dit spørgsmål..." style="flex:1;padding:11px 14px;border:1px solid rgba(17,17,17,0.08);border-radius:999px;outline:none;pointer-events:all;position:relative;z-index:99999;color:#1a1a1a;background:#f9f9f9;cursor:text;user-select:text;-webkit-user-select:text;font-size:14px;font-family:inherit;caret-color:#1a1a1a;"/>
         <button id="eb-send" aria-label="Send message" style="background:#ffffff;color:#1a1a1a;border:none;padding:10px 16px;border-radius:999px;cursor:pointer;white-space:nowrap;">Send</button>
       </div>
@@ -196,6 +195,7 @@
   const header = document.getElementById("eb-header");
   const title = document.getElementById("eb-title");
   const logo = document.getElementById("eb-logo");
+  const composer = document.getElementById("eb-composer");
   const input = document.getElementById("eb-input");
   const send = document.getElementById("eb-send");
   const messages = document.getElementById("eb-messages");
@@ -236,7 +236,7 @@
     ensureFontLoaded(widgetConfig.font_choice || defaultConfig.font_choice);
     const fabBackground = widgetConfig.fab_color || defaultConfig.fab_color;
     const primaryBackground = widgetConfig.primary_color || defaultConfig.primary_color;
-    const headerBackground = getBubbleTextColor(primaryBackground) === "#1a1a1a" ? SOFT_SURFACE : primaryBackground;
+    const headerBackground = primaryBackground;
     const fabTextColor = getBubbleTextColor(fabBackground);
     const primaryTextColor = getBubbleTextColor(primaryBackground);
     const headerTextColor = getBubbleTextColor(headerBackground);
@@ -246,6 +246,9 @@
     bubble.style.boxShadow = fabTextColor === "#ffffff"
       ? "0 8px 22px rgba(0,0,0,0.22)"
       : "0 8px 22px rgba(0,0,0,0.12)";
+    if (composer) {
+      composer.style.background = widgetConfig.secondary_color || defaultConfig.secondary_color;
+    }
     send.style.background = primaryBackground;
     send.style.color = primaryTextColor;
     header.style.background = headerBackground;
