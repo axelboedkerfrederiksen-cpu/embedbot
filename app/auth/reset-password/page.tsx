@@ -121,7 +121,7 @@ export default function ResetPasswordPage() {
         }}
       >
         <h1 style={{ margin: 0, fontSize: 28, fontWeight: 700, color: "#111111", letterSpacing: "-0.03em" }}>
-          Vaelg ny adgangskode
+          Vælg ny adgangskode
         </h1>
         <p style={{ margin: 0, color: "#6b6258", fontSize: 14, fontWeight: 400 }}>
           Indtast din nye adgangskode nedenfor.

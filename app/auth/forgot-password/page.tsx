@@ -16,10 +16,35 @@ export default function ForgotPasswordPage() {
     e.preventDefault();
     setLoading(true);
     setError("");
+    setSent(false);
 
     const normalizedEmail = email.trim().toLowerCase();
     const appUrl = process.env.NEXT_PUBLIC_APP_URL?.replace(/\/$/, "") || window.location.origin;
     const redirectTo = `${appUrl}/auth/reset-password`;
+
+    const checkResponse = await fetch("/api/auth/check-email", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({ email: normalizedEmail }),
+    });
+
+    const checkData = (await checkResponse.json().catch(() => null)) as
+      | { exists?: boolean; error?: string }
+      | null;
+
+    if (!checkResponse.ok) {
+      setLoading(false);
+      setError(checkData?.error || "Kunne ikke verificere mailen.");
+      return;
+    }
+
+    if (!checkData?.exists) {
+      setLoading(false);
+      setError("Din mail kunne ikke findes i systemet.");
+      return;
+    }
 
     const { error: resetError } = await supabase.auth.resetPasswordForEmail(normalizedEmail, {
       redirectTo,
@@ -67,7 +92,7 @@ export default function ForgotPasswordPage() {
           Glemt adgangskode
         </h1>
         <p style={{ margin: 0, color: "#6b6258", fontSize: 14, fontWeight: 400 }}>
-          Indtast din e-mail, sa sender vi et link til nulstilling af adgangskode.
+          Indtast din e-mail, så sender vi et link til nulstilling af adgangskode.
         </p>
 
         <input
@@ -120,7 +145,7 @@ export default function ForgotPasswordPage() {
               padding: "10px 12px",
             }}
           >
-            Hvis e-mailen findes i systemet, er et reset-link sendt. Tjek ogsa spam/uonsket.
+            Din mail er blevet sendt. Tjek også spam.
           </p>
         ) : null}
 
