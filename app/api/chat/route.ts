@@ -3,7 +3,7 @@ import { createClient } from "@supabase/supabase-js";
 import OpenAI from "openai";
 import { createHash } from "node:crypto";
 
-const RATE_LIMIT_MAX = 15;
+const RATE_LIMIT_MAX = 50;
 const RATE_LIMIT_WINDOW_SECONDS = 24 * 60 * 60;
 
 /**
@@ -62,7 +62,7 @@ export async function POST(req: NextRequest) {
     const clientIp = getClientIp(req);
     if (await isRateLimited(clientIp)) {
       return NextResponse.json(
-        { error: "Rate limit ramt: maks 15 beskeder pr. dag." },
+        { error: "Rate limit ramt: maks 50 beskeder pr. dag." },
         { status: 429 }
       );
     }
