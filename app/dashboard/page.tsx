@@ -1,5 +1,6 @@
 "use client";
 
+import type { CSSProperties } from "react";
 import { useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
@@ -165,6 +166,46 @@ type HighlightRow = {
   businessName: string;
 };
 
+type SubscriptionInvoice = {
+  id: string;
+  status: string | null;
+  hostedInvoiceUrl: string | null;
+  invoicePdf: string | null;
+  amountDue: number | null;
+  amountPaid: number | null;
+  currency: string | null;
+  dueDate: string | null;
+};
+
+type SubscriptionInfo = {
+  businessId: string;
+  businessName: string;
+  source: "stripe" | "database";
+  status: string;
+  paymentStatus: string;
+  isActive: boolean;
+  isTrialing: boolean;
+  trialEndsAt: string | null;
+  trialDaysRemaining: number | null;
+  currentPeriodStart: string | null;
+  currentPeriodEnd: string | null;
+  cancelAtPeriodEnd: boolean | null;
+  cancelAt: string | null;
+  canceledAt: string | null;
+  collectionMethod: string | null;
+  amount: number | null;
+  currency: string | null;
+  interval: string | null;
+  productName: string;
+  quantity: number | null;
+  customerId: string | null;
+  customerEmail: string | null;
+  subscriptionId: string | null;
+  latestInvoice: SubscriptionInvoice | null;
+  updatedAt: string | null;
+  error: string | null;
+};
+
 function normalizeMessages(raw: unknown): ChatMessage[] {
   if (!Array.isArray(raw)) {
     return [];
@@ -264,6 +305,81 @@ function formatPercent(value: number): string {
   return `${Math.max(0, Math.min(100, Math.round(value)))}%`;
 }
 
+function formatDateTime(value: string | null): string {
+  if (!value) return "Ikke oplyst";
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return "Ikke oplyst";
+
+  return new Intl.DateTimeFormat("da-DK", {
+    day: "2-digit",
+    month: "short",
+    year: "numeric",
+  }).format(date);
+}
+
+function formatCurrency(amount: number | null, currency: string | null): string {
+  if (typeof amount !== "number" || !Number.isFinite(amount) || !currency) {
+    return "Ikke oplyst";
+  }
+
+  return new Intl.NumberFormat("da-DK", {
+    style: "currency",
+    currency: currency.toUpperCase(),
+  }).format(amount / 100);
+}
+
+function formatBillingInterval(interval: string | null): string {
+  switch (interval) {
+    case "day":
+      return "dag";
+    case "week":
+      return "uge";
+    case "month":
+      return "måned";
+    case "year":
+      return "år";
+    default:
+      return "periode";
+  }
+}
+
+function formatSubscriptionStatus(status: string): string {
+  switch (status.toLowerCase()) {
+    case "trialing":
+      return "Gratis prøveperiode";
+    case "active":
+      return "Aktivt";
+    case "past_due":
+      return "Betaling mangler";
+    case "canceled":
+      return "Opsagt";
+    case "unpaid":
+      return "Ubetalt";
+    case "incomplete":
+      return "Afventer betaling";
+    case "paused":
+      return "Pauset";
+    default:
+      return status || "Ukendt";
+  }
+}
+
+function getSubscriptionStatusStyle(subscription: SubscriptionInfo): CSSProperties {
+  if (subscription.error) {
+    return { background: "rgba(155,61,47,0.10)", color: "#9b3d2f", borderColor: "rgba(155,61,47,0.18)" };
+  }
+
+  if (subscription.isTrialing) {
+    return { background: "rgba(217,199,166,0.32)", color: "#5f4a21", borderColor: "rgba(217,199,166,0.7)" };
+  }
+
+  if (subscription.isActive) {
+    return { background: "rgba(47,111,83,0.10)", color: "#2f6f53", borderColor: "rgba(47,111,83,0.18)" };
+  }
+
+  return { background: "rgba(155,61,47,0.10)", color: "#9b3d2f", borderColor: "rgba(155,61,47,0.18)" };
+}
+
 export default function DashboardPage() {
   const router = useRouter();
   const supabase = useMemo(() => createClient(), []);
@@ -272,6 +388,10 @@ export default function DashboardPage() {
   const [email, setEmail] = useState("");
   const [businesses, setBusinesses] = useState<Business[]>([]);
   const [conversations, setConversations] = useState<ConversationRow[]>([]);
+  const [subscriptions, setSubscriptions] = useState<SubscriptionInfo[]>([]);
+  const [subscriptionLoading, setSubscriptionLoading] = useState(false);
+  const [subscriptionError, setSubscriptionError] = useState("");
+  const [stripeConfigured, setStripeConfigured] = useState(true);
   const [fetchError, setFetchError] = useState("");
   const [copiedBusinessId, setCopiedBusinessId] = useState<string | null>(null);
   const [editingBusinessId, setEditingBusinessId] = useState<string | null>(null);
@@ -328,6 +448,35 @@ export default function DashboardPage() {
       }
 
       setBusinesses(rows);
+      setSubscriptionLoading(true);
+      setSubscriptionError("");
+
+      fetch("/api/dashboard/subscription")
+        .then(async (response) => {
+          const result = (await response.json()) as {
+            success?: boolean;
+            error?: string;
+            subscriptions?: SubscriptionInfo[];
+            stripeConfigured?: boolean;
+          };
+
+          if (!response.ok || !result.success) {
+            throw new Error(result.error || "Kunne ikke hente abonnement.");
+          }
+
+          if (!mounted) return;
+          setSubscriptions(result.subscriptions || []);
+          setStripeConfigured(result.stripeConfigured !== false);
+        })
+        .catch((error) => {
+          if (!mounted) return;
+          setSubscriptionError(error instanceof Error ? error.message : "Kunne ikke hente abonnement.");
+          setSubscriptions([]);
+        })
+        .finally(() => {
+          if (!mounted) return;
+          setSubscriptionLoading(false);
+        });
 
       const businessIds = rows.map((row) => row.id).filter(Boolean);
       if (businessIds.length === 0) {
@@ -656,6 +805,15 @@ export default function DashboardPage() {
     };
   }, [analyticsAnchor, businessNameById, conversations]);
 
+  const primarySubscription = useMemo(() => {
+    return (
+      subscriptions.find((subscription) => subscription.isTrialing) ||
+      subscriptions.find((subscription) => subscription.isActive) ||
+      subscriptions[0] ||
+      null
+    );
+  }, [subscriptions]);
+
   if (loading) {
     return (
       <main
@@ -778,6 +936,187 @@ export default function DashboardPage() {
             {fetchError}
           </p>
         ) : null}
+
+        <section
+          style={{
+            background: "rgba(255,255,255,0.94)",
+            color: "#111111",
+            borderRadius: 24,
+            padding: 20,
+            border: "1px solid rgba(17,17,17,0.08)",
+            boxShadow: "0 18px 40px rgba(17,17,17,0.05)",
+            display: "grid",
+            gap: 14,
+          }}
+        >
+          <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", gap: 12, flexWrap: "wrap" }}>
+            <div>
+              <h2 style={{ margin: 0, fontSize: 20, fontWeight: 600 }}>Abonnement</h2>
+              <p style={{ margin: "6px 0 0", fontSize: 13, color: "#6b6258" }}>
+                Status, prøveperiode, næste betaling og Stripe-data
+              </p>
+            </div>
+            {primarySubscription ? (
+              <span
+                style={{
+                  border: "1px solid",
+                  borderRadius: 999,
+                  padding: "7px 12px",
+                  fontSize: 12,
+                  fontWeight: 700,
+                  ...getSubscriptionStatusStyle(primarySubscription),
+                }}
+              >
+                {formatSubscriptionStatus(primarySubscription.status)}
+              </span>
+            ) : null}
+          </div>
+
+          {subscriptionLoading ? (
+            <p style={{ margin: 0, color: "#6b6258", fontSize: 13 }}>Henter abonnement fra Stripe...</p>
+          ) : subscriptionError ? (
+            <p
+              style={{
+                margin: 0,
+                background: "rgba(155,61,47,0.08)",
+                border: "1px solid rgba(155,61,47,0.14)",
+                color: "#9b3d2f",
+                borderRadius: 14,
+                padding: "10px 12px",
+                fontSize: 13,
+              }}
+            >
+              {subscriptionError}
+            </p>
+          ) : subscriptions.length === 0 ? (
+            <p style={{ margin: 0, color: "#6b6258", fontSize: 13 }}>Der blev ikke fundet et abonnement på din konto.</p>
+          ) : (
+            <>
+              {primarySubscription ? (
+                <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(160px, 1fr))", gap: 10 }}>
+                  <article style={{ background: "#ffffff", border: "1px solid rgba(17,17,17,0.07)", borderRadius: 16, padding: 12 }}>
+                    <p style={{ margin: 0, fontSize: 12, color: "#6b6258" }}>Trial tilbage</p>
+                    <p style={{ margin: "8px 0 0", fontSize: 24, fontWeight: 700 }}>
+                      {primarySubscription.isTrialing && primarySubscription.trialDaysRemaining !== null
+                        ? `${primarySubscription.trialDaysRemaining} dage`
+                        : "Ikke i trial"}
+                    </p>
+                    <p style={{ margin: "4px 0 0", fontSize: 11, color: "#8a7e70" }}>
+                      Slutter: {formatDateTime(primarySubscription.trialEndsAt)}
+                    </p>
+                  </article>
+
+                  <article style={{ background: "#ffffff", border: "1px solid rgba(17,17,17,0.07)", borderRadius: 16, padding: 12 }}>
+                    <p style={{ margin: 0, fontSize: 12, color: "#6b6258" }}>Pris</p>
+                    <p style={{ margin: "8px 0 0", fontSize: 24, fontWeight: 700 }}>
+                      {formatCurrency(primarySubscription.amount, primarySubscription.currency)}
+                    </p>
+                    <p style={{ margin: "4px 0 0", fontSize: 11, color: "#8a7e70" }}>
+                      pr. {formatBillingInterval(primarySubscription.interval)}
+                    </p>
+                  </article>
+
+                  <article style={{ background: "#ffffff", border: "1px solid rgba(17,17,17,0.07)", borderRadius: 16, padding: 12 }}>
+                    <p style={{ margin: 0, fontSize: 12, color: "#6b6258" }}>Næste periode</p>
+                    <p style={{ margin: "8px 0 0", fontSize: 18, fontWeight: 700 }}>
+                      {formatDateTime(primarySubscription.currentPeriodEnd)}
+                    </p>
+                    <p style={{ margin: "4px 0 0", fontSize: 11, color: "#8a7e70" }}>
+                      {primarySubscription.cancelAtPeriodEnd ? "Opsiges ved periodens slut" : "Fornyes automatisk hvis aktivt"}
+                    </p>
+                  </article>
+
+                  <article style={{ background: "#ffffff", border: "1px solid rgba(17,17,17,0.07)", borderRadius: 16, padding: 12 }}>
+                    <p style={{ margin: 0, fontSize: 12, color: "#6b6258" }}>Betaling</p>
+                    <p style={{ margin: "8px 0 0", fontSize: 18, fontWeight: 700 }}>
+                      {primarySubscription.paymentStatus || "Ukendt"}
+                    </p>
+                    <p style={{ margin: "4px 0 0", fontSize: 11, color: "#8a7e70" }}>
+                      {primarySubscription.collectionMethod === "charge_automatically" ? "Automatisk kortbetaling" : primarySubscription.collectionMethod || "Ikke oplyst"}
+                    </p>
+                  </article>
+                </div>
+              ) : null}
+
+              {!stripeConfigured ? (
+                <p style={{ margin: 0, color: "#9b3d2f", fontSize: 13 }}>
+                  Stripe secret key er ikke konfigureret, så dashboardet viser kun gemte databasefelter.
+                </p>
+              ) : null}
+
+              <div style={{ display: "grid", gap: 10 }}>
+                {subscriptions.map((subscription) => (
+                  <article
+                    key={`${subscription.businessId}-${subscription.subscriptionId || "local"}`}
+                    style={{
+                      background: "#ffffff",
+                      border: "1px solid rgba(17,17,17,0.07)",
+                      borderRadius: 18,
+                      padding: 14,
+                      display: "grid",
+                      gap: 12,
+                    }}
+                  >
+                    <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", gap: 10, flexWrap: "wrap" }}>
+                      <div>
+                        <h3 style={{ margin: 0, fontSize: 15 }}>{subscription.businessName}</h3>
+                        <p style={{ margin: "4px 0 0", fontSize: 12, color: "#6b6258" }}>
+                          {subscription.productName} · {subscription.source === "stripe" ? "Live fra Stripe" : "Fra database"}
+                        </p>
+                      </div>
+                      <span
+                        style={{
+                          border: "1px solid",
+                          borderRadius: 999,
+                          padding: "6px 10px",
+                          fontSize: 11,
+                          fontWeight: 700,
+                          ...getSubscriptionStatusStyle(subscription),
+                        }}
+                      >
+                        {formatSubscriptionStatus(subscription.status)}
+                      </span>
+                    </div>
+
+                    <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(180px, 1fr))", gap: 8 }}>
+                      {[
+                        ["Trial slutter", formatDateTime(subscription.trialEndsAt)],
+                        ["Trial dage tilbage", subscription.trialDaysRemaining === null ? "Ikke oplyst" : `${subscription.trialDaysRemaining}`],
+                        ["Periode start", formatDateTime(subscription.currentPeriodStart)],
+                        ["Periode slut", formatDateTime(subscription.currentPeriodEnd)],
+                        ["Opsigelse", subscription.cancelAtPeriodEnd ? `Ved periodens slut (${formatDateTime(subscription.cancelAt || subscription.currentPeriodEnd)})` : "Ikke planlagt"],
+                        ["Kunde-email", subscription.customerEmail || "Ikke oplyst"],
+                        ["Abonnement ID", subscription.subscriptionId || "Ikke oplyst"],
+                        ["Kunde ID", subscription.customerId || "Ikke oplyst"],
+                        ["Seneste faktura", subscription.latestInvoice?.status || "Ikke oplyst"],
+                      ].map(([label, value]) => (
+                        <div key={`${subscription.businessId}-${label}`} style={{ border: "1px solid rgba(17,17,17,0.06)", borderRadius: 12, padding: "9px 10px" }}>
+                          <p style={{ margin: 0, fontSize: 11, color: "#8a7e70" }}>{label}</p>
+                          <p style={{ margin: "4px 0 0", fontSize: 12, color: "#111111", wordBreak: "break-word" }}>{value}</p>
+                        </div>
+                      ))}
+                    </div>
+
+                    {subscription.latestInvoice?.hostedInvoiceUrl ? (
+                      <a
+                        href={subscription.latestInvoice.hostedInvoiceUrl}
+                        target="_blank"
+                        rel="noreferrer"
+                        style={{ color: "#111111", fontSize: 13, fontWeight: 600, textUnderlineOffset: 3 }}
+                      >
+                        Åbn seneste faktura
+                      </a>
+                    ) : null}
+
+                    {subscription.error ? (
+                      <p style={{ margin: 0, color: "#9b3d2f", fontSize: 12 }}>{subscription.error}</p>
+                    ) : null}
+                  </article>
+                ))}
+              </div>
+            </>
+          )}
+        </section>
 
         <section
           style={{

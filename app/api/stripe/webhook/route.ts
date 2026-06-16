@@ -33,7 +33,7 @@ function shouldActivateFromEvent(event: Stripe.Event, session: Stripe.Checkout.S
   }
 
   if (event.type === "checkout.session.completed") {
-    return session.payment_status === "paid";
+    return session.payment_status === "paid" || session.payment_status === "no_payment_required";
   }
 
   return false;
@@ -59,6 +59,47 @@ function getCurrentPeriodEndIso(session: Stripe.Checkout.Session) {
   }
 
   return new Date(periodEndSeconds * 1000).toISOString();
+}
+
+function getSubscriptionPeriodEndIso(subscription: Stripe.Subscription | null) {
+  if (!subscription) {
+    return undefined;
+  }
+
+  const directPeriodEnd = (subscription as unknown as { current_period_end?: unknown }).current_period_end;
+  if (typeof directPeriodEnd === "number" && Number.isFinite(directPeriodEnd) && directPeriodEnd > 0) {
+    return new Date(directPeriodEnd * 1000).toISOString();
+  }
+
+  const itemPeriodEnds = subscription.items.data
+    .map((item) => item.current_period_end)
+    .filter((value) => Number.isFinite(value) && value > 0);
+
+  if (itemPeriodEnds.length === 0) {
+    return undefined;
+  }
+
+  return new Date(Math.max(...itemPeriodEnds) * 1000).toISOString();
+}
+
+function getSubscriptionStatus(session: Stripe.Checkout.Session, subscription: Stripe.Subscription | null) {
+  if (subscription?.status) {
+    return subscription.status;
+  }
+
+  return session.payment_status === "no_payment_required" ? "trialing" : "active";
+}
+
+function getInternalPaymentStatus(session: Stripe.Checkout.Session, subscriptionStatus: string) {
+  if (subscriptionStatus === "trialing") {
+    return "unpaid";
+  }
+
+  if (session.payment_status === "paid") {
+    return "paid";
+  }
+
+  return "unpaid";
 }
 
 function getCustomerEmail(session: Stripe.Checkout.Session) {
@@ -138,13 +179,21 @@ export async function POST(req: NextRequest) {
       });
     }
 
+    const subscriptionId = getStringValue(session.subscription);
+    let subscription: Stripe.Subscription | null = null;
+    if (subscriptionId) {
+      subscription = await stripe.subscriptions.retrieve(subscriptionId);
+    }
+    const subscriptionStatus = getSubscriptionStatus(session, subscription);
+    const paymentStatus = getInternalPaymentStatus(session, subscriptionStatus);
+
     const activationResult = await activateBusinessAndSendEmail(businessId, {
       paymentConfirmed: true,
-      subscriptionStatus: "active",
-      paymentStatus: "paid",
+      subscriptionStatus,
+      paymentStatus,
       stripeCustomerId: getStringValue(session.customer),
-      stripeSubscriptionId: getStringValue(session.subscription),
-      currentPeriodEnd: getCurrentPeriodEndIso(session),
+      stripeSubscriptionId: subscriptionId,
+      currentPeriodEnd: getSubscriptionPeriodEndIso(subscription) || getCurrentPeriodEndIso(session),
       customerEmail: getCustomerEmail(session),
     });
     if (!activationResult.success) {

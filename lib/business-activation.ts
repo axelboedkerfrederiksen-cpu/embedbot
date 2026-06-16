@@ -77,11 +77,16 @@ export async function activateBusinessAndSendEmail(
     return { success: false, error: "Serveren mangler environment variables.", status: 500 };
   }
 
-  // Hard guard: chatbot activation is only allowed after Stripe confirms payment.
-  if (!billingUpdate?.paymentConfirmed || billingUpdate.paymentStatus !== "paid") {
+  const normalizedSubscriptionStatus = (billingUpdate?.subscriptionStatus || "").trim().toLowerCase();
+  const normalizedPaymentStatus = (billingUpdate?.paymentStatus || "").trim().toLowerCase();
+  const hasConfirmedPaidAccess = normalizedPaymentStatus === "paid";
+  const hasConfirmedTrialAccess = normalizedSubscriptionStatus === "trialing";
+
+  // Hard guard: chatbot activation is only allowed after Stripe confirms paid or trial access.
+  if (!billingUpdate?.paymentConfirmed || (!hasConfirmedPaidAccess && !hasConfirmedTrialAccess)) {
     return {
       success: false,
-      error: "Aktivering er blokeret: Stripe-betaling er ikke bekræftet.",
+      error: "Aktivering er blokeret: Stripe har ikke bekræftet betalt eller trial adgang.",
       status: 402,
     };
   }
