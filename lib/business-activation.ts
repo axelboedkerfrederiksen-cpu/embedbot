@@ -23,6 +23,7 @@ type ActivationBillingUpdate = {
   stripeCustomerId?: string;
   stripeSubscriptionId?: string;
   currentPeriodEnd?: string;
+  customerEmail?: string;
 };
 
 const supabase = createClient(
@@ -127,7 +128,11 @@ export async function activateBusinessAndSendEmail(
     return { success: false, error: "Virksomheden mangler website_url.", status: 400 };
   }
 
-  if (!business.support_email) {
+  const supportEmail = (business.support_email || "").trim();
+  const stripeCheckoutEmail = (billingUpdate?.customerEmail || "").trim();
+  const recipientEmail = supportEmail || stripeCheckoutEmail;
+
+  if (!recipientEmail) {
     return { success: false, error: "Virksomheden mangler support_email.", status: 400 };
   }
 
@@ -148,7 +153,7 @@ export async function activateBusinessAndSendEmail(
 
   const { error: mailError } = await resend.emails.send({
     from: "axel@embedbot.dk",
-    to: business.support_email,
+    to: recipientEmail,
     subject: "Din EmbedBot er klar! 🎉",
     html: buildCustomerEmailHtml(stableBusinessId, business.name),
   });
@@ -185,6 +190,10 @@ export async function activateBusinessAndSendEmail(
 
   if (billingUpdate?.currentPeriodEnd) {
     updatePayload.current_period_end = billingUpdate.currentPeriodEnd;
+  }
+
+  if (!supportEmail && stripeCheckoutEmail) {
+    updatePayload.support_email = stripeCheckoutEmail;
   }
 
   const { error: updateError } = await supabase

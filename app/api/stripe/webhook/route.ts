@@ -61,6 +61,18 @@ function getCurrentPeriodEndIso(session: Stripe.Checkout.Session) {
   return new Date(periodEndSeconds * 1000).toISOString();
 }
 
+function getCustomerEmail(session: Stripe.Checkout.Session) {
+  if (typeof session.customer_details?.email === "string" && session.customer_details.email.trim()) {
+    return session.customer_details.email.trim();
+  }
+
+  if (typeof session.customer_email === "string" && session.customer_email.trim()) {
+    return session.customer_email.trim();
+  }
+
+  return undefined;
+}
+
 export async function POST(req: NextRequest) {
   try {
     const stripeWebhookSecret = process.env.STRIPE_WEBHOOK_SECRET?.trim();
@@ -133,6 +145,7 @@ export async function POST(req: NextRequest) {
       stripeCustomerId: getStringValue(session.customer),
       stripeSubscriptionId: getStringValue(session.subscription),
       currentPeriodEnd: getCurrentPeriodEndIso(session),
+      customerEmail: getCustomerEmail(session),
     });
     if (!activationResult.success) {
       return NextResponse.json(

@@ -302,7 +302,8 @@ export default function Home() {
       return undefined;
     }
 
-    return `${window.location.origin}/auth/callback`;
+    const nextPath = encodeURIComponent("/auth/account-created");
+    return `${window.location.origin}/auth/callback?next=${nextPath}`;
   }
 
   async function handleAuth() {
