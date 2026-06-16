@@ -398,6 +398,10 @@
     console.log("[EmbedBot] setChatOpen called:", { isOpen, hasShownWelcomeMessage });
     chatOpen = isOpen;
     box.classList.toggle("eb-open", chatOpen);
+    box.style.opacity = chatOpen ? "1" : "0";
+    box.style.visibility = chatOpen ? "visible" : "hidden";
+    box.style.transform = chatOpen ? "translateY(0) scale(1)" : "translateY(10px) scale(0.985)";
+    box.style.pointerEvents = chatOpen ? "auto" : "none";
     bubble.innerHTML = chatOpen ? CLOSE_ICON : OPEN_ICON;
     bubble.setAttribute("aria-label", chatOpen ? "Close support chat" : "Open support chat");
     if (chatOpen) {
