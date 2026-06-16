@@ -4,6 +4,7 @@ import { useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { createClient } from "@/lib/supabase";
+import { isBusinessSubscriptionActive } from "@/lib/subscription";
 
 type Business = {
   id: string;
@@ -319,6 +320,13 @@ export default function DashboardPage() {
       }
 
       const rows = (businessData || []) as Business[];
+      const hasActiveSubscription = rows.some((business) => isBusinessSubscriptionActive(business));
+
+      if (!hasActiveSubscription) {
+        router.replace("/setup/provider?reason=subscription_required");
+        return;
+      }
+
       setBusinesses(rows);
 
       const businessIds = rows.map((row) => row.id).filter(Boolean);

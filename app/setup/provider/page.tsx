@@ -1,6 +1,9 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
+import { useRouter } from "next/navigation";
+import { createClient } from "@/lib/supabase";
+import { isBusinessSubscriptionActive } from "@/lib/subscription";
 
 const ONBOARDING_FORM_SNAPSHOT_KEY = "onboarding_form_snapshot";
 const CHECKOUT_URL = "https://buy.stripe.com/eVq00j5l7gew3dj3rIf3a02?locale=da";
@@ -49,6 +52,8 @@ function getPlatformGuidance(platform: string) {
 }
 
 export default function ProviderPage() {
+  const router = useRouter();
+  const supabase = useMemo(() => createClient(), []);
   const [snapshot, setSnapshot] = useState<OnboardingSnapshot | null>(null);
   const [selectedPlatform, setSelectedPlatform] = useState("");
   const [loading, setLoading] = useState(false);
@@ -56,33 +61,87 @@ export default function ProviderPage() {
   const [ready, setReady] = useState(false);
 
   useEffect(() => {
-    if (typeof window === "undefined") {
-      return;
-    }
+    let mounted = true;
 
-    try {
-      const rawSnapshot = localStorage.getItem(ONBOARDING_FORM_SNAPSHOT_KEY);
-      if (!rawSnapshot) {
-        setMessage("Mangler onboarding-data. Gå tilbage og prøv igen.");
-        setReady(true);
+    async function initializeProviderPage() {
+      if (typeof window === "undefined") {
         return;
       }
 
-      const parsed = JSON.parse(rawSnapshot) as Partial<OnboardingSnapshot>;
-      if (!parsed?.business_id || !parsed?.form) {
-        setMessage("Onboarding-data er ugyldig. Gå tilbage og prøv igen.");
-        setReady(true);
+      const searchParams = new URLSearchParams(window.location.search);
+      if (searchParams.get("reason") === "subscription_required") {
+        setMessage("Du mangler et aktivt abonnement. Gennemfør betaling for at fortsætte.");
+      }
+
+      const {
+        data: { user },
+      } = await supabase.auth.getUser();
+
+      if (!mounted) {
         return;
       }
 
-      setSnapshot(parsed as OnboardingSnapshot);
-      setSelectedPlatform(typeof parsed.form.platform === "string" ? parsed.form.platform : "");
-      setReady(true);
-    } catch {
-      setMessage("Kunne ikke læse onboarding-data. Gå tilbage og prøv igen.");
-      setReady(true);
+      if (!user) {
+        router.replace("/login");
+        return;
+      }
+
+      try {
+        const rawSnapshot = localStorage.getItem(ONBOARDING_FORM_SNAPSHOT_KEY);
+        if (!rawSnapshot) {
+          setMessage("Mangler onboarding-data. Gå tilbage og prøv igen.");
+          setReady(true);
+          return;
+        }
+
+        const parsed = JSON.parse(rawSnapshot) as Partial<OnboardingSnapshot>;
+        if (!parsed?.business_id || !parsed?.form) {
+          setMessage("Onboarding-data er ugyldig. Gå tilbage og prøv igen.");
+          setReady(true);
+          return;
+        }
+
+        const { data: business, error: businessError } = await supabase
+          .from("businesses")
+          .select("id, user_id, subscription_status, payment_status, activated")
+          .eq("id", parsed.business_id)
+          .eq("user_id", user.id)
+          .maybeSingle();
+
+        if (!mounted) {
+          return;
+        }
+
+        if (businessError || !business) {
+          setMessage("Kunne ikke verificere din virksomhed. Gå tilbage til setup og prøv igen.");
+          setReady(true);
+          return;
+        }
+
+        if (isBusinessSubscriptionActive(business)) {
+          router.replace("/dashboard");
+          return;
+        }
+
+        setSnapshot(parsed as OnboardingSnapshot);
+        setSelectedPlatform(typeof parsed.form.platform === "string" ? parsed.form.platform : "");
+        setReady(true);
+      } catch {
+        if (!mounted) {
+          return;
+        }
+
+        setMessage("Kunne ikke læse onboarding-data. Gå tilbage og prøv igen.");
+        setReady(true);
+      }
     }
-  }, []);
+
+    initializeProviderPage();
+
+    return () => {
+      mounted = false;
+    };
+  }, [router, supabase]);
 
   const guidance = useMemo(() => getPlatformGuidance(selectedPlatform), [selectedPlatform]);
 

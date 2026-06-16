@@ -16,6 +16,14 @@ type ActivationResult = {
   status?: number;
 };
 
+type ActivationBillingUpdate = {
+  subscriptionStatus?: string;
+  paymentStatus?: string;
+  stripeCustomerId?: string;
+  stripeSubscriptionId?: string;
+  currentPeriodEnd?: string;
+};
+
 const supabase = createClient(
   process.env.SUPABASE_URL!,
   process.env.SUPABASE_SERVICE_KEY!
@@ -54,7 +62,10 @@ function buildCustomerEmailHtml(
   `;
 }
 
-export async function activateBusinessAndSendEmail(businessId: string): Promise<ActivationResult> {
+export async function activateBusinessAndSendEmail(
+  businessId: string,
+  billingUpdate?: ActivationBillingUpdate
+): Promise<ActivationResult> {
   const stableBusinessId = businessId.trim();
   if (!stableBusinessId) {
     return { success: false, error: "Mangler business_id.", status: 400 };
@@ -140,9 +151,35 @@ export async function activateBusinessAndSendEmail(businessId: string): Promise<
     };
   }
 
+  const updatePayload: Record<string, unknown> = {
+    activated: true,
+    activated_at: new Date().toISOString(),
+    subscription_updated_at: new Date().toISOString(),
+  };
+
+  if (billingUpdate?.subscriptionStatus) {
+    updatePayload.subscription_status = billingUpdate.subscriptionStatus;
+  }
+
+  if (billingUpdate?.paymentStatus) {
+    updatePayload.payment_status = billingUpdate.paymentStatus;
+  }
+
+  if (billingUpdate?.stripeCustomerId) {
+    updatePayload.stripe_customer_id = billingUpdate.stripeCustomerId;
+  }
+
+  if (billingUpdate?.stripeSubscriptionId) {
+    updatePayload.stripe_subscription_id = billingUpdate.stripeSubscriptionId;
+  }
+
+  if (billingUpdate?.currentPeriodEnd) {
+    updatePayload.current_period_end = billingUpdate.currentPeriodEnd;
+  }
+
   const { error: updateError } = await supabase
     .from("businesses")
-    .update({ activated: true })
+    .update(updatePayload)
     .eq("id", stableBusinessId);
 
   if (updateError) {

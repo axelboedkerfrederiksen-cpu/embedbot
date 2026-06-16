@@ -1,7 +1,9 @@
 "use client";
 import { useEffect, useState } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase";
+import { isBusinessSubscriptionActive } from "@/lib/subscription";
 
 const ONBOARDING_BUSINESS_ID_KEY = "onboarding_business_id";
 const ONBOARDING_FORM_SNAPSHOT_KEY = "onboarding_form_snapshot";
@@ -18,6 +20,7 @@ const GENERATING_MESSAGES = [
 const SETUP_GUIDE_PDF_PATH = "/EmbedBot_Installationsguide.pdf";
 
 export default function Home() {
+  const router = useRouter();
   type SetupUser = { id: string; email?: string | null } | null;
 
   const initialForm = {
@@ -152,22 +155,72 @@ export default function Home() {
   }
 
   useEffect(() => {
-    if (typeof window === "undefined") return;
-    const params = new URLSearchParams(window.location.search);
-    if (params.get("success") !== "true") return;
+    let isMounted = true;
 
-    try {
-      localStorage.removeItem("embedbot_embed_code");
-    } catch {}
+    async function handleSuccessGate() {
+      if (typeof window === "undefined") {
+        return;
+      }
 
-    const storedId = getStoredBusinessId();
-    if (storedId) {
+      const params = new URLSearchParams(window.location.search);
+      if (params.get("success") !== "true") {
+        return;
+      }
+
+      try {
+        localStorage.removeItem("embedbot_embed_code");
+      } catch {
+        // Ignore storage failures.
+      }
+
+      const storedId = getStoredBusinessId();
+      if (!storedId) {
+        router.replace("/setup/provider?reason=subscription_required");
+        return;
+      }
+
+      const {
+        data: { user: authUser },
+      } = await supabase.auth.getUser();
+
+      if (!isMounted) {
+        return;
+      }
+
+      if (!authUser) {
+        router.replace("/login");
+        return;
+      }
+
+      setUser(authUser);
+
+      const { data: business, error: businessError } = await supabase
+        .from("businesses")
+        .select("id, user_id, subscription_status, payment_status, activated")
+        .eq("id", storedId)
+        .eq("user_id", authUser.id)
+        .maybeSingle();
+
+      if (!isMounted) {
+        return;
+      }
+
+      if (businessError || !isBusinessSubscriptionActive(business)) {
+        router.replace("/setup/provider?reason=subscription_required");
+        return;
+      }
+
       setBusinessId(storedId);
       clearPersistedBusinessId();
+      setStep(7);
     }
 
-    setStep(7);
-  }, []);
+    handleSuccessGate();
+
+    return () => {
+      isMounted = false;
+    };
+  }, [router, supabase]);
 
   useEffect(() => {
     let isMounted = true;

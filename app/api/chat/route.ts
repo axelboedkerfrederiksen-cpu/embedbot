@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@supabase/supabase-js";
 import OpenAI from "openai";
 import { createHash } from "node:crypto";
+import { isBusinessSubscriptionActive } from "@/lib/subscription";
 
 const RATE_LIMIT_MAX = 50;
 const RATE_LIMIT_WINDOW_SECONDS = 24 * 60 * 60;
@@ -117,6 +118,13 @@ export async function POST(req: NextRequest) {
       return NextResponse.json(
         { error: "Virksomheden blev ikke fundet." },
         { status: 404 }
+      );
+    }
+
+    if (!isBusinessSubscriptionActive(business)) {
+      return NextResponse.json(
+        { error: "Abonnement kræves for at bruge chatbotten." },
+        { status: 402 }
       );
     }
 

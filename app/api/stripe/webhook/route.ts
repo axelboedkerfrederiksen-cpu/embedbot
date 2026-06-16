@@ -39,6 +39,28 @@ function shouldActivateFromEvent(event: Stripe.Event, session: Stripe.Checkout.S
   return false;
 }
 
+function getStringValue(value: unknown) {
+  if (typeof value !== "string") {
+    return "";
+  }
+
+  return value.trim();
+}
+
+function getCurrentPeriodEndIso(session: Stripe.Checkout.Session) {
+  const periodEndValue = session.metadata?.current_period_end;
+  if (typeof periodEndValue !== "string") {
+    return undefined;
+  }
+
+  const periodEndSeconds = Number(periodEndValue);
+  if (!Number.isFinite(periodEndSeconds) || periodEndSeconds <= 0) {
+    return undefined;
+  }
+
+  return new Date(periodEndSeconds * 1000).toISOString();
+}
+
 export async function POST(req: NextRequest) {
   try {
     const stripeWebhookSecret = process.env.STRIPE_WEBHOOK_SECRET?.trim();
@@ -104,7 +126,13 @@ export async function POST(req: NextRequest) {
       });
     }
 
-    const activationResult = await activateBusinessAndSendEmail(businessId);
+    const activationResult = await activateBusinessAndSendEmail(businessId, {
+      subscriptionStatus: "active",
+      paymentStatus: "paid",
+      stripeCustomerId: getStringValue(session.customer),
+      stripeSubscriptionId: getStringValue(session.subscription),
+      currentPeriodEnd: getCurrentPeriodEndIso(session),
+    });
     if (!activationResult.success) {
       return NextResponse.json(
         { success: false, error: activationResult.error || "Aktivering fejlede." },
