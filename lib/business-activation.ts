@@ -17,6 +17,7 @@ type ActivationResult = {
 };
 
 type ActivationBillingUpdate = {
+  paymentConfirmed?: boolean;
   subscriptionStatus?: string;
   paymentStatus?: string;
   stripeCustomerId?: string;
@@ -73,6 +74,15 @@ export async function activateBusinessAndSendEmail(
 
   if (!process.env.SUPABASE_URL || !process.env.SUPABASE_SERVICE_KEY || !process.env.RESEND_API_KEY) {
     return { success: false, error: "Serveren mangler environment variables.", status: 500 };
+  }
+
+  // Hard guard: chatbot activation is only allowed after Stripe confirms payment.
+  if (!billingUpdate?.paymentConfirmed || billingUpdate.paymentStatus !== "paid") {
+    return {
+      success: false,
+      error: "Aktivering er blokeret: Stripe-betaling er ikke bekræftet.",
+      status: 402,
+    };
   }
 
   const appUrl = process.env.NEXT_PUBLIC_APP_URL?.trim();

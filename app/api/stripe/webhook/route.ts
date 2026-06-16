@@ -127,6 +127,7 @@ export async function POST(req: NextRequest) {
     }
 
     const activationResult = await activateBusinessAndSendEmail(businessId, {
+      paymentConfirmed: true,
       subscriptionStatus: "active",
       paymentStatus: "paid",
       stripeCustomerId: getStringValue(session.customer),
