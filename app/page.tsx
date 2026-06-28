@@ -147,6 +147,12 @@ export default function Home() {
           width: auto;
         }
 
+        .nav-links {
+          display: flex;
+          align-items: center;
+          gap: 18px;
+        }
+
         .nav-login {
           font-size: 0.85rem;
           font-weight: 500;
@@ -471,6 +477,7 @@ export default function Home() {
             padding: 15px 16px;
             border-radius: 16px;
           }
+          .nav-links { gap: 14px; }
 
           .hero { padding: 56px 0 38px; }
           .hero::after {
@@ -509,7 +516,10 @@ export default function Home() {
         <Link href="/" className="nav-logo">
           <img src={logoImage.src} alt="EmbedBot" />
         </Link>
-        <Link href="/login" className="nav-login">Log ind</Link>
+        <div className="nav-links">
+          <Link href="/prices" className="nav-login">Priser</Link>
+          <Link href="/login" className="nav-login">Log ind</Link>
+        </div>
       </motion.nav>
 
       {/* Hero — staggered children on load */}
