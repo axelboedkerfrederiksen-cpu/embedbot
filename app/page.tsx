@@ -2,6 +2,7 @@
 import Link from "next/link";
 import logoImage from "@/media/86a91d6a-f484-4e7d-a05c-55ab0979c3b1.png";
 import { motion } from "framer-motion";
+import { useEffect, useRef, useState } from "react";
 
 const ease = [0.22, 1, 0.36, 1] as const;
 
@@ -44,6 +45,23 @@ const features = [
 
 export default function Home() {
   const DEMO_BUSINESS_ID = "a2678b5f-6d8b-415f-bbc0-ef3ce2a148bc";
+  const [showDemoNudge, setShowDemoNudge] = useState(false);
+  const demoNudgeTimerRef = useRef<number | null>(null);
+
+  useEffect(() => {
+    demoNudgeTimerRef.current = window.setTimeout(() => setShowDemoNudge(true), 1400);
+    return () => {
+      if (demoNudgeTimerRef.current) window.clearTimeout(demoNudgeTimerRef.current);
+    };
+  }, []);
+
+  const hideDemoNudge = () => {
+    if (demoNudgeTimerRef.current) {
+      window.clearTimeout(demoNudgeTimerRef.current);
+      demoNudgeTimerRef.current = null;
+    }
+    setShowDemoNudge(false);
+  };
 
   const openWidgetIfAvailable = () => {
     const bubble = document.getElementById("eb-bubble") as HTMLButtonElement | null;
@@ -53,6 +71,7 @@ export default function Home() {
   };
 
   const handleDemoClick = () => {
+    hideDemoNudge();
     const existingScript = document.getElementById("embedbot-demo-script");
     if (existingScript) { openWidgetIfAvailable(); return; }
     const script = document.createElement("script");
@@ -192,8 +211,26 @@ export default function Home() {
           font-weight: 400;
           line-height: 1.8;
           color: #5f584f;
-          margin: 0 0 34px;
+          margin: 0 0 14px;
           max-width: 54ch;
+        }
+
+        .trial-badge {
+          display: inline-flex;
+          width: fit-content;
+          align-items: center;
+          padding: 8px 13px;
+          border-radius: 999px;
+          border: 1px solid rgba(17, 17, 17, 0.08);
+          background: rgba(255, 255, 255, 0.72);
+          color: #6b6258;
+          font-size: 0.9rem;
+          font-weight: 600;
+          line-height: 1.35;
+          margin: 0 0 30px;
+          box-shadow: 0 10px 28px rgba(17, 17, 17, 0.045);
+          backdrop-filter: blur(12px);
+          -webkit-backdrop-filter: blur(12px);
         }
 
         .cta-row {
@@ -344,6 +381,88 @@ export default function Home() {
 
         .foot a:hover { color: #111111; }
 
+        .demo-nudge {
+          position: fixed;
+          right: 22px;
+          bottom: 22px;
+          z-index: 30;
+          width: min(340px, calc(100vw - 32px));
+          padding: 16px;
+          border-radius: 22px;
+          border: 1px solid rgba(17, 17, 17, 0.08);
+          background: rgba(255, 255, 255, 0.92);
+          box-shadow: 0 22px 60px rgba(17, 17, 17, 0.14);
+          backdrop-filter: blur(18px);
+          -webkit-backdrop-filter: blur(18px);
+        }
+
+        .demo-nudge-top {
+          display: flex;
+          align-items: center;
+          justify-content: space-between;
+          gap: 12px;
+          margin-bottom: 10px;
+        }
+
+        .demo-nudge-kicker {
+          display: inline-flex;
+          align-items: center;
+          color: #6b6258;
+          font-size: 0.72rem;
+          font-weight: 700;
+          letter-spacing: 0.13em;
+          text-transform: uppercase;
+        }
+
+        .demo-nudge-close {
+          width: 30px;
+          height: 30px;
+          border: 0;
+          border-radius: 999px;
+          background: #f6f3ed;
+          color: #6b6258;
+          cursor: pointer;
+          font-size: 1.2rem;
+          line-height: 1;
+          display: inline-flex;
+          align-items: center;
+          justify-content: center;
+          transition: background 180ms ease, color 180ms ease;
+        }
+
+        .demo-nudge-close:hover {
+          background: #eee8dc;
+          color: #111111;
+        }
+
+        .demo-nudge-title {
+          margin: 0 0 6px;
+          color: #111111;
+          font-size: 1.03rem;
+          font-weight: 700;
+          line-height: 1.25;
+        }
+
+        .demo-nudge-text {
+          margin: 0 0 14px;
+          color: #5f584f;
+          font-size: 0.9rem;
+          line-height: 1.55;
+        }
+
+        .demo-nudge-action {
+          width: 100%;
+          justify-content: center;
+          background: #111111;
+          color: #ffffff;
+          box-shadow: 0 14px 28px rgba(17, 17, 17, 0.14);
+        }
+
+        .demo-nudge-action:hover {
+          background: #2a2927;
+          box-shadow: 0 16px 34px rgba(17, 17, 17, 0.18);
+        }
+
         @media (max-width: 600px) {
           .page { padding: 0 20px 44px; }
           .nav {
@@ -365,6 +484,13 @@ export default function Home() {
           .features { grid-template-columns: 1fr; }
           .feat {
             padding: 24px 20px !important;
+          }
+
+          .demo-nudge {
+            right: 16px;
+            bottom: 16px;
+            border-radius: 18px;
+            padding: 14px;
           }
 
           .platforms { flex-direction: column; align-items: flex-start; gap: 14px; }
@@ -401,6 +527,9 @@ export default function Home() {
         </motion.h1>
         <motion.p className="lead" variants={fadeUp}>
           EmbedBot lærer din forretning at kende og svarer dine kunders spørgsmål automatisk — så du ikke skal.
+        </motion.p>
+        <motion.p className="trial-badge" variants={fadeUp}>
+          14 dages gratis prøveperiode • 299 kr./måned derefter
         </motion.p>
         <motion.div className="cta-row" variants={fadeUp}>
           <Link href="/setup" className="btn btn-primary">
@@ -480,6 +609,41 @@ export default function Home() {
       >
         <Link href="/dashboard">Allerede kunde? Log ind her →</Link>
       </motion.div>
+
+      {showDemoNudge && (
+        <motion.aside
+          className="demo-nudge"
+          initial={{ opacity: 0, y: 18, scale: 0.96 }}
+          animate={{ opacity: 1, y: 0, scale: 1 }}
+          transition={{ duration: 0.45, ease }}
+          aria-label="Demo invitation"
+        >
+          <div className="demo-nudge-top">
+            <span className="demo-nudge-kicker">
+              Demo
+            </span>
+            <button
+              type="button"
+              className="demo-nudge-close"
+              onClick={hideDemoNudge}
+              aria-label="Luk demo-besked"
+            >
+              ×
+            </button>
+          </div>
+          <p className="demo-nudge-title">Vil du se den i aktion?</p>
+          <p className="demo-nudge-text">
+            Prøv EmbedBot direkte her på siden og se, hvordan den svarer kunderne.
+          </p>
+          <button
+            type="button"
+            className="btn demo-nudge-action"
+            onClick={handleDemoClick}
+          >
+            Åbn demo
+          </button>
+        </motion.aside>
+      )}
     </main>
   );
 }

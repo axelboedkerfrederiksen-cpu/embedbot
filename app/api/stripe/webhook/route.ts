@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import { createClient } from "@supabase/supabase-js";
 import Stripe from "stripe";
 import { activateBusinessAndSendEmail } from "@/lib/business-activation";
 
@@ -119,6 +120,40 @@ function getCustomerEmail(session: Stripe.Checkout.Session) {
   return undefined;
 }
 
+async function findPendingBusinessIdByEmail(customerEmail: string) {
+  if (!process.env.SUPABASE_URL || !process.env.SUPABASE_SERVICE_KEY) {
+    return {
+      businessId: "",
+      error: "Serveren mangler Supabase environment variables.",
+    };
+  }
+
+  const supabase = createClient(
+    process.env.SUPABASE_URL,
+    process.env.SUPABASE_SERVICE_KEY
+  );
+
+  const { data, error } = await supabase
+    .from("businesses")
+    .select("id")
+    .eq("support_email", customerEmail)
+    .or("activated.is.false,activated.is.null")
+    .order("created_at", { ascending: false })
+    .limit(1)
+    .maybeSingle();
+
+  if (error) {
+    return {
+      businessId: "",
+      error: `Kunne ikke finde virksomhed via Stripe-email: ${error.message}`,
+    };
+  }
+
+  return {
+    businessId: typeof data?.id === "string" ? data.id.trim() : "",
+  };
+}
+
 export async function POST(req: NextRequest) {
   try {
     const stripeWebhookSecret = process.env.STRIPE_WEBHOOK_SECRET?.trim();
@@ -174,12 +209,30 @@ export async function POST(req: NextRequest) {
       });
     }
 
-    const businessId = getBusinessIdFromSession(session);
+    const customerEmail = getCustomerEmail(session);
+    let businessId = getBusinessIdFromSession(session);
+    let resolvedBusinessIdFromEmail = false;
+
+    if (!businessId && customerEmail) {
+      const fallbackLookup = await findPendingBusinessIdByEmail(customerEmail);
+      if (fallbackLookup.error) {
+        return NextResponse.json(
+          { success: false, error: fallbackLookup.error },
+          { status: 500 }
+        );
+      }
+
+      businessId = fallbackLookup.businessId;
+      resolvedBusinessIdFromEmail = Boolean(businessId);
+    }
+
     if (!businessId) {
       return NextResponse.json({
         success: true,
         ignored: true,
-        reason: "Ingen business_id i client_reference_id eller metadata.",
+        reason: customerEmail
+          ? "Ingen business_id i client_reference_id eller metadata, og ingen matchende uaktiveret virksomhed fundet via Stripe-email."
+          : "Ingen business_id i client_reference_id eller metadata, og Stripe-eventet mangler kundemail.",
         eventType: event.type,
       });
     }
@@ -199,7 +252,7 @@ export async function POST(req: NextRequest) {
       stripeCustomerId: getStripeObjectId(session.customer),
       stripeSubscriptionId: subscriptionId,
       currentPeriodEnd: getSubscriptionPeriodEndIso(subscription) || getCurrentPeriodEndIso(session),
-      customerEmail: getCustomerEmail(session),
+      customerEmail,
     });
     if (!activationResult.success) {
       return NextResponse.json(
@@ -212,6 +265,7 @@ export async function POST(req: NextRequest) {
       success: true,
       eventType: event.type,
       business_id: businessId,
+      resolvedBusinessIdFromEmail,
       alreadyActivated: Boolean(activationResult.alreadyActivated),
     });
   } catch (error) {
