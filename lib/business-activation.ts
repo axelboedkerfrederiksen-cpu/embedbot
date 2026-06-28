@@ -35,6 +35,41 @@ const resend = process.env.RESEND_API_KEY
   ? new Resend(process.env.RESEND_API_KEY)
   : null;
 
+function buildBillingUpdatePayload(
+  billingUpdate: ActivationBillingUpdate,
+  shouldUseStripeEmail: boolean
+) {
+  const updatePayload: Record<string, unknown> = {
+    subscription_updated_at: new Date().toISOString(),
+  };
+
+  if (billingUpdate.subscriptionStatus) {
+    updatePayload.subscription_status = billingUpdate.subscriptionStatus;
+  }
+
+  if (billingUpdate.paymentStatus) {
+    updatePayload.payment_status = billingUpdate.paymentStatus;
+  }
+
+  if (billingUpdate.stripeCustomerId) {
+    updatePayload.stripe_customer_id = billingUpdate.stripeCustomerId;
+  }
+
+  if (billingUpdate.stripeSubscriptionId) {
+    updatePayload.stripe_subscription_id = billingUpdate.stripeSubscriptionId;
+  }
+
+  if (billingUpdate.currentPeriodEnd) {
+    updatePayload.current_period_end = billingUpdate.currentPeriodEnd;
+  }
+
+  if (shouldUseStripeEmail && billingUpdate.customerEmail) {
+    updatePayload.support_email = billingUpdate.customerEmail;
+  }
+
+  return updatePayload;
+}
+
 function buildCustomerEmailHtml(
   businessId: string,
   businessName: string | null,
@@ -73,7 +108,7 @@ export async function activateBusinessAndSendEmail(
     return { success: false, error: "Mangler business_id.", status: 400 };
   }
 
-  if (!process.env.SUPABASE_URL || !process.env.SUPABASE_SERVICE_KEY || !process.env.RESEND_API_KEY) {
+  if (!process.env.SUPABASE_URL || !process.env.SUPABASE_SERVICE_KEY) {
     return { success: false, error: "Serveren mangler environment variables.", status: 500 };
   }
 
@@ -89,22 +124,6 @@ export async function activateBusinessAndSendEmail(
       error: "Aktivering er blokeret: Stripe har ikke bekræftet betalt eller trial adgang.",
       status: 402,
     };
-  }
-
-  const appUrl = process.env.NEXT_PUBLIC_APP_URL?.trim();
-  if (!appUrl) {
-    return { success: false, error: "Serveren mangler NEXT_PUBLIC_APP_URL.", status: 500 };
-  }
-
-  let ingestEndpoint = "";
-  try {
-    ingestEndpoint = new URL("/api/ingest", appUrl).toString();
-  } catch {
-    return { success: false, error: "NEXT_PUBLIC_APP_URL er ugyldig.", status: 500 };
-  }
-
-  if (!resend) {
-    return { success: false, error: "Resend-klient kunne ikke initialiseres.", status: 500 };
   }
 
   const { data: businessRows, error: businessError } = await supabase
@@ -125,17 +144,47 @@ export async function activateBusinessAndSendEmail(
     };
   }
 
+  const supportEmail = (business.support_email || "").trim();
+  const stripeCheckoutEmail = (billingUpdate?.customerEmail || "").trim();
+  const recipientEmail = supportEmail || stripeCheckoutEmail;
+  const billingPayload = buildBillingUpdatePayload(billingUpdate, !supportEmail && Boolean(stripeCheckoutEmail));
+
+  const { error: billingUpdateError } = await supabase
+    .from("businesses")
+    .update(billingPayload)
+    .eq("id", stableBusinessId);
+
+  if (billingUpdateError) {
+    return {
+      success: false,
+      error: `Kunne ikke gemme Stripe betalingsdata: ${billingUpdateError.message}`,
+      status: 500,
+    };
+  }
+
   if (business.activated) {
     return { success: true, alreadyActivated: true };
+  }
+
+  const appUrl = process.env.NEXT_PUBLIC_APP_URL?.trim();
+  if (!appUrl) {
+    return { success: false, error: "Serveren mangler NEXT_PUBLIC_APP_URL.", status: 500 };
+  }
+
+  let ingestEndpoint = "";
+  try {
+    ingestEndpoint = new URL("/api/ingest", appUrl).toString();
+  } catch {
+    return { success: false, error: "NEXT_PUBLIC_APP_URL er ugyldig.", status: 500 };
+  }
+
+  if (!resend) {
+    return { success: false, error: "Resend-klient kunne ikke initialiseres.", status: 500 };
   }
 
   if (!business.website_url) {
     return { success: false, error: "Virksomheden mangler website_url.", status: 400 };
   }
-
-  const supportEmail = (business.support_email || "").trim();
-  const stripeCheckoutEmail = (billingUpdate?.customerEmail || "").trim();
-  const recipientEmail = supportEmail || stripeCheckoutEmail;
 
   if (!recipientEmail) {
     return { success: false, error: "Virksomheden mangler support_email.", status: 400 };
@@ -174,31 +223,6 @@ export async function activateBusinessAndSendEmail(
   const updatePayload: Record<string, unknown> = {
     activated: true,
     activated_at: new Date().toISOString(),
-    subscription_updated_at: new Date().toISOString(),
-  };
-
-  if (billingUpdate?.subscriptionStatus) {
-    updatePayload.subscription_status = billingUpdate.subscriptionStatus;
-  }
-
-  if (billingUpdate?.paymentStatus) {
-    updatePayload.payment_status = billingUpdate.paymentStatus;
-  }
-
-  if (billingUpdate?.stripeCustomerId) {
-    updatePayload.stripe_customer_id = billingUpdate.stripeCustomerId;
-  }
-
-  if (billingUpdate?.stripeSubscriptionId) {
-    updatePayload.stripe_subscription_id = billingUpdate.stripeSubscriptionId;
-  }
-
-  if (billingUpdate?.currentPeriodEnd) {
-    updatePayload.current_period_end = billingUpdate.currentPeriodEnd;
-  }
-
-  if (!supportEmail && stripeCheckoutEmail) {
-    updatePayload.support_email = stripeCheckoutEmail;
   }
 
   const { error: updateError } = await supabase

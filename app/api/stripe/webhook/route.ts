@@ -39,12 +39,17 @@ function shouldActivateFromEvent(event: Stripe.Event, session: Stripe.Checkout.S
   return false;
 }
 
-function getStringValue(value: unknown) {
-  if (typeof value !== "string") {
-    return "";
+function getStripeObjectId(value: unknown) {
+  if (typeof value === "string") {
+    return value.trim();
   }
 
-  return value.trim();
+  if (value && typeof value === "object" && "id" in value) {
+    const id = (value as { id?: unknown }).id;
+    return typeof id === "string" ? id.trim() : "";
+  }
+
+  return "";
 }
 
 function getCurrentPeriodEndIso(session: Stripe.Checkout.Session) {
@@ -179,7 +184,7 @@ export async function POST(req: NextRequest) {
       });
     }
 
-    const subscriptionId = getStringValue(session.subscription);
+    const subscriptionId = getStripeObjectId(session.subscription);
     let subscription: Stripe.Subscription | null = null;
     if (subscriptionId) {
       subscription = await stripe.subscriptions.retrieve(subscriptionId);
@@ -191,7 +196,7 @@ export async function POST(req: NextRequest) {
       paymentConfirmed: true,
       subscriptionStatus,
       paymentStatus,
-      stripeCustomerId: getStringValue(session.customer),
+      stripeCustomerId: getStripeObjectId(session.customer),
       stripeSubscriptionId: subscriptionId,
       currentPeriodEnd: getSubscriptionPeriodEndIso(subscription) || getCurrentPeriodEndIso(session),
       customerEmail: getCustomerEmail(session),
