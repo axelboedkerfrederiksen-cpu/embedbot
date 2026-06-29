@@ -517,6 +517,7 @@ export default function Home() {
           <img src={logoImage.src} alt="EmbedBot" />
         </Link>
         <div className="nav-links">
+          <Link href="/support" className="nav-login">Support</Link>
           <Link href="/prices" className="nav-login">Priser</Link>
           <Link href="/login" className="nav-login">Log ind</Link>
         </div>

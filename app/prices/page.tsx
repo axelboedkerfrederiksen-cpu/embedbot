@@ -289,6 +289,7 @@ export default function PricesPage() {
           <Image src={logoImage} alt="EmbedBot" priority />
         </Link>
         <div className="prices-nav-links">
+          <Link href="/support" className="prices-nav-link">Support</Link>
           <Link href="/prices" className="prices-nav-link active">Priser</Link>
           <Link href="/login" className="prices-nav-link">Log ind</Link>
         </div>
@@ -338,7 +339,6 @@ export default function PricesPage() {
             Gå til opsætning
           </Link>
         </article>
-
       </motion.section>
     </main>
   );
