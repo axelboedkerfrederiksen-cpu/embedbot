@@ -45,6 +45,18 @@ type Toast = {
 const statsCardClass =
   "rounded-2xl border border-[rgba(17,17,17,0.08)] bg-[rgba(255,255,255,0.94)] p-4 shadow-[0_18px_40px_rgba(17,17,17,0.05)] backdrop-blur text-[#111111]";
 
+function stringifyEditableValue(value: unknown): string {
+  if (value === null || value === undefined) {
+    return "";
+  }
+
+  if (typeof value === "string" || typeof value === "number" || typeof value === "boolean") {
+    return String(value);
+  }
+
+  return JSON.stringify(value);
+}
+
 function getFirstNumericField(row: Business, keys: string[]): number {
   for (const key of keys) {
     const value = row[key];
@@ -248,17 +260,7 @@ export default function AdminPage() {
         return;
       }
 
-      if (value === null || value === undefined) {
-        draft[key] = "";
-        return;
-      }
-
-      if (typeof value === "string" || typeof value === "number" || typeof value === "boolean") {
-        draft[key] = String(value);
-        return;
-      }
-
-      draft[key] = JSON.stringify(value);
+      draft[key] = stringifyEditableValue(value);
     });
 
     setEditDrafts((prev) => ({ ...prev, [business.id]: draft }));
@@ -290,7 +292,16 @@ export default function AdminPage() {
       return;
     }
 
-    const updates = editDrafts[stableBusinessId] || {};
+    const draft = editDrafts[stableBusinessId] || {};
+    const updates = Object.fromEntries(
+      Object.entries(draft).filter(([key, value]) => {
+        if (key === "id" || key === "created_at" || key.endsWith("_id")) {
+          return false;
+        }
+
+        return value !== stringifyEditableValue(business[key]);
+      })
+    );
 
     if (Object.keys(updates).length === 0) {
       setError("Ingen aendringer at gemme.");

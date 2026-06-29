@@ -8,6 +8,15 @@ const supabase = createClient(
   process.env.SUPABASE_SERVICE_KEY!
 );
 
+const timestampKeys = new Set([
+  "updated_at",
+  "deleted_at",
+  "current_period_end",
+  "canceled_at",
+  "activated_at",
+  "subscription_updated_at",
+]);
+
 export async function GET(req: NextRequest) {
   try {
     const authResult = await verifyAdminSession(req);
@@ -132,6 +141,15 @@ export async function PUT(req: NextRequest) {
       Object.entries(updates).flatMap(([key, value]) => {
         if (blockedKeys.has(key)) {
           return [];
+        }
+
+        if (timestampKeys.has(key)) {
+          if (typeof value !== "string") {
+            return [[key, value]];
+          }
+
+          const trimmedTimestamp = value.trim();
+          return [[key, trimmedTimestamp ? trimmedTimestamp : null]];
         }
 
         // Protect UUID/system columns from invalid empty-string values.
