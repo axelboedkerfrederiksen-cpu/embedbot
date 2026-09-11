@@ -17,8 +17,14 @@ const stagger = {
 };
 
 const supportedPlatforms = [
+  {
+    name: "WooCommerce på WordPress",
+    logo: "https://cdn.simpleicons.org/woocommerce/96588A",
+    secondaryLogo: "https://cdn.simpleicons.org/wordpress/21759B",
+    scale: 1,
+    featured: true,
+  },
   { name: "HTML",        logo: "https://cdn.simpleicons.org/html5/E34F26", scale: 0.92 },
-  { name: "WordPress",   logo: "https://cdn.simpleicons.org/wordpress/21759B", scale: 0.9 },
   { name: "Shopify",     logo: "https://cdn.simpleicons.org/shopify/95BF47", scale: 1 },
   { name: "Squarespace", logo: "https://cdn.simpleicons.org/squarespace/111111", scale: 1.02 },
   { name: "Wix",         logo: "https://cdn.simpleicons.org/wix/111111", scale: 1.15 },
@@ -193,22 +199,23 @@ export default function Home() {
           border-radius: 999px;
           border: 1px solid rgba(17, 17, 17, 0.08);
           background: #ffffff;
-          font-size: 0.92rem;
+          font-size: 0.82rem;
           font-weight: 600;
-          letter-spacing: 0.15em;
-          text-transform: uppercase;
+          line-height: 1.4;
+          letter-spacing: 0.04em;
           color: #6b6258;
           margin-bottom: 22px;
+          max-width: 100%;
         }
 
         .headline {
           font-family: "Poppins", sans-serif;
-          font-size: clamp(2.4rem, 6vw, 5.4rem);
+          font-size: clamp(2.35rem, 5.2vw, 4.65rem);
           font-weight: 700;
-          line-height: 0.97;
+          line-height: 1.02;
           letter-spacing: -0.05em;
           margin: 0 0 24px;
-          max-width: 11ch;
+          max-width: 20ch;
           color: #111111;
         }
 
@@ -233,7 +240,7 @@ export default function Home() {
           font-size: 0.9rem;
           font-weight: 600;
           line-height: 1.35;
-          margin: 0 0 30px;
+          margin: 14px 0 0;
           box-shadow: 0 10px 28px rgba(17, 17, 17, 0.045);
           backdrop-filter: blur(12px);
           -webkit-backdrop-filter: blur(12px);
@@ -363,11 +370,37 @@ export default function Home() {
           justify-content: center;
         }
 
+        .platform-logo-wrap-featured {
+          width: 80px;
+          height: 40px;
+          padding: 7px 9px;
+          border: 1px solid rgba(150, 88, 138, 0.2);
+          border-radius: 999px;
+          background: rgba(150, 88, 138, 0.09);
+          box-shadow: 0 6px 16px rgba(150, 88, 138, 0.1);
+        }
+
+        .platform-logo-pair {
+          display: flex;
+          height: 100%;
+          align-items: center;
+          justify-content: center;
+          gap: 7px;
+        }
+
         .platform-logo {
           max-width: 100%;
           max-height: 100%;
           display: block;
           transform-origin: center;
+        }
+
+        .platform-logo-pair .platform-logo {
+          width: 24px;
+          height: 24px;
+          max-width: none;
+          max-height: none;
+          object-fit: contain;
         }
 
         .foot {
@@ -487,6 +520,7 @@ export default function Home() {
             right: -20px;
           }
           .headline { max-width: 12ch; }
+          .tag { font-size: 0.76rem; }
 
           .features { grid-template-columns: 1fr; }
           .feat {
@@ -531,25 +565,25 @@ export default function Home() {
         animate="show"
       >
         <motion.span className="tag" variants={fadeUp}>
-          🇩🇰 Dansk AI-kundesupport
+          🇩🇰 Dansk AI-kundeservice til WooCommerce
         </motion.span>
         <motion.h1 className="headline" variants={fadeUp}>
-          Tilføj en AI-chatbot til din webshop på 5 minutter
+          Giv din WooCommerce-webshop en dansk kundeservice<wbr />medarbejder, der svarer døgnet rundt.
         </motion.h1>
         <motion.p className="lead" variants={fadeUp}>
-          EmbedBot lærer din forretning at kende og svarer dine kunders spørgsmål automatisk — så du ikke skal.
-        </motion.p>
-        <motion.p className="trial-badge" variants={fadeUp}>
-          14 dages gratis prøveperiode • 299 kr./måned derefter
+          EmbedBot besvarer spørgsmål om produkter, levering, retur og størrelser direkte på din WordPress-webshop — så du får færre gentagne henvendelser og mere tid til at drive forretningen.
         </motion.p>
         <motion.div className="cta-row" variants={fadeUp}>
           <Link href="/setup" className="btn btn-primary">
-            Start opsætning
+            Prøv gratis i 14 dage
           </Link>
           <button onClick={handleDemoClick} className="btn btn-outline">
             Se demo
           </button>
         </motion.div>
+        <motion.p className="trial-badge" variants={fadeUp}>
+          Klar på få minutter · Ingen kodning · 299 kr./md. efter prøveperioden
+        </motion.p>
       </motion.section>
 
       {/* Features — scroll-triggered stagger */}
@@ -586,8 +620,9 @@ export default function Home() {
         >
           {supportedPlatforms.map((p) => (
             <motion.span
-              className="platform-logo-wrap"
+              className={`platform-logo-wrap${p.featured ? " platform-logo-wrap-featured" : ""}`}
               key={p.name}
+              title={p.name}
               variants={{
                 hidden: { opacity: 0, scale: 0.75 },
                 show: {
@@ -598,13 +633,31 @@ export default function Home() {
               }}
               whileHover={{ opacity: 1, scale: 1.04, transition: { duration: 0.15 } }}
             >
-              <img
-                src={p.logo}
-                alt={p.name}
-                className="platform-logo"
-                style={{ transform: `scale(${p.scale})` }}
-                loading="lazy"
-              />
+              {p.secondaryLogo ? (
+                <span className="platform-logo-pair">
+                  <img
+                    src={p.logo}
+                    alt={p.name}
+                    className="platform-logo"
+                    style={{ transform: `scale(${p.scale})` }}
+                    loading="lazy"
+                  />
+                  <img
+                    src={p.secondaryLogo}
+                    alt=""
+                    className="platform-logo"
+                    loading="lazy"
+                  />
+                </span>
+              ) : (
+                <img
+                  src={p.logo}
+                  alt={p.name}
+                  className="platform-logo"
+                  style={{ transform: `scale(${p.scale})` }}
+                  loading="lazy"
+                />
+              )}
             </motion.span>
           ))}
         </motion.div>
