@@ -568,10 +568,10 @@ export default function Home() {
           🇩🇰 Dansk AI-kundeservice til WooCommerce
         </motion.span>
         <motion.h1 className="headline" variants={fadeUp}>
-          Giv din WooCommerce-webshop en dansk kundeservice<wbr />medarbejder, der svarer døgnet rundt.
+          Få styr på kundeservice—automatisk.
         </motion.h1>
         <motion.p className="lead" variants={fadeUp}>
-          EmbedBot besvarer spørgsmål om produkter, levering, retur og størrelser direkte på din WordPress-webshop — så du får færre gentagne henvendelser og mere tid til at drive forretningen.
+          EmbedBot svarer på spørgsmål om produkter, levering og retur direkte på din webshop—døgnet rundt.
         </motion.p>
         <motion.div className="cta-row" variants={fadeUp}>
           <Link href="/setup" className="btn btn-primary">
