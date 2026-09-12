@@ -336,6 +336,12 @@
         height: 34px;
         margin: 2px 0;
       }
+      #eb-messages .eb-thinking-host + .eb-meta {
+        display: inline-flex !important;
+        width: 34px !important;
+        justify-content: center !important;
+        margin-top: 1px !important;
+      }
       .eb-thinking-orb {
         position: relative;
         display: grid;

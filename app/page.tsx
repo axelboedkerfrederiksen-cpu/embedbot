@@ -82,7 +82,7 @@ export default function Home() {
     if (existingScript) { openWidgetIfAvailable(); return; }
     const script = document.createElement("script");
     script.id = "embedbot-demo-script";
-    script.src = `https://www.embedbot.dk/widget.js?v=orbital-loader-2&id=${DEMO_BUSINESS_ID}`;
+    script.src = `https://www.embedbot.dk/widget.js?v=orbital-loader-3&id=${DEMO_BUSINESS_ID}`;
     script.setAttribute("data-name", "EmbedBot");
     script.setAttribute("data-primary-color", "#ffffff");
     script.setAttribute("data-secondary-color", "#f6f3ed");
