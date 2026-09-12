@@ -348,7 +348,7 @@ export default function ProviderPage() {
               Tilbage
             </a>
             <button type="button" className="provider-continue" onClick={handleContinue} disabled={loading || !ready}>
-              {loading ? "Sender videre..." : `Vælg ${selectedPlan.name} · fortsæt til betaling`}
+              {loading ? "Sender videre..." : `Fortsæt med ${selectedPlan.name} · til betaling`}
             </button>
           </div>
         </section>
