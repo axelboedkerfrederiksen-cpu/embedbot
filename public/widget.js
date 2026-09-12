@@ -329,20 +329,135 @@
         0% { opacity: 0; transform: translateY(6px); }
         100% { opacity: 1; transform: translateY(0); }
       }
-      @keyframes eb-cursor-blink {
-        0%, 49% { opacity: 1; }
-        50%, 100% { opacity: 0; }
+      .eb-thinking-card {
+        position: relative;
+        isolation: isolate;
+        display: inline-flex;
+        align-items: center;
+        gap: 10px;
+        min-height: 48px;
+        padding: 8px 14px 8px 9px;
+        overflow: hidden;
+        border: 1px solid rgba(17, 17, 17, 0.08);
+        border-radius: 18px 18px 18px 6px;
+        background: linear-gradient(135deg, rgba(255, 255, 255, 0.98), rgba(246, 243, 237, 0.92));
+        box-shadow: 0 10px 24px rgba(17, 17, 17, 0.07), inset 0 1px 0 rgba(255, 255, 255, 0.9);
       }
-      .eb-streaming::after {
+      .eb-thinking-card::before {
         content: "";
-        display: inline-block;
-        width: 2px;
-        height: 0.9em;
-        margin-left: 3px;
-        vertical-align: middle;
-        transform: translateY(-0.02em);
+        position: absolute;
+        z-index: -1;
+        inset: 0;
+        width: 56%;
+        background: linear-gradient(100deg, transparent, rgba(255, 255, 255, 0.95), transparent);
+        transform: translateX(-140%) skewX(-16deg);
+        animation: eb-thinking-shimmer 2.2s cubic-bezier(0.4, 0, 0.2, 1) infinite;
+      }
+      .eb-thinking-orb {
+        position: relative;
+        display: grid;
+        place-items: center;
+        width: 30px;
+        height: 30px;
+        flex: 0 0 30px;
+      }
+      .eb-thinking-core {
+        width: 8px;
+        height: 8px;
+        border-radius: 50%;
+        background: #111111;
+        box-shadow: 0 0 0 4px rgba(17, 17, 17, 0.07), 0 0 14px rgba(17, 17, 17, 0.28);
+        animation: eb-thinking-breathe 1.45s ease-in-out infinite;
+      }
+      .eb-thinking-ring {
+        position: absolute;
+        inset: 2px;
+        border: 1px solid rgba(17, 17, 17, 0.18);
+        border-radius: 50%;
+        animation: eb-thinking-orbit 1.65s linear infinite;
+      }
+      .eb-thinking-ring::after {
+        content: "";
+        position: absolute;
+        top: -2px;
+        left: 50%;
+        width: 5px;
+        height: 5px;
+        border-radius: 50%;
+        background: #111111;
+        box-shadow: 0 0 8px rgba(17, 17, 17, 0.3);
+      }
+      .eb-thinking-ring-secondary {
+        inset: 6px;
+        border-color: rgba(17, 17, 17, 0.11);
+        animation-duration: 1.05s;
+        animation-direction: reverse;
+      }
+      .eb-thinking-ring-secondary::after {
+        top: auto;
+        bottom: -2px;
+        width: 4px;
+        height: 4px;
+        background: #8a8176;
+      }
+      .eb-thinking-copy {
+        display: inline-flex;
+        align-items: center;
+        gap: 7px;
+        color: #504a43;
+        font-size: 11px;
+        font-weight: 600;
+        letter-spacing: 0.01em;
+        white-space: nowrap;
+      }
+      .eb-thinking-dots {
+        display: inline-flex;
+        align-items: center;
+        gap: 3px;
+        height: 10px;
+      }
+      .eb-thinking-dots i {
+        display: block;
+        width: 3px;
+        height: 3px;
+        border-radius: 50%;
         background: currentColor;
-        animation: eb-cursor-blink 0.9s steps(1, end) infinite;
+        opacity: 0.35;
+        animation: eb-thinking-dot 1.2s ease-in-out infinite;
+      }
+      .eb-thinking-dots i:nth-child(2) { animation-delay: 0.14s; }
+      .eb-thinking-dots i:nth-child(3) { animation-delay: 0.28s; }
+      .eb-answer-reveal {
+        animation: eb-answer-reveal 0.28s cubic-bezier(0.22, 1, 0.36, 1);
+      }
+      @keyframes eb-thinking-shimmer {
+        0%, 18% { transform: translateX(-140%) skewX(-16deg); opacity: 0; }
+        35% { opacity: 0.8; }
+        68%, 100% { transform: translateX(260%) skewX(-16deg); opacity: 0; }
+      }
+      @keyframes eb-thinking-breathe {
+        0%, 100% { transform: scale(0.82); opacity: 0.68; }
+        50% { transform: scale(1.14); opacity: 1; }
+      }
+      @keyframes eb-thinking-orbit {
+        to { transform: rotate(360deg); }
+      }
+      @keyframes eb-thinking-dot {
+        0%, 60%, 100% { transform: translateY(0); opacity: 0.28; }
+        30% { transform: translateY(-3px); opacity: 0.9; }
+      }
+      @keyframes eb-answer-reveal {
+        from { opacity: 0; transform: translateY(4px); filter: blur(2px); }
+        to { opacity: 1; transform: translateY(0); filter: blur(0); }
+      }
+      @media (prefers-reduced-motion: reduce) {
+        .eb-thinking-card::before,
+        .eb-thinking-core,
+        .eb-thinking-ring,
+        .eb-thinking-dots i,
+        .eb-answer-reveal {
+          animation: none !important;
+        }
       }
     `;
     document.head.appendChild(style);
@@ -539,6 +654,30 @@
     });
   }
 
+  function renderThinkingState(target, language) {
+    if (!target) return;
+    target.textContent = "";
+    target.classList.add("eb-thinking-host");
+
+    const loader = document.createElement("div");
+    loader.className = "eb-thinking-card";
+    loader.setAttribute("role", "status");
+    loader.setAttribute("aria-live", "polite");
+    loader.setAttribute("aria-label", language === "en" ? "Preparing your answer" : "Forbereder dit svar");
+    loader.innerHTML = `
+      <span class="eb-thinking-orb" aria-hidden="true">
+        <span class="eb-thinking-ring"></span>
+        <span class="eb-thinking-ring eb-thinking-ring-secondary"></span>
+        <span class="eb-thinking-core"></span>
+      </span>
+      <span class="eb-thinking-copy">
+        ${language === "en" ? "Finding the best answer" : "Finder det bedste svar"}
+        <span class="eb-thinking-dots" aria-hidden="true"><i></i><i></i><i></i></span>
+      </span>
+    `;
+    target.appendChild(loader);
+  }
+
   function addMessage(text, isUser, options = {}) {
     const showStatus = options.showStatus || false;
     const timestamp = options.timestamp || nowAsTime();
@@ -623,8 +762,9 @@
     input.value = "";
     const userMessage = addMessage(text, true, { showStatus: true, statusText: labels.sending });
     const botMessage = addMessage("", false);
-    botMessage.msg.classList.add("eb-streaming");
+    renderThinkingState(botMessage.msg, language);
     let botStreamText = "";
+    let hasStartedResponse = false;
 
     try {
       const res = await fetch(API_URL, {
@@ -654,7 +794,17 @@
           break;
         }
 
-        botStreamText += decoder.decode(value, { stream: true });
+        const streamedText = decoder.decode(value, { stream: true });
+        if (!streamedText) {
+          continue;
+        }
+
+        botStreamText += streamedText;
+        if (!hasStartedResponse) {
+          hasStartedResponse = true;
+          botMessage.msg.classList.remove("eb-thinking-host");
+          botMessage.msg.classList.add("eb-answer-reveal");
+        }
         renderAssistantText(botMessage.msg, botStreamText);
         messages.scrollTop = messages.scrollHeight;
       }
@@ -665,7 +815,7 @@
 
       renderAssistantText(botMessage.msg, botStreamText);
 
-      botMessage.msg.classList.remove("eb-streaming");
+      botMessage.msg.classList.remove("eb-thinking-host");
       if (userMessage.status) {
         userMessage.status.textContent = "";
       }
@@ -676,7 +826,7 @@
         ? error.message
         : labels.errorReply;
       renderAssistantText(botMessage.msg, errorMessage);
-      botMessage.msg.classList.remove("eb-streaming");
+      botMessage.msg.classList.remove("eb-thinking-host");
       if (userMessage.status) {
         userMessage.status.textContent = labels.failed;
         userMessage.status.style.color = "#b91c1c";
