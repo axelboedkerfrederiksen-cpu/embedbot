@@ -4,9 +4,16 @@ import { useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase";
 import { isBusinessSubscriptionActive } from "@/lib/subscription";
+import { getPlan, normalizePlan, type PlanSlug } from "@/lib/plans";
 
 const ONBOARDING_FORM_SNAPSHOT_KEY = "onboarding_form_snapshot";
-const CHECKOUT_URL = "https://buy.stripe.com/eVq00j5l7gew3dj3rIf3a02?locale=da";
+const CHECKOUT_URLS: Partial<Record<PlanSlug, string>> = {
+  starter:
+    process.env.NEXT_PUBLIC_STRIPE_STARTER_CHECKOUT_URL ||
+    "https://buy.stripe.com/eVq00j5l7gew3dj3rIf3a02?locale=da",
+  growth: process.env.NEXT_PUBLIC_STRIPE_GROWTH_CHECKOUT_URL,
+  scale: process.env.NEXT_PUBLIC_STRIPE_SCALE_CHECKOUT_URL,
+};
 const LOGO_UPLOAD_ENABLED = false;
 
 type OnboardingSnapshot = {
@@ -158,9 +165,16 @@ export default function ProviderPage() {
 
   const guidance = useMemo(() => getPlatformGuidance(selectedPlatform), [selectedPlatform]);
 
-  function buildCheckoutUrl(businessId: string, supportEmail: string) {
+  const selectedPlan = getPlan(snapshot?.form.plan);
+
+  function buildCheckoutUrl(plan: PlanSlug, businessId: string, supportEmail: string) {
+    const checkoutUrl = CHECKOUT_URLS[plan];
+    if (!checkoutUrl) {
+      return null;
+    }
+
     try {
-      const url = new URL(CHECKOUT_URL);
+      const url = new URL(checkoutUrl);
       if (supportEmail.trim()) {
         url.searchParams.set("prefilled_email", supportEmail.trim());
       }
@@ -169,7 +183,7 @@ export default function ProviderPage() {
       }
       return url.toString();
     } catch {
-      return CHECKOUT_URL;
+      return checkoutUrl;
     }
   }
 
@@ -181,6 +195,18 @@ export default function ProviderPage() {
 
     if (!selectedPlatform) {
       setMessage("Vælg en platform for at fortsætte.");
+      return;
+    }
+
+    const plan = normalizePlan(snapshot.form.plan);
+    if (plan === "enterprise") {
+      router.push("/support?plan=enterprise");
+      return;
+    }
+
+    const checkoutUrl = buildCheckoutUrl(plan, snapshot.business_id, String(snapshot.form.support_email || ""));
+    if (!checkoutUrl) {
+      setMessage(`Betalingslinket til ${getPlan(plan).name} er ikke konfigureret endnu. Kontakt os, så hjælper vi dig videre.`);
       return;
     }
 
@@ -201,7 +227,7 @@ export default function ProviderPage() {
       }
 
       localStorage.removeItem(ONBOARDING_FORM_SNAPSHOT_KEY);
-      window.location.href = buildCheckoutUrl(snapshot.business_id, String(form["support_email"] || ""));
+      window.location.href = checkoutUrl;
     } catch (error) {
       setMessage(error instanceof Error ? error.message : "Noget gik galt.");
       setLoading(false);
@@ -212,7 +238,7 @@ export default function ProviderPage() {
     <main className="provider-page">
       <div className="provider-shell">
         <section className="provider-card provider-intro">
-          <div className="provider-kicker">Næste trin før betaling</div>
+          <div className="provider-kicker">{selectedPlan.name} · {selectedPlan.answerLabel}</div>
           <h1>Hvilken platform bruger du?</h1>
           <p>
             Vælg hvor din chatbot skal installeres. Det hjælper os med at vise den rigtige vejledning

@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@supabase/supabase-js";
 import Stripe from "stripe";
 import { activateBusinessAndSendEmail } from "@/lib/business-activation";
+import type { PlanSlug } from "@/lib/plans";
 
 export const runtime = "nodejs";
 
@@ -94,6 +95,17 @@ function getSubscriptionStatus(session: Stripe.Checkout.Session, subscription: S
   }
 
   return session.payment_status === "no_payment_required" ? "trialing" : "active";
+}
+
+function getPlanFromSubscription(subscription: Stripe.Subscription | null): PlanSlug {
+  const priceId = subscription?.items.data[0]?.price.id || "";
+  const priceIds: Array<[PlanSlug, string | undefined]> = [
+    ["starter", process.env.STRIPE_STARTER_PRICE_ID],
+    ["growth", process.env.STRIPE_GROWTH_PRICE_ID],
+    ["scale", process.env.STRIPE_SCALE_PRICE_ID],
+  ];
+
+  return priceIds.find(([, configuredPriceId]) => configuredPriceId?.trim() === priceId)?.[0] || "starter";
 }
 
 function getInternalPaymentStatus(session: Stripe.Checkout.Session, subscriptionStatus: string) {
@@ -244,6 +256,7 @@ export async function POST(req: NextRequest) {
     }
     const subscriptionStatus = getSubscriptionStatus(session, subscription);
     const paymentStatus = getInternalPaymentStatus(session, subscriptionStatus);
+    const plan = getPlanFromSubscription(subscription);
 
     const activationResult = await activateBusinessAndSendEmail(businessId, {
       paymentConfirmed: true,
@@ -253,6 +266,7 @@ export async function POST(req: NextRequest) {
       stripeSubscriptionId: subscriptionId,
       currentPeriodEnd: getSubscriptionPeriodEndIso(subscription) || getCurrentPeriodEndIso(session),
       customerEmail,
+      plan,
     });
     if (!activationResult.success) {
       return NextResponse.json(

@@ -582,7 +582,7 @@ export default function Home() {
           </button>
         </motion.div>
         <motion.p className="trial-badge" variants={fadeUp}>
-          Klar på få minutter · Ingen kodning · 299 kr./md. efter prøveperioden
+          Klar på få minutter · Ingen kodning · Planer fra 299 kr./md.
         </motion.p>
       </motion.section>
 

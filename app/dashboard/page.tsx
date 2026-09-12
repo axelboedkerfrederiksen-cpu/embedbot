@@ -204,6 +204,11 @@ type SubscriptionInfo = {
   latestInvoice: SubscriptionInvoice | null;
   updatedAt: string | null;
   error: string | null;
+  plan: "starter" | "growth" | "scale" | "enterprise";
+  planName: string;
+  answersUsed: number;
+  answerLimit: number;
+  usageResetsAt: string | null;
 };
 
 function normalizeMessages(raw: unknown): ChatMessage[] {
@@ -1035,6 +1040,16 @@ export default function DashboardPage() {
                       {primarySubscription.collectionMethod === "charge_automatically" ? "Automatisk kortbetaling" : primarySubscription.collectionMethod || "Ikke oplyst"}
                     </p>
                   </article>
+
+                  <article style={{ background: "#ffffff", border: "1px solid rgba(17,17,17,0.07)", borderRadius: 16, padding: 12 }}>
+                    <p style={{ margin: 0, fontSize: 12, color: "#6b6258" }}>AI-svar · {primarySubscription.planName}</p>
+                    <p style={{ margin: "8px 0 0", fontSize: 24, fontWeight: 700 }}>
+                      {new Intl.NumberFormat("da-DK").format(primarySubscription.answersUsed)} / {new Intl.NumberFormat("da-DK").format(primarySubscription.answerLimit)}
+                    </p>
+                    <p style={{ margin: "4px 0 0", fontSize: 11, color: "#8a7e70" }}>
+                      Nulstilles {formatDateTime(primarySubscription.usageResetsAt)}
+                    </p>
+                  </article>
                 </div>
               ) : null}
 
@@ -1080,6 +1095,8 @@ export default function DashboardPage() {
 
                     <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(180px, 1fr))", gap: 8 }}>
                       {[
+                        ["Plan", subscription.planName],
+                        ["AI-svar denne måned", `${new Intl.NumberFormat("da-DK").format(subscription.answersUsed)} / ${new Intl.NumberFormat("da-DK").format(subscription.answerLimit)}`],
                         ["Trial slutter", formatDateTime(subscription.trialEndsAt)],
                         ["Trial dage tilbage", subscription.trialDaysRemaining === null ? "Ikke oplyst" : `${subscription.trialDaysRemaining}`],
                         ["Periode start", formatDateTime(subscription.currentPeriodStart)],

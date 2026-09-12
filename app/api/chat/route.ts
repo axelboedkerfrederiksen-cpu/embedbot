@@ -3,6 +3,7 @@ import { createClient } from "@supabase/supabase-js";
 import OpenAI from "openai";
 import { createHash } from "node:crypto";
 import { isBusinessSubscriptionActive } from "@/lib/subscription";
+import { getPlan } from "@/lib/plans";
 
 const RATE_LIMIT_MAX = 50;
 const RATE_LIMIT_WINDOW_SECONDS = 24 * 60 * 60;
@@ -32,9 +33,9 @@ function getClientIp(req: NextRequest): string {
   return "unknown";
 }
 
-function hashClientIp(ip: string) {
+function hashClientIp(ip: string, businessId: string) {
   const salt = process.env.RATE_LIMIT_SALT || process.env.SUPABASE_SERVICE_KEY || "embedbot";
-  return createHash("sha256").update(`${salt}:${ip}`).digest("hex");
+  return createHash("sha256").update(`${salt}:${businessId}:${ip}`).digest("hex");
 }
 
 const supabase = createClient(
@@ -43,8 +44,8 @@ const supabase = createClient(
 );
 const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY! });
 
-async function isRateLimited(ip: string) {
-  const ipHash = hashClientIp(ip);
+async function isRateLimited(ip: string, businessId: string) {
+  const ipHash = hashClientIp(ip, businessId);
   const { data, error } = await supabase.rpc("enforce_chat_rate_limit", {
     p_ip_hash: ipHash,
     p_limit: RATE_LIMIT_MAX,
@@ -58,16 +59,55 @@ async function isRateLimited(ip: string) {
   return data === true;
 }
 
+type AnswerAllowance = {
+  allowed: boolean;
+  used: number;
+  limit: number;
+};
+
+function getCurrentUtcMonthStart() {
+  const now = new Date();
+  return new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), 1)).toISOString();
+}
+
+async function consumeAnswerAllowance(businessId: string, planValue: unknown): Promise<AnswerAllowance> {
+  const plan = getPlan(planValue);
+  const { data, error } = await supabase.rpc("consume_ai_answer", {
+    p_business_id: businessId,
+    p_limit: plan.answerLimit,
+  });
+
+  if (!error) {
+    const result = Array.isArray(data) ? data[0] : data;
+    if (result && typeof result === "object") {
+      const row = result as Record<string, unknown>;
+      return {
+        allowed: row.allowed === true,
+        used: typeof row.used === "number" ? row.used : 0,
+        limit: typeof row.limit_value === "number" ? row.limit_value : plan.answerLimit,
+      };
+    }
+  }
+
+  // Safe fallback while the pricing migration is being rolled out.
+  const { count, error: countError } = await supabase
+    .from("conversations")
+    .select("id", { count: "exact", head: true })
+    .eq("business_id", businessId)
+    .gte("created_at", getCurrentUtcMonthStart());
+
+  if (countError) {
+    console.error("Could not verify monthly answer allowance:", error || countError);
+    return { allowed: false, used: plan.answerLimit, limit: plan.answerLimit };
+  }
+
+  const used = count || 0;
+  return { allowed: used < plan.answerLimit, used, limit: plan.answerLimit };
+}
+
 export async function POST(req: NextRequest) {
   try {
     const clientIp = getClientIp(req);
-    if (await isRateLimited(clientIp)) {
-      return NextResponse.json(
-        { error: "Rate limit ramt: maks 50 beskeder pr. dag." },
-        { status: 429 }
-      );
-    }
-
     const { message, business_id, page_url, history } = await req.json();
     const stableBusinessId = typeof business_id === "string" ? business_id.trim() : "";
     const stablePageUrl = typeof page_url === "string" && page_url.trim() ? page_url.trim() : "";
@@ -76,6 +116,13 @@ export async function POST(req: NextRequest) {
       return NextResponse.json(
         { error: "Mangler business_id." },
         { status: 400 }
+      );
+    }
+
+    if (await isRateLimited(clientIp, stableBusinessId)) {
+      return NextResponse.json(
+        { error: "Rate limit ramt: maks 50 beskeder pr. dag." },
+        { status: 429 }
       );
     }
 
@@ -125,6 +172,20 @@ export async function POST(req: NextRequest) {
       return NextResponse.json(
         { error: "Abonnement kræves for at bruge chatbotten." },
         { status: 402 }
+      );
+    }
+
+    const plan = getPlan(business.plan);
+    const allowance = await consumeAnswerAllowance(stableBusinessId, plan.slug);
+    if (!allowance.allowed) {
+      return NextResponse.json(
+        {
+          error: `${plan.name}-planen har brugt månedens ${new Intl.NumberFormat("da-DK").format(allowance.limit)} AI-svar. Grænsen nulstilles ved næste månedsskifte.`,
+          code: "monthly_answer_limit_reached",
+          used: allowance.used,
+          limit: allowance.limit,
+        },
+        { status: 429 }
       );
     }
 
@@ -209,10 +270,10 @@ ${sanitizeOutput(business?.custom_instructions || "Ingen")}
 `;
 
   const completion = await openai.chat.completions.create({
-    model: "gpt-4.1-nano",
+    model: "gpt-5.6-luna",
+    reasoning_effort: "none",
     stream: true,
-    max_tokens: 500,
-    temperature: 0.7,
+    max_completion_tokens: 500,
     messages: [
       {
         role: "system",

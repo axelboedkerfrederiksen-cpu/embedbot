@@ -48,6 +48,12 @@ ADMIN_EMAIL=
 # Stripe (betaling + webhook)
 STRIPE_SECRET_KEY=
 STRIPE_WEBHOOK_SECRET=
+NEXT_PUBLIC_STRIPE_STARTER_CHECKOUT_URL=
+NEXT_PUBLIC_STRIPE_GROWTH_CHECKOUT_URL=
+NEXT_PUBLIC_STRIPE_SCALE_CHECKOUT_URL=
+STRIPE_STARTER_PRICE_ID=
+STRIPE_GROWTH_PRICE_ID=
+STRIPE_SCALE_PRICE_ID=
 
 # App URL (bruges af server routes)
 NEXT_PUBLIC_APP_URL=
@@ -94,6 +100,7 @@ npm run dev
 
 Dette repository indeholder SQL til `conversations` i [sql/create_conversations_table.sql](sql/create_conversations_table.sql).
 Rate limiting til chat kræver også [sql/create_chat_rate_limit.sql](sql/create_chat_rate_limit.sql).
+Prisplaner og månedlige AI-svar kræver [sql/add_pricing_plans_and_usage.sql](sql/add_pricing_plans_and_usage.sql).
 
 Du skal også have følgende databaseobjekter, som appen bruger:
 

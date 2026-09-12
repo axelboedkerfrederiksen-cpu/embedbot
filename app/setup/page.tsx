@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase";
 import { isBusinessSubscriptionActive } from "@/lib/subscription";
+import { normalizePlan } from "@/lib/plans";
 
 const ONBOARDING_BUSINESS_ID_KEY = "onboarding_business_id";
 const ONBOARDING_FORM_SNAPSHOT_KEY = "onboarding_form_snapshot";
@@ -25,6 +26,7 @@ export default function Home() {
   type SetupUser = { id: string; email?: string | null } | null;
 
   const initialForm = {
+    plan: "starter",
     name: "", website_url: "", industry: "", description: "",
     support_email: "", phone: "", address: "", city: "",
     hours_weekday: "", hours_saturday: "", hours_sunday: "",
@@ -58,6 +60,15 @@ export default function Home() {
   const [form, setForm] = useState<FormState>(initialForm);
 
   const [supabase] = useState(() => createClient());
+
+  useEffect(() => {
+    if (typeof window === "undefined") {
+      return;
+    }
+
+    const selectedPlan = normalizePlan(new URLSearchParams(window.location.search).get("plan"));
+    setForm(current => ({ ...current, plan: selectedPlan }));
+  }, []);
 
   function getStoredBusinessId() {
     if (typeof window === "undefined") {

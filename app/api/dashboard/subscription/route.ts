@@ -3,6 +3,7 @@ import { createServerClient } from "@supabase/ssr";
 import { createClient } from "@supabase/supabase-js";
 import { cookies } from "next/headers";
 import Stripe from "stripe";
+import { getPlan } from "@/lib/plans";
 
 export const runtime = "nodejs";
 
@@ -16,7 +17,28 @@ type BusinessBillingRow = {
   current_period_end: string | null;
   subscription_updated_at: string | null;
   activated: boolean | null;
+  plan: string | null;
+  ai_answers_used: number | null;
+  ai_usage_period_start: string | null;
 };
+
+function getUsageInfo(business: BusinessBillingRow) {
+  const plan = getPlan(business.plan);
+  const now = new Date();
+  const currentMonthStart = Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), 1);
+  const nextMonthStart = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth() + 1, 1));
+  const storedPeriodStart = business.ai_usage_period_start
+    ? new Date(`${business.ai_usage_period_start}T00:00:00.000Z`).getTime()
+    : Number.NaN;
+
+  return {
+    plan: plan.slug,
+    planName: plan.name,
+    answersUsed: storedPeriodStart === currentMonthStart ? Math.max(0, business.ai_answers_used || 0) : 0,
+    answerLimit: plan.answerLimit,
+    usageResetsAt: nextMonthStart.toISOString(),
+  };
+}
 
 function getStripeClient() {
   const stripeSecret = process.env.STRIPE_SECRET_KEY?.trim();
@@ -141,6 +163,7 @@ async function getStripeSubscriptionInfo(stripe: Stripe | null, business: Busine
       latestInvoice: null,
       updatedAt: business.subscription_updated_at,
       error: "Stripe er ikke konfigureret, eller abonnementet mangler Stripe-data.",
+      ...getUsageInfo(business),
     };
   }
 
@@ -186,6 +209,7 @@ async function getStripeSubscriptionInfo(stripe: Stripe | null, business: Busine
       latestInvoice: getInvoiceStatus(subscription.latest_invoice),
       updatedAt: new Date().toISOString(),
       error: null,
+      ...getUsageInfo(business),
     };
   } catch (error) {
     return {
@@ -215,6 +239,7 @@ async function getStripeSubscriptionInfo(stripe: Stripe | null, business: Busine
       latestInvoice: null,
       updatedAt: business.subscription_updated_at,
       error: error instanceof Error ? error.message : "Kunne ikke hente abonnement fra Stripe.",
+      ...getUsageInfo(business),
     };
   }
 }
@@ -259,7 +284,7 @@ export async function GET() {
     const supabase = createClient(process.env.SUPABASE_URL, process.env.SUPABASE_SERVICE_KEY);
     const { data: businesses, error: businessError } = await supabase
       .from("businesses")
-      .select("id,name,subscription_status,payment_status,stripe_customer_id,stripe_subscription_id,current_period_end,subscription_updated_at,activated")
+      .select("id,name,subscription_status,payment_status,stripe_customer_id,stripe_subscription_id,current_period_end,subscription_updated_at,activated,plan,ai_answers_used,ai_usage_period_start")
       .eq("user_id", user.id)
       .order("created_at", { ascending: false })
       .returns<BusinessBillingRow[]>();

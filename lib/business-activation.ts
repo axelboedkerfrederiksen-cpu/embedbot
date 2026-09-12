@@ -1,5 +1,6 @@
 import { createClient } from "@supabase/supabase-js";
 import { Resend } from "resend";
+import type { PlanSlug } from "@/lib/plans";
 
 type BusinessRecord = {
   id: string;
@@ -24,6 +25,7 @@ type ActivationBillingUpdate = {
   stripeSubscriptionId?: string;
   currentPeriodEnd?: string;
   customerEmail?: string;
+  plan?: PlanSlug;
 };
 
 const supabase = createClient(
@@ -61,6 +63,10 @@ function buildBillingUpdatePayload(
 
   if (billingUpdate.currentPeriodEnd) {
     updatePayload.current_period_end = billingUpdate.currentPeriodEnd;
+  }
+
+  if (billingUpdate.plan) {
+    updatePayload.plan = billingUpdate.plan;
   }
 
   if (shouldUseStripeEmail && billingUpdate.customerEmail) {
