@@ -568,11 +568,11 @@ Sentry.init({
 - [ ] File upload to Supabase Storage (instead of base64)
 - [ ] Per-admin accounts (instead of shared token)
 - [ ] Admin audit log
-- [ ] Stripe webhook integration
+- [x] Stripe webhook integration (checkout, fornyelse, betalingsfejl og opsigelse)
 - [ ] Conversation deletion UI
 - [ ] Data retention UI controls
 - [ ] Email notification on data deletion
-- [ ] Comprehensive test suite
+- [ ] Comprehensive test suite (abonnements- og Stripe-regler har enhedstests; integration/E2E mangler)
 
 ---
 

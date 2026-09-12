@@ -138,7 +138,7 @@ export default function ProviderPage() {
 
         const { data: business, error: businessError } = await supabase
           .from("businesses")
-          .select("id, user_id, subscription_status, payment_status, activated")
+          .select("id, user_id, subscription_status, payment_status, stripe_subscription_id, activated")
           .eq("id", parsed.business_id)
           .eq("user_id", user.id)
           .maybeSingle();

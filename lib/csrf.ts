@@ -1,5 +1,5 @@
 import { NextRequest } from "next/server";
-import { createHash, randomBytes } from "node:crypto";
+import { randomBytes } from "node:crypto";
 
 /**
  * CSRF protection utility

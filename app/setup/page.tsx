@@ -1,6 +1,7 @@
 "use client";
 import { useEffect, useState } from "react";
 import Link from "next/link";
+import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase";
 import { isBusinessSubscriptionActive } from "@/lib/subscription";
@@ -151,10 +152,6 @@ export default function Home() {
     return resetBusinessIdForStepOne();
   }
 
-  function ensureBusinessId() {
-    return resolveOrCreateOnboardingBusinessId();
-  }
-
   function ensureDatabaseBusinessId() {
     if (!user?.id || typeof user.id !== "string") {
       throw new Error("Mangler bruger-id. Log ind igen og prøv på ny.");
@@ -210,7 +207,7 @@ export default function Home() {
 
       const { data: business, error: businessError } = await supabase
         .from("businesses")
-        .select("id, user_id, subscription_status, payment_status, activated")
+        .select("id, user_id, subscription_status, payment_status, stripe_subscription_id, activated")
         .eq("id", storedId)
         .eq("user_id", authUser.id)
         .maybeSingle();
@@ -251,6 +248,8 @@ export default function Home() {
     return () => {
       isMounted = false;
     };
+    // Creating/resuming an onboarding ID is intentionally tied to auth-client initialization.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [supabase]);
 
   useEffect(() => {
@@ -260,6 +259,8 @@ export default function Home() {
 
     // Every arrival at step 1 starts a new onboarding session ID.
     resetBusinessIdForStepOne();
+    // Entering step one deliberately creates exactly one fresh onboarding session.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [user, step]);
 
   useEffect(() => {
@@ -401,7 +402,7 @@ export default function Home() {
       }
     } else {
       const normalizedEmail = email.trim().toLowerCase();
-      const { data, error } = await supabase.auth.signUp({
+      const { error } = await supabase.auth.signUp({
         email: normalizedEmail,
         password,
         options: {
@@ -1872,7 +1873,7 @@ export default function Home() {
             {form.logo_file_name && <p className="font-preview">Valgt fil: {form.logo_file_name}</p>}
             {form.logo_data_url && (
               <div className="logo-preview">
-                <img src={form.logo_data_url} alt="Logo preview" />
+                <Image src={form.logo_data_url} alt="Logo preview" width={160} height={80} unoptimized />
               </div>
             )}
           </div>
@@ -1914,7 +1915,7 @@ export default function Home() {
                 }}
               >
                 {LOGO_UPLOAD_ENABLED && form.logo_data_url ? (
-                  <img className="widget-mini-logo" src={form.logo_data_url} alt="Logo" />
+                  <Image className="widget-mini-logo" src={form.logo_data_url} alt="Logo" width={32} height={32} unoptimized />
                 ) : (
                   <div className="widget-mini-logo" aria-hidden="true" />
                 )}

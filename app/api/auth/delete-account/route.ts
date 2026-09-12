@@ -48,7 +48,7 @@ export async function POST(req: NextRequest) {
     }
 
     // Call RPC function to delete account
-    const { data, error } = await supabase.rpc("delete_user_account", {
+    const { error } = await supabase.rpc("delete_user_account", {
       user_id: user.id,
     });
 

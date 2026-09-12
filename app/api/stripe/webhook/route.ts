@@ -1,167 +1,76 @@
 import { NextRequest, NextResponse } from "next/server";
-import { createClient } from "@supabase/supabase-js";
+import { createClient, type SupabaseClient } from "@supabase/supabase-js";
 import Stripe from "stripe";
 import { activateBusinessAndSendEmail } from "@/lib/business-activation";
-import type { PlanSlug } from "@/lib/plans";
+import {
+  getPaymentStatusForSubscription,
+  getPlanFromSubscription,
+  getStripeObjectId,
+  getSubscriptionIdFromInvoice,
+  getSubscriptionPeriodEndIso,
+  isCurrentSubscriptionInvoice,
+  normalizeSubscriptionStatus,
+} from "@/lib/stripe-billing";
 
 export const runtime = "nodejs";
 
+type BillingSyncResult = {
+  businessId?: string;
+  ignored?: boolean;
+  error?: string;
+};
+
 function getStripeClient() {
   const stripeSecret = process.env.STRIPE_SECRET_KEY?.trim();
-  if (!stripeSecret) {
+  return stripeSecret ? new Stripe(stripeSecret) : null;
+}
+
+function getSupabaseClient() {
+  if (!process.env.SUPABASE_URL || !process.env.SUPABASE_SERVICE_KEY) {
     return null;
   }
 
-  return new Stripe(stripeSecret);
+  return createClient(process.env.SUPABASE_URL, process.env.SUPABASE_SERVICE_KEY);
 }
 
 function getBusinessIdFromSession(session: Stripe.Checkout.Session) {
-  const fromReference = typeof session.client_reference_id === "string" ? session.client_reference_id.trim() : "";
-  if (fromReference) {
-    return fromReference;
+  const referenceId = session.client_reference_id?.trim();
+  if (referenceId) {
+    return referenceId;
   }
 
-  const fromMetadata =
-    typeof session.metadata?.business_id === "string"
-      ? session.metadata.business_id.trim()
-      : "";
-
-  return fromMetadata;
+  return session.metadata?.business_id?.trim() || "";
 }
 
-function shouldActivateFromEvent(event: Stripe.Event, session: Stripe.Checkout.Session) {
-  if (event.type === "checkout.session.async_payment_succeeded") {
-    return true;
-  }
-
-  if (event.type === "checkout.session.completed") {
-    return session.payment_status === "paid" || session.payment_status === "no_payment_required";
-  }
-
-  return false;
+function shouldActivateFromCheckout(event: Stripe.Event, session: Stripe.Checkout.Session) {
+  return event.type === "checkout.session.async_payment_succeeded"
+    || (event.type === "checkout.session.completed"
+      && (session.payment_status === "paid" || session.payment_status === "no_payment_required"));
 }
 
-function getStripeObjectId(value: unknown) {
-  if (typeof value === "string") {
-    return value.trim();
-  }
-
-  if (value && typeof value === "object" && "id" in value) {
-    const id = (value as { id?: unknown }).id;
-    return typeof id === "string" ? id.trim() : "";
-  }
-
-  return "";
-}
-
-function getCurrentPeriodEndIso(session: Stripe.Checkout.Session) {
-  const periodEndValue = session.metadata?.current_period_end;
-  if (typeof periodEndValue !== "string") {
-    return undefined;
-  }
-
-  const periodEndSeconds = Number(periodEndValue);
-  if (!Number.isFinite(periodEndSeconds) || periodEndSeconds <= 0) {
-    return undefined;
-  }
-
-  return new Date(periodEndSeconds * 1000).toISOString();
-}
-
-function getSubscriptionPeriodEndIso(subscription: Stripe.Subscription | null) {
-  if (!subscription) {
-    return undefined;
-  }
-
-  const directPeriodEnd = (subscription as unknown as { current_period_end?: unknown }).current_period_end;
-  if (typeof directPeriodEnd === "number" && Number.isFinite(directPeriodEnd) && directPeriodEnd > 0) {
-    return new Date(directPeriodEnd * 1000).toISOString();
-  }
-
-  const itemPeriodEnds = subscription.items.data
-    .map((item) => item.current_period_end)
-    .filter((value) => Number.isFinite(value) && value > 0);
-
-  if (itemPeriodEnds.length === 0) {
-    return undefined;
-  }
-
-  return new Date(Math.max(...itemPeriodEnds) * 1000).toISOString();
-}
-
-function getSubscriptionStatus(session: Stripe.Checkout.Session, subscription: Stripe.Subscription | null) {
-  if (subscription?.status) {
-    return subscription.status;
+function getCheckoutSubscriptionStatus(
+  session: Stripe.Checkout.Session,
+  subscription: Stripe.Subscription | null
+) {
+  if (subscription) {
+    return normalizeSubscriptionStatus(subscription.status);
   }
 
   return session.payment_status === "no_payment_required" ? "trialing" : "active";
 }
 
-function getPlanFromSubscription(subscription: Stripe.Subscription | null): PlanSlug | undefined {
-  const price = subscription?.items.data[0]?.price;
-  const priceId = price?.id || "";
-  const priceIds: Array<[PlanSlug, string | undefined]> = [
-    ["starter", process.env.STRIPE_STARTER_PRICE_ID],
-    ["growth", process.env.STRIPE_GROWTH_PRICE_ID],
-    ["scale", process.env.STRIPE_SCALE_PRICE_ID],
-  ];
-
-  const planFromConfiguredPriceId = priceIds.find(
-    ([, configuredPriceId]) => configuredPriceId?.trim() === priceId
-  )?.[0];
-  if (planFromConfiguredPriceId) {
-    return planFromConfiguredPriceId;
-  }
-
-  if (price?.currency === "dkk") {
-    const plansByMonthlyAmount: Record<number, PlanSlug> = {
-      29_900: "starter",
-      69_900: "growth",
-      149_900: "scale",
-    };
-    return price.unit_amount ? plansByMonthlyAmount[price.unit_amount] : undefined;
-  }
-
-  return undefined;
-}
-
-function getInternalPaymentStatus(session: Stripe.Checkout.Session, subscriptionStatus: string) {
-  if (subscriptionStatus === "trialing") {
-    return "unpaid";
-  }
-
-  if (session.payment_status === "paid") {
-    return "paid";
-  }
-
-  return "unpaid";
+function getCurrentPeriodEndFromMetadata(session: Stripe.Checkout.Session) {
+  const seconds = Number(session.metadata?.current_period_end);
+  return Number.isFinite(seconds) && seconds > 0
+    ? new Date(seconds * 1000).toISOString()
+    : undefined;
 }
 
 function getCustomerEmail(session: Stripe.Checkout.Session) {
-  if (typeof session.customer_details?.email === "string" && session.customer_details.email.trim()) {
-    return session.customer_details.email.trim();
-  }
-
-  if (typeof session.customer_email === "string" && session.customer_email.trim()) {
-    return session.customer_email.trim();
-  }
-
-  return undefined;
+  return session.customer_details?.email?.trim() || session.customer_email?.trim() || undefined;
 }
 
-async function findPendingBusinessIdByEmail(customerEmail: string) {
-  if (!process.env.SUPABASE_URL || !process.env.SUPABASE_SERVICE_KEY) {
-    return {
-      businessId: "",
-      error: "Serveren mangler Supabase environment variables.",
-    };
-  }
-
-  const supabase = createClient(
-    process.env.SUPABASE_URL,
-    process.env.SUPABASE_SERVICE_KEY
-  );
-
+async function findPendingBusinessIdByEmail(supabase: SupabaseClient, customerEmail: string) {
   const { data, error } = await supabase
     .from("businesses")
     .select("id")
@@ -171,140 +80,245 @@ async function findPendingBusinessIdByEmail(customerEmail: string) {
     .limit(1)
     .maybeSingle();
 
-  if (error) {
-    return {
-      businessId: "",
-      error: `Kunne ikke finde virksomhed via Stripe-email: ${error.message}`,
-    };
+  return {
+    businessId: typeof data?.id === "string" ? data.id.trim() : "",
+    error: error ? `Kunne ikke finde virksomhed via Stripe-email: ${error.message}` : undefined,
+  };
+}
+
+async function findBusinessForSubscription(
+  supabase: SupabaseClient,
+  subscription: Stripe.Subscription
+) {
+  const metadataBusinessId = subscription.metadata?.business_id?.trim();
+  if (metadataBusinessId) {
+    const result = await supabase
+      .from("businesses")
+      .select("id,payment_status")
+      .eq("id", metadataBusinessId)
+      .maybeSingle();
+    if (result.error || result.data) {
+      return result;
+    }
+  }
+
+  const bySubscription = await supabase
+    .from("businesses")
+    .select("id,payment_status")
+    .eq("stripe_subscription_id", subscription.id)
+    .maybeSingle();
+  if (bySubscription.error || bySubscription.data) {
+    return bySubscription;
+  }
+
+  const customerId = getStripeObjectId(subscription.customer);
+  if (!customerId) {
+    return bySubscription;
+  }
+
+  return supabase
+    .from("businesses")
+    .select("id,payment_status")
+    .eq("stripe_customer_id", customerId)
+    .order("created_at", { ascending: false })
+    .limit(1)
+    .maybeSingle();
+}
+
+async function syncSubscription(
+  supabase: SupabaseClient,
+  subscription: Stripe.Subscription,
+  paymentStatusOverride?: "paid" | "failed"
+): Promise<BillingSyncResult> {
+  const { data: business, error: lookupError } = await findBusinessForSubscription(supabase, subscription);
+  if (lookupError) {
+    return { error: `Kunne ikke finde virksomhed til Stripe-abonnement: ${lookupError.message}` };
+  }
+  if (!business?.id) {
+    return { ignored: true };
+  }
+
+  const subscriptionStatus = normalizeSubscriptionStatus(subscription.status);
+  const paymentStatus = paymentStatusOverride
+    || getPaymentStatusForSubscription(subscriptionStatus, business.payment_status);
+  const canceledAt = subscription.canceled_at
+    ? new Date(subscription.canceled_at * 1000).toISOString()
+    : subscriptionStatus === "canceled"
+      ? new Date().toISOString()
+      : null;
+  const plan = getPlanFromSubscription(subscription);
+  const updatePayload: Record<string, unknown> = {
+    subscription_status: subscriptionStatus,
+    payment_status: paymentStatus,
+    stripe_subscription_id: subscription.id,
+    stripe_customer_id: getStripeObjectId(subscription.customer) || null,
+    current_period_end: getSubscriptionPeriodEndIso(subscription),
+    canceled_at: canceledAt,
+    subscription_updated_at: new Date().toISOString(),
+  };
+  if (plan) {
+    updatePayload.plan = plan;
+  }
+
+  const { error: updateError } = await supabase
+    .from("businesses")
+    .update(updatePayload)
+    .eq("id", business.id);
+
+  return updateError
+    ? { error: `Kunne ikke opdatere abonnement: ${updateError.message}` }
+    : { businessId: business.id };
+}
+
+async function handleCheckoutEvent(
+  stripe: Stripe,
+  supabase: SupabaseClient,
+  event: Stripe.Event
+) {
+  const session = event.data.object as Stripe.Checkout.Session;
+  if (!shouldActivateFromCheckout(event, session)) {
+    return { success: true, ignored: true, reason: "Betaling er endnu ikke bekræftet." };
+  }
+
+  const customerEmail = getCustomerEmail(session);
+  let businessId = getBusinessIdFromSession(session);
+  let resolvedBusinessIdFromEmail = false;
+  if (!businessId && customerEmail) {
+    const fallback = await findPendingBusinessIdByEmail(supabase, customerEmail);
+    if (fallback.error) {
+      throw new Error(fallback.error);
+    }
+    businessId = fallback.businessId;
+    resolvedBusinessIdFromEmail = Boolean(businessId);
+  }
+
+  if (!businessId) {
+    return { success: true, ignored: true, reason: "Stripe-eventet kunne ikke knyttes til en virksomhed." };
+  }
+
+  const subscriptionId = getStripeObjectId(session.subscription);
+  const subscription = subscriptionId ? await stripe.subscriptions.retrieve(subscriptionId) : null;
+  const subscriptionStatus = getCheckoutSubscriptionStatus(session, subscription);
+  const paymentStatus = subscriptionStatus === "trialing" ? "unpaid" : "paid";
+  const plan = subscription ? getPlanFromSubscription(subscription) : undefined;
+  const activationResult = await activateBusinessAndSendEmail(businessId, {
+    paymentConfirmed: true,
+    subscriptionStatus,
+    paymentStatus,
+    stripeCustomerId: getStripeObjectId(session.customer),
+    stripeSubscriptionId: subscriptionId,
+    currentPeriodEnd: subscription
+      ? getSubscriptionPeriodEndIso(subscription) || undefined
+      : getCurrentPeriodEndFromMetadata(session),
+    customerEmail,
+    ...(plan ? { plan } : {}),
+  });
+
+  if (!activationResult.success) {
+    throw new Error(activationResult.error || "Aktivering fejlede.");
   }
 
   return {
-    businessId: typeof data?.id === "string" ? data.id.trim() : "",
+    success: true,
+    business_id: businessId,
+    resolvedBusinessIdFromEmail,
+    alreadyActivated: Boolean(activationResult.alreadyActivated),
+  };
+}
+
+async function handleSubscriptionEvent(
+  stripe: Stripe,
+  supabase: SupabaseClient,
+  event: Stripe.Event
+) {
+  let subscription: Stripe.Subscription;
+  let paymentStatusOverride: "paid" | "failed" | undefined;
+
+  if (
+    event.type === "customer.subscription.created"
+    || event.type === "customer.subscription.updated"
+    || event.type === "customer.subscription.deleted"
+    || event.type === "customer.subscription.paused"
+    || event.type === "customer.subscription.resumed"
+  ) {
+    subscription = event.data.object as Stripe.Subscription;
+  } else {
+    const invoice = event.data.object as Stripe.Invoice;
+    const subscriptionId = getSubscriptionIdFromInvoice(invoice);
+    if (!subscriptionId) {
+      return { success: true, ignored: true, reason: "Fakturaen tilhører ikke et abonnement." };
+    }
+    subscription = await stripe.subscriptions.retrieve(subscriptionId, { expand: ["latest_invoice"] });
+    if (!isCurrentSubscriptionInvoice(invoice, subscription)) {
+      return { success: true, ignored: true, reason: "Fakturaeventet er ældre end abonnementets seneste faktura." };
+    }
+    paymentStatusOverride = event.type === "invoice.paid" || event.type === "invoice.payment_succeeded"
+      ? "paid"
+      : "failed";
+  }
+
+  const result = await syncSubscription(supabase, subscription, paymentStatusOverride);
+  if (result.error) {
+    throw new Error(result.error);
+  }
+
+  return {
+    success: true,
+    ignored: Boolean(result.ignored),
+    business_id: result.businessId,
   };
 }
 
 export async function POST(req: NextRequest) {
   try {
-    const stripeWebhookSecret = process.env.STRIPE_WEBHOOK_SECRET?.trim();
-    if (!stripeWebhookSecret) {
-      return NextResponse.json(
-        { success: false, error: "Serveren mangler STRIPE_WEBHOOK_SECRET." },
-        { status: 500 }
-      );
-    }
-
+    const webhookSecret = process.env.STRIPE_WEBHOOK_SECRET?.trim();
     const stripe = getStripeClient();
-    if (!stripe) {
+    const supabase = getSupabaseClient();
+    if (!webhookSecret || !stripe || !supabase) {
       return NextResponse.json(
-        { success: false, error: "Serveren mangler STRIPE_SECRET_KEY." },
+        { success: false, error: "Serveren mangler Stripe- eller Supabase-konfiguration." },
         { status: 500 }
       );
     }
 
     const signature = req.headers.get("stripe-signature");
     if (!signature) {
-      return NextResponse.json(
-        { success: false, error: "Mangler stripe-signature header." },
-        { status: 400 }
-      );
+      return NextResponse.json({ success: false, error: "Mangler stripe-signature header." }, { status: 400 });
     }
-
-    const body = await req.text();
 
     let event: Stripe.Event;
     try {
-      event = stripe.webhooks.constructEvent(body, signature, stripeWebhookSecret);
+      event = stripe.webhooks.constructEvent(await req.text(), signature, webhookSecret);
     } catch (error) {
       return NextResponse.json(
-        {
-          success: false,
-          error: error instanceof Error ? `Ugyldig webhook-signatur: ${error.message}` : "Ugyldig webhook-signatur.",
-        },
+        { success: false, error: error instanceof Error ? `Ugyldig webhook-signatur: ${error.message}` : "Ugyldig webhook-signatur." },
         { status: 400 }
       );
     }
 
-    if (event.type !== "checkout.session.completed" && event.type !== "checkout.session.async_payment_succeeded") {
-      return NextResponse.json({ success: true, ignored: true, eventType: event.type });
+    let result: Record<string, unknown>;
+    if (event.type === "checkout.session.completed" || event.type === "checkout.session.async_payment_succeeded") {
+      result = await handleCheckoutEvent(stripe, supabase, event);
+    } else if (
+      event.type === "customer.subscription.created"
+      || event.type === "customer.subscription.updated"
+      || event.type === "customer.subscription.deleted"
+      || event.type === "customer.subscription.paused"
+      || event.type === "customer.subscription.resumed"
+      || event.type === "invoice.paid"
+      || event.type === "invoice.payment_succeeded"
+      || event.type === "invoice.payment_failed"
+      || event.type === "invoice.finalization_failed"
+    ) {
+      result = await handleSubscriptionEvent(stripe, supabase, event);
+    } else {
+      result = { success: true, ignored: true };
     }
 
-    const session = event.data.object as Stripe.Checkout.Session;
-    if (!shouldActivateFromEvent(event, session)) {
-      return NextResponse.json({
-        success: true,
-        ignored: true,
-        reason: "Betaling er endnu ikke bekræftet.",
-        eventType: event.type,
-      });
-    }
-
-    const customerEmail = getCustomerEmail(session);
-    let businessId = getBusinessIdFromSession(session);
-    let resolvedBusinessIdFromEmail = false;
-
-    if (!businessId && customerEmail) {
-      const fallbackLookup = await findPendingBusinessIdByEmail(customerEmail);
-      if (fallbackLookup.error) {
-        return NextResponse.json(
-          { success: false, error: fallbackLookup.error },
-          { status: 500 }
-        );
-      }
-
-      businessId = fallbackLookup.businessId;
-      resolvedBusinessIdFromEmail = Boolean(businessId);
-    }
-
-    if (!businessId) {
-      return NextResponse.json({
-        success: true,
-        ignored: true,
-        reason: customerEmail
-          ? "Ingen business_id i client_reference_id eller metadata, og ingen matchende uaktiveret virksomhed fundet via Stripe-email."
-          : "Ingen business_id i client_reference_id eller metadata, og Stripe-eventet mangler kundemail.",
-        eventType: event.type,
-      });
-    }
-
-    const subscriptionId = getStripeObjectId(session.subscription);
-    let subscription: Stripe.Subscription | null = null;
-    if (subscriptionId) {
-      subscription = await stripe.subscriptions.retrieve(subscriptionId);
-    }
-    const subscriptionStatus = getSubscriptionStatus(session, subscription);
-    const paymentStatus = getInternalPaymentStatus(session, subscriptionStatus);
-    const plan = getPlanFromSubscription(subscription);
-
-    const activationResult = await activateBusinessAndSendEmail(businessId, {
-      paymentConfirmed: true,
-      subscriptionStatus,
-      paymentStatus,
-      stripeCustomerId: getStripeObjectId(session.customer),
-      stripeSubscriptionId: subscriptionId,
-      currentPeriodEnd: getSubscriptionPeriodEndIso(subscription) || getCurrentPeriodEndIso(session),
-      customerEmail,
-      ...(plan ? { plan } : {}),
-    });
-    if (!activationResult.success) {
-      return NextResponse.json(
-        { success: false, error: activationResult.error || "Aktivering fejlede." },
-        { status: activationResult.status || 500 }
-      );
-    }
-
-    return NextResponse.json({
-      success: true,
-      eventType: event.type,
-      business_id: businessId,
-      resolvedBusinessIdFromEmail,
-      alreadyActivated: Boolean(activationResult.alreadyActivated),
-    });
+    return NextResponse.json({ ...result, eventType: event.type });
   } catch (error) {
     return NextResponse.json(
-      {
-        success: false,
-        error: error instanceof Error ? error.message : "Ukendt webhook-fejl.",
-      },
+      { success: false, error: error instanceof Error ? error.message : "Ukendt webhook-fejl." },
       { status: 500 }
     );
   }

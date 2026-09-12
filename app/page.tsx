@@ -1,5 +1,6 @@
 "use client";
 import Link from "next/link";
+import Image from "next/image";
 import logoImage from "@/media/86a91d6a-f484-4e7d-a05c-55ab0979c3b1.png";
 import { motion } from "framer-motion";
 import { useEffect, useRef, useState } from "react";
@@ -548,7 +549,7 @@ export default function Home() {
         transition={{ duration: 0.5, ease }}
       >
         <Link href="/" className="nav-logo">
-          <img src={logoImage.src} alt="EmbedBot" />
+          <Image src={logoImage} alt="EmbedBot" priority />
         </Link>
         <div className="nav-links">
           <Link href="/support" className="nav-login">Support</Link>
@@ -635,24 +636,33 @@ export default function Home() {
             >
               {p.secondaryLogo ? (
                 <span className="platform-logo-pair">
-                  <img
+                  <Image
                     src={p.logo}
                     alt={p.name}
+                    width={40}
+                    height={40}
+                    unoptimized
                     className="platform-logo"
                     style={{ transform: `scale(${p.scale})` }}
                     loading="lazy"
                   />
-                  <img
+                  <Image
                     src={p.secondaryLogo}
                     alt=""
+                    width={40}
+                    height={40}
+                    unoptimized
                     className="platform-logo"
                     loading="lazy"
                   />
                 </span>
               ) : (
-                <img
+                <Image
                   src={p.logo}
                   alt={p.name}
+                  width={40}
+                  height={40}
+                  unoptimized
                   className="platform-logo"
                   style={{ transform: `scale(${p.scale})` }}
                   loading="lazy"

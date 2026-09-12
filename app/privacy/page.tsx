@@ -14,7 +14,7 @@ export default function PrivacyPolicy() {
           <section className="mb-8">
             <h2 className="text-2xl font-semibold text-gray-900 mb-4">1. Introduktion</h2>
             <p>
-              EmbedBot ("vi", "os", "vores") drifter embedbot.dk ("Tjenesten"). Denne privatlivspolitik forklarer, hvordan vi indsamler, bruger, videregiver og beskytter dine data.
+              EmbedBot (”vi”, ”os”, ”vores”) drifter embedbot.dk (”Tjenesten”). Denne privatlivspolitik forklarer, hvordan vi indsamler, bruger, videregiver og beskytter dine data.
             </p>
           </section>
 
@@ -102,7 +102,7 @@ export default function PrivacyPolicy() {
           <section className="mb-8">
             <h2 className="text-2xl font-semibold text-gray-900 mb-4">5. Databehandling med OpenAI</h2>
             <p>
-              Vi sender dine beskedertil OpenAI's API for at generere svar. OpenAI kan behandle dine data ifølge deres privatlivspolitik. Vi har IKKE valgt at deaktivere OpenAI's dataopbevaring.
+              Vi sender dine beskeder til OpenAI’s API for at generere svar. OpenAI kan behandle dine data ifølge deres privatlivspolitik. Vi har IKKE valgt at deaktivere OpenAI’s dataopbevaring.
             </p>
             <p className="mt-4">
               <strong>Hvad vi sender:</strong>
@@ -178,7 +178,7 @@ export default function PrivacyPolicy() {
             <ul className="list-disc list-inside mb-4">
               <li><strong>Adgang:</strong> Anmod om kopi af dine data</li>
               <li><strong>Berettigung:</strong> Ændring af urigtige data</li>
-              <li><strong>Sletning:</strong> "Retten til at blive glemt"</li>
+              <li><strong>Sletning:</strong> ”Retten til at blive glemt”</li>
               <li><strong>Indskrænkning:</strong> Begrænsning af behandling</li>
               <li><strong>Overførbarhed:</strong> Modtagelse af dine data i struktureret format</li>
               <li><strong>Indsigelse:</strong> Indsigelse mod behandling</li>

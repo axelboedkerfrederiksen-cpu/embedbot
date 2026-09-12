@@ -19,10 +19,6 @@
     </svg>
   `;
 
-  const hasPrimaryColorAttr = scriptTag.getAttribute("data-primary-color") !== null;
-  const hasSecondaryColorAttr = scriptTag.getAttribute("data-secondary-color") !== null;
-  const hasFabColorAttr = scriptTag.getAttribute("data-fab-color") !== null;
-  const hasFontAttr = scriptTag.getAttribute("data-font") !== null;
   const scriptName = (scriptTag.getAttribute("data-name") || "").trim();
 
   const defaultConfig = {
@@ -480,7 +476,7 @@
       }
       const cached = localStorage.getItem(CONFIG_CACHE_KEY);
       return cached ? JSON.parse(cached) : null;
-    } catch (_) {
+    } catch {
       return null;
     }
   }
@@ -491,7 +487,7 @@
         return;
       }
       localStorage.setItem(CONFIG_CACHE_KEY, JSON.stringify(config));
-    } catch (_) {
+    } catch {
       // Ignore cache write failures
     }
   }
@@ -551,7 +547,7 @@
         // If chat was opened before config finished loading, try again now.
         tryShowWelcomeMessage();
       }
-    } catch (_) {
+    } catch {
       // If fetch failed and we have cache, keep using it
       if (!cachedConfig) {
         widgetConfig = {

@@ -111,7 +111,8 @@ async function persistWithMissingColumnFallback(payload: Record<string, unknown>
     }
 
     // Keep as much data as possible by removing only unavailable columns.
-    const { [missingColumn]: _removed, ...rest } = activePayload;
+    const rest = { ...activePayload };
+    delete rest[missingColumn];
     activePayload = { ...rest, id: payload.id };
   }
 

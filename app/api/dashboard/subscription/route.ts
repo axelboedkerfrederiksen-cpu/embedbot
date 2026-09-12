@@ -4,6 +4,7 @@ import { createClient } from "@supabase/supabase-js";
 import { cookies } from "next/headers";
 import Stripe from "stripe";
 import { getAnswerLimit, getPlan } from "@/lib/plans";
+import { isBusinessSubscriptionActive } from "@/lib/subscription";
 
 export const runtime = "nodejs";
 
@@ -143,7 +144,7 @@ async function getStripeSubscriptionInfo(stripe: Stripe | null, business: Busine
       source: "database" as const,
       status: business.subscription_status || "unknown",
       paymentStatus: business.payment_status || "unknown",
-      isActive: Boolean(business.activated) || ["active", "trialing"].includes((business.subscription_status || "").toLowerCase()),
+      isActive: isBusinessSubscriptionActive(business as unknown as Record<string, unknown>),
       isTrialing: (business.subscription_status || "").toLowerCase() === "trialing",
       trialEndsAt: null,
       trialDaysRemaining: null,
@@ -219,7 +220,7 @@ async function getStripeSubscriptionInfo(stripe: Stripe | null, business: Busine
       source: "database" as const,
       status: business.subscription_status || "unknown",
       paymentStatus: business.payment_status || "unknown",
-      isActive: Boolean(business.activated) || ["active", "trialing"].includes((business.subscription_status || "").toLowerCase()),
+      isActive: isBusinessSubscriptionActive(business as unknown as Record<string, unknown>),
       isTrialing: (business.subscription_status || "").toLowerCase() === "trialing",
       trialEndsAt: null,
       trialDaysRemaining: null,

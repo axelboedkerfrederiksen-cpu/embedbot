@@ -81,6 +81,7 @@ npm run dev
 - `npm run build` - lav produktionsbuild
 - `npm run start` - kør produktionsserver
 - `npm run lint` - kør ESLint
+- `npm test` - kør enhedstests for abonnement, adgang og Stripe-mapping
 
 ## Kerneflow
 
@@ -140,7 +141,18 @@ I Stripe Dashboard (produktion):
 2. Vælg events:
 	- `checkout.session.completed`
 	- `checkout.session.async_payment_succeeded`
+	- `customer.subscription.created`
+	- `customer.subscription.updated`
+	- `customer.subscription.deleted`
+	- `customer.subscription.paused`
+	- `customer.subscription.resumed`
+	- `invoice.paid`
+	- `invoice.payment_succeeded`
+	- `invoice.payment_failed`
+	- `invoice.finalization_failed`
 3. Gem endpoint secret som `STRIPE_WEBHOOK_SECRET` i Vercel
+
+Webhooken holder plan, betalingsstatus og udløbsdato synkroniseret. Opsigelse med virkning ved periodens udløb bevarer adgang, mens `past_due`, `unpaid`, `canceled`, `paused` og fejlet betaling blokerer chatbotten. En senere gennemført betaling genåbner adgangen automatisk.
 
 ## Glemt adgangskode (password reset)
 

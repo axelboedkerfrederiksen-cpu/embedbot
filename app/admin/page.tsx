@@ -178,6 +178,8 @@ export default function AdminPage() {
     return () => {
       mounted = false;
     };
+    // Restore the existing admin session once on mount; credentials are passed explicitly.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   function pushToast(message: string, type: Toast["type"] = "info") {

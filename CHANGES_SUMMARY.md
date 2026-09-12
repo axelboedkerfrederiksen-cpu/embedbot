@@ -280,12 +280,12 @@ SENTRY_DSN=https://...  # From Sentry.io
 These require manual implementation but are documented:
 
 1. **File Upload to Storage** - Replace base64 with Supabase Storage
-2. **Stripe Webhooks** - Subscription handling
+2. **Stripe Webhooks** - Implementeret for checkout, fornyelse, betalingsfejl, pause og opsigelse; live sandbox-verifikation mangler
 3. **Per-Admin Accounts** - Instead of shared token
 4. **Admin Audit Log** - Track admin actions
 5. **Conversation Deletion UI** - Frontend feature
 6. **Data Retention UI** - Business owner settings
-7. **Comprehensive Testing** - Unit, integration, E2E tests
+7. **Comprehensive Testing** - Abonnementsregler har enhedstests; integration og E2E mangler
 8. **Load Testing** - Verify performance at scale
 
 See `DEPLOYMENT_GUIDE.md` for implementation recommendations.

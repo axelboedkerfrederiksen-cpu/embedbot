@@ -66,10 +66,10 @@ export default function TermsOfService() {
               <strong>Rate limiting:</strong> Vi begrænser chatten til 15 beskeder pr. IP per 24 timer for at forebygge misbrug.
             </p>
             <p className="mt-4">
-              <strong>Prompt injection:</strong> Systemprompten er beskyttet mod manipulation. Forsøg på at få AI'en til at ignorere instruktioner vil blive filtreret.
+              <strong>Prompt injection:</strong> Systemprompten er beskyttet mod manipulation. Forsøg på at få AI’en til at ignorere instruktioner vil blive filtreret.
             </p>
             <p className="mt-4">
-              <strong>FAQ og kontekst:</strong> Al kontekst, der sendes til AI'en, skal være brugerdefineret af virksomhedsejeren. EmbedBot er ikke ansvarlig for urinelig eller ulovlig indhold fra virksomhedens side.
+              <strong>FAQ og kontekst:</strong> Al kontekst, der sendes til AI’en, skal være brugerdefineret af virksomhedsejeren. EmbedBot er ikke ansvarlig for urimeligt eller ulovligt indhold fra virksomhedens side.
             </p>
           </section>
 
@@ -91,7 +91,7 @@ export default function TermsOfService() {
             </p>
             <ul className="list-disc list-inside mb-4">
               <li>Indhold du uploader eller dets nøjagtighed</li>
-              <li>Svarene som AI'en genererer baseret på dit indhold</li>
+              <li>Svarene som AI’en genererer baseret på dit indhold</li>
               <li>Besøgendes beskedinger i chatten</li>
               <li>Brug af data fra dine websteder</li>
             </ul>
@@ -125,16 +125,16 @@ export default function TermsOfService() {
           <section className="mb-8">
             <h2 className="text-2xl font-semibold text-gray-900 mb-4">9. Betaling og fakturering</h2>
             <p>
-              [Tjekliste: Dette afsnit bør opdateres baseret på din prismodel]
+              EmbedBot tilbydes som et månedligt abonnement. De aktuelle planer, priser og inkluderede AI-svar fremgår af prissiden. Priser vises eksklusive moms, medmindre andet er angivet.
             </p>
             <p className="mt-4">
-              Når dette udfyldes, skal det dække:
+              Abonnementet fornyes automatisk hver måned, indtil det opsiges. Ved opsigelse bevares adgangen normalt frem til udgangen af den allerede betalte periode. Ved manglende betaling kan chatbotten suspenderes, indtil betalingen er gennemført.
             </p>
             <ul className="list-disc list-inside mb-4">
-              <li>Pricing og tilgængelige planer</li>
-              <li>Billing cycle (månedlig, årlig)</li>
-              <li>Refund policy</li>
-              <li>What happens if payment fails</li>
+              <li>Betaling og fakturering håndteres sikkert af Stripe</li>
+              <li>Planens forbrugsgrænse nulstilles ved månedsskiftet</li>
+              <li>Allerede leverede abonnementsperioder refunderes som udgangspunkt ikke</li>
+              <li>Fejlbehæftede betalinger kan medføre midlertidig suspension</li>
             </ul>
           </section>
 
@@ -163,7 +163,7 @@ export default function TermsOfService() {
           <section className="mb-8">
             <h2 className="text-2xl font-semibold text-gray-900 mb-4">11. Ansvarsbegrænsninger</h2>
             <p>
-              <strong>SOM DER ER:</strong> EmbedBot leveres "AS IS" uden garantier af nogen art.
+              <strong>SOM DER ER:</strong> EmbedBot leveres ”AS IS” uden garantier af nogen art.
             </p>
             <p className="mt-4">
               <strong>VI GARANTERER IKKE:</strong>
