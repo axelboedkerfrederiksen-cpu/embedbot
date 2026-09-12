@@ -98,14 +98,31 @@ function getSubscriptionStatus(session: Stripe.Checkout.Session, subscription: S
 }
 
 function getPlanFromSubscription(subscription: Stripe.Subscription | null): PlanSlug | undefined {
-  const priceId = subscription?.items.data[0]?.price.id || "";
+  const price = subscription?.items.data[0]?.price;
+  const priceId = price?.id || "";
   const priceIds: Array<[PlanSlug, string | undefined]> = [
     ["starter", process.env.STRIPE_STARTER_PRICE_ID],
     ["growth", process.env.STRIPE_GROWTH_PRICE_ID],
     ["scale", process.env.STRIPE_SCALE_PRICE_ID],
   ];
 
-  return priceIds.find(([, configuredPriceId]) => configuredPriceId?.trim() === priceId)?.[0];
+  const planFromConfiguredPriceId = priceIds.find(
+    ([, configuredPriceId]) => configuredPriceId?.trim() === priceId
+  )?.[0];
+  if (planFromConfiguredPriceId) {
+    return planFromConfiguredPriceId;
+  }
+
+  if (price?.currency === "dkk") {
+    const plansByMonthlyAmount: Record<number, PlanSlug> = {
+      29_900: "starter",
+      69_900: "growth",
+      149_900: "scale",
+    };
+    return price.unit_amount ? plansByMonthlyAmount[price.unit_amount] : undefined;
+  }
+
+  return undefined;
 }
 
 function getInternalPaymentStatus(session: Stripe.Checkout.Session, subscriptionStatus: string) {
