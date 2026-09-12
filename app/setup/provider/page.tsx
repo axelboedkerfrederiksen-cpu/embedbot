@@ -4,7 +4,7 @@ import { useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase";
 import { isBusinessSubscriptionActive } from "@/lib/subscription";
-import { getPlan, normalizePlan, type PlanSlug } from "@/lib/plans";
+import { getPlan, normalizePlan, PLANS, type PlanSlug } from "@/lib/plans";
 
 const ONBOARDING_FORM_SNAPSHOT_KEY = "onboarding_form_snapshot";
 const CHECKOUT_URLS: Partial<Record<PlanSlug, string>> = {
@@ -35,6 +35,16 @@ const PLATFORM_OPTIONS = [
   "WooCommerce",
   "Other",
 ];
+
+const CHECKOUT_PLAN_OPTIONS: PlanSlug[] = ["starter", "growth", "scale"];
+
+function formatMonthlyPrice(price: number | null) {
+  if (price === null) {
+    return "Kontakt os";
+  }
+
+  return new Intl.NumberFormat("da-DK").format(price);
+}
 
 function getPlatformGuidance(platform: string) {
   switch (platform) {
@@ -80,6 +90,7 @@ export default function ProviderPage() {
   const supabase = useMemo(() => createClient(), []);
   const [snapshot, setSnapshot] = useState<OnboardingSnapshot | null>(null);
   const [selectedPlatform, setSelectedPlatform] = useState("");
+  const [selectedPlanSlug, setSelectedPlanSlug] = useState<PlanSlug>("starter");
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState("");
   const [ready, setReady] = useState(false);
@@ -149,6 +160,7 @@ export default function ProviderPage() {
 
         setSnapshot(parsed as OnboardingSnapshot);
         setSelectedPlatform(typeof parsed.form.platform === "string" ? parsed.form.platform : "");
+        setSelectedPlanSlug(normalizePlan(parsed.form.plan));
         setReady(true);
       } catch {
         if (!mounted) {
@@ -169,7 +181,7 @@ export default function ProviderPage() {
 
   const guidance = useMemo(() => getPlatformGuidance(selectedPlatform), [selectedPlatform]);
 
-  const selectedPlan = getPlan(snapshot?.form.plan);
+  const selectedPlan = getPlan(selectedPlanSlug);
 
   function buildCheckoutUrl(plan: PlanSlug, businessId: string, supportEmail: string) {
     const checkoutUrl = CHECKOUT_URLS[plan];
@@ -202,7 +214,7 @@ export default function ProviderPage() {
       return;
     }
 
-    const plan = normalizePlan(snapshot.form.plan);
+    const plan = selectedPlanSlug;
     if (plan === "enterprise") {
       router.push("/support?plan=enterprise");
       return;
@@ -218,7 +230,11 @@ export default function ProviderPage() {
     setMessage("");
 
     try {
-      const form: Record<string, string> = getFormForSubmit({ ...snapshot.form, platform: selectedPlatform });
+      const form: Record<string, string> = getFormForSubmit({
+        ...snapshot.form,
+        platform: selectedPlatform,
+        plan,
+      });
       const res = await fetch("/api/submit", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -242,15 +258,23 @@ export default function ProviderPage() {
     <main className="provider-page">
       <div className="provider-shell">
         <section className="provider-card provider-intro">
-          <div className="provider-kicker">{selectedPlan.name} · {selectedPlan.answerLabel}</div>
-          <h1>Hvilken platform bruger du?</h1>
+          <div className="provider-kicker">Sidste trin · {selectedPlan.name}</div>
+          <h1>Vælg platform og plan</h1>
           <p>
-            Vælg hvor din chatbot skal installeres. Det hjælper os med at vise den rigtige vejledning
-            og sende dig direkte videre til betaling bagefter.
+            Fortæl os, hvor chatbotten skal installeres, og vælg den plan der passer til jeres trafik.
+            Du sendes direkte videre til den rigtige betaling bagefter.
           </p>
         </section>
 
         <section className="provider-card">
+          <div className="provider-section-heading">
+            <span className="provider-step-number">1</span>
+            <div>
+              <h2>Hvor skal chatbotten bruges?</h2>
+              <p>Så viser vi den rigtige installationsvejledning.</p>
+            </div>
+          </div>
+
           <div className="provider-grid" role="radiogroup" aria-label="Platform selector">
             {PLATFORM_OPTIONS.map(platform => {
               const active = selectedPlatform === platform;
@@ -275,6 +299,48 @@ export default function ProviderPage() {
             <span>{guidance?.label || "Vælg en platform for at se en anbefaling."}</span>
           </div>
 
+          <div className="provider-divider" />
+
+          <div className="provider-section-heading">
+            <span className="provider-step-number">2</span>
+            <div>
+              <h2>Vælg jeres plan</h2>
+              <p>Du kan altid opgradere senere.</p>
+            </div>
+          </div>
+
+          <div className="provider-plan-grid" role="radiogroup" aria-label="Vælg prisplan">
+            {CHECKOUT_PLAN_OPTIONS.map(planSlug => {
+              const plan = PLANS[planSlug];
+              const active = selectedPlanSlug === planSlug;
+
+              return (
+                <button
+                  key={planSlug}
+                  type="button"
+                  className={`provider-plan ${active ? "is-active" : ""}`}
+                  onClick={() => setSelectedPlanSlug(planSlug)}
+                  aria-checked={active}
+                  role="radio"
+                >
+                  {planSlug === "growth" ? <span className="provider-plan-badge">Mest valgt</span> : null}
+                  <span className="provider-plan-topline">
+                    <span className="provider-plan-name">{plan.name}</span>
+                    <span className="provider-plan-radio" aria-hidden="true" />
+                  </span>
+                  <span className="provider-plan-price">
+                    {formatMonthlyPrice(plan.monthlyPriceDkk)} <small>kr./md.</small>
+                  </span>
+                  <span className="provider-plan-limit">{plan.answerLabel}</span>
+                </button>
+              );
+            })}
+          </div>
+
+          <a className="provider-enterprise" href="/support?plan=enterprise">
+            Har I brug for mere end 15.000 AI-svar? <strong>Se Enterprise →</strong>
+          </a>
+
           {message && <p className="provider-message">{message}</p>}
 
           <div className="provider-actions">
@@ -282,7 +348,7 @@ export default function ProviderPage() {
               Tilbage
             </a>
             <button type="button" className="provider-continue" onClick={handleContinue} disabled={loading || !ready}>
-              {loading ? "Sender videre..." : "Fortsæt til betaling"}
+              {loading ? "Sender videre..." : `Vælg ${selectedPlan.name} · fortsæt til betaling`}
             </button>
           </div>
         </section>
@@ -371,6 +437,40 @@ export default function ProviderPage() {
           display: grid;
           grid-template-columns: repeat(2, minmax(0, 1fr));
           gap: 10px;
+        }
+
+        .provider-section-heading {
+          display: flex;
+          align-items: center;
+          gap: 12px;
+          margin-bottom: 14px;
+        }
+
+        .provider-step-number {
+          display: grid;
+          place-items: center;
+          width: 32px;
+          height: 32px;
+          flex: 0 0 auto;
+          border-radius: 999px;
+          background: #111111;
+          color: #ffffff;
+          font-size: 13px;
+          font-weight: 700;
+        }
+
+        .provider-section-heading h2 {
+          margin: 0;
+          font-size: 17px;
+          line-height: 1.3;
+          letter-spacing: -0.025em;
+        }
+
+        .provider-section-heading p {
+          margin: 2px 0 0;
+          color: #756d63;
+          font-size: 12px;
+          line-height: 1.4;
         }
 
         .provider-option {
@@ -492,6 +592,140 @@ export default function ProviderPage() {
           color: #5f584f;
         }
 
+        .provider-divider {
+          height: 1px;
+          margin: 24px 0;
+          background: rgba(17, 17, 17, 0.08);
+        }
+
+        .provider-plan-grid {
+          display: grid;
+          grid-template-columns: repeat(3, minmax(0, 1fr));
+          gap: 10px;
+        }
+
+        .provider-plan {
+          position: relative;
+          display: flex;
+          min-width: 0;
+          min-height: 152px;
+          flex-direction: column;
+          align-items: flex-start;
+          padding: 17px 15px;
+          border: 1px solid rgba(17, 17, 17, 0.1);
+          border-radius: 18px;
+          background: #ffffff;
+          color: #111111;
+          cursor: pointer;
+          font: inherit;
+          text-align: left;
+          transition: transform 160ms ease, border-color 160ms ease, box-shadow 160ms ease, background 160ms ease;
+        }
+
+        .provider-plan:hover,
+        .provider-plan:focus-visible {
+          transform: translateY(-2px);
+          border-color: rgba(17, 17, 17, 0.22);
+          box-shadow: 0 14px 30px rgba(17, 17, 17, 0.08);
+          outline: none;
+        }
+
+        .provider-plan.is-active {
+          border-color: #111111;
+          background: linear-gradient(155deg, #ffffff 0%, #f6f3ed 100%);
+          box-shadow: 0 14px 32px rgba(17, 17, 17, 0.11), inset 0 0 0 1px #111111;
+          transform: translateY(-2px);
+        }
+
+        .provider-plan-badge {
+          position: absolute;
+          top: -9px;
+          left: 14px;
+          padding: 4px 8px;
+          border-radius: 999px;
+          background: #111111;
+          color: #ffffff;
+          font-size: 9px;
+          font-weight: 700;
+          letter-spacing: 0.04em;
+          text-transform: uppercase;
+        }
+
+        .provider-plan-topline {
+          display: flex;
+          width: 100%;
+          align-items: center;
+          justify-content: space-between;
+          gap: 8px;
+          margin-bottom: 14px;
+        }
+
+        .provider-plan-name {
+          font-size: 14px;
+          font-weight: 700;
+        }
+
+        .provider-plan-radio {
+          width: 14px;
+          height: 14px;
+          flex: 0 0 auto;
+          border: 1.5px solid rgba(17, 17, 17, 0.25);
+          border-radius: 999px;
+          box-shadow: inset 0 0 0 4px transparent;
+        }
+
+        .provider-plan.is-active .provider-plan-radio {
+          border-color: #111111;
+          box-shadow: inset 0 0 0 4px #111111;
+        }
+
+        .provider-plan-price {
+          display: block;
+          margin-bottom: 8px;
+          font-family: "DM Serif Display", serif;
+          font-size: clamp(1.45rem, 4vw, 1.8rem);
+          line-height: 1;
+          letter-spacing: -0.03em;
+          white-space: nowrap;
+        }
+
+        .provider-plan-price small {
+          font-family: "Poppins", sans-serif;
+          font-size: 10px;
+          font-weight: 600;
+          color: #756d63;
+          letter-spacing: 0;
+        }
+
+        .provider-plan-limit {
+          margin-top: auto;
+          color: #6b6258;
+          font-size: 10px;
+          font-weight: 600;
+          line-height: 1.4;
+        }
+
+        .provider-enterprise {
+          display: block;
+          margin-top: 12px;
+          padding: 12px 14px;
+          border-radius: 14px;
+          background: rgba(246, 243, 237, 0.72);
+          color: #625a50;
+          font-size: 12px;
+          line-height: 1.5;
+          text-align: center;
+          text-decoration: none;
+          transition: background 160ms ease, color 160ms ease;
+        }
+
+        .provider-enterprise:hover,
+        .provider-enterprise:focus-visible {
+          background: rgba(246, 243, 237, 1);
+          color: #111111;
+          outline: none;
+        }
+
         .provider-message {
           margin: 12px 0 0;
           color: #9b3d2f;
@@ -609,6 +843,14 @@ export default function ProviderPage() {
 
           .provider-grid {
             grid-template-columns: 1fr;
+          }
+
+          .provider-plan-grid {
+            grid-template-columns: 1fr;
+          }
+
+          .provider-plan {
+            min-height: 132px;
           }
 
           .provider-actions {
