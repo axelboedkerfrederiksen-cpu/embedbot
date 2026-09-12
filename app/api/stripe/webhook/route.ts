@@ -97,7 +97,7 @@ function getSubscriptionStatus(session: Stripe.Checkout.Session, subscription: S
   return session.payment_status === "no_payment_required" ? "trialing" : "active";
 }
 
-function getPlanFromSubscription(subscription: Stripe.Subscription | null): PlanSlug {
+function getPlanFromSubscription(subscription: Stripe.Subscription | null): PlanSlug | undefined {
   const priceId = subscription?.items.data[0]?.price.id || "";
   const priceIds: Array<[PlanSlug, string | undefined]> = [
     ["starter", process.env.STRIPE_STARTER_PRICE_ID],
@@ -105,7 +105,7 @@ function getPlanFromSubscription(subscription: Stripe.Subscription | null): Plan
     ["scale", process.env.STRIPE_SCALE_PRICE_ID],
   ];
 
-  return priceIds.find(([, configuredPriceId]) => configuredPriceId?.trim() === priceId)?.[0] || "starter";
+  return priceIds.find(([, configuredPriceId]) => configuredPriceId?.trim() === priceId)?.[0];
 }
 
 function getInternalPaymentStatus(session: Stripe.Checkout.Session, subscriptionStatus: string) {
@@ -266,7 +266,7 @@ export async function POST(req: NextRequest) {
       stripeSubscriptionId: subscriptionId,
       currentPeriodEnd: getSubscriptionPeriodEndIso(subscription) || getCurrentPeriodEndIso(session),
       customerEmail,
-      plan,
+      ...(plan ? { plan } : {}),
     });
     if (!activationResult.success) {
       return NextResponse.json(

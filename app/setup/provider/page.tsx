@@ -11,8 +11,12 @@ const CHECKOUT_URLS: Partial<Record<PlanSlug, string>> = {
   starter:
     process.env.NEXT_PUBLIC_STRIPE_STARTER_CHECKOUT_URL ||
     "https://buy.stripe.com/eVq00j5l7gew3dj3rIf3a02?locale=da",
-  growth: process.env.NEXT_PUBLIC_STRIPE_GROWTH_CHECKOUT_URL,
-  scale: process.env.NEXT_PUBLIC_STRIPE_SCALE_CHECKOUT_URL,
+  growth:
+    process.env.NEXT_PUBLIC_STRIPE_GROWTH_CHECKOUT_URL ||
+    "https://buy.stripe.com/6oU00j28V2nG15b1jAf3a05",
+  scale:
+    process.env.NEXT_PUBLIC_STRIPE_SCALE_CHECKOUT_URL ||
+    "https://buy.stripe.com/aFa28rfZLfas0176DUf3a06",
 };
 const LOGO_UPLOAD_ENABLED = false;
 
