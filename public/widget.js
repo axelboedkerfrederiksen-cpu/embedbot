@@ -330,28 +330,11 @@
         100% { opacity: 1; transform: translateY(0); }
       }
       .eb-thinking-card {
-        position: relative;
-        isolation: isolate;
-        display: inline-flex;
-        align-items: center;
-        gap: 10px;
-        min-height: 48px;
-        padding: 8px 14px 8px 9px;
-        overflow: hidden;
-        border: 1px solid rgba(17, 17, 17, 0.08);
-        border-radius: 18px 18px 18px 6px;
-        background: linear-gradient(135deg, rgba(255, 255, 255, 0.98), rgba(246, 243, 237, 0.92));
-        box-shadow: 0 10px 24px rgba(17, 17, 17, 0.07), inset 0 1px 0 rgba(255, 255, 255, 0.9);
-      }
-      .eb-thinking-card::before {
-        content: "";
-        position: absolute;
-        z-index: -1;
-        inset: 0;
-        width: 56%;
-        background: linear-gradient(100deg, transparent, rgba(255, 255, 255, 0.95), transparent);
-        transform: translateX(-140%) skewX(-16deg);
-        animation: eb-thinking-shimmer 2.2s cubic-bezier(0.4, 0, 0.2, 1) infinite;
+        display: inline-grid;
+        place-items: center;
+        width: 34px;
+        height: 34px;
+        margin: 2px 0;
       }
       .eb-thinking-orb {
         position: relative;
@@ -400,40 +383,8 @@
         height: 4px;
         background: #8a8176;
       }
-      .eb-thinking-copy {
-        display: inline-flex;
-        align-items: center;
-        gap: 7px;
-        color: #504a43;
-        font-size: 11px;
-        font-weight: 600;
-        letter-spacing: 0.01em;
-        white-space: nowrap;
-      }
-      .eb-thinking-dots {
-        display: inline-flex;
-        align-items: center;
-        gap: 3px;
-        height: 10px;
-      }
-      .eb-thinking-dots i {
-        display: block;
-        width: 3px;
-        height: 3px;
-        border-radius: 50%;
-        background: currentColor;
-        opacity: 0.35;
-        animation: eb-thinking-dot 1.2s ease-in-out infinite;
-      }
-      .eb-thinking-dots i:nth-child(2) { animation-delay: 0.14s; }
-      .eb-thinking-dots i:nth-child(3) { animation-delay: 0.28s; }
       .eb-answer-reveal {
         animation: eb-answer-reveal 0.28s cubic-bezier(0.22, 1, 0.36, 1);
-      }
-      @keyframes eb-thinking-shimmer {
-        0%, 18% { transform: translateX(-140%) skewX(-16deg); opacity: 0; }
-        35% { opacity: 0.8; }
-        68%, 100% { transform: translateX(260%) skewX(-16deg); opacity: 0; }
       }
       @keyframes eb-thinking-breathe {
         0%, 100% { transform: scale(0.82); opacity: 0.68; }
@@ -442,19 +393,13 @@
       @keyframes eb-thinking-orbit {
         to { transform: rotate(360deg); }
       }
-      @keyframes eb-thinking-dot {
-        0%, 60%, 100% { transform: translateY(0); opacity: 0.28; }
-        30% { transform: translateY(-3px); opacity: 0.9; }
-      }
       @keyframes eb-answer-reveal {
         from { opacity: 0; transform: translateY(4px); filter: blur(2px); }
         to { opacity: 1; transform: translateY(0); filter: blur(0); }
       }
       @media (prefers-reduced-motion: reduce) {
-        .eb-thinking-card::before,
         .eb-thinking-core,
         .eb-thinking-ring,
-        .eb-thinking-dots i,
         .eb-answer-reveal {
           animation: none !important;
         }
@@ -670,10 +615,6 @@
         <span class="eb-thinking-ring eb-thinking-ring-secondary"></span>
         <span class="eb-thinking-core"></span>
       </span>
-      <span class="eb-thinking-copy">
-        ${language === "en" ? "Finding the best answer" : "Finder det bedste svar"}
-        <span class="eb-thinking-dots" aria-hidden="true"><i></i><i></i><i></i></span>
-      </span>
     `;
     target.appendChild(loader);
   }
@@ -783,6 +724,10 @@
 
       if (!res.body) {
         throw new Error(labels.errorReply);
+      }
+
+      if (userMessage.status) {
+        userMessage.status.textContent = labels.sent;
       }
 
       const reader = res.body.getReader();
