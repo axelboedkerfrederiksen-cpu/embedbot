@@ -55,3 +55,14 @@ export function normalizePlan(value: unknown): PlanSlug {
 export function getPlan(value: unknown) {
   return PLANS[normalizePlan(value)];
 }
+
+export function getAnswerLimit(planValue: unknown, overrideValue?: unknown) {
+  const plan = getPlan(planValue);
+  const override = typeof overrideValue === "number" ? overrideValue : Number(overrideValue);
+
+  if (plan.slug === "enterprise" && Number.isInteger(override) && override >= plan.answerLimit) {
+    return override;
+  }
+
+  return plan.answerLimit;
+}

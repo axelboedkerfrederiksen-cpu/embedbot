@@ -3,7 +3,7 @@ import { createClient } from "@supabase/supabase-js";
 import OpenAI from "openai";
 import { createHash } from "node:crypto";
 import { isBusinessSubscriptionActive } from "@/lib/subscription";
-import { getPlan } from "@/lib/plans";
+import { getAnswerLimit, getPlan } from "@/lib/plans";
 
 const RATE_LIMIT_MAX = 50;
 const RATE_LIMIT_WINDOW_SECONDS = 24 * 60 * 60;
@@ -70,11 +70,16 @@ function getCurrentUtcMonthStart() {
   return new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), 1)).toISOString();
 }
 
-async function consumeAnswerAllowance(businessId: string, planValue: unknown): Promise<AnswerAllowance> {
+async function consumeAnswerAllowance(
+  businessId: string,
+  planValue: unknown,
+  answerLimitOverride?: unknown
+): Promise<AnswerAllowance> {
   const plan = getPlan(planValue);
+  const answerLimit = getAnswerLimit(plan.slug, answerLimitOverride);
   const { data, error } = await supabase.rpc("consume_ai_answer", {
     p_business_id: businessId,
-    p_limit: plan.answerLimit,
+    p_limit: answerLimit,
   });
 
   if (!error) {
@@ -84,7 +89,7 @@ async function consumeAnswerAllowance(businessId: string, planValue: unknown): P
       return {
         allowed: row.allowed === true,
         used: typeof row.used === "number" ? row.used : 0,
-        limit: typeof row.limit_value === "number" ? row.limit_value : plan.answerLimit,
+        limit: typeof row.limit_value === "number" ? row.limit_value : answerLimit,
       };
     }
   }
@@ -98,11 +103,11 @@ async function consumeAnswerAllowance(businessId: string, planValue: unknown): P
 
   if (countError) {
     console.error("Could not verify monthly answer allowance:", error || countError);
-    return { allowed: false, used: plan.answerLimit, limit: plan.answerLimit };
+    return { allowed: false, used: answerLimit, limit: answerLimit };
   }
 
   const used = count || 0;
-  return { allowed: used < plan.answerLimit, used, limit: plan.answerLimit };
+  return { allowed: used < answerLimit, used, limit: answerLimit };
 }
 
 export async function POST(req: NextRequest) {
@@ -176,7 +181,11 @@ export async function POST(req: NextRequest) {
     }
 
     const plan = getPlan(business.plan);
-    const allowance = await consumeAnswerAllowance(stableBusinessId, plan.slug);
+    const allowance = await consumeAnswerAllowance(
+      stableBusinessId,
+      plan.slug,
+      business.ai_answer_limit_override
+    );
     if (!allowance.allowed) {
       return NextResponse.json(
         {

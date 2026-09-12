@@ -4,6 +4,7 @@
 alter table public.businesses
 add column if not exists plan text not null default 'starter',
 add column if not exists ai_answers_used integer not null default 0,
+add column if not exists ai_answer_limit_override integer,
 add column if not exists ai_usage_period_start date not null
   default (date_trunc('month', timezone('utc', now())))::date;
 
@@ -29,6 +30,17 @@ begin
     alter table public.businesses
       add constraint businesses_ai_answers_used_check
       check (ai_answers_used >= 0);
+  end if;
+
+  if not exists (
+    select 1
+    from pg_constraint
+    where conname = 'businesses_ai_answer_limit_override_check'
+      and conrelid = 'public.businesses'::regclass
+  ) then
+    alter table public.businesses
+      add constraint businesses_ai_answer_limit_override_check
+      check (ai_answer_limit_override is null or ai_answer_limit_override >= 30000);
   end if;
 end
 $$;

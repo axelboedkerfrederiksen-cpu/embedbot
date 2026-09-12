@@ -3,7 +3,7 @@ import { createServerClient } from "@supabase/ssr";
 import { createClient } from "@supabase/supabase-js";
 import { cookies } from "next/headers";
 import Stripe from "stripe";
-import { getPlan } from "@/lib/plans";
+import { getAnswerLimit, getPlan } from "@/lib/plans";
 
 export const runtime = "nodejs";
 
@@ -20,6 +20,7 @@ type BusinessBillingRow = {
   plan: string | null;
   ai_answers_used: number | null;
   ai_usage_period_start: string | null;
+  ai_answer_limit_override: number | null;
 };
 
 function getUsageInfo(business: BusinessBillingRow) {
@@ -35,7 +36,7 @@ function getUsageInfo(business: BusinessBillingRow) {
     plan: plan.slug,
     planName: plan.name,
     answersUsed: storedPeriodStart === currentMonthStart ? Math.max(0, business.ai_answers_used || 0) : 0,
-    answerLimit: plan.answerLimit,
+    answerLimit: getAnswerLimit(plan.slug, business.ai_answer_limit_override),
     usageResetsAt: nextMonthStart.toISOString(),
   };
 }
@@ -284,7 +285,7 @@ export async function GET() {
     const supabase = createClient(process.env.SUPABASE_URL, process.env.SUPABASE_SERVICE_KEY);
     const { data: businesses, error: businessError } = await supabase
       .from("businesses")
-      .select("id,name,subscription_status,payment_status,stripe_customer_id,stripe_subscription_id,current_period_end,subscription_updated_at,activated,plan,ai_answers_used,ai_usage_period_start")
+      .select("id,name,subscription_status,payment_status,stripe_customer_id,stripe_subscription_id,current_period_end,subscription_updated_at,activated,plan,ai_answers_used,ai_usage_period_start,ai_answer_limit_override")
       .eq("user_id", user.id)
       .order("created_at", { ascending: false })
       .returns<BusinessBillingRow[]>();

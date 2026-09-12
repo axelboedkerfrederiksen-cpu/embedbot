@@ -101,6 +101,7 @@ npm run dev
 Dette repository indeholder SQL til `conversations` i [sql/create_conversations_table.sql](sql/create_conversations_table.sql).
 Rate limiting til chat kræver også [sql/create_chat_rate_limit.sql](sql/create_chat_rate_limit.sql).
 Prisplaner og månedlige AI-svar kræver [sql/add_pricing_plans_and_usage.sql](sql/add_pricing_plans_and_usage.sql).
+Enterprise-kunder kan få en individuel grænse via `businesses.ai_answer_limit_override` (minimum 30.000).
 
 Du skal også have følgende databaseobjekter, som appen bruger:
 
