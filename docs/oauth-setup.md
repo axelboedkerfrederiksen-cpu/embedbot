@@ -6,17 +6,18 @@ Appen er klar til socialt login med Google og Microsoft (Azure/Entra ID). Der ma
 
 I **Supabase Dashboard → Authentication → URL Configuration** skal Site URL være:
 
-`https://embedbot.dk`
+`https://www.embedbot.dk`
 
 Tilføj desuden følgende Redirect URL'er:
 
+- `https://www.embedbot.dk/auth/callback`
 - `https://embedbot.dk/auth/callback`
 - `http://localhost:3000/auth/callback`
 
 ## Google
 
 1. Opret en *Web application* under Google Cloud → Google Auth Platform.
-2. Tilføj `https://embedbot.dk` som Authorized JavaScript origin.
+2. Tilføj både `https://www.embedbot.dk` og `https://embedbot.dk` som Authorized JavaScript origins.
 3. Kopiér callback-URL'en fra **Supabase Dashboard → Authentication → Providers → Google** til Google Cloud under Authorized redirect URIs.
 4. Indsæt Google Client ID og Client Secret i Supabase, og slå provideren til.
 
