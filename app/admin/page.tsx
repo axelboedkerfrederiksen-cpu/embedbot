@@ -1,6 +1,5 @@
 "use client";
 
-import Link from "next/link";
 import { FormEvent, useEffect, useMemo, useState } from "react";
 import { AnimatePresence, motion } from "framer-motion";
 import {
@@ -9,8 +8,10 @@ import {
   Bot,
   Building2,
   CheckCircle2,
+  ChevronDown,
   Copy,
   CreditCard,
+  Eye,
   Filter,
   Gauge,
   LayoutDashboard,
@@ -61,6 +62,19 @@ type SupportMessage = {
   message?: string | null;
   status?: string | null;
   created_at?: string | null;
+};
+
+type Conversation = {
+  id: string;
+  business_id: string;
+  created_at?: string | null;
+  messages: unknown;
+};
+
+type CustomerDetail = {
+  business: Business;
+  conversations: Conversation[];
+  knowledgeChunkCount: number;
 };
 
 type AdminView = "overview" | "businesses" | "billing" | "support" | "system";
@@ -144,6 +158,18 @@ function formatRelativeDate(input?: string | null): string {
   });
 }
 
+function normalizeMessages(raw: unknown): Array<{ role: string; content: string }> {
+  if (!Array.isArray(raw)) return [];
+  return raw.map((item) => {
+    if (typeof item === "string") return { role: "assistant", content: item };
+    if (!item || typeof item !== "object") return { role: "assistant", content: "" };
+    const row = item as Record<string, unknown>;
+    const role = typeof row.role === "string" ? row.role : typeof row.sender === "string" ? row.sender : "assistant";
+    const content = typeof row.content === "string" ? row.content : typeof row.text === "string" ? row.text : typeof row.message === "string" ? row.message : "";
+    return { role, content };
+  }).filter((message) => message.content.trim().length > 0);
+}
+
 export default function AdminPage() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -169,6 +195,10 @@ export default function AdminPage() {
   const [toasts, setToasts] = useState<Toast[]>([]);
   const [pendingDeleteBusiness, setPendingDeleteBusiness] = useState<Business | null>(null);
   const [lastUpdatedAt, setLastUpdatedAt] = useState<Date | null>(null);
+  const [customerDetail, setCustomerDetail] = useState<CustomerDetail | null>(null);
+  const [customerDetailLoading, setCustomerDetailLoading] = useState(false);
+  const [customerDetailError, setCustomerDetailError] = useState("");
+  const [openCustomerConversations, setOpenCustomerConversations] = useState<Record<string, boolean>>({});
 
   function selectView(view: AdminView) {
     setActiveView(view);
@@ -432,6 +462,9 @@ export default function AdminPage() {
       }
 
       setBusinesses((previous) => previous.map((row) => row.id === business.id ? data.business as Business : row));
+      setCustomerDetail((previous) => previous && previous.business.id === business.id
+        ? { ...previous, business: data.business as Business }
+        : previous);
       pushToast(successMessage, "success");
     } catch (updateError) {
       const message = updateError instanceof Error ? updateError.message : "Kunne ikke gemme ændringen.";
@@ -439,6 +472,26 @@ export default function AdminPage() {
       pushToast(message, "error");
     } finally {
       setSavingId(null);
+    }
+  }
+
+  async function openCustomerCenter(business: Business) {
+    setCustomerDetailLoading(true);
+    setCustomerDetailError("");
+    setCustomerDetail(null);
+    setOpenCustomerConversations({});
+
+    try {
+      const res = await fetch(`/api/admin/customer?business_id=${encodeURIComponent(business.id)}`, {
+        headers: buildAdminHeaders(),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || "Kunne ikke hente kundens data.");
+      setCustomerDetail(data as CustomerDetail);
+    } catch (detailError) {
+      setCustomerDetailError(detailError instanceof Error ? detailError.message : "Kunne ikke hente kundens data.");
+    } finally {
+      setCustomerDetailLoading(false);
     }
   }
 
@@ -1096,12 +1149,12 @@ export default function AdminPage() {
                               <option value="delete">Slet</option>
                             </select>
 
-                            <Link
-                              href={`/dashboard/${business.id}/samtaler`}
-                              className="rounded-lg border border-[rgba(17,17,17,0.10)] bg-white px-3 py-1.5 text-sm text-[#111111] transition hover:bg-[rgba(246,243,237,0.9)]"
+                            <button
+                              onClick={() => void openCustomerCenter(business)}
+                              className="inline-flex items-center gap-1 rounded-lg border border-[rgba(17,17,17,0.10)] bg-[#111111] px-3 py-1.5 text-sm font-semibold text-white transition hover:bg-[#2a2a2a]"
                             >
-                              Samtaler
-                            </Link>
+                              <Eye size={14} /> Kundecenter
+                            </button>
                           </div>
                         </div>
 
@@ -1213,6 +1266,62 @@ export default function AdminPage() {
       </div>
 
       <AnimatePresence>
+        {customerDetailLoading || customerDetail || customerDetailError ? (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 z-40 overflow-y-auto bg-[rgba(17,17,17,0.3)] p-3 sm:p-6"
+            onClick={() => {
+              if (!customerDetailLoading) {
+                setCustomerDetail(null);
+                setCustomerDetailError("");
+              }
+            }}
+          >
+            <motion.section
+              initial={{ opacity: 0, y: 18, scale: 0.985 }}
+              animate={{ opacity: 1, y: 0, scale: 1 }}
+              exit={{ opacity: 0, y: 18, scale: 0.985 }}
+              onClick={(event) => event.stopPropagation()}
+              className="mx-auto my-3 w-full max-w-6xl rounded-3xl border border-[rgba(17,17,17,0.09)] bg-[#f6f3ed] p-4 text-[#111111] shadow-[0_28px_80px_rgba(17,17,17,0.2)] sm:my-8 sm:p-6"
+            >
+              <div className="flex items-start justify-between gap-4">
+                <div>
+                  <p className="text-xs font-bold uppercase tracking-[0.16em] text-[#8a7e70]">Kundecenter</p>
+                  <h2 className="mt-1 text-2xl font-semibold tracking-[-0.04em] sm:text-3xl">{customerDetail?.business.name || (customerDetailLoading ? "Henter kundedata…" : "Kundedata")}</h2>
+                  {customerDetail?.business.website_url ? <p className="mt-1 text-sm text-[#6b6258]">{customerDetail.business.website_url}</p> : null}
+                </div>
+                <button onClick={() => { setCustomerDetail(null); setCustomerDetailError(""); }} disabled={customerDetailLoading} className="rounded-xl border border-[rgba(17,17,17,0.1)] bg-white p-2 text-[#6b6258] hover:text-[#111111] disabled:opacity-50" aria-label="Luk kundecenter"><X size={18} /></button>
+              </div>
+
+              {customerDetailLoading ? <div className="mt-6 grid min-h-64 place-items-center rounded-2xl border border-dashed border-[rgba(17,17,17,0.12)] bg-white/70"><span className="text-sm text-[#6b6258]">Henter chatbotdata og samtaler…</span></div> : null}
+              {customerDetailError ? <div className="mt-6 rounded-2xl border border-[rgba(155,61,47,0.16)] bg-[rgba(255,245,242,0.9)] p-4 text-sm text-[#9b3d2f]">{customerDetailError}</div> : null}
+
+              {customerDetail ? (() => {
+                const business = customerDetail.business;
+                const plan = typeof business.plan === "string" ? business.plan : "starter";
+                const used = getFirstNumericField(business, ["ai_answers_used"]);
+                const limit = getFirstNumericField(business, ["ai_answer_limit_override"]) || ({ starter: 1000, growth: 5000, scale: 15000, enterprise: 30000 }[plan] || 1000);
+                const chatbotFields = [
+                  ["Velkomstbesked", "welcome_message"], ["Tone", "tone"], ["Sprog", "language"], ["Branche", "industry"],
+                  ["Tilpassede instruktioner", "custom_instructions"], ["FAQ", "faq"], ["Produkter & ydelser", "products_services"], ["Fallback-handling", "fallback_action"],
+                ] as const;
+                return <div className="mt-6 grid gap-5">
+                  <section className="grid gap-4 lg:grid-cols-[1.2fr_.8fr]">
+                    <article className="rounded-2xl bg-[#111111] p-5 text-white"><p className="text-xs font-bold uppercase tracking-[0.16em] text-white/55">Plan og forbrug</p><div className="mt-4 grid gap-4 sm:grid-cols-[190px_1fr]"><label className="grid gap-1 text-xs font-semibold text-white/65"><span>Kundens plan</span><select value={plan} onChange={(event) => void updateBusiness(business, { plan: event.target.value }, "Kundeplan opdateret")} disabled={savingId === business.id} className="rounded-xl border border-white/15 bg-white/10 px-3 py-2.5 text-sm font-semibold text-white outline-none"><option className="bg-[#111111]" value="starter">Starter · 1.000 svar</option><option className="bg-[#111111]" value="growth">Growth · 5.000 svar</option><option className="bg-[#111111]" value="scale">Scale · 15.000 svar</option><option className="bg-[#111111]" value="enterprise">Enterprise · individuel</option></select></label><div><div className="flex justify-between gap-3 text-xs text-white/65"><span>AI-forbrug denne måned</span><span>{used.toLocaleString("da-DK")} / {limit.toLocaleString("da-DK")}</span></div><div className="mt-2 h-2 overflow-hidden rounded-full bg-white/15"><div className="h-full rounded-full bg-white" style={{ width: `${Math.min(100, Math.round((used / Math.max(limit, 1)) * 100))}%` }} /></div><button onClick={() => void updateBusiness(business, { ai_answers_used: 0 }, "AI-forbrug nulstillet")} disabled={savingId === business.id} className="mt-3 text-xs font-semibold text-white underline underline-offset-4 disabled:opacity-50">Nulstil forbrug</button></div></div></article>
+                    <article className="rounded-2xl border border-[rgba(17,17,17,0.08)] bg-white p-5"><p className="text-xs font-bold uppercase tracking-[0.16em] text-[#8a7e70]">Chatbotstatus</p><div className="mt-4 grid gap-3 text-sm"><div className="flex justify-between gap-3"><span className="text-[#6b6258]">Abonnement</span><span className="font-semibold">{business.subscription_status || "Ukendt"}</span></div><div className="flex justify-between gap-3"><span className="text-[#6b6258]">Betaling</span><span className="font-semibold">{business.payment_status || "Ukendt"}</span></div><div className="flex justify-between gap-3"><span className="text-[#6b6258]">Aktiv chatbot</span><span className="font-semibold">{business.activated ? "Ja" : "Nej"}</span></div><div className="flex justify-between gap-3"><span className="text-[#6b6258]">Indekseret viden</span><span className="font-semibold">{customerDetail.knowledgeChunkCount} tekststykker</span></div></div></article>
+                  </section>
+
+                  <section className="rounded-2xl border border-[rgba(17,17,17,0.08)] bg-white p-5"><div className="flex items-center justify-between gap-3"><div><p className="text-xs font-bold uppercase tracking-[0.16em] text-[#8a7e70]">Chatbot-data</p><h3 className="mt-1 text-xl font-semibold">Det botten ved og siger</h3></div><button onClick={() => { startEditing(business); setCustomerDetail(null); }} className="rounded-xl border border-[rgba(17,17,17,0.1)] px-3 py-2 text-sm font-semibold hover:bg-[#f6f3ed]">Redigér data</button></div><div className="mt-4 grid gap-3 md:grid-cols-2">{chatbotFields.map(([label, key]) => { const value = business[key]; return <div key={key} className="rounded-xl bg-[#f6f3ed] p-3"><p className="text-xs font-semibold text-[#8a7e70]">{label}</p><p className="mt-1 whitespace-pre-wrap break-words text-sm leading-6">{typeof value === "string" && value.trim() ? value : "Ikke angivet"}</p></div>; })}</div></section>
+
+                  <section className="rounded-2xl border border-[rgba(17,17,17,0.08)] bg-white p-5"><div className="flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between"><div><p className="text-xs font-bold uppercase tracking-[0.16em] text-[#8a7e70]">Samtaler</p><h3 className="mt-1 text-xl font-semibold">Kundens samtalehistorik</h3><p className="mt-1 text-sm text-[#6b6258]">Viser de seneste {customerDetail.conversations.length} samtaler.</p></div><span className="w-fit rounded-full bg-[#f6f3ed] px-3 py-1 text-xs font-semibold text-[#6b6258]">{customerDetail.conversations.length} samtaler</span></div>{customerDetail.conversations.length ? <div className="mt-4 grid gap-2">{customerDetail.conversations.map((conversation) => { const isOpen = Boolean(openCustomerConversations[conversation.id]); const messages = normalizeMessages(conversation.messages); return <article key={conversation.id} className="overflow-hidden rounded-xl border border-[rgba(17,17,17,0.08)]"><button onClick={() => setOpenCustomerConversations((previous) => ({ ...previous, [conversation.id]: !previous[conversation.id] }))} className="flex w-full items-center justify-between gap-3 bg-white px-4 py-3 text-left hover:bg-[#faf9f6]"><span><strong className="block text-sm">{messages.find((message) => message.role.toLowerCase().includes("user"))?.content.slice(0, 90) || "Samtale uden spørgsmål"}</strong><span className="mt-1 block text-xs text-[#8a7e70]">{conversation.created_at ? new Date(conversation.created_at).toLocaleString("da-DK") : "Ukendt tidspunkt"} · {messages.length} beskeder</span></span><ChevronDown size={17} className={`shrink-0 text-[#8a7e70] transition ${isOpen ? "rotate-180" : ""}`} /></button>{isOpen ? <div className="grid gap-2 border-t border-[rgba(17,17,17,0.08)] bg-[#f6f3ed] p-3">{messages.length ? messages.map((message, index) => <div key={`${conversation.id}-${index}`} className={`max-w-[88%] rounded-xl px-3 py-2 text-sm leading-6 ${message.role.toLowerCase().includes("user") ? "justify-self-end bg-[#111111] text-white" : "bg-white text-[#111111]"}`}>{message.content}</div>) : <p className="text-sm text-[#8a7e70]">Ingen beskeder i samtalen.</p>}</div> : null}</article>; })}</div> : <div className="mt-4 rounded-xl border border-dashed border-[rgba(17,17,17,0.12)] bg-[#f6f3ed] px-4 py-8 text-center text-sm text-[#6b6258]">Ingen samtaler endnu.</div>}</section>
+                </div>;
+              })() : null}
+            </motion.section>
+          </motion.div>
+        ) : null}
+
         {pendingDeleteBusiness ? (
           <motion.div
             initial={{ opacity: 0 }}
