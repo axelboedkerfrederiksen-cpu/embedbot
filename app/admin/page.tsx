@@ -442,7 +442,7 @@ export default function AdminPage() {
     }
   }
 
-  async function updateSupportStatus(message: SupportMessage, status: "new" | "in_progress" | "resolved") {
+  async function updateSupportStatus(message: SupportMessage, status: "new" | "read" | "archived") {
     try {
       const res = await fetch("/api/support", {
         method: "PUT",
@@ -454,7 +454,7 @@ export default function AdminPage() {
         throw new Error(data.error || "Kunne ikke opdatere beskeden.");
       }
       setSupportMessages((previous) => previous.map((row) => row.id === message.id ? data.message as SupportMessage : row));
-      pushToast(status === "resolved" ? "Besked markeret som løst" : "Supportstatus opdateret", "success");
+      pushToast(status === "archived" ? "Besked markeret som løst" : "Supportstatus opdateret", "success");
     } catch (statusError) {
       pushToast(statusError instanceof Error ? statusError.message : "Kunne ikke opdatere beskeden.", "error");
     }
@@ -886,8 +886,8 @@ export default function AdminPage() {
                             </div>
                           </div>
                           <div className="flex shrink-0 items-center gap-2">
-                            <span className={`rounded-full px-2.5 py-1 text-xs font-semibold ${supportMessage.status === "resolved" ? "bg-[#e8f6f0] text-[#31795d]" : "border border-[rgba(17,17,17,0.08)] bg-white text-[#6b6258]"}`}>{supportMessage.status === "resolved" ? "Løst" : supportMessage.status === "in_progress" ? "I gang" : "Ny"}</span>
-                            {supportMessage.status !== "resolved" ? <button onClick={() => void updateSupportStatus(supportMessage, "resolved")} className="rounded-lg border border-[rgba(17,17,17,0.10)] bg-white px-2.5 py-1 text-xs font-semibold text-[#111111] hover:bg-[#f6f3ed]">Markér løst</button> : null}
+                            <span className={`rounded-full px-2.5 py-1 text-xs font-semibold ${supportMessage.status === "archived" ? "bg-[#e8f6f0] text-[#31795d]" : "border border-[rgba(17,17,17,0.08)] bg-white text-[#6b6258]"}`}>{supportMessage.status === "archived" ? "Løst" : supportMessage.status === "read" ? "I gang" : "Ny"}</span>
+                            {supportMessage.status !== "archived" ? <button onClick={() => void updateSupportStatus(supportMessage, "archived")} className="rounded-lg border border-[rgba(17,17,17,0.10)] bg-white px-2.5 py-1 text-xs font-semibold text-[#111111] hover:bg-[#f6f3ed]">Markér løst</button> : null}
                           </div>
                         </div>
 

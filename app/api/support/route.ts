@@ -124,7 +124,8 @@ export async function PUT(req: NextRequest) {
     const body = await req.json();
     const id = normalizeString(body.id, 80);
     const status = normalizeString(body.status, 24);
-    const allowedStatuses = new Set(["new", "in_progress", "resolved"]);
+    // These values mirror support_messages_status_check in the initial Supabase schema.
+    const allowedStatuses = new Set(["new", "read", "archived"]);
 
     if (!id || !allowedStatuses.has(status)) {
       return NextResponse.json({ error: "Ugyldig besked eller status." }, { status: 400 });
