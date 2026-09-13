@@ -11,6 +11,27 @@ const supabase = createClient(
 );
 
 const LOGO_UPLOAD_ENABLED = false;
+const TRANSIENT_DATABASE_RETRY_DELAYS = [250, 750] as const;
+
+function wait(ms: number) {
+  return new Promise((resolve) => setTimeout(resolve, ms));
+}
+
+function isTransientDatabaseError(error: { message?: string | null; code?: string | null } | null) {
+  if (!error) {
+    return false;
+  }
+
+  const message = (error.message || "").toLowerCase();
+  return (
+    error.code === "502" ||
+    error.code === "503" ||
+    error.code === "504" ||
+    message.includes("gateway timeout") ||
+    message.includes("bad gateway") ||
+    message.includes("service unavailable")
+  );
+}
 
 function isOnConflictConstraintError(errorMessage: string) {
   return errorMessage.toLowerCase().includes("no unique or exclusion constraint matching the on conflict specification");
@@ -62,9 +83,25 @@ function getFormForPersistence(form: Record<string, unknown>) {
 }
 
 async function persistBusinessPayload(payload: Record<string, unknown> & { id: string }) {
-  const { error } = await supabase
-    .from("businesses")
-    .upsert(payload, { onConflict: "id" });
+  let error: { message: string; code?: string | null } | null = null;
+
+  for (let attempt = 0; attempt <= TRANSIENT_DATABASE_RETRY_DELAYS.length; attempt += 1) {
+    const result = await supabase
+      .from("businesses")
+      .upsert(payload, { onConflict: "id" });
+
+    error = result.error;
+    if (!isTransientDatabaseError(error) || attempt === TRANSIENT_DATABASE_RETRY_DELAYS.length) {
+      break;
+    }
+
+    console.warn("Transient Supabase error while saving business; retrying.", {
+      businessId: payload.id,
+      attempt: attempt + 1,
+      code: error?.code,
+    });
+    await wait(TRANSIENT_DATABASE_RETRY_DELAYS[attempt]);
+  }
 
   if (!error || !isOnConflictConstraintError(error.message)) {
     return { error };
@@ -222,6 +259,11 @@ export async function POST(req: NextRequest) {
     }
 
     if (upsertError) {
+      console.error("Unable to save business.", {
+        businessId: stableBusinessId,
+        code: "code" in upsertError ? upsertError.code : undefined,
+        message: upsertError.message,
+      });
       return NextResponse.json(
         { success: false, error: `Kunne ikke gemme virksomhedsdata: ${upsertError.message}` },
         { status: 500 }
