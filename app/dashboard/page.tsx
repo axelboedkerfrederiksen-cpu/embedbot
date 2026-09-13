@@ -1,11 +1,21 @@
 "use client";
 
-import type { CSSProperties } from "react";
 import { useEffect, useMemo, useState } from "react";
-import { useRouter } from "next/navigation";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
+import type { LucideIcon } from "lucide-react";
+import {
+  AlertCircle, ArrowRight, BarChart3, BookOpenText, Bot, Check, CheckCircle2,
+  ChevronDown, Code2, Copy, CreditCard, ExternalLink, Eye, HelpCircle,
+  LayoutDashboard, LogOut, Menu, MessagesSquare, Palette, Plus, Search,
+  Settings, SlidersHorizontal, Sparkles, TrendingUp, UserRoundPlus,
+  UsersRound, X, Zap,
+} from "lucide-react";
 import { createClient } from "@/lib/supabase";
 import { isBusinessSubscriptionActive } from "@/lib/subscription";
+import styles from "./dashboard.module.css";
+
+type DashboardView = "overview" | "conversations" | "leads" | "knowledge" | "behavior" | "appearance" | "installation" | "analytics" | "billing" | "settings";
 
 type Business = {
   id: string;
@@ -41,348 +51,217 @@ type Business = {
   primary_color?: string | null;
   secondary_color?: string | null;
   chat_icon_color?: string | null;
+  fab_color?: string | null;
   font_choice?: string | null;
+  chat_outline_enabled?: string | boolean | null;
+  chat_outline_color?: string | null;
+  chat_outline_width?: string | number | null;
+  chat_outline_opacity?: string | number | null;
+  widget_opacity?: string | number | null;
+  subscription_status?: string | null;
+  payment_status?: string | null;
+  stripe_subscription_id?: string | null;
+  activated?: boolean | null;
+  plan?: string | null;
   [key: string]: unknown;
 };
 
-type BusinessFieldType = "text" | "textarea" | "select" | "color";
-
-type BusinessFieldDefinition = {
-  key: keyof Business;
-  label: string;
-  type: BusinessFieldType;
-  options?: Array<{ label: string; value: string }>;
-  placeholder?: string;
+type ConversationRow = { id: string; business_id: string; created_at: string | null; messages: unknown };
+type ChatMessage = { role: string; content: string };
+type LeadRow = { email: string; message: string; pageUrl: string; createdAt: string | null };
+type SubscriptionInvoice = { id: string; status: string | null; hostedInvoiceUrl: string | null; invoicePdf: string | null; amountDue: number | null; amountPaid: number | null; currency: string | null; dueDate: string | null };
+type SubscriptionInfo = {
+  businessId: string; businessName: string; source: "stripe" | "database"; status: string;
+  paymentStatus: string; isActive: boolean; isTrialing: boolean; trialEndsAt: string | null;
+  trialDaysRemaining: number | null; currentPeriodStart: string | null; currentPeriodEnd: string | null;
+  cancelAtPeriodEnd: boolean | null; cancelAt: string | null; canceledAt: string | null;
+  collectionMethod: string | null; amount: number | null; currency: string | null; interval: string | null;
+  productName: string; quantity: number | null; customerId: string | null; customerEmail: string | null;
+  subscriptionId: string | null; latestInvoice: SubscriptionInvoice | null; updatedAt: string | null;
+  error: string | null; plan: "starter" | "growth" | "scale" | "enterprise"; planName: string;
+  answersUsed: number; answerLimit: number; usageResetsAt: string | null;
 };
 
-const BUSINESS_FIELD_DEFINITIONS: BusinessFieldDefinition[] = [
-  { key: "name", label: "Virksomhedsnavn", type: "text", placeholder: "Navn på chatbotten eller virksomheden" },
+type FieldType = "text" | "textarea" | "select" | "color" | "range";
+type FieldDefinition = { key: string; label: string; type: FieldType; placeholder?: string; hint?: string; options?: Array<{ label: string; value: string }>; min?: number; max?: number; step?: number; suffix?: string };
+type NavItem = { view: DashboardView; label: string; icon: LucideIcon; badge?: "attention" };
+
+const NAV_PRIMARY: NavItem[] = [
+  { view: "overview", label: "Overblik", icon: LayoutDashboard },
+  { view: "conversations", label: "Samtaler", icon: MessagesSquare, badge: "attention" },
+  { view: "leads", label: "Leads", icon: UserRoundPlus },
+];
+const NAV_IMPROVE: NavItem[] = [
+  { view: "knowledge", label: "Viden & svar", icon: BookOpenText },
+  { view: "behavior", label: "Adfærd", icon: SlidersHorizontal },
+  { view: "appearance", label: "Udseende", icon: Palette },
+  { view: "installation", label: "Installation", icon: Code2 },
+];
+const NAV_MANAGE: NavItem[] = [
+  { view: "analytics", label: "Analyse", icon: BarChart3 },
+  { view: "billing", label: "Abonnement", icon: CreditCard },
+  { view: "settings", label: "Indstillinger", icon: Settings },
+];
+
+const IDENTITY_FIELDS: FieldDefinition[] = [
+  { key: "name", label: "Navn", type: "text", placeholder: "Navn på virksomheden" },
   { key: "website_url", label: "Hjemmeside", type: "text", placeholder: "https://..." },
-  { key: "industry", label: "Branche", type: "text", placeholder: "Fx webshop, klinik eller rådgivning" },
-  { key: "description", label: "Beskrivelse", type: "textarea", placeholder: "Kort beskrivelse af virksomheden" },
+  { key: "industry", label: "Branche", type: "text", placeholder: "Fx webshop eller rådgivning" },
+  { key: "description", label: "Virksomhedsbeskrivelse", type: "textarea", placeholder: "Hvad virksomheden hjælper sine kunder med" },
+];
+const CONTACT_FIELDS: FieldDefinition[] = [
   { key: "support_email", label: "Support-email", type: "text", placeholder: "kontakt@firma.dk" },
   { key: "phone", label: "Telefon", type: "text", placeholder: "+45 ..." },
   { key: "address", label: "Adresse", type: "text", placeholder: "Vejnavn 1" },
   { key: "city", label: "By", type: "text", placeholder: "København" },
-  { key: "hours_weekday", label: "Åbningstider - hverdag", type: "text", placeholder: "Man-fre 09-17" },
-  { key: "hours_saturday", label: "Åbningstider - lørdag", type: "text", placeholder: "Lør 10-14" },
-  { key: "hours_sunday", label: "Åbningstider - søndag", type: "text", placeholder: "Søn lukket" },
-  { key: "response_time", label: "Svarfrist", type: "text", placeholder: "Typisk svar inden for 24 timer" },
-  { key: "fallback_action", label: "Fallback-handling", type: "textarea", placeholder: "Hvad botten skal gøre, hvis den er i tvivl" },
-  { key: "complaint_action", label: "Klage-handling", type: "textarea", placeholder: "Hvordan klager skal håndteres" },
-  { key: "products_services", label: "Produkter og services", type: "textarea", placeholder: "Hvad chatbotten skal kende til" },
-  { key: "delivery_time", label: "Leveringstid", type: "textarea", placeholder: "Levering, afhentning eller service tid" },
-  { key: "return_policy", label: "Returpolitik", type: "textarea", placeholder: "Retur, ombytning og garanti" },
-  { key: "payment_methods", label: "Betalingsformer", type: "textarea", placeholder: "Kort, MobilePay, faktura osv." },
-  { key: "welcome_message", label: "Velkomstbesked", type: "textarea", placeholder: "Hvad botten skal sige som første besked" },
-  {
-    key: "tone",
-    label: "Tone",
-    type: "select",
-    options: [
-      { label: "Uformel", value: "uformel" },
-      { label: "Formel", value: "formel" },
-      { label: "Venlig", value: "venlig" },
-      { label: "Ekspert", value: "ekspert" },
-    ],
-  },
-  {
-    key: "language",
-    label: "Sprog",
-    type: "select",
-    options: [
-      { label: "Dansk", value: "dansk" },
-      { label: "Engelsk", value: "engelsk" },
-      { label: "Norsk", value: "norsk" },
-      { label: "Svensk", value: "svensk" },
-      { label: "Tysk", value: "tysk" },
-    ],
-  },
-  { key: "custom_instructions", label: "Custom instruktioner", type: "textarea", placeholder: "Ekstra instruktioner til chatbotten" },
-  { key: "faq", label: "FAQ", type: "textarea", placeholder: "Spørgsmål og svar" },
+  { key: "hours_weekday", label: "Åbningstider · hverdag", type: "text", placeholder: "Man–fre 09–17" },
+  { key: "hours_saturday", label: "Åbningstider · lørdag", type: "text", placeholder: "Lør 10–14" },
+  { key: "hours_sunday", label: "Åbningstider · søndag", type: "text", placeholder: "Søn lukket" },
   { key: "cvr", label: "CVR", type: "text", placeholder: "12345678" },
-  { key: "social_media", label: "Sociale medier", type: "textarea", placeholder: "Links til sociale profiler" },
-  { key: "current_offers", label: "Aktuelle tilbud", type: "textarea", placeholder: "Særlige kampagner eller tilbud" },
-  { key: "warranty", label: "Garanti", type: "textarea", placeholder: "Garanti og reklamation" },
-  { key: "size_guide", label: "Størrelsesguide", type: "textarea", placeholder: "Hvis relevant for webshop" },
-  { key: "primary_color", label: "Primær farve", type: "color" },
-  { key: "secondary_color", label: "Sekundær farve", type: "color" },
-  { key: "chat_icon_color", label: "Chat-ikon farve", type: "color" },
-  {
-    key: "font_choice",
-    label: "Font",
-    type: "select",
-    options: [
-      { label: "Poppins", value: "Poppins" },
-      { label: "DM Sans", value: "DM Sans" },
-      { label: "Inter", value: "Inter" },
-      { label: "Lora", value: "Lora" },
-    ],
-  },
+  { key: "social_media", label: "Sociale medier", type: "textarea", placeholder: "Links til virksomhedens profiler" },
 ];
+const KNOWLEDGE_FIELDS: FieldDefinition[] = [
+  { key: "products_services", label: "Produkter og services", type: "textarea", placeholder: "Beskriv hvad I sælger eller tilbyder" },
+  { key: "delivery_time", label: "Levering", type: "textarea", placeholder: "Leveringstid, pris og områder" },
+  { key: "return_policy", label: "Returpolitik", type: "textarea", placeholder: "Retur, ombytning og refundering" },
+  { key: "payment_methods", label: "Betalingsformer", type: "textarea", placeholder: "Kort, MobilePay, faktura osv." },
+  { key: "current_offers", label: "Aktuelle tilbud", type: "textarea", placeholder: "Kampagner eller rabatter" },
+  { key: "warranty", label: "Garanti og reklamation", type: "textarea", placeholder: "Garantier og reklamationsret" },
+  { key: "size_guide", label: "Størrelsesguide", type: "textarea", placeholder: "Hvis relevant for jeres produkter" },
+  { key: "faq", label: "FAQ · spørgsmål og svar", type: "textarea", placeholder: "Spørgsmål: ...\nSvar: ...", hint: "Skriv klare spørgsmål og korte, konkrete svar." },
+];
+const BEHAVIOR_FIELDS: FieldDefinition[] = [
+  { key: "welcome_message", label: "Velkomstbesked", type: "textarea", placeholder: "Hej! Hvordan kan jeg hjælpe?" },
+  { key: "tone", label: "Tone", type: "select", options: [{ label: "Venlig", value: "venlig" }, { label: "Uformel", value: "uformel" }, { label: "Formel", value: "formel" }, { label: "Ekspert", value: "ekspert" }] },
+  { key: "language", label: "Sprog", type: "select", options: [{ label: "Dansk", value: "dansk" }, { label: "Engelsk", value: "engelsk" }, { label: "Norsk", value: "norsk" }, { label: "Svensk", value: "svensk" }, { label: "Tysk", value: "tysk" }] },
+  { key: "response_time", label: "Forventet svartid", type: "text", placeholder: "Fx inden for 24 timer" },
+  { key: "fallback_action", label: "Når botten ikke kender svaret", type: "textarea", placeholder: "Henvis fx til support-email eller telefon" },
+  { key: "complaint_action", label: "Når kunden klager", type: "textarea", placeholder: "Beskriv hvordan botten skal hjælpe videre" },
+  { key: "custom_instructions", label: "Ekstra instruktioner", type: "textarea", placeholder: "Særlige regler botten skal følge", hint: "Hold instruktionerne korte og undgå regler, der modsiger hinanden." },
+];
+const APPEARANCE_FIELDS: FieldDefinition[] = [
+  { key: "primary_color", label: "Primær farve", type: "color" },
+  { key: "secondary_color", label: "Kundens beskedfarve", type: "color" },
+  { key: "chat_icon_color", label: "Chatknap", type: "color" },
+  { key: "font_choice", label: "Skrifttype", type: "select", options: [{ label: "Poppins", value: "Poppins" }, { label: "DM Sans", value: "DM Sans" }, { label: "Inter", value: "Inter" }, { label: "Lora", value: "Lora" }] },
+  { key: "widget_opacity", label: "Gennemsigtighed", type: "range", min: 40, max: 100, step: 5, suffix: "%" },
+];
+const ALL_FIELDS = [...IDENTITY_FIELDS, ...CONTACT_FIELDS, ...KNOWLEDGE_FIELDS, ...BEHAVIOR_FIELDS, ...APPEARANCE_FIELDS];
 
-function buildBusinessDraft(business: Business): Record<string, string> {
-  return Object.fromEntries(
-    BUSINESS_FIELD_DEFINITIONS.map((field) => {
-      const value = business[field.key];
-      return [field.key, typeof value === "string" ? value : value ? String(value) : ""];
-    })
-  );
-}
-
-function sanitizeColorValue(value: string, fallback: string): string {
-  const trimmed = value.trim();
-  if (/^#([0-9a-fA-F]{3}|[0-9a-fA-F]{6})$/.test(trimmed)) {
-    return trimmed;
-  }
-
-  return fallback;
-}
-
-type ConversationRow = {
-  id: string;
-  business_id: string;
-  created_at: string | null;
-  messages: unknown;
+const VIEW_COPY: Record<DashboardView, { eyebrow: string; title: string; description: string }> = {
+  overview: { eyebrow: "Dit arbejdsområde", title: "Overblik", description: "Det vigtigste om din chatbot — og hvad der kræver din opmærksomhed." },
+  conversations: { eyebrow: "Kundedialog", title: "Samtaler", description: "Gennemgå kundernes spørgsmål og find svar, der kan forbedres." },
+  leads: { eyebrow: "Muligheder", title: "Leads", description: "Kontaktoplysninger, som kunder har delt med chatbotten." },
+  knowledge: { eyebrow: "Forbedr botten", title: "Viden & svar", description: "Hold botten opdateret med produkter, politikker og gode standardsvar." },
+  behavior: { eyebrow: "Forbedr botten", title: "Adfærd", description: "Bestem hvordan chatbotten taler, hjælper og sender kunder videre." },
+  appearance: { eyebrow: "Forbedr botten", title: "Udseende", description: "Tilpas chatten til jeres brand og se ændringerne med det samme." },
+  installation: { eyebrow: "Gå live", title: "Installation", description: "Alt din udvikler eller webshopansvarlige skal bruge for at installere EmbedBot." },
+  analytics: { eyebrow: "Resultater", title: "Analyse", description: "Se udviklingen og gå fra tal direkte til de samtaler, der ligger bag." },
+  billing: { eyebrow: "Konto", title: "Abonnement", description: "Plan, AI-forbrug, næste periode og faktura — synkroniseret med Stripe." },
+  settings: { eyebrow: "Konto", title: "Indstillinger", description: "Grundoplysninger, kontaktinformation og åbningstider." },
 };
 
-type ChatMessage = {
-  role: string;
-  content: string;
-};
-
-type LeadRow = {
-  email: string;
-  message: string;
-  pageUrl: string;
-  businessName: string;
-  createdAt: string | null;
-};
-
-type HighlightRow = {
-  id: string;
-  question: string;
-  answer: string;
-  businessName: string;
-};
-
-type SubscriptionInvoice = {
-  id: string;
-  status: string | null;
-  hostedInvoiceUrl: string | null;
-  invoicePdf: string | null;
-  amountDue: number | null;
-  amountPaid: number | null;
-  currency: string | null;
-  dueDate: string | null;
-};
-
-type SubscriptionInfo = {
-  businessId: string;
-  businessName: string;
-  source: "stripe" | "database";
-  status: string;
-  paymentStatus: string;
-  isActive: boolean;
-  isTrialing: boolean;
-  trialEndsAt: string | null;
-  trialDaysRemaining: number | null;
-  currentPeriodStart: string | null;
-  currentPeriodEnd: string | null;
-  cancelAtPeriodEnd: boolean | null;
-  cancelAt: string | null;
-  canceledAt: string | null;
-  collectionMethod: string | null;
-  amount: number | null;
-  currency: string | null;
-  interval: string | null;
-  productName: string;
-  quantity: number | null;
-  customerId: string | null;
-  customerEmail: string | null;
-  subscriptionId: string | null;
-  latestInvoice: SubscriptionInvoice | null;
-  updatedAt: string | null;
-  error: string | null;
-  plan: "starter" | "growth" | "scale" | "enterprise";
-  planName: string;
-  answersUsed: number;
-  answerLimit: number;
-  usageResetsAt: string | null;
-};
+function cx(...classes: Array<string | false | null | undefined>) { return classes.filter(Boolean).join(" "); }
 
 function normalizeMessages(raw: unknown): ChatMessage[] {
-  if (!Array.isArray(raw)) {
-    return [];
-  }
-
-  return raw
-    .map((entry) => {
-      if (typeof entry === "string") {
-        return { role: "assistant", content: entry };
-      }
-
-      if (entry && typeof entry === "object") {
-        const obj = entry as Record<string, unknown>;
-        const role = typeof obj.role === "string" ? obj.role : "assistant";
-        const content =
-          typeof obj.content === "string"
-            ? obj.content
-            : typeof obj.text === "string"
-              ? obj.text
-              : typeof obj.message === "string"
-                ? obj.message
-                : "";
-
-        return { role, content };
-      }
-
-      return { role: "assistant", content: "" };
-    })
-    .filter((message) => message.content.trim().length > 0);
+  if (!Array.isArray(raw)) return [];
+  return raw.map((entry) => {
+    if (typeof entry === "string") return { role: "assistant", content: entry };
+    if (!entry || typeof entry !== "object") return { role: "assistant", content: "" };
+    const item = entry as Record<string, unknown>;
+    const role = typeof item.role === "string" ? item.role : typeof item.sender === "string" ? item.sender : "assistant";
+    const content = typeof item.content === "string" ? item.content : typeof item.text === "string" ? item.text : typeof item.message === "string" ? item.message : "";
+    return { role, content };
+  }).filter((message) => message.content.trim().length > 0);
 }
 
 function extractPageUrl(raw: unknown): string {
-  if (!Array.isArray(raw)) {
-    return "Ikke oplyst";
-  }
-
+  if (!Array.isArray(raw)) return "Ikke oplyst";
   for (const entry of raw) {
-    if (!entry || typeof entry !== "object") {
-      continue;
-    }
-
-    const obj = entry as Record<string, unknown>;
-    if (typeof obj.page_url === "string" && obj.page_url.trim()) {
-      return obj.page_url.trim();
-    }
+    if (!entry || typeof entry !== "object") continue;
+    const pageUrl = (entry as Record<string, unknown>).page_url;
+    if (typeof pageUrl === "string" && pageUrl.trim()) return pageUrl.trim();
   }
-
   return "Ikke oplyst";
 }
-
-function extractEmails(text: string): string[] {
-  const matches = text.match(/[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}/gi) || [];
-  return Array.from(new Set(matches.map((email) => email.toLowerCase())));
-}
-
-function isMissedAnswer(text: string): boolean {
-  const normalized = text.toLowerCase();
-  const patterns = [
-    "kontakt os",
-    "kontakt os venligst",
-    "kan ikke hjælpe",
-    "beklager",
-    "jeg ved det ikke",
-    "please contact",
-    "i cannot help",
-    "i can't help",
-  ];
-
-  return patterns.some((pattern) => normalized.includes(pattern));
-}
-
+function extractEmails(text: string): string[] { return Array.from(new Set((text.match(/[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}/gi) || []).map((address) => address.toLowerCase()))); }
+function isMissedAnswer(text: string): boolean { const value = text.toLowerCase(); return ["kontakt os", "kan ikke hjælpe", "beklager", "jeg ved det ikke", "please contact", "i cannot help", "i can't help"].some((pattern) => value.includes(pattern)); }
 function classifyTopic(question: string): string {
-  const normalized = question.toLowerCase();
-
-  if (/pris|price|pricing|koster|tilbud|rabat/.test(normalized)) return "Pris og tilbud";
-  if (/levering|shipping|fragt|send|norge|norway|delivery/.test(normalized)) return "Levering og forsendelse";
-  if (/retur|refund|return|ombyt|garanti/.test(normalized)) return "Retur og garanti";
-  if (/betaling|payment|faktura|invoice|kort|mobilepay/.test(normalized)) return "Betaling";
-  if (/aabning|åbning|open|lukke|hour|hours|tid/.test(normalized)) return "Åbningstider";
-  if (/kontakt|telefon|email|mail|adresse/.test(normalized)) return "Kontakt";
+  const value = question.toLowerCase();
+  if (/pris|price|pricing|koster|tilbud|rabat/.test(value)) return "Pris og tilbud";
+  if (/levering|shipping|fragt|forsend|delivery/.test(value)) return "Levering";
+  if (/retur|refund|return|ombyt|garanti/.test(value)) return "Retur og garanti";
+  if (/betaling|payment|faktura|invoice|kort|mobilepay/.test(value)) return "Betaling";
+  if (/åbning|aabning|open|lukke|hour|tid/.test(value)) return "Åbningstider";
+  if (/kontakt|telefon|email|mail|adresse/.test(value)) return "Kontakt";
   return "Andet";
 }
+function shortText(value: string, max = 110) { const clean = value.trim(); return clean.length <= max ? clean : `${clean.slice(0, max - 1)}…`; }
+function formatDate(value: string | null | undefined) { if (!value) return "Ikke oplyst"; const date = new Date(value); return Number.isNaN(date.getTime()) ? "Ikke oplyst" : new Intl.DateTimeFormat("da-DK", { day: "numeric", month: "short", year: "numeric" }).format(date); }
+function formatConversationDate(value: string | null) { if (!value) return "Ukendt tidspunkt"; const date = new Date(value); return Number.isNaN(date.getTime()) ? "Ukendt tidspunkt" : new Intl.DateTimeFormat("da-DK", { day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" }).format(date); }
+function formatCurrency(amount: number | null, currency: string | null) { return typeof amount !== "number" || !currency ? "Ikke oplyst" : new Intl.NumberFormat("da-DK", { style: "currency", currency: currency.toUpperCase(), maximumFractionDigits: 0 }).format(amount / 100); }
+function formatSubscriptionStatus(status: string) { switch (status.toLowerCase()) { case "active": return "Aktivt"; case "trialing": return "Prøveperiode"; case "past_due": return "Betaling mangler"; case "canceled": return "Opsagt"; case "unpaid": return "Ubetalt"; case "paused": return "Pauset"; default: return "Afventer"; } }
+function normalizeExternalUrl(value: string | null | undefined) { const trimmed = (value || "").trim(); return !trimmed ? "" : /^https?:\/\//i.test(trimmed) ? trimmed : `https://${trimmed}`; }
+function sanitizeColor(value: string, fallback: string) { return /^#([0-9a-f]{3}|[0-9a-f]{6})$/i.test(value.trim()) ? value.trim() : fallback; }
+function buildDraft(business: Business): Record<string, string> { return Object.fromEntries(ALL_FIELDS.map((field) => { const value = business[field.key]; if (typeof value === "boolean") return [field.key, value ? "true" : "false"]; return [field.key, value === null || value === undefined ? "" : String(value)]; })); }
+function getConversationQuestion(conversation: ConversationRow) { return normalizeMessages(conversation.messages).find((message) => message.role.toLowerCase().includes("user"))?.content || "Samtale uden spørgsmål"; }
+function getConversationAnswer(conversation: ConversationRow) { return normalizeMessages(conversation.messages).find((message) => message.role.toLowerCase().includes("assistant"))?.content || ""; }
 
-function shortText(value: string, max = 120): string {
-  const clean = value.trim();
-  if (clean.length <= max) return clean;
-  return `${clean.slice(0, max - 1)}...`;
+function MetricCard({ icon: Icon, label, value, hint }: { icon: LucideIcon; label: string; value: string; hint: string }) {
+  return <article className={cx(styles.card, styles.metricCard)}><div className={styles.metricTop}><p className={styles.metricLabel}>{label}</p><Icon className={styles.metricIcon} size={16} aria-hidden="true" /></div><p className={styles.metricValue}>{value}</p><p className={styles.metricHint}>{hint}</p></article>;
+}
+function EmptyState({ icon: Icon, title, description }: { icon: LucideIcon; title: string; description: string }) {
+  return <div className={styles.emptyState}><Icon size={24} aria-hidden="true" /><strong>{title}</strong><p>{description}</p></div>;
 }
 
-function formatHours(value: number): string {
-  if (!Number.isFinite(value)) return "0,0";
-  return value.toFixed(1).replace(".", ",");
+function EditorSection({ title, description, fields, draft, onChange, onSave, saving }: { title: string; description: string; fields: FieldDefinition[]; draft: Record<string, string>; onChange: (key: string, value: string) => void; onSave: () => void; saving: boolean }) {
+  return (
+    <section className={cx(styles.card, styles.sectionCard)}>
+      <div className={styles.cardHeader}><div><h2 className={styles.cardTitle}>{title}</h2><p className={styles.cardDescription}>{description}</p></div></div>
+      <div className={styles.editorGrid}>
+        {fields.map((field) => {
+          const value = draft[field.key] || "";
+          const colorFallback = field.key === "secondary_color" ? "#edf3ef" : "#237a57";
+          return (
+            <label key={field.key} className={cx(styles.field, field.type === "textarea" && styles.fieldFull)}>
+              <span className={styles.fieldLabel}>{field.label}</span>
+              {field.type === "textarea" ? <textarea className={styles.textarea} rows={field.key === "faq" ? 10 : 4} value={value} placeholder={field.placeholder} onChange={(event) => onChange(field.key, event.target.value)} />
+                : field.type === "select" ? <select className={styles.select} value={value} onChange={(event) => onChange(field.key, event.target.value)}><option value="">Vælg</option>{field.options?.map((option) => <option key={option.value} value={option.value}>{option.label}</option>)}</select>
+                : field.type === "color" ? <span className={styles.colorInputWrap}><input className={styles.colorInput} type="color" value={sanitizeColor(value, colorFallback)} onChange={(event) => onChange(field.key, event.target.value)} /><span className={styles.colorValue}>{sanitizeColor(value, colorFallback)}</span></span>
+                : field.type === "range" ? <span className={styles.rangeRow}><input className={styles.range} type="range" min={field.min} max={field.max} step={field.step} value={value || field.max} onChange={(event) => onChange(field.key, event.target.value)} /><span className={styles.rangeValue}>{value || field.max}{field.suffix}</span></span>
+                : <input className={styles.input} value={value} placeholder={field.placeholder} onChange={(event) => onChange(field.key, event.target.value)} />}
+              {field.hint ? <p className={styles.fieldHint}>{field.hint}</p> : null}
+            </label>
+          );
+        })}
+      </div>
+      <div className={styles.editorFooter}><button className={styles.button} type="button" onClick={onSave} disabled={saving}>{saving ? "Gemmer…" : "Gem ændringer"}</button></div>
+    </section>
+  );
 }
 
-function formatPercent(value: number): string {
-  if (!Number.isFinite(value)) return "0%";
-  return `${Math.max(0, Math.min(100, Math.round(value)))}%`;
+function WidgetPreview({ businessName, draft }: { businessName: string; draft: Record<string, string> }) {
+  const primaryColor = sanitizeColor(draft.primary_color || "", "#237a57");
+  const secondaryColor = sanitizeColor(draft.secondary_color || "", "#edf3ef");
+  const iconColor = sanitizeColor(draft.chat_icon_color || "", primaryColor);
+  const opacity = Math.max(0.4, Math.min(1, Number(draft.widget_opacity || "100") / 100));
+  return (
+    <section className={cx(styles.card, styles.previewCard)}>
+      <div className={styles.cardHeader} style={{ padding: "18px 18px 0" }}><div><h2 className={styles.cardTitle}>Live preview</h2><p className={styles.cardDescription}>Sådan føles chatten på en lys hjemmeside.</p></div><Eye size={17} className={styles.metricIcon} /></div>
+      <div className={styles.previewStage}>
+        <div className={styles.mockSite} aria-hidden="true"><div className={styles.mockNav} /><div className={styles.mockTitle} /><div className={styles.mockCopy} /></div>
+        <div className={styles.widgetMock} style={{ opacity, fontFamily: `"${draft.font_choice || "Poppins"}", sans-serif` }}>
+          <div className={styles.widgetHeader} style={{ background: primaryColor, color: "#ffffff" }}>{businessName}</div>
+          <div className={styles.widgetBody}><div className={styles.widgetMessage} style={{ background: secondaryColor, color: "#142019" }}>{draft.welcome_message?.trim() || "Hej! Hvordan kan jeg hjælpe dig i dag?"}</div><div className={styles.widgetInput}>Skriv en besked…<span className={styles.widgetSend} style={{ background: iconColor }}><ArrowRight size={12} /></span></div></div>
+        </div>
+      </div>
+    </section>
+  );
 }
 
-function formatDateTime(value: string | null): string {
-  if (!value) return "Ikke oplyst";
-  const date = new Date(value);
-  if (Number.isNaN(date.getTime())) return "Ikke oplyst";
-
-  return new Intl.DateTimeFormat("da-DK", {
-    day: "2-digit",
-    month: "short",
-    year: "numeric",
-  }).format(date);
-}
-
-function formatCurrency(amount: number | null, currency: string | null): string {
-  if (typeof amount !== "number" || !Number.isFinite(amount) || !currency) {
-    return "Ikke oplyst";
-  }
-
-  return new Intl.NumberFormat("da-DK", {
-    style: "currency",
-    currency: currency.toUpperCase(),
-  }).format(amount / 100);
-}
-
-function formatBillingInterval(interval: string | null): string {
-  switch (interval) {
-    case "day":
-      return "dag";
-    case "week":
-      return "uge";
-    case "month":
-      return "måned";
-    case "year":
-      return "år";
-    default:
-      return "periode";
-  }
-}
-
-function formatSubscriptionStatus(status: string): string {
-  switch (status.toLowerCase()) {
-    case "trialing":
-      return "Gratis prøveperiode";
-    case "active":
-      return "Aktivt";
-    case "past_due":
-      return "Betaling mangler";
-    case "canceled":
-      return "Opsagt";
-    case "unpaid":
-      return "Ubetalt";
-    case "incomplete":
-      return "Afventer betaling";
-    case "paused":
-      return "Pauset";
-    default:
-      return status || "Ukendt";
-  }
-}
-
-function getSubscriptionStatusStyle(subscription: SubscriptionInfo): CSSProperties {
-  if (subscription.error) {
-    return { background: "rgba(155,61,47,0.10)", color: "#9b3d2f", borderColor: "rgba(155,61,47,0.18)" };
-  }
-
-  if (subscription.isTrialing) {
-    return { background: "rgba(217,199,166,0.32)", color: "#5f4a21", borderColor: "rgba(217,199,166,0.7)" };
-  }
-
-  if (subscription.isActive) {
-    return { background: "rgba(47,111,83,0.10)", color: "#2f6f53", borderColor: "rgba(47,111,83,0.18)" };
-  }
-
-  return { background: "rgba(155,61,47,0.10)", color: "#9b3d2f", borderColor: "rgba(155,61,47,0.18)" };
+function TrendChart({ daily }: { daily: Array<{ label: string; conversations: number; leads: number }> }) {
+  const maxValue = Math.max(1, ...daily.flatMap((day) => [day.conversations, day.leads]));
+  return <><div className={styles.chartScroll}><div className={styles.chart} style={{ gridTemplateColumns: `repeat(${daily.length}, minmax(34px, 1fr))`, minWidth: Math.max(420, daily.length * 44) }}>{daily.map((day, index) => <div className={styles.chartDay} key={`${day.label}-${index}`}><div className={styles.barArea}><div className={styles.bar} title={`${day.conversations} samtaler`} style={{ height: day.conversations === 0 ? 0 : Math.max(5, Math.round((day.conversations / maxValue) * 138)) }} /><div className={styles.barSoft} title={`${day.leads} leads`} style={{ height: day.leads === 0 ? 0 : Math.max(5, Math.round((day.leads / maxValue) * 138)) }} /></div><span className={styles.chartLabel}>{day.label}</span></div>)}</div></div><div className={styles.legend}><span className={styles.legendItem}><span className={styles.legendDot} />Samtaler</span><span className={styles.legendItem}><span className={styles.legendDotSoft} />Leads</span></div></>;
 }
 
 export default function DashboardPage() {
@@ -392,1238 +271,232 @@ export default function DashboardPage() {
   const [loading, setLoading] = useState(true);
   const [email, setEmail] = useState("");
   const [businesses, setBusinesses] = useState<Business[]>([]);
+  const [selectedBusinessId, setSelectedBusinessId] = useState("");
   const [conversations, setConversations] = useState<ConversationRow[]>([]);
   const [subscriptions, setSubscriptions] = useState<SubscriptionInfo[]>([]);
   const [subscriptionLoading, setSubscriptionLoading] = useState(false);
   const [subscriptionError, setSubscriptionError] = useState("");
-  const [stripeConfigured, setStripeConfigured] = useState(true);
   const [fetchError, setFetchError] = useState("");
-  const [copiedBusinessId, setCopiedBusinessId] = useState<string | null>(null);
-  const [editingBusinessId, setEditingBusinessId] = useState<string | null>(null);
-  const [savingBusinessId, setSavingBusinessId] = useState<string | null>(null);
+  const [activeView, setActiveView] = useState<DashboardView>("overview");
+  const [mobileNavOpen, setMobileNavOpen] = useState(false);
+  const [rangeDays, setRangeDays] = useState<7 | 30>(7);
+  const [conversationSearch, setConversationSearch] = useState("");
+  const [conversationFilter, setConversationFilter] = useState<"all" | "unanswered" | "leads">("all");
+  const [selectedConversationId, setSelectedConversationId] = useState("");
   const [editDrafts, setEditDrafts] = useState<Record<string, Record<string, string>>>({});
-  const [editError, setEditError] = useState("");
+  const [savingSection, setSavingSection] = useState("");
+  const [actionError, setActionError] = useState("");
+  const [toast, setToast] = useState("");
+  const [copied, setCopied] = useState(false);
+  const [faqCandidate, setFaqCandidate] = useState<{ question: string; answer: string } | null>(null);
+
+  useEffect(() => {
+    const requestedView = new URLSearchParams(window.location.search).get("view");
+    if (requestedView && requestedView in VIEW_COPY) setActiveView(requestedView as DashboardView);
+  }, []);
 
   useEffect(() => {
     let mounted = true;
-
     async function loadDashboard() {
-      if (typeof window !== "undefined") {
-        const freshLoginAtRaw = sessionStorage.getItem("dashboard_fresh_login_at");
-        const freshLoginAt = Number(freshLoginAtRaw || "0");
-        const isFreshLogin = Number.isFinite(freshLoginAt) && Date.now() - freshLoginAt < 2 * 60 * 1000;
-
-        if (!isFreshLogin) {
-          await supabase.auth.signOut();
-          router.replace("/login");
-          return;
-        }
+      if (process.env.NODE_ENV === "development" && new URLSearchParams(window.location.search).get("preview") === "1") {
+        const previewBusiness: Business = {
+          id: "11111111-1111-4111-8111-111111111111", name: "Nordic Living", website_url: "https://example.com",
+          industry: "Webshop", description: "Dansk interiør til hverdagen", support_email: "hej@nordicliving.dk",
+          products_services: "Møbler, lamper og boligtilbehør", delivery_time: "2-4 hverdage", return_policy: "30 dages returret",
+          payment_methods: "Visa, Mastercard og MobilePay", faq: "Spørgsmål: Hvor hurtigt leverer I?\nSvar: Vi leverer normalt inden for 2-4 hverdage.",
+          welcome_message: "Hej! Hvordan kan jeg hjælpe dig med dit hjem i dag?", tone: "venlig", language: "dansk",
+          primary_color: "#237a57", secondary_color: "#e9f5ef", chat_icon_color: "#237a57", font_choice: "Poppins",
+          widget_opacity: "100", subscription_status: "active", payment_status: "paid", activated: true, plan: "growth",
+        };
+        const previewNow = Date.now();
+        const previewConversations: ConversationRow[] = [
+          { id: "preview-1", business_id: previewBusiness.id, created_at: new Date(previewNow - 45 * 60 * 1000).toISOString(), messages: [{ role: "user", content: "Hvor lang leveringstid har spisebordet?" }, { role: "assistant", content: "Vi leverer normalt inden for 2-4 hverdage. Vil du have hjælp til at vælge størrelse?" }] },
+          { id: "preview-2", business_id: previewBusiness.id, created_at: new Date(previewNow - 28 * 60 * 60 * 1000).toISOString(), messages: [{ role: "user", content: "Kan lampen dæmpes? Min mail er ida@example.com" }, { role: "assistant", content: "Beklager, jeg ved det ikke. Kontakt os venligst." }] },
+          { id: "preview-3", business_id: previewBusiness.id, created_at: new Date(previewNow - 52 * 60 * 60 * 1000).toISOString(), messages: [{ role: "user", content: "Kan jeg returnere en vare købt på tilbud?" }, { role: "assistant", content: "Ja, I har 30 dages returret — også på tilbudsvarer." }] },
+        ];
+        const previewSubscription: SubscriptionInfo = {
+          businessId: previewBusiness.id, businessName: previewBusiness.name || "", source: "stripe", status: "active",
+          paymentStatus: "paid", isActive: true, isTrialing: false, trialEndsAt: null, trialDaysRemaining: null,
+          currentPeriodStart: new Date(previewNow - 10 * 86400000).toISOString(), currentPeriodEnd: new Date(previewNow + 20 * 86400000).toISOString(),
+          cancelAtPeriodEnd: false, cancelAt: null, canceledAt: null, collectionMethod: "charge_automatically",
+          amount: 69900, currency: "dkk", interval: "month", productName: "Growth", quantity: 1,
+          customerId: "preview", customerEmail: "hej@nordicliving.dk", subscriptionId: "preview", latestInvoice: null,
+          updatedAt: new Date(previewNow).toISOString(), error: null, plan: "growth", planName: "Growth",
+          answersUsed: 1834, answerLimit: 5000, usageResetsAt: new Date(previewNow + 20 * 86400000).toISOString(),
+        };
+        setEmail("kunde@nordicliving.dk");
+        setBusinesses([previewBusiness]); setSelectedBusinessId(previewBusiness.id);
+        setEditDrafts({ [previewBusiness.id]: buildDraft(previewBusiness) });
+        setConversations(previewConversations); setSubscriptions([previewSubscription]); setLoading(false);
+        return;
       }
-
       const { data: userData } = await supabase.auth.getUser();
       if (!mounted) return;
-
-      if (!userData.user) {
-        router.replace("/login");
-        return;
-      }
-
+      if (!userData.user) { router.replace("/login"); return; }
       setEmail(userData.user.email || "");
-
-      const { data: businessData, error: businessError } = await supabase
-        .from("businesses")
-        .select("*")
-        .eq("user_id", userData.user.id)
-        .order("created_at", { ascending: false });
-
+      const { data: businessData, error: businessError } = await supabase.from("businesses").select("*").eq("user_id", userData.user.id).order("created_at", { ascending: false });
       if (!mounted) return;
-
-      if (businessError) {
-        setFetchError(businessError.message || "Kunne ikke hente dine chatbots.");
-        setLoading(false);
-        return;
-      }
-
+      if (businessError) { setFetchError("Vi kunne ikke hente dine chatbots. Prøv at genindlæse siden."); setLoading(false); return; }
       const rows = (businessData || []) as Business[];
-      const hasActiveSubscription = rows.some((business) => isBusinessSubscriptionActive(business));
-
-      if (!hasActiveSubscription) {
-        router.replace("/setup/provider?reason=subscription_required");
-        return;
-      }
-
+      const activeBusiness = rows.find((business) => isBusinessSubscriptionActive(business));
+      if (!activeBusiness) { router.replace("/setup/provider?reason=subscription_required"); return; }
       setBusinesses(rows);
+      setSelectedBusinessId(activeBusiness.id);
+      setEditDrafts(Object.fromEntries(rows.map((business) => [business.id, buildDraft(business)])));
       setSubscriptionLoading(true);
-      setSubscriptionError("");
-
-      fetch("/api/dashboard/subscription")
-        .then(async (response) => {
-          const result = (await response.json()) as {
-            success?: boolean;
-            error?: string;
-            subscriptions?: SubscriptionInfo[];
-            stripeConfigured?: boolean;
-          };
-
-          if (!response.ok || !result.success) {
-            throw new Error(result.error || "Kunne ikke hente abonnement.");
-          }
-
-          if (!mounted) return;
-          setSubscriptions(result.subscriptions || []);
-          setStripeConfigured(result.stripeConfigured !== false);
-        })
-        .catch((error) => {
-          if (!mounted) return;
-          setSubscriptionError(error instanceof Error ? error.message : "Kunne ikke hente abonnement.");
-          setSubscriptions([]);
-        })
-        .finally(() => {
-          if (!mounted) return;
-          setSubscriptionLoading(false);
-        });
-
-      const businessIds = rows.map((row) => row.id).filter(Boolean);
-      if (businessIds.length === 0) {
-        setConversations([]);
-        setLoading(false);
-        return;
-      }
-
-      const { data: convoData, error: convoError } = await supabase
-        .from("conversations")
-        .select("id,business_id,created_at,messages")
-        .in("business_id", businessIds)
-        .order("created_at", { ascending: false })
-        .limit(600);
-
+      const businessIds = rows.map((business) => business.id).filter(Boolean);
+      const subscriptionPromise = fetch("/api/dashboard/subscription").then(async (response) => { const result = await response.json() as { success?: boolean; error?: string; subscriptions?: SubscriptionInfo[] }; if (!response.ok || !result.success) throw new Error(result.error || "Subscription request failed"); return result.subscriptions || []; });
+      const conversationsPromise = businessIds.length ? supabase.from("conversations").select("id,business_id,created_at,messages").in("business_id", businessIds).order("created_at", { ascending: false }).limit(600) : Promise.resolve({ data: [], error: null });
+      const [subscriptionResult, conversationResult] = await Promise.allSettled([subscriptionPromise, conversationsPromise]);
       if (!mounted) return;
-
-      if (convoError) {
-        const message = convoError.message || "Kunne ikke hente samtaler.";
-        if (message.includes("Could not find the table") && message.includes("conversations")) {
-          setFetchError("Tabellen conversations mangler i Supabase. Opret den i SQL Editor for at se data.");
-        } else {
-          setFetchError(message);
-        }
-        setConversations([]);
-      } else {
-        setConversations((convoData || []) as ConversationRow[]);
-      }
-
+      if (subscriptionResult.status === "fulfilled") setSubscriptions(subscriptionResult.value);
+      else setSubscriptionError("Abonnementsdata kunne ikke opdateres lige nu. Vi viser stadig din gemte adgangsstatus.");
+      if (conversationResult.status === "fulfilled" && !conversationResult.value.error) setConversations((conversationResult.value.data || []) as ConversationRow[]);
+      else setFetchError("Samtaler kunne ikke hentes lige nu. Dine chatbot-indstillinger virker stadig.");
+      setSubscriptionLoading(false);
       setLoading(false);
     }
+    void loadDashboard();
+    return () => { mounted = false; };
+  }, [router, supabase]);
 
-    loadDashboard();
+  useEffect(() => { if (!toast) return; const timer = window.setTimeout(() => setToast(""), 3200); return () => window.clearTimeout(timer); }, [toast]);
 
-    return () => {
-      mounted = false;
-    };
-  }, [router, supabase, supabase.auth]);
-
-  async function handleLogout() {
-    await supabase.auth.signOut();
-    router.push("/login");
-  }
-
-  async function handleCopyEmbedCode(businessId: string) {
-    const script = `<script src="https://www.embedbot.dk/widget.js?id=${businessId}"></script>`;
-
-    try {
-      await navigator.clipboard.writeText(script);
-      setCopiedBusinessId(businessId);
-      setTimeout(() => {
-        setCopiedBusinessId((current) => (current === businessId ? null : current));
-      }, 2000);
-    } catch {
-      setFetchError("Kunne ikke kopiere embed-kode.");
-    }
-  }
-
-  function startEditingBusiness(business: Business) {
-    setEditingBusinessId(business.id);
-    setEditError("");
-    setEditDrafts((current) => ({
-      ...current,
-      [business.id]: buildBusinessDraft(business),
-    }));
-  }
-
-  function cancelEditingBusiness() {
-    setEditingBusinessId(null);
-    setEditError("");
-  }
-
-  function updateDraftValue(businessId: string, key: string, value: string) {
-    setEditDrafts((current) => ({
-      ...current,
-      [businessId]: {
-        ...(current[businessId] || {}),
-        [key]: value,
-      },
-    }));
-  }
-
-  async function saveBusinessEdit(business: Business) {
-    const stableBusinessId = business.id.trim();
-    if (!stableBusinessId) {
-      setEditError("Virksomheden mangler et gyldigt id.");
-      return;
-    }
-
-    const draft = editDrafts[stableBusinessId] || buildBusinessDraft(business);
-    const updates: Record<string, string> = {};
-    const existingColumns = new Set(Object.keys(business));
-
-    for (const field of BUSINESS_FIELD_DEFINITIONS) {
-      const fieldKey = String(field.key);
-
-      // Only submit columns that exist on this deployment's businesses schema.
-      if (!existingColumns.has(fieldKey)) {
-        continue;
-      }
-
-      const rawValue = (draft[String(field.key)] || "").trim();
-
-      if (field.type === "color") {
-        const fallback = field.key === "secondary_color" ? "#f6f3ed" : "#ffffff";
-        updates[fieldKey] = sanitizeColorValue(rawValue || String(business[field.key] || ""), fallback);
-        continue;
-      }
-
-      updates[fieldKey] = rawValue;
-    }
-
-    setSavingBusinessId(stableBusinessId);
-    setEditError("");
-
-    try {
-      const saveResponse = await fetch("/api/business-draft", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          business_id: stableBusinessId,
-          form: updates,
-        }),
-      });
-
-      const saveResult = (await saveResponse.json()) as { success?: boolean; error?: string };
-      if (!saveResponse.ok || !saveResult.success) {
-        throw new Error(saveResult.error || "Kunne ikke gemme ændringer.");
-      }
-
-      const { data } = await supabase
-        .from("businesses")
-        .select("*")
-        .eq("id", stableBusinessId)
-        .maybeSingle();
-
-      setBusinesses((current) =>
-        current.map((row) => {
-          if (row.id !== stableBusinessId) {
-            return row;
-          }
-
-          if (data) {
-            return data as Business;
-          }
-
-          return {
-            ...row,
-            ...updates,
-          };
-        })
-      );
-      setEditingBusinessId(null);
-    } catch (saveError) {
-      setEditError(saveError instanceof Error ? saveError.message : "Kunne ikke gemme ændringer.");
-    } finally {
-      setSavingBusinessId(null);
-    }
-  }
-
-  const businessNameById = useMemo(() => {
-    return new Map(businesses.map((business) => [business.id, (business.name || "Unavngiven chatbot").trim()]));
-  }, [businesses]);
+  const selectedBusiness = useMemo(() => businesses.find((business) => business.id === selectedBusinessId) || businesses[0] || null, [businesses, selectedBusinessId]);
+  const selectedSubscription = useMemo(() => subscriptions.find((subscription) => subscription.businessId === selectedBusiness?.id) || null, [selectedBusiness, subscriptions]);
+  const selectedConversations = useMemo(() => conversations.filter((conversation) => conversation.business_id === selectedBusiness?.id), [conversations, selectedBusiness]);
+  const draft = selectedBusiness ? editDrafts[selectedBusiness.id] || buildDraft(selectedBusiness) : {};
 
   const analytics = useMemo(() => {
-    const now = analyticsAnchor;
-    const weekAgo = now - 7 * 24 * 60 * 60 * 1000;
-
-    const weekConversations = conversations.filter((row) => {
-      if (!row.created_at) return false;
-      const timestamp = new Date(row.created_at).getTime();
-      return Number.isFinite(timestamp) && timestamp >= weekAgo;
-    });
-
-    const leads: LeadRow[] = [];
-    const seenLeadEmails = new Set<string>();
+    const anchorDate = new Date(analyticsAnchor);
+    const start = Date.UTC(anchorDate.getUTCFullYear(), anchorDate.getUTCMonth(), anchorDate.getUTCDate() - (rangeDays - 1));
+    const rangeConversations = selectedConversations.filter((conversation) => { const timestamp = new Date(conversation.created_at || "").getTime(); return Number.isFinite(timestamp) && timestamp >= start; });
     const topicCounts = new Map<string, number>();
-    const missedQuestions: HighlightRow[] = [];
-    const goodHighlights: HighlightRow[] = [];
-    const badHighlights: HighlightRow[] = [];
-
-    const dayKeys: string[] = [];
-    const dayConversationCount = new Map<string, number>();
-    const dayLeadCount = new Map<string, number>();
-
-    for (let i = 6; i >= 0; i -= 1) {
-      const date = new Date(now - i * 24 * 60 * 60 * 1000);
-      const key = date.toISOString().slice(0, 10);
-      dayKeys.push(key);
-      dayConversationCount.set(key, 0);
-      dayLeadCount.set(key, 0);
+    const leadMap = new Map<string, LeadRow>();
+    const missed: ConversationRow[] = [];
+    let resolved = 0; let withAnswer = 0; let userMessages = 0;
+    const dayKeys: string[] = []; const conversationCounts = new Map<string, number>(); const leadCounts = new Map<string, number>();
+    for (let index = rangeDays - 1; index >= 0; index -= 1) { const date = new Date(analyticsAnchor - index * 86400000); const key = date.toISOString().slice(0, 10); dayKeys.push(key); conversationCounts.set(key, 0); leadCounts.set(key, 0); }
+    for (const conversation of rangeConversations) {
+      const messages = normalizeMessages(conversation.messages);
+      const userContent = messages.filter((message) => message.role.toLowerCase().includes("user")).map((message) => message.content).join(" ");
+      const assistantContent = messages.filter((message) => message.role.toLowerCase().includes("assistant")).map((message) => message.content).join(" ");
+      const key = conversation.created_at?.slice(0, 10) || "";
+      if (conversationCounts.has(key)) conversationCounts.set(key, (conversationCounts.get(key) || 0) + 1);
+      if (userContent) { userMessages += messages.filter((message) => message.role.toLowerCase().includes("user")).length; const topic = classifyTopic(userContent); topicCounts.set(topic, (topicCounts.get(topic) || 0) + 1); }
+      if (assistantContent) { withAnswer += 1; if (isMissedAnswer(assistantContent)) missed.push(conversation); else resolved += 1; }
+      const emails = extractEmails(userContent);
+      if (emails.length && leadCounts.has(key)) leadCounts.set(key, (leadCounts.get(key) || 0) + emails.length);
+      for (const leadEmail of emails) if (!leadMap.has(leadEmail)) leadMap.set(leadEmail, { email: leadEmail, message: shortText(userContent, 150), pageUrl: extractPageUrl(conversation.messages), createdAt: conversation.created_at });
     }
+    const topics = Array.from(topicCounts.entries()).map(([label, count]) => ({ label, count })).sort((a, b) => b.count - a.count).slice(0, 6);
+    const leads = Array.from(leadMap.values()).sort((a, b) => new Date(b.createdAt || "").getTime() - new Date(a.createdAt || "").getTime());
+    const daily = dayKeys.map((key) => ({ label: new Date(`${key}T12:00:00Z`).toLocaleDateString("da-DK", { weekday: "short", ...(rangeDays === 30 ? { day: "numeric" } : {}) }), conversations: conversationCounts.get(key) || 0, leads: leadCounts.get(key) || 0 }));
+    return { conversations: rangeConversations, conversationCount: rangeConversations.length, leads, missed, topics, daily, hoursSaved: userMessages * (4 / 60), resolutionRate: withAnswer ? Math.round((resolved / withAnswer) * 100) : 0 };
+  }, [analyticsAnchor, rangeDays, selectedConversations]);
 
-    let userMessagesThisWeek = 0;
-    let leadsThisWeek = 0;
-    let resolvedConversations = 0;
-    let assistantConversations = 0;
+  const filteredConversations = useMemo(() => {
+    const search = conversationSearch.trim().toLowerCase();
+    return selectedConversations.filter((conversation) => { const combined = normalizeMessages(conversation.messages).map((message) => message.content).join(" ").toLowerCase(); if (search && !combined.includes(search)) return false; if (conversationFilter === "unanswered" && !isMissedAnswer(getConversationAnswer(conversation))) return false; if (conversationFilter === "leads" && extractEmails(combined).length === 0) return false; return true; });
+  }, [conversationFilter, conversationSearch, selectedConversations]);
 
-    for (const row of conversations) {
-      const messages = normalizeMessages(row.messages);
-      const userMessage = messages.find((message) => message.role.toLowerCase().includes("user"));
-      const assistantMessage = messages.find((message) => message.role.toLowerCase().includes("assistant"));
-      const question = userMessage?.content || "";
-      const answer = assistantMessage?.content || "";
-      const businessName = businessNameById.get(row.business_id) || "Unavngiven chatbot";
-      const createdAt = row.created_at;
-      const createdAtTime = createdAt ? new Date(createdAt).getTime() : Number.NaN;
-      const isThisWeek = Number.isFinite(createdAtTime) && createdAtTime >= weekAgo;
+  const activeConversation = filteredConversations.find((conversation) => conversation.id === selectedConversationId) || filteredConversations[0] || null;
+  const activeBusiness = selectedSubscription?.isActive ?? (selectedBusiness ? isBusinessSubscriptionActive(selectedBusiness) : false);
+  const usagePercent = selectedSubscription?.answerLimit ? Math.min(100, Math.round((selectedSubscription.answersUsed / selectedSubscription.answerLimit) * 100)) : 0;
+  const websiteUrl = normalizeExternalUrl(selectedBusiness?.website_url);
+  const embedCode = selectedBusiness ? `<script src="https://www.embedbot.dk/widget.js?id=${selectedBusiness.id}"></script>` : "";
 
-      if (createdAt) {
-        const dayKey = createdAt.slice(0, 10);
-        if (dayConversationCount.has(dayKey)) {
-          dayConversationCount.set(dayKey, (dayConversationCount.get(dayKey) || 0) + 1);
-        }
-      }
+  function changeView(view: DashboardView) { setActiveView(view); setMobileNavOpen(false); const previewMode = process.env.NODE_ENV === "development" && new URLSearchParams(window.location.search).get("preview") === "1"; const nextUrl = view === "overview" ? "/dashboard" : `/dashboard?view=${view}`; window.history.replaceState(null, "", previewMode ? `${nextUrl}${nextUrl.includes("?") ? "&" : "?"}preview=1` : nextUrl); window.scrollTo({ top: 0, behavior: "smooth" }); }
+  function updateDraftValue(key: string, value: string) { if (!selectedBusiness) return; setEditDrafts((current) => ({ ...current, [selectedBusiness.id]: { ...(current[selectedBusiness.id] || buildDraft(selectedBusiness)), [key]: value } })); }
 
-      if (question && isThisWeek) {
-        userMessagesThisWeek += 1;
-        const topic = classifyTopic(question);
-        topicCounts.set(topic, (topicCounts.get(topic) || 0) + 1);
-      }
-
-      if (assistantMessage) {
-        assistantConversations += 1;
-
-        if (!isMissedAnswer(answer)) {
-          resolvedConversations += 1;
-
-          if (goodHighlights.length < 3) {
-            goodHighlights.push({
-              id: row.id,
-              question: shortText(question || "Spørgsmål uden tekst", 100),
-              answer: shortText(answer, 140),
-              businessName,
-            });
-          }
-        } else {
-          const failed = {
-            id: row.id,
-            question: shortText(question || "Ukendt spørgsmål", 100),
-            answer: shortText(answer, 140),
-            businessName,
-          };
-
-          missedQuestions.push(failed);
-          if (badHighlights.length < 3) {
-            badHighlights.push(failed);
-          }
-        }
-      }
-
-      if (!question) {
-        continue;
-      }
-
-      const emails = extractEmails(question);
-      if (emails.length > 0 && isThisWeek) {
-        leadsThisWeek += emails.length;
-      }
-
-      if (emails.length > 0 && createdAt) {
-        const dayKey = createdAt.slice(0, 10);
-        if (dayLeadCount.has(dayKey)) {
-          dayLeadCount.set(dayKey, (dayLeadCount.get(dayKey) || 0) + emails.length);
-        }
-      }
-
-      for (const emailAddress of emails) {
-        if (seenLeadEmails.has(emailAddress)) continue;
-
-        seenLeadEmails.add(emailAddress);
-        leads.push({
-          email: emailAddress,
-          message: shortText(question, 140),
-          pageUrl: extractPageUrl(row.messages),
-          businessName,
-          createdAt,
-        });
-      }
-    }
-
-    const topicInsights = Array.from(topicCounts.entries())
-      .map(([label, count]) => ({ label, count }))
-      .sort((a, b) => b.count - a.count)
-      .slice(0, 5);
-
-    const daily = dayKeys.map((key) => ({
-      label: new Date(`${key}T00:00:00`).toLocaleDateString("da-DK", { weekday: "short" }),
-      conversations: dayConversationCount.get(key) || 0,
-      leads: dayLeadCount.get(key) || 0,
-    }));
-
-    const maxDailyValue = Math.max(1, ...daily.map((entry) => Math.max(entry.conversations, entry.leads)));
-    const suggestions: string[] = [];
-
-    if ((topicCounts.get("Levering og forsendelse") || 0) >= 3) {
-      suggestions.push("Mange kunder spørger om levering. Tilføj en tydelig FAQ med lande, pris og leveringstid.");
-    }
-    if ((topicCounts.get("Pris og tilbud") || 0) >= 3) {
-      suggestions.push("Prisspørgsmål fylder meget. Tilføj konkrete priser og pakker i chatbot-data for hurtigere svar.");
-    }
-    if (missedQuestions.length >= 2) {
-      suggestions.push("Du har flere ubesvarede spørgsmål. Tilføj konkrete svar i FAQ for at hæve løsningsgraden.");
-    }
-    if (leads.length === 0 && conversations.length > 0) {
-      suggestions.push("Ingen leads fanget endnu. Tilføj en tydelig opfordring i velkomstbeskeden: 'Skriv din e-mail for opfølgning'.");
-    }
-
-    return {
-      conversationsThisWeek: weekConversations.length,
-      estimatedHoursSaved: userMessagesThisWeek * (4 / 60),
-      leadsThisWeek,
-      resolutionRate: assistantConversations > 0 ? (resolvedConversations / assistantConversations) * 100 : 0,
-      leads: leads
-        .sort((a, b) => new Date(b.createdAt || "").getTime() - new Date(a.createdAt || "").getTime())
-        .slice(0, 8),
-      topicInsights,
-      missedQuestions: missedQuestions.slice(0, 6),
-      goodHighlights,
-      badHighlights,
-      daily,
-      maxDailyValue,
-      suggestions,
-    };
-  }, [analyticsAnchor, businessNameById, conversations]);
-
-  const primarySubscription = useMemo(() => {
-    return (
-      subscriptions.find((subscription) => subscription.isTrialing) ||
-      subscriptions.find((subscription) => subscription.isActive) ||
-      subscriptions[0] ||
-      null
-    );
-  }, [subscriptions]);
-
-  if (loading) {
-    return (
-      <main
-        style={{
-          minHeight: "100dvh",
-          display: "grid",
-          placeItems: "center",
-          background:
-            "radial-gradient(circle at 12% 18%, rgba(246, 243, 237, 0.92) 0%, rgba(246, 243, 237, 0) 24%), radial-gradient(circle at 88% 14%, rgba(246, 243, 237, 0.9) 0%, rgba(246, 243, 237, 0) 22%), linear-gradient(180deg, #ffffff 0%, #fcfaf6 55%, #f8f4ee 100%)",
-          color: "#111111",
-          fontFamily: '"Poppins", sans-serif',
-        }}
-      >
-        Indlæser...
-      </main>
-    );
+  async function saveFields(sectionName: string, fields: FieldDefinition[]) {
+    if (!selectedBusiness) return;
+    setSavingSection(sectionName); setActionError("");
+    const currentDraft = editDrafts[selectedBusiness.id] || buildDraft(selectedBusiness);
+    const updates: Record<string, string> = {};
+    for (const field of fields) { if (!Object.prototype.hasOwnProperty.call(selectedBusiness, field.key)) continue; const value = (currentDraft[field.key] || "").trim(); updates[field.key] = field.type === "color" ? sanitizeColor(value, field.key === "secondary_color" ? "#edf3ef" : "#237a57") : value; }
+    try {
+      const response = await fetch("/api/business-draft", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ business_id: selectedBusiness.id, form: updates }) });
+      const result = await response.json() as { success?: boolean; error?: string };
+      if (!response.ok || !result.success) throw new Error(result.error || "Kunne ikke gemme ændringerne.");
+      const { data } = await supabase.from("businesses").select("*").eq("id", selectedBusiness.id).maybeSingle();
+      setBusinesses((current) => current.map((business) => business.id === selectedBusiness.id ? (data as Business || { ...business, ...updates }) : business));
+      setToast("Ændringerne er gemt og bruges nu af chatbotten.");
+    } catch { setActionError("Ændringerne kunne ikke gemmes. Prøv igen om et øjeblik."); }
+    finally { setSavingSection(""); }
   }
 
-  return (
-    <main
-      style={{
-        minHeight: "100dvh",
-        background:
-          "radial-gradient(circle at 12% 18%, rgba(246, 243, 237, 0.92) 0%, rgba(246, 243, 237, 0) 24%), radial-gradient(circle at 88% 14%, rgba(246, 243, 237, 0.9) 0%, rgba(246, 243, 237, 0) 22%), linear-gradient(180deg, #ffffff 0%, #fcfaf6 55%, #f8f4ee 100%)",
-        color: "#111111",
-        fontFamily: '"Poppins", sans-serif',
-        paddingTop: 48,
-        paddingBottom: 56,
-        paddingLeft: "clamp(14px, 3vw, 28px)",
-        paddingRight: "clamp(14px, 3vw, 28px)",
-      }}
-    >
-      <div style={{ width: "100%", maxWidth: 1120, margin: "0 auto", display: "grid", gap: 20 }}>
-        <nav style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 12, flexWrap: "wrap", padding: "18px 20px", border: "1px solid rgba(17,17,17,0.08)", borderRadius: 22, background: "rgba(255,255,255,0.86)", boxShadow: "0 16px 38px rgba(17,17,17,0.05)", backdropFilter: "blur(12px)" }}>
-          <Link href="/" style={{ fontSize: 18, fontWeight: 700, textDecoration: "none", color: "#111111", letterSpacing: "-0.03em" }}>
-            EmbedBot
-          </Link>
-          <div style={{ display: "flex", alignItems: "center", justifyContent: "flex-end", gap: 10, minWidth: 0, flex: "1 1 300px", flexWrap: "wrap" }}>
-            <span
-              style={{
-                maxWidth: "min(100%, 320px)",
-                overflow: "hidden",
-                textOverflow: "ellipsis",
-                whiteSpace: "nowrap",
-                color: "#6b6258",
-                fontSize: 13,
-              }}
-            >
-              {email || "ukendt bruger"}
-            </span>
-            <button
-              type="button"
-              onClick={handleLogout}
-              style={{
-                border: "1px solid rgba(17,17,17,0.10)",
-                background: "#ffffff",
-                color: "#111111",
-                fontSize: 13,
-                fontWeight: 600,
-                padding: "8px 14px",
-                borderRadius: 999,
-                cursor: "pointer",
-                fontFamily: '"Poppins", sans-serif',
-                boxShadow: "0 8px 18px rgba(17,17,17,0.06)",
-              }}
-            >
-              Log ud
-            </button>
-          </div>
-        </nav>
+  async function handleCopyEmbedCode() { if (!embedCode) return; try { await navigator.clipboard.writeText(embedCode); setCopied(true); setToast("Installationskoden er kopieret."); window.setTimeout(() => setCopied(false), 2000); } catch { setActionError("Koden kunne ikke kopieres automatisk. Markér den og kopiér manuelt."); } }
+  function prepareFaqFromConversation(conversation: ConversationRow) { setFaqCandidate({ question: getConversationQuestion(conversation), answer: "" }); changeView("knowledge"); }
+  function addFaqCandidate() { if (!faqCandidate?.question.trim() || !faqCandidate.answer.trim()) return; const entry = `Spørgsmål: ${faqCandidate.question.trim()}\nSvar: ${faqCandidate.answer.trim()}`; updateDraftValue("faq", [draft.faq?.trim(), entry].filter(Boolean).join("\n\n")); setFaqCandidate(null); setToast("Svaret er føjet til FAQ-kladden. Husk at gemme ændringerne."); }
+  function exportLeads() { if (!analytics.leads.length) return; const escape = (value: string) => `"${value.replaceAll('"', '""')}"`; const rows = [["E-mail", "Besked", "Side", "Dato"], ...analytics.leads.map((lead) => [lead.email, lead.message, lead.pageUrl, formatDate(lead.createdAt)])]; const csv = rows.map((row) => row.map(escape).join(";")).join("\n"); const url = URL.createObjectURL(new Blob([`\uFEFF${csv}`], { type: "text/csv;charset=utf-8" })); const anchor = document.createElement("a"); anchor.href = url; anchor.download = `embedbot-leads-${new Date().toISOString().slice(0, 10)}.csv`; anchor.click(); URL.revokeObjectURL(url); }
+  async function handleLogout() { await supabase.auth.signOut(); router.push("/login"); }
 
-        <section
-          style={{
-            display: "flex",
-            alignItems: "flex-end",
-            justifyContent: "space-between",
-            flexWrap: "wrap",
-            gap: 12,
-          }}
-        >
-          <div>
-            <h1 style={{ margin: 0, fontSize: 32, lineHeight: 1.05, fontWeight: 700, letterSpacing: "-0.04em" }}>Overblik</h1>
-            <p style={{ margin: "6px 0 0", fontSize: 14, color: "#6b6258", fontWeight: 400 }}>
-              Her er hvorfor det betyder noget for din forretning
-            </p>
-          </div>
-          <Link
-            href="/setup"
-            style={{
-              display: "inline-flex",
-              alignItems: "center",
-              justifyContent: "center",
-              background: "#ffffff",
-              color: "#111111",
-              textDecoration: "none",
-              fontSize: 14,
-              fontWeight: 600,
-              padding: "12px 18px",
-              borderRadius: 999,
-              border: "1px solid rgba(17,17,17,0.08)",
-              boxShadow: "0 12px 28px rgba(17,17,17,0.08)",
-            }}
-          >
-            Opret ny chatbot
-          </Link>
-        </section>
+  function renderPageHeader(actions?: React.ReactNode) { const copy = VIEW_COPY[activeView]; return <header className={styles.pageHeader}><div><p className={styles.eyebrow}>{copy.eyebrow}</p><h1 className={styles.pageTitle}>{copy.title}</h1><p className={styles.pageDescription}>{copy.description}</p></div>{actions ? <div className={styles.headerActions}>{actions}</div> : null}</header>; }
+  function renderDatePills() { return <div className={styles.datePills} aria-label="Vælg periode">{([7, 30] as const).map((days) => <button key={days} className={cx(styles.datePill, rangeDays === days && styles.datePillActive)} type="button" onClick={() => setRangeDays(days)}>{days} dage</button>)}</div>; }
 
-        {fetchError ? (
-          <p
-            style={{
-              margin: 0,
-              background: "rgba(246,243,237,0.72)",
-              border: "1px solid rgba(17,17,17,0.08)",
-              color: "#9b3d2f",
-              borderRadius: 16,
-              padding: "10px 12px",
-              fontSize: 14,
-            }}
-          >
-            {fetchError}
-          </p>
-        ) : null}
+  function renderOverview() {
+    const latest = selectedConversations.slice(0, 4);
+    const attentionItems = [
+      ...(analytics.missed.length ? [{ title: `${analytics.missed.length} spørgsmål mangler et sikkert svar`, detail: "Gennemgå samtalerne og lær botten det rigtige svar.", action: "conversations" as DashboardView }] : []),
+      ...(!selectedBusiness?.website_url ? [{ title: "Tilføj virksomhedens hjemmeside", detail: "Det gør installation og botinformation nemmere at holde styr på.", action: "settings" as DashboardView }] : []),
+      ...(usagePercent >= 80 ? [{ title: `${usagePercent}% af månedens AI-svar er brugt`, detail: "Se nulstillingsdato og plan under Abonnement.", action: "billing" as DashboardView }] : []),
+    ];
+    return <>
+      {renderPageHeader(<>{websiteUrl ? <a className={styles.buttonSecondary} href={websiteUrl} target="_blank" rel="noreferrer"><ExternalLink size={14} />Åbn hjemmeside</a> : null}<button className={styles.button} type="button" onClick={() => changeView("appearance")}><Eye size={14} />Forhåndsvis bot</button></>)}
+      <section className={cx(styles.card, styles.heroCard)}><div className={styles.heroIdentity}><div className={styles.botIcon}><Bot size={23} /></div><div><h2 className={styles.heroName}>{selectedBusiness?.name || "Unavngiven chatbot"}</h2><div className={styles.heroMeta}><span className={cx(styles.statusDot, !activeBusiness && styles.statusDotInactive)} /><span>{activeBusiness ? "Aktiv" : "Kræver opmærksomhed"}</span><span>·</span><span>{selectedBusiness?.industry || "Branche ikke valgt"}</span></div></div></div><div className={styles.buttonRow}><button className={styles.buttonSecondary} type="button" onClick={() => changeView("installation")}><Code2 size={14} />Installér</button><button className={styles.buttonSecondary} type="button" onClick={() => changeView("behavior")}><SlidersHorizontal size={14} />Tilpas</button></div></section>
+      {attentionItems.length ? <section className={cx(styles.card, styles.attentionCard)}><div className={styles.attentionHeader}><Sparkles size={16} className={styles.warningIcon} />Kræver din opmærksomhed</div><div className={styles.attentionList}>{attentionItems.map((item) => <div className={styles.attentionItem} key={item.title}><AlertCircle size={16} className={styles.attentionIcon} /><div className={styles.attentionText}><strong>{item.title}</strong><span>{item.detail}</span></div><button className={styles.inlineAction} type="button" onClick={() => { if (item.action === "conversations") setConversationFilter("unanswered"); changeView(item.action); }}>Åbn <ArrowRight size={11} /></button></div>)}</div></section> : <div className={styles.successBanner}><CheckCircle2 size={16} />Alt ser godt ud. Der er ingen presserende handlinger lige nu.</div>}
+      <section className={styles.metricGrid}><MetricCard icon={MessagesSquare} label="Samtaler" value={String(analytics.conversationCount)} hint={`Seneste ${rangeDays} dage`} /><MetricCard icon={CheckCircle2} label="Løsningsgrad" value={`${analytics.resolutionRate}%`} hint="Svar uden tydelig fallback" /><MetricCard icon={UsersRound} label="Leads" value={String(analytics.leads.length)} hint="Unikke e-mailadresser" /><MetricCard icon={Zap} label="AI-forbrug" value={selectedSubscription ? `${usagePercent}%` : "–"} hint={selectedSubscription ? `${selectedSubscription.answersUsed.toLocaleString("da-DK")} af ${selectedSubscription.answerLimit.toLocaleString("da-DK")}` : "Henter fra Stripe"} /></section>
+      <section className={styles.gridTwo}>
+        <article className={cx(styles.card, styles.sectionCard)}><div className={styles.cardHeader}><div><h2 className={styles.cardTitle}>Aktivitet</h2><p className={styles.cardDescription}>Samtaler og leads over tid.</p></div>{renderDatePills()}</div><TrendChart daily={analytics.daily} /></article>
+        <article className={cx(styles.card, styles.sectionCard)}><div className={styles.cardHeader}><div><h2 className={styles.cardTitle}>Seneste samtaler</h2><p className={styles.cardDescription}>De nyeste spørgsmål til botten.</p></div><button className={styles.inlineAction} type="button" onClick={() => changeView("conversations")}>Se alle</button></div>{latest.length ? <div className={styles.activityList}>{latest.map((conversation) => <button className={styles.activityButton} type="button" key={conversation.id} onClick={() => { setSelectedConversationId(conversation.id); changeView("conversations"); }}><span className={styles.activityText}><strong>{shortText(getConversationQuestion(conversation), 64)}</strong><span>{formatConversationDate(conversation.created_at)}</span></span><ArrowRight size={13} className={styles.metricIcon} /></button>)}</div> : <EmptyState icon={MessagesSquare} title="Ingen samtaler endnu" description="Når besøgende bruger botten, kommer de seneste samtaler frem her." />}</article>
+      </section>
+      <section className={styles.gridEqual}>
+        <article className={cx(styles.card, styles.sectionCard)}><div className={styles.cardHeader}><div><h2 className={styles.cardTitle}>Populære emner</h2><p className={styles.cardDescription}>Det kunderne oftest spørger om.</p></div></div>{analytics.topics.length ? <div className={styles.topicList}>{analytics.topics.slice(0, 4).map((topic) => <div className={styles.topicRow} key={topic.label}><div><div className={styles.statusLabel}>{topic.label}</div><div className={styles.topicBarTrack}><div className={styles.topicBarFill} style={{ width: `${Math.round((topic.count / Math.max(1, analytics.topics[0].count)) * 100)}%` }} /></div></div><span className={styles.statusValue}>{topic.count}</span></div>)}</div> : <EmptyState icon={TrendingUp} title="Ikke nok data endnu" description="Emner bliver synlige, når kunderne begynder at stille spørgsmål." />}</article>
+        <article className={cx(styles.card, styles.sectionCard)}><div className={styles.cardHeader}><div><h2 className={styles.cardTitle}>Botstatus</h2><p className={styles.cardDescription}>En enkel kontrol af den valgte chatbot.</p></div></div><div className={styles.statusList}><div className={styles.statusRow}><span className={styles.statusLabel}><CheckCircle2 size={15} className={activeBusiness ? styles.successIcon : styles.warningIcon} />Abonnement</span><span className={styles.statusValue}>{selectedSubscription ? formatSubscriptionStatus(selectedSubscription.status) : activeBusiness ? "Aktivt" : "Kontrollér"}</span></div><div className={styles.statusRow}><span className={styles.statusLabel}><CheckCircle2 size={15} className={selectedBusiness?.website_url ? styles.successIcon : styles.warningIcon} />Hjemmeside</span><span className={styles.statusValue}>{selectedBusiness?.website_url ? "Tilføjet" : "Mangler"}</span></div><div className={styles.statusRow}><span className={styles.statusLabel}><CheckCircle2 size={15} className={selectedBusiness?.faq || selectedBusiness?.products_services ? styles.successIcon : styles.warningIcon} />Viden</span><span className={styles.statusValue}>{selectedBusiness?.faq || selectedBusiness?.products_services ? "Klar" : "Kan forbedres"}</span></div><div className={styles.statusRow}><span className={styles.statusLabel}><Zap size={15} className={usagePercent < 80 ? styles.successIcon : styles.warningIcon} />AI-forbrug</span><span className={styles.statusValue}>{selectedSubscription ? `${usagePercent}% brugt` : "Henter…"}</span></div></div></article>
+      </section>
+    </>;
+  }
 
-        <section
-          style={{
-            background: "rgba(255,255,255,0.94)",
-            color: "#111111",
-            borderRadius: 24,
-            padding: 20,
-            border: "1px solid rgba(17,17,17,0.08)",
-            boxShadow: "0 18px 40px rgba(17,17,17,0.05)",
-            display: "grid",
-            gap: 14,
-          }}
-        >
-          <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", gap: 12, flexWrap: "wrap" }}>
-            <div>
-              <h2 style={{ margin: 0, fontSize: 20, fontWeight: 600 }}>Abonnement</h2>
-              <p style={{ margin: "6px 0 0", fontSize: 13, color: "#6b6258" }}>
-                Status, prøveperiode, næste betaling og Stripe-data
-              </p>
-            </div>
-            {primarySubscription ? (
-              <span
-                style={{
-                  border: "1px solid",
-                  borderRadius: 999,
-                  padding: "7px 12px",
-                  fontSize: 12,
-                  fontWeight: 700,
-                  ...getSubscriptionStatusStyle(primarySubscription),
-                }}
-              >
-                {formatSubscriptionStatus(primarySubscription.status)}
-              </span>
-            ) : null}
-          </div>
+  function renderConversations() {
+    const messages = activeConversation ? normalizeMessages(activeConversation.messages) : [];
+    return <>{renderPageHeader()}<div className={styles.toolbar}><div className={styles.searchWrap}><Search className={styles.searchIcon} size={15} /><input className={styles.searchInput} value={conversationSearch} onChange={(event) => setConversationSearch(event.target.value)} placeholder="Søg i samtaler…" /></div><div className={styles.filterRow}>{([['all', 'Alle'], ['unanswered', 'Kan forbedres'], ['leads', 'Med lead']] as const).map(([value, label]) => <button key={value} className={cx(styles.filterButton, conversationFilter === value && styles.filterActive)} type="button" onClick={() => setConversationFilter(value)}>{label}</button>)}</div></div>
+      <section className={cx(styles.card, styles.conversationLayout)}><div className={styles.conversationList}>{filteredConversations.length ? filteredConversations.map((conversation) => { const question = getConversationQuestion(conversation); const answer = getConversationAnswer(conversation); return <button className={cx(styles.conversationRow, activeConversation?.id === conversation.id && styles.conversationRowActive)} type="button" key={conversation.id} onClick={() => setSelectedConversationId(conversation.id)}><span className={styles.conversationRowTop}><strong>{shortText(question, 54)}</strong><span className={styles.conversationTime}>{formatConversationDate(conversation.created_at)}</span></span><span className={styles.conversationSnippet}>{shortText(answer || "Intet svar gemt", 72)}</span></button>; }) : <EmptyState icon={Search} title="Ingen samtaler matcher" description="Prøv at ændre søgningen eller filteret." />}</div>
+        <div className={styles.conversationDetail}>{activeConversation ? <><div className={styles.conversationDetailHeader}><div><strong>Samtale</strong><span>{formatConversationDate(activeConversation.created_at)} · {extractPageUrl(activeConversation.messages)}</span></div>{isMissedAnswer(getConversationAnswer(activeConversation)) ? <span className={styles.warningPill}><AlertCircle size={12} />Kan forbedres</span> : <span className={styles.statusPill}><Check size={12} />Besvaret</span>}</div><div className={styles.messages}>{messages.filter((message) => !message.role.toLowerCase().includes("meta")).map((message, index) => <div key={`${message.role}-${index}`} className={message.role.toLowerCase().includes("user") ? styles.messageUser : styles.messageAssistant}>{message.content}</div>)}</div><div className={styles.conversationActions}><button className={styles.buttonSecondary} type="button" onClick={() => prepareFaqFromConversation(activeConversation)}><BookOpenText size={14} />Lav et bedre svar</button></div></> : <EmptyState icon={MessagesSquare} title="Vælg en samtale" description="Samtalen åbnes her, så du kan læse den uden at miste overblikket." />}</div>
+      </section></>;
+  }
 
-          {subscriptionLoading ? (
-            <p style={{ margin: 0, color: "#6b6258", fontSize: 13 }}>Henter abonnement fra Stripe...</p>
-          ) : subscriptionError ? (
-            <p
-              style={{
-                margin: 0,
-                background: "rgba(155,61,47,0.08)",
-                border: "1px solid rgba(155,61,47,0.14)",
-                color: "#9b3d2f",
-                borderRadius: 14,
-                padding: "10px 12px",
-                fontSize: 13,
-              }}
-            >
-              {subscriptionError}
-            </p>
-          ) : subscriptions.length === 0 ? (
-            <p style={{ margin: 0, color: "#6b6258", fontSize: 13 }}>Der blev ikke fundet et abonnement på din konto.</p>
-          ) : (
-            <>
-              {primarySubscription ? (
-                <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(160px, 1fr))", gap: 10 }}>
-                  <article style={{ background: "#ffffff", border: "1px solid rgba(17,17,17,0.07)", borderRadius: 16, padding: 12 }}>
-                    <p style={{ margin: 0, fontSize: 12, color: "#6b6258" }}>Trial tilbage</p>
-                    <p style={{ margin: "8px 0 0", fontSize: 24, fontWeight: 700 }}>
-                      {primarySubscription.isTrialing && primarySubscription.trialDaysRemaining !== null
-                        ? `${primarySubscription.trialDaysRemaining} dage`
-                        : "Ikke i trial"}
-                    </p>
-                    <p style={{ margin: "4px 0 0", fontSize: 11, color: "#8a7e70" }}>
-                      Slutter: {formatDateTime(primarySubscription.trialEndsAt)}
-                    </p>
-                  </article>
+  function renderLeads() { return <>{renderPageHeader(<button className={styles.buttonSecondary} type="button" onClick={exportLeads} disabled={!analytics.leads.length}><ExternalLink size={14} />Eksportér CSV</button>)}<section className={cx(styles.card, styles.sectionCard)}><div className={styles.cardHeader}><div><h2 className={styles.cardTitle}>{analytics.leads.length} unikke leads</h2><p className={styles.cardDescription}>Fundet i samtaler fra de seneste {rangeDays} dage.</p></div>{renderDatePills()}</div>{analytics.leads.length ? <div className={styles.tableWrap}><table className={styles.table}><thead><tr><th>Kontakt</th><th>Besked</th><th>Side</th><th>Dato</th></tr></thead><tbody>{analytics.leads.map((lead) => <tr key={lead.email}><td><div className={styles.tablePrimary}>{lead.email}</div></td><td>{lead.message}</td><td>{lead.pageUrl}</td><td>{formatDate(lead.createdAt)}</td></tr>)}</tbody></table></div> : <EmptyState icon={UserRoundPlus} title="Ingen leads i perioden" description="Når en kunde deler sin e-mail i chatten, samles kontakten automatisk her." />}</section></>; }
 
-                  <article style={{ background: "#ffffff", border: "1px solid rgba(17,17,17,0.07)", borderRadius: 16, padding: 12 }}>
-                    <p style={{ margin: 0, fontSize: 12, color: "#6b6258" }}>Pris</p>
-                    <p style={{ margin: "8px 0 0", fontSize: 24, fontWeight: 700 }}>
-                      {formatCurrency(primarySubscription.amount, primarySubscription.currency)}
-                    </p>
-                    <p style={{ margin: "4px 0 0", fontSize: 11, color: "#8a7e70" }}>
-                      pr. {formatBillingInterval(primarySubscription.interval)}
-                    </p>
-                  </article>
+  function renderKnowledge() { return <>{renderPageHeader()}{faqCandidate ? <section className={styles.candidateCard}><h3>Nyt svar fra en samtale</h3><p className={styles.candidateQuestion}>{faqCandidate.question}</p><label className={styles.field}><span className={styles.fieldLabel}>Det korrekte svar</span><textarea className={styles.textarea} rows={4} autoFocus value={faqCandidate.answer} onChange={(event) => setFaqCandidate({ ...faqCandidate, answer: event.target.value })} placeholder="Skriv det svar, botten skal kunne give fremover…" /></label><div className={styles.buttonRow} style={{ marginTop: 12 }}><button className={styles.button} type="button" onClick={addFaqCandidate} disabled={!faqCandidate.answer.trim()}>Føj til FAQ</button><button className={styles.buttonGhost} type="button" onClick={() => setFaqCandidate(null)}>Annuller</button></div></section> : null}<EditorSection title="Det botten skal vide" description="Opdater indholdet her, når produkter, vilkår eller tilbud ændrer sig." fields={KNOWLEDGE_FIELDS} draft={draft} onChange={updateDraftValue} onSave={() => void saveFields("knowledge", KNOWLEDGE_FIELDS)} saving={savingSection === "knowledge"} /></>; }
+  function renderBehavior() { return <>{renderPageHeader()}<EditorSection title="Sådan skal botten hjælpe" description="Indstillingerne bruges direkte, når chatbotten formulerer sit svar." fields={BEHAVIOR_FIELDS} draft={draft} onChange={updateDraftValue} onSave={() => void saveFields("behavior", BEHAVIOR_FIELDS)} saving={savingSection === "behavior"} /></>; }
+  function renderAppearance() { return <>{renderPageHeader()}<div className={styles.appearanceLayout}><EditorSection title="Farver og typografi" description="Hold udtrykket enkelt og genkendeligt på jeres hjemmeside." fields={APPEARANCE_FIELDS} draft={draft} onChange={updateDraftValue} onSave={() => void saveFields("appearance", APPEARANCE_FIELDS)} saving={savingSection === "appearance"} /><WidgetPreview businessName={selectedBusiness?.name || "EmbedBot"} draft={draft} /></div></>; }
 
-                  <article style={{ background: "#ffffff", border: "1px solid rgba(17,17,17,0.07)", borderRadius: 16, padding: 12 }}>
-                    <p style={{ margin: 0, fontSize: 12, color: "#6b6258" }}>Næste periode</p>
-                    <p style={{ margin: "8px 0 0", fontSize: 18, fontWeight: 700 }}>
-                      {formatDateTime(primarySubscription.currentPeriodEnd)}
-                    </p>
-                    <p style={{ margin: "4px 0 0", fontSize: 11, color: "#8a7e70" }}>
-                      {primarySubscription.cancelAtPeriodEnd ? "Opsiges ved periodens slut" : "Fornyes automatisk hvis aktivt"}
-                    </p>
-                  </article>
+  function renderInstallation() { return <>{renderPageHeader(<Link className={styles.buttonSecondary} href="/EmbedBot_Installationsguide.pdf" target="_blank"><ExternalLink size={14} />Åbn hele guiden</Link>)}<section className={styles.gridTwo}><article className={cx(styles.card, styles.sectionCard)}><div className={styles.cardHeader}><div><h2 className={styles.cardTitle}>Din installationskode</h2><p className={styles.cardDescription}>Koden er unik for {selectedBusiness?.name || "denne chatbot"}.</p></div></div><pre className={styles.embedCode}>{embedCode}</pre><div className={styles.buttonRow} style={{ marginTop: 14 }}><button className={styles.button} type="button" onClick={() => void handleCopyEmbedCode()}>{copied ? <Check size={14} /> : <Copy size={14} />}{copied ? "Kopieret" : "Kopiér kode"}</button></div></article><article className={cx(styles.card, styles.sectionCard)}><div className={styles.cardHeader}><div><h2 className={styles.cardTitle}>Sådan går du live</h2><p className={styles.cardDescription}>Det tager normalt få minutter.</p></div></div><ol className={styles.stepList}><li className={styles.step}><span className={styles.stepNumber}>1</span><div><strong>Kopiér koden</strong><p>Brug knappen til venstre og send eventuelt koden til den, der vedligeholder hjemmesiden.</p></div></li><li className={styles.step}><span className={styles.stepNumber}>2</span><div><strong>Indsæt før &lt;/body&gt;</strong><p>Placér scriptet på alle sider, hvor chatten skal være synlig.</p></div></li><li className={styles.step}><span className={styles.stepNumber}>3</span><div><strong>Udgiv og kontrollér</strong><p>Åbn hjemmesiden i et nyt vindue og kontrollér, at chatknappen vises.</p></div></li></ol></article></section><section className={cx(styles.card, styles.sectionCard)}><div className={styles.cardHeader}><div><h2 className={styles.cardTitle}>Website</h2><p className={styles.cardDescription}>Den hjemmeside, denne bot er knyttet til.</p></div></div>{websiteUrl ? <a className={styles.buttonSecondary} href={websiteUrl} target="_blank" rel="noreferrer"><ExternalLink size={14} />{selectedBusiness?.website_url}</a> : <div className={styles.infoBanner}><AlertCircle size={15} />Tilføj hjemmesiden under Indstillinger, så installationen bliver lettere at kontrollere.</div>}</section></>; }
 
-                  <article style={{ background: "#ffffff", border: "1px solid rgba(17,17,17,0.07)", borderRadius: 16, padding: 12 }}>
-                    <p style={{ margin: 0, fontSize: 12, color: "#6b6258" }}>Betaling</p>
-                    <p style={{ margin: "8px 0 0", fontSize: 18, fontWeight: 700 }}>
-                      {primarySubscription.paymentStatus || "Ukendt"}
-                    </p>
-                    <p style={{ margin: "4px 0 0", fontSize: 11, color: "#8a7e70" }}>
-                      {primarySubscription.collectionMethod === "charge_automatically" ? "Automatisk kortbetaling" : primarySubscription.collectionMethod || "Ikke oplyst"}
-                    </p>
-                  </article>
+  function renderAnalytics() { return <>{renderPageHeader(renderDatePills())}<section className={styles.metricGrid}><MetricCard icon={MessagesSquare} label="Samtaler" value={String(analytics.conversationCount)} hint={`Seneste ${rangeDays} dage`} /><MetricCard icon={CheckCircle2} label="Løsningsgrad" value={`${analytics.resolutionRate}%`} hint="Svar uden tydelig fallback" /><MetricCard icon={UsersRound} label="Leads" value={String(analytics.leads.length)} hint="Unikke kontakter" /><MetricCard icon={Zap} label="Estimeret tid sparet" value={`${analytics.hoursSaved.toFixed(1).replace(".", ",")} t`} hint="Baseret på 4 min. pr. spørgsmål" /></section><section className={cx(styles.card, styles.sectionCard)} style={{ marginBottom: 16 }}><div className={styles.cardHeader}><div><h2 className={styles.cardTitle}>Udvikling</h2><p className={styles.cardDescription}>Hold musen over søjlerne for de præcise tal.</p></div></div><TrendChart daily={analytics.daily} /></section><section className={styles.gridEqual}><article className={cx(styles.card, styles.sectionCard)}><div className={styles.cardHeader}><div><h2 className={styles.cardTitle}>Emner</h2><p className={styles.cardDescription}>Hvad kunderne spørger om.</p></div></div>{analytics.topics.length ? <div className={styles.topicList}>{analytics.topics.map((topic) => <div className={styles.topicRow} key={topic.label}><span className={styles.statusLabel}>{topic.label}</span><span className={styles.statusValue}>{topic.count}</span></div>)}</div> : <EmptyState icon={TrendingUp} title="Ingen emner endnu" description="Der er ikke nok samtaler i den valgte periode." />}</article><article className={cx(styles.card, styles.sectionCard)}><div className={styles.cardHeader}><div><h2 className={styles.cardTitle}>Svar der kan forbedres</h2><p className={styles.cardDescription}>Gå direkte til den relevante samtale.</p></div></div>{analytics.missed.length ? <div className={styles.activityList}>{analytics.missed.slice(0, 6).map((conversation) => <button className={styles.activityButton} type="button" key={conversation.id} onClick={() => { setSelectedConversationId(conversation.id); setConversationFilter("all"); changeView("conversations"); }}><span className={styles.activityText}><strong>{shortText(getConversationQuestion(conversation), 68)}</strong><span>{formatConversationDate(conversation.created_at)}</span></span><ArrowRight size={13} /></button>)}</div> : <EmptyState icon={CheckCircle2} title="Ingen tydelige problemer" description="Botten har ikke brugt en kendt fallback i perioden." />}</article></section></>; }
 
-                  <article style={{ background: "#ffffff", border: "1px solid rgba(17,17,17,0.07)", borderRadius: 16, padding: 12 }}>
-                    <p style={{ margin: 0, fontSize: 12, color: "#6b6258" }}>AI-svar · {primarySubscription.planName}</p>
-                    <p style={{ margin: "8px 0 0", fontSize: 24, fontWeight: 700 }}>
-                      {new Intl.NumberFormat("da-DK").format(primarySubscription.answersUsed)} / {new Intl.NumberFormat("da-DK").format(primarySubscription.answerLimit)}
-                    </p>
-                    <p style={{ margin: "4px 0 0", fontSize: 11, color: "#8a7e70" }}>
-                      Nulstilles {formatDateTime(primarySubscription.usageResetsAt)}
-                    </p>
-                  </article>
-                </div>
-              ) : null}
+  function renderBilling() {
+    const subscription = selectedSubscription;
+    return <>{renderPageHeader()}{subscriptionError ? <div className={styles.infoBanner}><AlertCircle size={15} />{subscriptionError}</div> : null}<section className={cx(styles.card, styles.billingHero)} style={{ marginBottom: 16 }}><div><p className={styles.eyebrow}>Nuværende plan</p><h2 className={styles.planName}>{subscription?.planName || selectedBusiness?.plan || "Starter"}</h2><p className={styles.planPrice}>{subscription ? `${formatCurrency(subscription.amount, subscription.currency)} pr. ${subscription.interval === "year" ? "år" : "måned"}` : "Abonnementsprisen hentes fra Stripe"}</p></div><span className={subscription?.isActive || activeBusiness ? styles.statusPill : styles.warningPill}>{subscription?.isActive || activeBusiness ? <CheckCircle2 size={13} /> : <AlertCircle size={13} />}{subscription ? formatSubscriptionStatus(subscription.status) : activeBusiness ? "Aktivt" : "Kontrollér betaling"}</span></section><section className={styles.gridEqual}><article className={cx(styles.card, styles.usageBlock)}><div className={styles.cardHeader}><div><h2 className={styles.cardTitle}>AI-svar denne måned</h2><p className={styles.cardDescription}>Forbruget opdateres automatisk, når botten svarer.</p></div></div><div className={styles.usageNumbers}><strong>{subscription ? subscription.answersUsed.toLocaleString("da-DK") : "–"} / {subscription ? subscription.answerLimit.toLocaleString("da-DK") : "–"}</strong><span>{usagePercent}% brugt</span></div><div className={styles.progressTrack}><div className={styles.progressFill} style={{ width: `${usagePercent}%` }} /></div><p className={styles.cardDescription} style={{ marginTop: 10 }}>Nulstilles {formatDate(subscription?.usageResetsAt)}</p></article><article className={cx(styles.card, styles.sectionCard)}><div className={styles.cardHeader}><div><h2 className={styles.cardTitle}>Næste periode</h2><p className={styles.cardDescription}>Status synkroniseres via jeres Stripe-webhooks.</p></div></div><div className={styles.statusList}><div className={styles.statusRow}><span className={styles.statusLabel}>Fornyelse</span><span className={styles.statusValue}>{formatDate(subscription?.currentPeriodEnd)}</span></div><div className={styles.statusRow}><span className={styles.statusLabel}>Betaling</span><span className={styles.statusValue}>{subscription?.paymentStatus === "paid" ? "Betalt" : subscription?.paymentStatus || "Afventer"}</span></div><div className={styles.statusRow}><span className={styles.statusLabel}>Fornyes automatisk</span><span className={styles.statusValue}>{subscription?.cancelAtPeriodEnd ? "Nej" : "Ja"}</span></div></div>{subscription?.latestInvoice?.hostedInvoiceUrl ? <a className={styles.buttonSecondary} style={{ marginTop: 14 }} href={subscription.latestInvoice.hostedInvoiceUrl} target="_blank" rel="noreferrer"><CreditCard size={14} />Åbn seneste faktura</a> : null}</article></section>{subscription?.error ? <div className={styles.infoBanner} style={{ marginTop: 16 }}><AlertCircle size={15} />Live Stripe-data kunne ikke hentes. Den senest gemte abonnementsstatus vises, mens webhook-synkroniseringen fortsætter i baggrunden.</div> : null}</>;
+  }
 
-              {!stripeConfigured ? (
-                <p style={{ margin: 0, color: "#9b3d2f", fontSize: 13 }}>
-                  Stripe secret key er ikke konfigureret, så dashboardet viser kun gemte databasefelter.
-                </p>
-              ) : null}
+  function renderSettings() { return <>{renderPageHeader()}<div style={{ display: "grid", gap: 16 }}><EditorSection title="Virksomhed" description="De grundlæggende oplysninger, kunden ser og botten bruger." fields={IDENTITY_FIELDS} draft={draft} onChange={updateDraftValue} onSave={() => void saveFields("identity", IDENTITY_FIELDS)} saving={savingSection === "identity"} /><EditorSection title="Kontakt og åbningstider" description="Bruges når botten skal sende en kunde videre til jer." fields={CONTACT_FIELDS} draft={draft} onChange={updateDraftValue} onSave={() => void saveFields("contact", CONTACT_FIELDS)} saving={savingSection === "contact"} /></div></>; }
+  function renderActiveView() { switch (activeView) { case "conversations": return renderConversations(); case "leads": return renderLeads(); case "knowledge": return renderKnowledge(); case "behavior": return renderBehavior(); case "appearance": return renderAppearance(); case "installation": return renderInstallation(); case "analytics": return renderAnalytics(); case "billing": return renderBilling(); case "settings": return renderSettings(); default: return renderOverview(); } }
+  function renderNavItems(items: NavItem[]) { return items.map((item) => { const Icon = item.icon; const badgeCount = item.badge === "attention" ? analytics.missed.length : 0; return <button className={cx(styles.navButton, activeView === item.view && styles.navActive)} type="button" key={item.view} onClick={() => changeView(item.view)}><Icon size={17} aria-hidden="true" /><span>{item.label}</span>{badgeCount ? <span className={styles.navBadge}>{badgeCount}</span> : null}</button>; }); }
 
-              <div style={{ display: "grid", gap: 10 }}>
-                {subscriptions.map((subscription) => (
-                  <article
-                    key={`${subscription.businessId}-${subscription.subscriptionId || "local"}`}
-                    style={{
-                      background: "#ffffff",
-                      border: "1px solid rgba(17,17,17,0.07)",
-                      borderRadius: 18,
-                      padding: 14,
-                      display: "grid",
-                      gap: 12,
-                    }}
-                  >
-                    <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", gap: 10, flexWrap: "wrap" }}>
-                      <div>
-                        <h3 style={{ margin: 0, fontSize: 15 }}>{subscription.businessName}</h3>
-                        <p style={{ margin: "4px 0 0", fontSize: 12, color: "#6b6258" }}>
-                          {subscription.productName} · {subscription.source === "stripe" ? "Live fra Stripe" : "Fra database"}
-                        </p>
-                      </div>
-                      <span
-                        style={{
-                          border: "1px solid",
-                          borderRadius: 999,
-                          padding: "6px 10px",
-                          fontSize: 11,
-                          fontWeight: 700,
-                          ...getSubscriptionStatusStyle(subscription),
-                        }}
-                      >
-                        {formatSubscriptionStatus(subscription.status)}
-                      </span>
-                    </div>
+  if (loading) return <main className={styles.loadingRoot}><div className={styles.loadingCard}><span className={styles.spinner} />Gør dit dashboard klar…</div></main>;
 
-                    <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(180px, 1fr))", gap: 8 }}>
-                      {[
-                        ["Plan", subscription.planName],
-                        ["AI-svar denne måned", `${new Intl.NumberFormat("da-DK").format(subscription.answersUsed)} / ${new Intl.NumberFormat("da-DK").format(subscription.answerLimit)}`],
-                        ["Trial slutter", formatDateTime(subscription.trialEndsAt)],
-                        ["Trial dage tilbage", subscription.trialDaysRemaining === null ? "Ikke oplyst" : `${subscription.trialDaysRemaining}`],
-                        ["Periode start", formatDateTime(subscription.currentPeriodStart)],
-                        ["Periode slut", formatDateTime(subscription.currentPeriodEnd)],
-                        ["Opsigelse", subscription.cancelAtPeriodEnd ? `Ved periodens slut (${formatDateTime(subscription.cancelAt || subscription.currentPeriodEnd)})` : "Ikke planlagt"],
-                        ["Kunde-email", subscription.customerEmail || "Ikke oplyst"],
-                        ["Abonnement ID", subscription.subscriptionId || "Ikke oplyst"],
-                        ["Kunde ID", subscription.customerId || "Ikke oplyst"],
-                        ["Seneste faktura", subscription.latestInvoice?.status || "Ikke oplyst"],
-                      ].map(([label, value]) => (
-                        <div key={`${subscription.businessId}-${label}`} style={{ border: "1px solid rgba(17,17,17,0.06)", borderRadius: 12, padding: "9px 10px" }}>
-                          <p style={{ margin: 0, fontSize: 11, color: "#8a7e70" }}>{label}</p>
-                          <p style={{ margin: "4px 0 0", fontSize: 12, color: "#111111", wordBreak: "break-word" }}>{value}</p>
-                        </div>
-                      ))}
-                    </div>
-
-                    {subscription.latestInvoice?.hostedInvoiceUrl ? (
-                      <a
-                        href={subscription.latestInvoice.hostedInvoiceUrl}
-                        target="_blank"
-                        rel="noreferrer"
-                        style={{ color: "#111111", fontSize: 13, fontWeight: 600, textUnderlineOffset: 3 }}
-                      >
-                        Åbn seneste faktura
-                      </a>
-                    ) : null}
-
-                    {subscription.error ? (
-                      <p style={{ margin: 0, color: "#9b3d2f", fontSize: 12 }}>{subscription.error}</p>
-                    ) : null}
-                  </article>
-                ))}
-              </div>
-            </>
-          )}
-        </section>
-
-        <section
-          style={{
-            background: "rgba(255,255,255,0.94)",
-            color: "#111111",
-            borderRadius: 24,
-            padding: 20,
-            border: "1px solid rgba(17,17,17,0.08)",
-            boxShadow: "0 18px 40px rgba(17,17,17,0.05)",
-            display: "grid",
-            gap: 14,
-          }}
-        >
-          <div>
-            <h2 style={{ margin: 0, fontSize: 20, fontWeight: 600 }}>Værdioverblik (7 dage)</h2>
-            <p style={{ margin: "6px 0 0", fontSize: 13, color: "#6b6258" }}>
-              Samtaler, estimeret tidsbesparelse, leads og løsningsgrad
-            </p>
-          </div>
-          <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(150px, 1fr))", gap: 10 }}>
-            <article style={{ background: "#ffffff", border: "1px solid rgba(17,17,17,0.07)", borderRadius: 16, padding: 12, boxShadow: "0 10px 24px rgba(17,17,17,0.04)" }}>
-              <p style={{ margin: 0, fontSize: 12, color: "#6b6258" }}>Samtaler håndteret</p>
-              <p style={{ margin: "8px 0 0", fontSize: 24, fontWeight: 700 }}>{analytics.conversationsThisWeek}</p>
-            </article>
-            <article style={{ background: "#ffffff", border: "1px solid rgba(17,17,17,0.07)", borderRadius: 16, padding: 12, boxShadow: "0 10px 24px rgba(17,17,17,0.04)" }}>
-              <p style={{ margin: 0, fontSize: 12, color: "#6b6258" }}>Estimeret tid sparet</p>
-              <p style={{ margin: "8px 0 0", fontSize: 24, fontWeight: 700 }}>~{formatHours(analytics.estimatedHoursSaved)} t</p>
-            </article>
-            <article style={{ background: "#ffffff", border: "1px solid rgba(17,17,17,0.07)", borderRadius: 16, padding: 12, boxShadow: "0 10px 24px rgba(17,17,17,0.04)" }}>
-              <p style={{ margin: 0, fontSize: 12, color: "#6b6258" }}>Leads fanget</p>
-              <p style={{ margin: "8px 0 0", fontSize: 24, fontWeight: 700 }}>{analytics.leadsThisWeek}</p>
-            </article>
-            <article style={{ background: "#ffffff", border: "1px solid rgba(17,17,17,0.07)", borderRadius: 16, padding: 12, boxShadow: "0 10px 24px rgba(17,17,17,0.04)" }}>
-              <p style={{ margin: 0, fontSize: 12, color: "#6b6258" }}>Løsningsgrad</p>
-              <p style={{ margin: "8px 0 0", fontSize: 24, fontWeight: 700 }}>{formatPercent(analytics.resolutionRate)}</p>
-            </article>
-          </div>
-        </section>
-
-        <section
-          style={{
-            background: "rgba(255,255,255,0.94)",
-            border: "1px solid rgba(17,17,17,0.08)",
-            borderRadius: 24,
-            padding: 16,
-            display: "grid",
-            gap: 12,
-            boxShadow: "0 18px 40px rgba(17,17,17,0.05)",
-          }}
-        >
-          <div>
-            <h2 style={{ margin: 0, fontSize: 18 }}>Udvikling (7 dage)</h2>
-            <p style={{ margin: "6px 0 0", fontSize: 13, color: "#6b6258" }}>Mørk = samtaler, sand = leads</p>
-          </div>
-
-          <div style={{ display: "grid", gridTemplateColumns: "repeat(7, minmax(0, 1fr))", gap: 8, alignItems: "end", height: 132 }}>
-            {analytics.daily.map((day, index) => {
-              const conversationHeight = Math.max(8, Math.round((day.conversations / analytics.maxDailyValue) * 90));
-              const leadHeight = Math.max(8, Math.round((day.leads / analytics.maxDailyValue) * 90));
-
-              return (
-                <div key={`${day.label}-${index}`} style={{ display: "grid", gap: 6, justifyItems: "center" }}>
-                  <div style={{ display: "flex", alignItems: "end", gap: 4, height: 96 }}>
-                    <div title={`Samtaler: ${day.conversations}`} style={{ width: 12, height: conversationHeight, background: "#111111", borderRadius: 4 }} />
-                    <div title={`Leads: ${day.leads}`} style={{ width: 12, height: leadHeight, background: "#d9c7a6", borderRadius: 4 }} />
-                  </div>
-                  <span style={{ fontSize: 11, color: "#6b6258", textTransform: "capitalize" }}>{day.label}</span>
-                </div>
-              );
-            })}
-          </div>
-        </section>
-
-        <section style={{ display: "grid", gap: 12, gridTemplateColumns: "repeat(auto-fit, minmax(280px, 1fr))" }}>
-          <article
-            style={{
-              background: "rgba(255,255,255,0.94)",
-              border: "1px solid rgba(17,17,17,0.08)",
-              borderRadius: 24,
-              padding: 16,
-              display: "grid",
-              gap: 10,
-              boxShadow: "0 18px 40px rgba(17,17,17,0.05)",
-            }}
-          >
-            <div>
-              <h2 style={{ margin: 0, fontSize: 18 }}>Leads fanget</h2>
-              <p style={{ margin: "6px 0 0", fontSize: 13, color: "#6b6258" }}>E-mail, besked og side</p>
-            </div>
-
-            {analytics.leads.length === 0 ? (
-              <p style={{ margin: 0, fontSize: 13, color: "#6b6258" }}>Ingen leads fundet endnu.</p>
-            ) : (
-              <div style={{ display: "grid", gap: 8 }}>
-                {analytics.leads.map((lead) => (
-                  <div key={`${lead.email}-${lead.createdAt || ""}`} style={{ border: "1px solid rgba(17,17,17,0.08)", background: "#ffffff", borderRadius: 16, padding: 10, display: "grid", gap: 4 }}>
-                    <p style={{ margin: 0, fontSize: 13, fontWeight: 600 }}>{lead.email}</p>
-                    <p style={{ margin: 0, fontSize: 12, color: "#6b6258" }}>{lead.message}</p>
-                    <p style={{ margin: 0, fontSize: 11, color: "#8a7e70" }}>
-                      {lead.businessName} · {lead.pageUrl}
-                    </p>
-                  </div>
-                ))}
-              </div>
-            )}
-          </article>
-
-          <article
-            style={{
-              background: "rgba(255,255,255,0.94)",
-              border: "1px solid rgba(17,17,17,0.08)",
-              borderRadius: 24,
-              padding: 16,
-              display: "grid",
-              gap: 10,
-              boxShadow: "0 18px 40px rgba(17,17,17,0.05)",
-            }}
-          >
-            <div>
-              <h2 style={{ margin: 0, fontSize: 18 }}>Hvad kunder spørger om</h2>
-              <p style={{ margin: "6px 0 0", fontSize: 13, color: "#6b6258" }}>Top-emner fra sidste 7 dage</p>
-            </div>
-
-            {analytics.topicInsights.length === 0 ? (
-              <p style={{ margin: 0, fontSize: 13, color: "#6b6258" }}>Ikke nok data endnu.</p>
-            ) : (
-              <div style={{ display: "grid", gap: 8 }}>
-                {analytics.topicInsights.map((topic) => (
-                  <div key={topic.label} style={{ display: "flex", alignItems: "center", justifyContent: "space-between", border: "1px solid rgba(17,17,17,0.08)", background: "#ffffff", borderRadius: 16, padding: "8px 10px" }}>
-                    <span style={{ fontSize: 13 }}>{topic.label}</span>
-                    <span style={{ fontSize: 12, color: "#6b6258" }}>{topic.count}</span>
-                  </div>
-                ))}
-              </div>
-            )}
-          </article>
-        </section>
-
-        <section
-          style={{
-            background: "rgba(255,255,255,0.94)",
-            border: "1px solid rgba(17,17,17,0.08)",
-            borderRadius: 24,
-            padding: 16,
-            display: "grid",
-            gap: 10,
-            boxShadow: "0 18px 40px rgba(17,17,17,0.05)",
-          }}
-        >
-          <div>
-            <h2 style={{ margin: 0, fontSize: 18 }}>Ubesvarede spørgsmål</h2>
-            <p style={{ margin: "6px 0 0", fontSize: 13, color: "#6b6258" }}>Spørgsmål hvor botten ser ud til at have manglet et godt svar</p>
-          </div>
-
-          {analytics.missedQuestions.length === 0 ? (
-              <p style={{ margin: 0, fontSize: 13, color: "#6b6258" }}>Ingen tydelige mangler fundet.</p>
-          ) : (
-            <div style={{ display: "grid", gap: 8 }}>
-              {analytics.missedQuestions.map((row) => (
-                <div key={`missed-${row.id}`} style={{ border: "1px solid rgba(17,17,17,0.08)", background: "#ffffff", borderRadius: 16, padding: 10, display: "grid", gap: 4 }}>
-                  <p style={{ margin: 0, fontSize: 13, fontWeight: 600 }}>{row.question}</p>
-                  <p style={{ margin: 0, fontSize: 12, color: "#9b3d2f" }}>{row.answer}</p>
-                  <p style={{ margin: 0, fontSize: 11, color: "#8a7e70" }}>{row.businessName}</p>
-                </div>
-              ))}
-            </div>
-          )}
-        </section>
-
-        <section style={{ display: "grid", gap: 12, gridTemplateColumns: "repeat(auto-fit, minmax(280px, 1fr))" }}>
-          <article
-            style={{
-              background: "rgba(255,255,255,0.94)",
-              border: "1px solid rgba(17,17,17,0.08)",
-              borderRadius: 24,
-              padding: 16,
-              display: "grid",
-              gap: 10,
-              boxShadow: "0 18px 40px rgba(17,17,17,0.05)",
-            }}
-          >
-            <h2 style={{ margin: 0, fontSize: 18 }}>Samtalehøjdepunkter (gode)</h2>
-            {analytics.goodHighlights.length === 0 ? (
-              <p style={{ margin: 0, fontSize: 13, color: "#6b6258" }}>Ingen højdepunkter endnu.</p>
-            ) : (
-              <div style={{ display: "grid", gap: 8 }}>
-                {analytics.goodHighlights.map((item) => (
-                  <div key={`good-${item.id}`} style={{ border: "1px solid rgba(17,17,17,0.08)", background: "#ffffff", borderRadius: 16, padding: 10 }}>
-                    <p style={{ margin: 0, fontSize: 12, color: "#6b6258" }}>{item.businessName}</p>
-                    <p style={{ margin: "4px 0 0", fontSize: 13, fontWeight: 600 }}>Q: {item.question}</p>
-                    <p style={{ margin: "4px 0 0", fontSize: 12, color: "#6b6258" }}>A: {item.answer}</p>
-                  </div>
-                ))}
-              </div>
-            )}
-          </article>
-
-          <article
-            style={{
-              background: "rgba(255,255,255,0.94)",
-              border: "1px solid rgba(17,17,17,0.08)",
-              borderRadius: 24,
-              padding: 16,
-              display: "grid",
-              gap: 10,
-              boxShadow: "0 18px 40px rgba(17,17,17,0.05)",
-            }}
-          >
-            <h2 style={{ margin: 0, fontSize: 18 }}>Forbedringsforslag til botten</h2>
-            {analytics.suggestions.length === 0 ? (
-              <p style={{ margin: 0, fontSize: 13, color: "#6b6258" }}>Ingen presserende forslag lige nu.</p>
-            ) : (
-              <div style={{ display: "grid", gap: 8 }}>
-                {analytics.suggestions.map((suggestion) => (
-                  <div key={suggestion} style={{ border: "1px solid rgba(17,17,17,0.08)", background: "#ffffff", borderRadius: 16, padding: 10, fontSize: 13 }}>
-                    {suggestion}
-                  </div>
-                ))}
-              </div>
-            )}
-          </article>
-        </section>
-
-        {businesses.length === 0 ? (
-          <section
-            style={{
-              borderTop: "1px solid rgba(17,17,17,0.08)",
-              padding: "44px 0",
-              textAlign: "center",
-            }}
-          >
-            <h2 style={{ margin: "0 0 16px", fontSize: 20, fontWeight: 500 }}>Du har ingen chatbots endnu</h2>
-            <Link
-              href="/setup"
-              style={{
-                display: "inline-flex",
-                alignItems: "center",
-                justifyContent: "center",
-                background: "#ffffff",
-                color: "#111111",
-                textDecoration: "none",
-                fontSize: 14,
-                fontWeight: 600,
-                padding: "12px 18px",
-                borderRadius: 999,
-                border: "1px solid rgba(17,17,17,0.08)",
-                boxShadow: "0 12px 28px rgba(17,17,17,0.08)",
-              }}
-            >
-              Opret din første chatbot
-            </Link>
-          </section>
-        ) : (
-          <section style={{ display: "grid", gap: 1, borderTop: "1px solid rgba(17,17,17,0.08)", paddingTop: 6 }}>
-            <h2 style={{ margin: "8px 0 6px", fontSize: 18 }}>Dine aktive bots</h2>
-            {businesses.map((business) => {
-              const displayName = (business.name || "Unavngiven chatbot").trim();
-              const website = (business.website_url || "Ingen hjemmeside angivet").trim();
-              const industry = (business.industry || "Ingen branche").trim();
-              const copyFeedback = copiedBusinessId === business.id;
-              const isEditing = editingBusinessId === business.id;
-              const draft = editDrafts[business.id] || buildBusinessDraft(business);
-
-              return (
-                <article key={business.id} style={{ borderBottom: "1px solid rgba(17,17,17,0.08)", padding: "20px 0" }}>
-                  <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 8, flexWrap: "wrap" }}>
-                    <h2 style={{ margin: 0, fontSize: 17, fontWeight: 500 }}>{displayName}</h2>
-                    <span style={{ background: "#ffffff", color: "#6b6258", border: "1px solid rgba(17,17,17,0.08)", fontSize: 11, fontWeight: 600, padding: "6px 12px", borderRadius: 999, letterSpacing: "0.06em", textTransform: "uppercase" }}>
-                      {industry}
-                    </span>
-                  </div>
-
-                  <p style={{ margin: "6px 0 0", fontSize: 13, color: "#6b6258", fontWeight: 400 }}>{website}</p>
-
-                  <div style={{ marginTop: 14, display: "flex", gap: 8, flexWrap: "wrap" }}>
-                    <button
-                      type="button"
-                      onClick={() => startEditingBusiness(business)}
-                      style={{
-                        display: "inline-flex",
-                        alignItems: "center",
-                        justifyContent: "center",
-                        border: "1px solid rgba(17,17,17,0.08)",
-                        background: "#ffffff",
-                        color: "#111111",
-                        fontSize: 13,
-                        fontWeight: 600,
-                        padding: "10px 14px",
-                        borderRadius: 999,
-                        cursor: "pointer",
-                        fontFamily: '"Poppins", sans-serif',
-                        boxShadow: "0 10px 24px rgba(17,17,17,0.06)",
-                      }}
-                    >
-                      Rediger info
-                    </button>
-
-                    <button
-                      type="button"
-                      onClick={() => handleCopyEmbedCode(business.id)}
-                      style={{
-                        display: "inline-flex",
-                        alignItems: "center",
-                        justifyContent: "center",
-                        border: "1px solid rgba(17,17,17,0.08)",
-                        background: "#ffffff",
-                        color: "#111111",
-                        fontSize: 13,
-                        fontWeight: 600,
-                        padding: "10px 14px",
-                        borderRadius: 999,
-                        cursor: "pointer",
-                        fontFamily: '"Poppins", sans-serif',
-                        boxShadow: "0 10px 24px rgba(17,17,17,0.06)",
-                      }}
-                    >
-                      {copyFeedback ? "Kopieret! ✓" : "Kopier embed-kode"}
-                    </button>
-
-                    <Link
-                      href={`/dashboard/${business.id}/samtaler`}
-                      style={{
-                        display: "inline-flex",
-                        alignItems: "center",
-                        justifyContent: "center",
-                        border: "1px solid rgba(17,17,17,0.10)",
-                        background: "transparent",
-                        color: "#111111",
-                        textDecoration: "none",
-                        fontSize: 13,
-                        fontWeight: 600,
-                        padding: "10px 14px",
-                        borderRadius: 999,
-                      }}
-                    >
-                      Se samtaler
-                    </Link>
-                  </div>
-
-                  {isEditing ? (
-                    <div style={{ marginTop: 16, border: "1px solid rgba(17,17,17,0.08)", borderRadius: 18, background: "rgba(246,243,237,0.52)", padding: 14 }}>
-                      <p style={{ margin: 0, fontSize: 12, fontWeight: 600, color: "#6b6258", textTransform: "uppercase", letterSpacing: "0.08em" }}>
-                        Rediger chatbot-info
-                      </p>
-                      <p style={{ margin: "6px 0 0", fontSize: 13, color: "#6b6258" }}>
-                        Ændringerne opdaterer den chatbot, du ejer.
-                      </p>
-
-                      <div style={{ marginTop: 14, display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(220px, 1fr))", gap: 10 }}>
-                        {BUSINESS_FIELD_DEFINITIONS.map((field) => {
-                          const value = draft[String(field.key)] || "";
-                          const spanFullWidth = field.type === "textarea";
-
-                          return (
-                            <label key={`${business.id}-${String(field.key)}`} style={{ display: "grid", gap: 6, gridColumn: spanFullWidth ? "1 / -1" : "auto" }}>
-                              <span style={{ fontSize: 12, fontWeight: 600, color: "#6b6258" }}>{field.label}</span>
-                              {field.type === "textarea" ? (
-                                <textarea
-                                  value={value}
-                                  onChange={(event) => updateDraftValue(business.id, String(field.key), event.target.value)}
-                                  placeholder={field.placeholder}
-                                  rows={3}
-                                  style={{
-                                    width: "100%",
-                                    resize: "vertical",
-                                    borderRadius: 12,
-                                    border: "1px solid rgba(17,17,17,0.10)",
-                                    background: "#ffffff",
-                                    color: "#111111",
-                                    padding: "10px 12px",
-                                    fontFamily: '"Poppins", sans-serif',
-                                    fontSize: 13,
-                                    minHeight: 84,
-                                  }}
-                                />
-                              ) : field.type === "select" ? (
-                                <select
-                                  value={value}
-                                  onChange={(event) => updateDraftValue(business.id, String(field.key), event.target.value)}
-                                  style={{
-                                    width: "100%",
-                                    borderRadius: 12,
-                                    border: "1px solid rgba(17,17,17,0.10)",
-                                    background: "#ffffff",
-                                    color: "#111111",
-                                    padding: "10px 12px",
-                                    fontFamily: '"Poppins", sans-serif',
-                                    fontSize: 13,
-                                  }}
-                                >
-                                  <option value="">Vælg</option>
-                                  {field.options?.map((option) => (
-                                    <option key={option.value} value={option.value}>
-                                      {option.label}
-                                    </option>
-                                  ))}
-                                </select>
-                              ) : field.type === "color" ? (
-                                <input
-                                  type="color"
-                                  value={sanitizeColorValue(value || (field.key === "secondary_color" ? "#f6f3ed" : "#ffffff"), field.key === "secondary_color" ? "#f6f3ed" : "#ffffff")}
-                                  onChange={(event) => updateDraftValue(business.id, String(field.key), event.target.value)}
-                                  style={{
-                                    width: "100%",
-                                    minHeight: 46,
-                                    borderRadius: 12,
-                                    border: "1px solid rgba(17,17,17,0.10)",
-                                    background: "#ffffff",
-                                    padding: 4,
-                                  }}
-                                />
-                              ) : (
-                                <input
-                                  value={value}
-                                  onChange={(event) => updateDraftValue(business.id, String(field.key), event.target.value)}
-                                  placeholder={field.placeholder}
-                                  style={{
-                                    width: "100%",
-                                    borderRadius: 12,
-                                    border: "1px solid rgba(17,17,17,0.10)",
-                                    background: "#ffffff",
-                                    color: "#111111",
-                                    padding: "10px 12px",
-                                    fontFamily: '"Poppins", sans-serif',
-                                    fontSize: 13,
-                                  }}
-                                />
-                              )}
-                            </label>
-                          );
-                        })}
-                      </div>
-
-                      {editError ? (
-                        <p style={{ margin: "12px 0 0", color: "#9b3d2f", fontSize: 13 }}>{editError}</p>
-                      ) : null}
-
-                      <div style={{ marginTop: 14, display: "flex", gap: 8, flexWrap: "wrap" }}>
-                        <button
-                          type="button"
-                          onClick={() => saveBusinessEdit(business)}
-                          disabled={savingBusinessId === business.id}
-                          style={{
-                            display: "inline-flex",
-                            alignItems: "center",
-                            justifyContent: "center",
-                            border: "1px solid rgba(17,17,17,0.08)",
-                            background: "#111111",
-                            color: "#ffffff",
-                            fontSize: 13,
-                            fontWeight: 600,
-                            padding: "10px 14px",
-                            borderRadius: 999,
-                            cursor: "pointer",
-                            fontFamily: '"Poppins", sans-serif',
-                            boxShadow: "0 10px 24px rgba(17,17,17,0.06)",
-                            opacity: savingBusinessId === business.id ? 0.7 : 1,
-                          }}
-                        >
-                          {savingBusinessId === business.id ? "Gemmer..." : "Gem ændringer"}
-                        </button>
-                        <button
-                          type="button"
-                          onClick={cancelEditingBusiness}
-                          style={{
-                            display: "inline-flex",
-                            alignItems: "center",
-                            justifyContent: "center",
-                            border: "1px solid rgba(17,17,17,0.08)",
-                            background: "#ffffff",
-                            color: "#111111",
-                            fontSize: 13,
-                            fontWeight: 600,
-                            padding: "10px 14px",
-                            borderRadius: 999,
-                            cursor: "pointer",
-                            fontFamily: '"Poppins", sans-serif',
-                          }}
-                        >
-                          Annuller
-                        </button>
-                      </div>
-                    </div>
-                  ) : null}
-                </article>
-              );
-            })}
-          </section>
-        )}
-      </div>
-    </main>
-  );
+  return <main className={styles.dashboardRoot}>
+    {mobileNavOpen ? <button className={styles.mobileOverlay} type="button" aria-label="Luk menu" onClick={() => setMobileNavOpen(false)} /> : null}
+    <aside className={cx(styles.sidebar, mobileNavOpen && styles.sidebarOpen)}>
+      <Link className={styles.brand} href="/"><span className={styles.brandMark}><Bot size={18} /></span>EmbedBot</Link>
+      <div className={styles.botPickerHeader}><label className={styles.botPickerLabel} htmlFor="dashboard-bot-picker">Din chatbot</label><Link className={styles.newBotLink} href="/setup"><Plus size={12} />Ny</Link></div>
+      <div className={styles.botPickerWrap}><select id="dashboard-bot-picker" className={styles.botPicker} value={selectedBusiness?.id || ""} onChange={(event) => { setSelectedBusinessId(event.target.value); setSelectedConversationId(""); }}>{businesses.map((business) => <option key={business.id} value={business.id}>{business.name || "Unavngiven chatbot"}</option>)}</select><ChevronDown className={styles.pickerChevron} size={14} /></div>
+      <nav className={styles.nav} aria-label="Dashboard navigation">{renderNavItems(NAV_PRIMARY)}<div className={styles.navGroup}><span className={styles.navGroupLabel}>Forbedr botten</span>{renderNavItems(NAV_IMPROVE)}</div><div className={styles.navGroup}><span className={styles.navGroupLabel}>Konto</span>{renderNavItems(NAV_MANAGE)}</div><Link className={styles.navLink} href="/support"><HelpCircle size={17} />Hjælp</Link></nav>
+      <div className={styles.sidebarFooter}><div className={styles.accountBlock}><span className={styles.avatar}>{(email[0] || "E").toUpperCase()}</span><div className={styles.accountText}><p className={styles.accountEmail}>{email || "Ukendt bruger"}</p></div><button className={styles.logoutButton} type="button" title="Log ud" aria-label="Log ud" onClick={() => void handleLogout()}><LogOut size={16} /></button></div></div>
+    </aside>
+    <div className={styles.mainArea}><div className={styles.mobileTopbar}><button className={styles.mobileMenuButton} type="button" aria-label={mobileNavOpen ? "Luk menu" : "Åbn menu"} onClick={() => setMobileNavOpen((open) => !open)}>{mobileNavOpen ? <X size={18} /> : <Menu size={18} />}</button><span className={styles.mobileBotName}>{selectedBusiness?.name || "EmbedBot"}</span><Link className={styles.mobileMenuButton} href="/setup" aria-label="Opret ny chatbot"><Plus size={18} /></Link></div><div className={styles.content}>{fetchError ? <div className={styles.errorBanner}><AlertCircle size={16} />{fetchError}</div> : null}{actionError ? <div className={styles.errorBanner}><AlertCircle size={16} />{actionError}</div> : null}{subscriptionLoading && activeView === "billing" ? <div className={styles.infoBanner}><span className={styles.spinner} />Henter den nyeste abonnementsstatus fra Stripe…</div> : null}{renderActiveView()}</div></div>
+    {toast ? <div className={styles.toast} role="status"><CheckCircle2 size={16} className={styles.successIcon} />{toast}</div> : null}
+  </main>;
 }

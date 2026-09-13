@@ -6,7 +6,7 @@ export default function UniversalBackButton() {
   const router = useRouter();
   const pathname = usePathname();
 
-  if (!pathname || pathname === "/") {
+  if (!pathname || pathname === "/" || pathname.startsWith("/dashboard")) {
     return null;
   }
 
