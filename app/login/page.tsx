@@ -1,6 +1,6 @@
 "use client";
 
-import { FormEvent, useEffect, useMemo, useState } from "react";
+import { FormEvent, useMemo, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase";
@@ -16,11 +16,8 @@ export default function LoginPage() {
   const [error, setError] = useState("");
   const showResetSuccess =
     typeof window !== "undefined" && new URLSearchParams(window.location.search).get("reset") === "success";
-
-  useEffect(() => {
-    // Force explicit login each time user lands on /login.
-    supabase.auth.signOut();
-  }, [router, supabase.auth]);
+  const showOAuthError =
+    typeof window !== "undefined" && new URLSearchParams(window.location.search).get("oauth") === "error";
 
   async function handleSubmit(e: FormEvent) {
     e.preventDefault();
@@ -128,6 +125,22 @@ export default function LoginPage() {
             }}
           >
             Din adgangskode er opdateret. Du kan nu logge ind.
+          </p>
+        ) : null}
+
+        {showOAuthError ? (
+          <p
+            style={{
+              margin: 0,
+              color: "#9b3d2f",
+              fontSize: 13,
+              border: "1px solid rgba(155,61,47,0.2)",
+              background: "rgba(155,61,47,0.07)",
+              borderRadius: 10,
+              padding: "10px 12px",
+            }}
+          >
+            Login med Google eller Microsoft kunne ikke færdiggøres. Prøv igen.
           </p>
         ) : null}
 
