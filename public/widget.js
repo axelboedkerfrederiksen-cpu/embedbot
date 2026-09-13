@@ -214,7 +214,7 @@
         </div>
       </div>
       <div id="eb-messages" style="flex:1;overflow-y:auto;padding:28px 24px 16px 24px;display:flex;flex-direction:column;gap:0;height:356px;background:#ffffff;"></div>
-      <div id="eb-composer" style="padding:12px 24px 14px 24px;border-top:1px solid rgba(17,17,17,0.06);display:flex;gap:8px;align-items:center;background:#ffffff;">
+      <div id="eb-composer" style="padding:12px 24px 11px 24px;border-top:1px solid rgba(17,17,17,0.06);display:flex;flex-direction:column;gap:6px;align-items:stretch;background:#ffffff;">
         <div id="eb-input-wrap" style="display:flex;align-items:center;gap:8px;flex:1;border:1px solid rgba(17,17,17,0.10);border-radius:15px;padding:7px 7px 7px 14px;background:#ffffff;transition:border-color 0.18s ease, box-shadow 0.18s ease;">
           <input id="eb-input" aria-label="Message input" type="text" placeholder="Skriv dit spørgsmål..." style="flex:1;padding:11px 0;border:none;outline:none;pointer-events:all;position:relative;z-index:99999;color:#1a1a1a;background:#ffffff;cursor:text;user-select:text;-webkit-user-select:text;font-size:14px;font-family:inherit;line-height:1.45;caret-color:#1a1a1a;"/>
           <button id="eb-send" aria-label="Send message" style="background:#ffffff;color:#1a1a1a;border:none;padding:8px;border-radius:10px;cursor:pointer;white-space:nowrap;font-weight:600;line-height:1;display:flex;align-items:center;justify-content:center;transition:transform 0.16s ease, box-shadow 0.16s ease, background-color 0.16s ease;">
@@ -224,6 +224,7 @@
             </svg>
           </button>
         </div>
+        <div id="eb-watermark" aria-label="Lavet af EmbedBot" style="color:#a39b91;font-size:10px;line-height:1.2;text-align:center;letter-spacing:0.01em;user-select:none;">Lavet af EmbedBot</div>
       </div>
     </div>
   `;
@@ -236,6 +237,7 @@
   const logo = document.getElementById("eb-logo");
   const composer = document.getElementById("eb-composer");
   const inputWrap = document.getElementById("eb-input-wrap");
+  const watermark = document.getElementById("eb-watermark");
   const input = document.getElementById("eb-input");
   const send = document.getElementById("eb-send");
   const messages = document.getElementById("eb-messages");
@@ -457,6 +459,7 @@
     setFontImportant(inputWrap, fontStack);
     setFontImportant(input, fontStack);
     setFontImportant(send, fontStack);
+    setFontImportant(watermark, fontStack);
 
     if (widgetConfig.logo_url) {
       logo.src = widgetConfig.logo_url;
