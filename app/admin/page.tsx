@@ -8,7 +8,9 @@ import {
   BarChart3,
   Bot,
   Building2,
+  CheckCircle2,
   Copy,
+  CreditCard,
   Filter,
   Gauge,
   LayoutDashboard,
@@ -18,6 +20,7 @@ import {
   RefreshCcw,
   Search,
   Server,
+  Settings2,
   Trash2,
   X,
 } from "lucide-react";
@@ -34,6 +37,12 @@ type Business = {
   fab_color?: string | null;
   chat_icon_color?: string | null;
   font_choice?: string | null;
+  plan?: string | null;
+  subscription_status?: string | null;
+  payment_status?: string | null;
+  ai_answers_used?: number | null;
+  ai_answer_limit_override?: number | null;
+  ai_usage_period_start?: string | null;
   [key: string]: unknown;
 };
 
@@ -52,6 +61,24 @@ type SupportMessage = {
   message?: string | null;
   status?: string | null;
   created_at?: string | null;
+};
+
+type AdminView = "overview" | "businesses" | "billing" | "support" | "system";
+
+const ADMIN_NAV: Array<{ view: AdminView; label: string; icon: typeof LayoutDashboard }> = [
+  { view: "overview", label: "Overblik", icon: LayoutDashboard },
+  { view: "businesses", label: "Kunder", icon: Building2 },
+  { view: "billing", label: "Planer & forbrug", icon: CreditCard },
+  { view: "support", label: "Support", icon: MessageSquare },
+  { view: "system", label: "Driftstatus", icon: Activity },
+];
+
+const VIEW_COPY: Record<AdminView, { eyebrow: string; title: string; description: string }> = {
+  overview: { eyebrow: "ADMINISTRATION", title: "Overblik", description: "Det vigtigste på tværs af alle EmbedBot-kunder." },
+  businesses: { eyebrow: "KUNDER", title: "Kunder", description: "Åbn en kunde for at ændre chatbot, profil og integration." },
+  billing: { eyebrow: "ABONNEMENTER", title: "Planer & forbrug", description: "Skift kundens plan og administrér AI-forbrug direkte i Supabase." },
+  support: { eyebrow: "INDBAKKE", title: "Support", description: "Følg op på supporthenvendelser og klager." },
+  system: { eyebrow: "DRIFT", title: "Driftstatus", description: "Et hurtigt billede af data, adgang og synkronisering." },
 };
 
 const statsCardClass =
@@ -130,18 +157,23 @@ export default function AdminPage() {
   const [error, setError] = useState("");
   const [supportError, setSupportError] = useState("");
   const [expanded, setExpanded] = useState<Record<string, boolean>>({});
-  const [activatingId, setActivatingId] = useState<string | null>(null);
   const [deletingId, setDeletingId] = useState<string | null>(null);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [savingId, setSavingId] = useState<string | null>(null);
   const [editDrafts, setEditDrafts] = useState<Record<string, Record<string, string>>>({});
   const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [activeView, setActiveView] = useState<AdminView>("overview");
   const [searchTerm, setSearchTerm] = useState("");
   const [statusFilter, setStatusFilter] = useState<"all" | "active" | "inactive">("all");
   const [sortBy, setSortBy] = useState<"date" | "name" | "status">("date");
   const [toasts, setToasts] = useState<Toast[]>([]);
   const [pendingDeleteBusiness, setPendingDeleteBusiness] = useState<Business | null>(null);
   const [lastUpdatedAt, setLastUpdatedAt] = useState<Date | null>(null);
+
+  function selectView(view: AdminView) {
+    setActiveView(view);
+    setSidebarOpen(false);
+  }
 
   useEffect(() => {
     let mounted = true;
@@ -384,6 +416,50 @@ export default function AdminPage() {
     }
   }
 
+  async function updateBusiness(business: Business, updates: Record<string, unknown>, successMessage: string) {
+    setSavingId(business.id);
+    setError("");
+
+    try {
+      const res = await fetch("/api/admin/businesses", {
+        method: "PUT",
+        headers: buildAdminHeaders(),
+        body: JSON.stringify({ business_id: business.id, updates }),
+      });
+      const data = await res.json();
+      if (!res.ok || !data.success) {
+        throw new Error(data.error || "Kunne ikke gemme ændringen.");
+      }
+
+      setBusinesses((previous) => previous.map((row) => row.id === business.id ? data.business as Business : row));
+      pushToast(successMessage, "success");
+    } catch (updateError) {
+      const message = updateError instanceof Error ? updateError.message : "Kunne ikke gemme ændringen.";
+      setError(message);
+      pushToast(message, "error");
+    } finally {
+      setSavingId(null);
+    }
+  }
+
+  async function updateSupportStatus(message: SupportMessage, status: "new" | "in_progress" | "resolved") {
+    try {
+      const res = await fetch("/api/support", {
+        method: "PUT",
+        headers: buildAdminHeaders(),
+        body: JSON.stringify({ id: message.id, status }),
+      });
+      const data = await res.json();
+      if (!res.ok || !data.success) {
+        throw new Error(data.error || "Kunne ikke opdatere beskeden.");
+      }
+      setSupportMessages((previous) => previous.map((row) => row.id === message.id ? data.message as SupportMessage : row));
+      pushToast(status === "resolved" ? "Besked markeret som løst" : "Supportstatus opdateret", "success");
+    } catch (statusError) {
+      pushToast(statusError instanceof Error ? statusError.message : "Kunne ikke opdatere beskeden.", "error");
+    }
+  }
+
   function isTextareaField(field: string) {
     return [
       "description",
@@ -398,37 +474,6 @@ export default function AdminPage() {
       "logo_data_url",
       "logo_url",
     ].includes(field);
-  }
-
-  async function activateBusiness(id: string) {
-    setActivatingId(id);
-    setError("");
-
-    try {
-      const res = await fetch("/api/activate", {
-        method: "POST",
-        headers: buildAdminHeaders(),
-        body: JSON.stringify({ business_id: id }),
-      });
-
-      const data = await res.json();
-      if (!res.ok || !data.success) {
-        throw new Error(data.error || "Kunne ikke aktivere virksomhed.");
-      }
-
-      await fetchBusinesses();
-      pushToast("Virksomhed aktiveret", "success");
-    } catch (activationError) {
-      if (activationError instanceof Error) {
-        setError(activationError.message);
-        pushToast(activationError.message, "error");
-      } else {
-        setError("Kunne ikke aktivere virksomhed.");
-        pushToast("Kunne ikke aktivere virksomhed.", "error");
-      }
-    } finally {
-      setActivatingId(null);
-    }
   }
 
   async function deleteBusiness(id: string) {
@@ -608,7 +653,7 @@ export default function AdminPage() {
           initial={{ x: -40, opacity: 0 }}
           animate={{ x: 0, opacity: 1 }}
           transition={{ duration: 0.35 }}
-          className={`fixed inset-y-0 left-0 z-30 w-72 border-r border-[rgba(17,17,17,0.08)] bg-[rgba(255,255,255,0.92)] p-5 backdrop-blur lg:static lg:translate-x-0 ${sidebarOpen ? "translate-x-0" : "-translate-x-full lg:translate-x-0"} transition-transform duration-300`}
+          className={`fixed inset-y-0 left-0 z-30 w-72 border-r border-white/10 bg-[#191918] p-5 text-white backdrop-blur lg:static lg:translate-x-0 ${sidebarOpen ? "translate-x-0" : "-translate-x-full lg:translate-x-0"} transition-transform duration-300`}
         >
           <div className="flex items-center justify-between gap-2">
             <div className="flex items-center gap-3">
@@ -617,51 +662,46 @@ export default function AdminPage() {
               </div>
               <div>
                 <p className="text-sm font-semibold">EmbedBot</p>
-                <p className="text-xs text-[#8a7e70]">Admin Console</p>
+                <p className="text-xs text-white/50">Admin Console</p>
               </div>
             </div>
 
             <button
               onClick={() => setSidebarOpen(false)}
-              className="rounded-lg border border-[rgba(17,17,17,0.10)] p-1.5 text-[#6b6258] lg:hidden"
+              className="rounded-lg border border-white/15 p-1.5 text-white/70 lg:hidden"
               aria-label="Luk sidebar"
             >
               <X size={16} />
             </button>
           </div>
 
-          <nav className="mt-8 space-y-1">
-            <button className="flex w-full items-center gap-3 rounded-xl border border-[rgba(17,17,17,0.08)] bg-white px-3 py-2 text-sm font-medium text-[#111111] shadow-[0_8px_18px_rgba(17,17,17,0.05)]">
-              <LayoutDashboard size={16} />
-              Overblik
-            </button>
-            <button className="flex w-full items-center gap-3 rounded-xl px-3 py-2 text-sm text-[#6b6258] transition hover:bg-[rgba(246,243,237,0.85)]">
-              <Building2 size={16} />
-              Virksomheder
-            </button>
-            <button className="flex w-full items-center gap-3 rounded-xl px-3 py-2 text-sm text-[#6b6258] transition hover:bg-[rgba(246,243,237,0.85)]">
-              <BarChart3 size={16} />
-              Analytics
-            </button>
-            <button className="flex w-full items-center gap-3 rounded-xl px-3 py-2 text-sm text-[#6b6258] transition hover:bg-[rgba(246,243,237,0.85)]">
-              <Activity size={16} />
-              Driftstatus
-            </button>
-            <button className="flex w-full items-center gap-3 rounded-xl px-3 py-2 text-sm text-[#6b6258] transition hover:bg-[rgba(246,243,237,0.85)]">
-              <MessageSquare size={16} />
-              Support
-            </button>
+          <nav className="mt-8 space-y-1" aria-label="Admin navigation">
+            {ADMIN_NAV.map((item) => {
+              const Icon = item.icon;
+              const isCurrent = activeView === item.view;
+              return (
+                <button
+                  key={item.view}
+                  onClick={() => selectView(item.view)}
+                  className={`flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-sm transition ${isCurrent ? "bg-white/15 font-semibold text-white shadow-[0_8px_18px_rgba(0,0,0,0.16)]" : "text-white/65 hover:bg-white/8 hover:text-white"}`}
+                >
+                  <Icon size={17} />
+                  {item.label}
+                  {item.view === "support" && unreadSupportMessages > 0 ? <span className="ml-auto grid h-5 min-w-5 place-items-center rounded-full bg-[#111111] px-1 text-[10px] font-bold text-white">{unreadSupportMessages}</span> : null}
+                </button>
+              );
+            })}
           </nav>
 
-          <div className="mt-8 rounded-xl border border-[rgba(17,17,17,0.08)] bg-[rgba(255,255,255,0.94)] p-3 shadow-[0_12px_28px_rgba(17,17,17,0.04)]">
-            <p className="text-xs uppercase tracking-[0.15em] text-[#8a7e70]">System</p>
+          <div className="mt-8 rounded-xl border border-white/10 bg-white/6 p-3">
+            <p className="text-xs uppercase tracking-[0.15em] text-white/45">System</p>
             <div className="mt-2 flex items-center justify-between">
-              <span className="text-sm text-[#6b6258]">Embed API</span>
+              <span className="text-sm text-white/70">Embed API</span>
               <span
                 className={`rounded-full px-2.5 py-0.5 text-xs font-medium ${
                   systemOnline
-                    ? "bg-[#111111] text-white"
-                    : "border border-[rgba(17,17,17,0.08)] bg-white text-[#6b6258]"
+                    ? "bg-[#e8f6f0] text-[#31795d]"
+                    : "border border-white/10 bg-white/8 text-white/60"
                 }`}
               >
                 {systemOnline ? "Online" : "Offline"}
@@ -683,8 +723,8 @@ export default function AdminPage() {
                 </button>
 
                 <div>
-                  <p className="text-xs text-[#8a7e70]">Dashboard / Admin</p>
-                  <h1 className="text-base font-semibold sm:text-lg">Virksomheds-overblik</h1>
+                  <p className="text-xs font-semibold uppercase tracking-[0.14em] text-[#8a7e70]">{VIEW_COPY[activeView].eyebrow}</p>
+                  <h1 className="text-base font-semibold sm:text-lg">{VIEW_COPY[activeView].title}</h1>
                 </div>
               </div>
 
@@ -703,7 +743,16 @@ export default function AdminPage() {
           </header>
 
           <div className="mx-auto w-full max-w-7xl space-y-6 px-4 py-6 sm:px-6">
-            <motion.section
+            <section className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
+              <div>
+                <p className="text-xs font-bold uppercase tracking-[0.16em] text-[#8a7e70]">{VIEW_COPY[activeView].eyebrow}</p>
+                <h2 className="mt-1 text-3xl font-semibold tracking-[-0.04em] sm:text-4xl">{VIEW_COPY[activeView].title}</h2>
+                <p className="mt-2 text-sm text-[#6b6258] sm:text-base">{VIEW_COPY[activeView].description}</p>
+              </div>
+              {lastUpdatedAt ? <p className="text-xs text-[#8a7e70]">Opdateret {formatRelativeDate(lastUpdatedAt.toISOString())}</p> : null}
+            </section>
+
+            {activeView === "overview" ? <motion.section
               initial={{ opacity: 0, y: 18 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.35 }}
@@ -758,9 +807,24 @@ export default function AdminPage() {
                   {systemOnline ? "Online" : "Offline"}
                 </p>
               </article>
-            </motion.section>
+            </motion.section> : null}
 
-            <section className="rounded-2xl border border-[rgba(17,17,17,0.08)] bg-[rgba(255,255,255,0.94)] p-4 shadow-[0_18px_40px_rgba(17,17,17,0.05)] backdrop-blur sm:p-5">
+            {activeView === "overview" ? <section className="grid gap-4 lg:grid-cols-[1.25fr_.75fr]">
+              <article className="rounded-2xl border border-[rgba(17,17,17,0.08)] bg-[#111111] p-5 text-white shadow-[0_18px_40px_rgba(17,17,17,0.12)] sm:p-6">
+                <p className="text-xs font-bold uppercase tracking-[0.16em] text-white/55">Kundeportefølje</p>
+                <div className="mt-5 flex items-end justify-between gap-4">
+                  <div><p className="text-4xl font-semibold tracking-[-0.05em]">{totalBusinesses ? Math.round((activeBusinesses / totalBusinesses) * 100) : 0}%</p><p className="mt-1 text-sm text-white/65">af kunderne har en aktiv chatbot</p></div>
+                  <button onClick={() => selectView("businesses")} className="rounded-xl bg-white px-3 py-2 text-sm font-semibold text-[#111111] transition hover:bg-[#f6f3ed]">Åbn kunder</button>
+                </div>
+              </article>
+              <article className="rounded-2xl border border-[rgba(17,17,17,0.08)] bg-[rgba(232,246,240,0.86)] p-5 shadow-[0_18px_40px_rgba(17,17,17,0.04)] sm:p-6">
+                <div className="flex items-center gap-2 text-[#31795d]"><CheckCircle2 size={18} /><p className="text-xs font-bold uppercase tracking-[0.16em]">Handlinger</p></div>
+                <p className="mt-4 text-lg font-semibold">{unreadSupportMessages ? `${unreadSupportMessages} beskeder venter` : "Alt ser godt ud"}</p>
+                <p className="mt-1 text-sm text-[#4d7868]">{unreadSupportMessages ? "Gennemgå dem i support-indbakken." : "Der er ingen åbne henvendelser lige nu."}</p>
+              </article>
+            </section> : null}
+
+            {(activeView === "overview" || activeView === "support") ? <section className="rounded-2xl border border-[rgba(17,17,17,0.08)] bg-[rgba(255,255,255,0.94)] p-4 shadow-[0_18px_40px_rgba(17,17,17,0.05)] backdrop-blur sm:p-5">
               <div className="mb-4 flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
                 <div>
                   <p className="text-xs uppercase tracking-[0.16em] text-[#8a7e70]">Indbakke</p>
@@ -821,6 +885,10 @@ export default function AdminPage() {
                               </span>
                             </div>
                           </div>
+                          <div className="flex shrink-0 items-center gap-2">
+                            <span className={`rounded-full px-2.5 py-1 text-xs font-semibold ${supportMessage.status === "resolved" ? "bg-[#e8f6f0] text-[#31795d]" : "border border-[rgba(17,17,17,0.08)] bg-white text-[#6b6258]"}`}>{supportMessage.status === "resolved" ? "Løst" : supportMessage.status === "in_progress" ? "I gang" : "Ny"}</span>
+                            {supportMessage.status !== "resolved" ? <button onClick={() => void updateSupportStatus(supportMessage, "resolved")} className="rounded-lg border border-[rgba(17,17,17,0.10)] bg-white px-2.5 py-1 text-xs font-semibold text-[#111111] hover:bg-[#f6f3ed]">Markér løst</button> : null}
+                          </div>
                         </div>
 
                         <p className="mt-3 whitespace-pre-wrap break-words rounded-lg border border-[rgba(17,17,17,0.08)] bg-[rgba(246,243,237,0.62)] p-3 text-sm leading-6 text-[#111111]">
@@ -831,9 +899,24 @@ export default function AdminPage() {
                   })}
                 </div>
               ) : null}
-            </section>
+            </section> : null}
 
-            <section className="rounded-2xl border border-[rgba(17,17,17,0.08)] bg-[rgba(255,255,255,0.94)] p-4 shadow-[0_18px_40px_rgba(17,17,17,0.05)] backdrop-blur sm:p-5">
+            {activeView === "billing" ? <section className="rounded-2xl border border-[rgba(17,17,17,0.08)] bg-[rgba(255,255,255,0.94)] p-4 shadow-[0_18px_40px_rgba(17,17,17,0.05)] backdrop-blur sm:p-5">
+              <div className="mb-5 flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between"><div><p className="text-xs font-bold uppercase tracking-[0.16em] text-[#8a7e70]">Supabase · businesses</p><h3 className="mt-1 text-xl font-semibold">Kundeplaner og AI-forbrug</h3></div><span className="w-fit rounded-full bg-[#f6f3ed] px-3 py-1 text-xs font-semibold text-[#6b6258]">{businesses.length} kunder</span></div>
+              <div className="grid gap-3">
+                {businesses.map((business) => {
+                  const plan = typeof business.plan === "string" ? business.plan : "starter";
+                  const used = getFirstNumericField(business, ["ai_answers_used"]);
+                  const limit = getFirstNumericField(business, ["ai_answer_limit_override"]) || ({ starter: 1000, growth: 5000, scale: 15000, enterprise: 30000 }[plan] || 1000);
+                  const usage = Math.min(100, Math.round((used / Math.max(limit, 1)) * 100));
+                  return <article key={business.id} className="rounded-xl border border-[rgba(17,17,17,0.08)] bg-white p-4"><div className="grid gap-4 lg:grid-cols-[minmax(190px,1fr)_190px_minmax(180px,1fr)_auto] lg:items-center"><div><p className="font-semibold">{business.name || "Uden navn"}</p><p className="mt-1 text-xs text-[#8a7e70]">{business.support_email || business.website_url || "Ingen kontaktoplysning"}</p></div><label className="grid gap-1 text-xs font-semibold text-[#6b6258]"><span>Plan</span><select value={plan} onChange={(event) => void updateBusiness(business, { plan: event.target.value }, "Kundeplan opdateret")} disabled={savingId === business.id} className="rounded-lg border border-[rgba(17,17,17,0.1)] bg-white px-2.5 py-2 text-sm font-medium text-[#111111] outline-none"><option value="starter">Starter</option><option value="growth">Growth</option><option value="scale">Scale</option><option value="enterprise">Enterprise</option></select></label><div><div className="flex justify-between gap-3 text-xs text-[#6b6258]"><span>AI-svar</span><span>{used.toLocaleString("da-DK")} / {limit.toLocaleString("da-DK")}</span></div><div className="mt-2 h-2 overflow-hidden rounded-full bg-[#f0ede7]"><div className="h-full rounded-full bg-[#111111]" style={{ width: `${usage}%` }} /></div><div className="mt-2 flex gap-2"><button onClick={() => void updateBusiness(business, { ai_answers_used: 0 }, "AI-forbrug nulstillet")} disabled={savingId === business.id} className="text-xs font-semibold text-[#6b6258] underline underline-offset-4 hover:text-[#111111]">Nulstil forbrug</button>{plan === "enterprise" ? <button onClick={() => { const value = window.prompt("Ny månedlig AI-grænse (mindst 30.000)", String(limit)); if (value) void updateBusiness(business, { ai_answer_limit_override: value }, "Enterprise-grænse opdateret"); }} className="text-xs font-semibold text-[#6b6258] underline underline-offset-4 hover:text-[#111111]">Tilpas grænse</button> : null}</div></div><span className={`w-fit rounded-full px-3 py-1 text-xs font-semibold ${business.subscription_status === "active" || business.subscription_status === "trialing" ? "bg-[#e8f6f0] text-[#31795d]" : "bg-[#f6f3ed] text-[#6b6258]"}`}>{business.subscription_status || "Ingen status"}</span></div></article>;
+                })}
+              </div>
+            </section> : null}
+
+            {activeView === "system" ? <section className="grid gap-4 md:grid-cols-2"><article className={statsCardClass}><div className="flex items-center gap-2"><Server size={17}/><h3 className="font-semibold">Datakilde</h3></div><p className="mt-3 text-sm text-[#6b6258]">Kundedata hentes fra Supabase med service-role på serveren. Skrivehandlinger kræver admin-adgang og CSRF-header.</p><div className="mt-4 flex items-center gap-2 text-sm font-semibold"><span className={`h-2 w-2 rounded-full ${systemOnline ? "bg-[#31795d]" : "bg-[#b86f3b]"}`} />{systemOnline ? "Forbundet" : "Kontrollér forbindelsen"}</div></article><article className={statsCardClass}><div className="flex items-center gap-2"><Settings2 size={17}/><h3 className="font-semibold">Seneste synkronisering</h3></div><p className="mt-3 text-sm text-[#6b6258]">{lastUpdatedAt ? lastUpdatedAt.toLocaleString("da-DK") : "Ikke hentet endnu"}</p><button onClick={() => { void fetchBusinesses(); void fetchSupportMessages(); }} className="mt-4 rounded-xl bg-[#111111] px-3 py-2 text-sm font-semibold text-white">Opdatér data</button></article></section> : null}
+
+            {activeView === "businesses" ? <section className="rounded-2xl border border-[rgba(17,17,17,0.08)] bg-[rgba(255,255,255,0.94)] p-4 shadow-[0_18px_40px_rgba(17,17,17,0.05)] backdrop-blur sm:p-5">
               <div className="mb-4 flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
                 <h2 className="text-lg font-semibold">Virksomheder</h2>
 
@@ -911,7 +994,6 @@ export default function AdminPage() {
                   {filteredBusinesses.map((business) => {
                     const isOpen = Boolean(expanded[business.id]);
                     const isActive = Boolean(business.activated);
-                    const isActivating = activatingId === business.id;
                     const isEditing = editingId === business.id;
                     const draft = editDrafts[business.id] || {};
 
@@ -985,14 +1067,6 @@ export default function AdminPage() {
 
                           <div className="flex shrink-0 flex-wrap items-center gap-2 lg:justify-end">
                             <button
-                              onClick={() => activateBusiness(business.id)}
-                              disabled={isActive || isActivating || deletingId === business.id || savingId === business.id}
-                              className="rounded-lg border border-[rgba(17,17,17,0.10)] bg-white px-3 py-1.5 text-sm text-[#111111] transition hover:bg-[rgba(246,243,237,0.9)] disabled:cursor-not-allowed disabled:opacity-60"
-                            >
-                              {isActive ? "Aktiv" : isActivating ? "Aktiverer..." : "Aktivér"}
-                            </button>
-
-                            <button
                               onClick={() => toggleExpand(business.id)}
                               className="rounded-lg border border-[rgba(17,17,17,0.10)] bg-white px-3 py-1.5 text-sm text-[#111111] transition hover:bg-[rgba(246,243,237,0.9)]"
                             >
@@ -1005,9 +1079,7 @@ export default function AdminPage() {
                                 const value = e.target.value;
                                 e.target.value = "";
 
-                                if (value === "activate") {
-                                  activateBusiness(business.id);
-                                } else if (value === "edit") {
+                                if (value === "edit") {
                                   startEditing(business);
                                 } else if (value === "delete") {
                                   setPendingDeleteBusiness(business);
@@ -1015,13 +1087,11 @@ export default function AdminPage() {
                               }}
                               className="rounded-lg border border-[rgba(17,17,17,0.10)] bg-white px-3 py-1.5 text-sm text-[#111111] outline-none"
                               disabled={
-                                activatingId === business.id ||
                                 deletingId === business.id ||
                                 savingId === business.id
                               }
                             >
                               <option value="">Quick actions</option>
-                              <option value="activate">Aktiver</option>
                               <option value="edit">Rediger</option>
                               <option value="delete">Slet</option>
                             </select>
@@ -1137,7 +1207,7 @@ export default function AdminPage() {
                   })}
                 </div>
               ) : null}
-            </section>
+            </section> : null}
           </div>
         </section>
       </div>

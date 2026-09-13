@@ -104,3 +104,48 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "Ukendt serverfejl." }, { status: 500 });
   }
 }
+
+export async function PUT(req: NextRequest) {
+  try {
+    const csrfCheck = await checkCsrfSafety(req, true);
+    if (!csrfCheck.safe) {
+      return NextResponse.json({ error: csrfCheck.error }, { status: 403 });
+    }
+
+    const authResult = await verifyAdminSession(req);
+    if ("error" in authResult) {
+      return NextResponse.json({ error: authResult.error }, { status: authResult.status });
+    }
+
+    if (!process.env.SUPABASE_URL || !process.env.SUPABASE_SERVICE_KEY) {
+      return NextResponse.json({ error: "Serveren mangler Supabase environment variables." }, { status: 500 });
+    }
+
+    const body = await req.json();
+    const id = normalizeString(body.id, 80);
+    const status = normalizeString(body.status, 24);
+    const allowedStatuses = new Set(["new", "in_progress", "resolved"]);
+
+    if (!id || !allowedStatuses.has(status)) {
+      return NextResponse.json({ error: "Ugyldig besked eller status." }, { status: 400 });
+    }
+
+    const { data, error } = await supabase
+      .from("support_messages")
+      .update({ status })
+      .eq("id", id)
+      .select("*")
+      .single();
+
+    if (error) {
+      return NextResponse.json({ error: error.message }, { status: 500 });
+    }
+
+    return NextResponse.json({ success: true, message: data });
+  } catch (error) {
+    return NextResponse.json(
+      { error: error instanceof Error ? error.message : "Ukendt serverfejl." },
+      { status: 500 }
+    );
+  }
+}

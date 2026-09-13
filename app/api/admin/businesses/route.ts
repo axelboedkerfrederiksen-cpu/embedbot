@@ -17,6 +17,18 @@ const timestampKeys = new Set([
   "subscription_updated_at",
 ]);
 
+const numericKeys = new Set([
+  "ai_answers_used",
+  "ai_answer_limit_override",
+  "chat_outline_width",
+  "chat_outline_opacity",
+  "widget_opacity",
+]);
+
+const booleanKeys = new Set(["activated", "chat_outline_enabled"]);
+const planValues = new Set(["starter", "growth", "scale", "enterprise"]);
+const subscriptionStatusValues = new Set(["inactive", "trialing", "active", "past_due", "canceled", "unpaid"]);
+
 export async function GET(req: NextRequest) {
   try {
     const authResult = await verifyAdminSession(req);
@@ -150,6 +162,43 @@ export async function PUT(req: NextRequest) {
 
           const trimmedTimestamp = value.trim();
           return [[key, trimmedTimestamp ? trimmedTimestamp : null]];
+        }
+
+        if (key === "plan") {
+          const plan = typeof value === "string" ? value.trim().toLowerCase() : "";
+          return planValues.has(plan) ? [[key, plan]] : [];
+        }
+
+        if (key === "subscription_status") {
+          const status = typeof value === "string" ? value.trim().toLowerCase() : "";
+          return subscriptionStatusValues.has(status) ? [[key, status]] : [];
+        }
+
+        if (numericKeys.has(key)) {
+          if (value === null && key === "ai_answer_limit_override") {
+            return [[key, null]];
+          }
+          const numberValue = typeof value === "number" ? value : Number(value);
+          if (!Number.isFinite(numberValue)) {
+            return [];
+          }
+          if (key === "ai_answers_used" && (!Number.isInteger(numberValue) || numberValue < 0)) {
+            return [];
+          }
+          if (key === "ai_answer_limit_override" && (!Number.isInteger(numberValue) || numberValue < 30000)) {
+            return [];
+          }
+          return [[key, numberValue]];
+        }
+
+        if (booleanKeys.has(key)) {
+          if (typeof value === "boolean") {
+            return [[key, value]];
+          }
+          if (value === "true" || value === "false") {
+            return [[key, value === "true"]];
+          }
+          return [];
         }
 
         // Protect UUID/system columns from invalid empty-string values.
