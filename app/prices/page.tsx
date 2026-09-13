@@ -125,6 +125,7 @@ export default function PricesPage() {
         <Link href="/" className="prices-logo"><Image src={logoImage} alt="EmbedBot" priority /></Link>
         <div className="prices-nav-links">
           <Link href="/support" className="prices-nav-link">Support</Link>
+          <Link href="/faq" className="prices-nav-link">FAQ</Link>
           <Link href="/prices" className="prices-nav-link active">Priser</Link>
           <Link href="/login" className="prices-nav-link">Log ind</Link>
         </div>

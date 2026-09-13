@@ -313,6 +313,7 @@ export default function SupportPage() {
         </Link>
         <div className="support-nav-links">
           <Link href="/support" className="support-nav-link active">Support</Link>
+          <Link href="/faq" className="support-nav-link">FAQ</Link>
           <Link href="/prices" className="support-nav-link">Priser</Link>
           <Link href="/login" className="support-nav-link">Log ind</Link>
         </div>

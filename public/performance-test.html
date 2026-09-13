@@ -1,0 +1,197 @@
+<!doctype html>
+<html lang="da">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>EmbedBot performance-test</title>
+    <style>
+      :root { color-scheme: light; font-family: system-ui, -apple-system, sans-serif; }
+      body { margin: 0; background: #f5f7fb; color: #172033; }
+      main { max-width: 900px; margin: 0 auto; padding: 32px 18px 64px; }
+      .card { background: white; border: 1px solid #dfe5ef; border-radius: 16px; padding: 22px; margin: 16px 0; box-shadow: 0 8px 24px #1720330d; }
+      h1 { margin: 0 0 8px; font-size: clamp(1.7rem, 4vw, 2.5rem); }
+      h2 { margin: 0 0 12px; font-size: 1.15rem; }
+      p { line-height: 1.55; color: #526078; }
+      .actions { display: flex; flex-wrap: wrap; gap: 10px; margin: 18px 0 8px; }
+      button, a.button { border: 0; border-radius: 10px; padding: 11px 15px; font: inherit; font-weight: 700; cursor: pointer; text-decoration: none; }
+      button.primary, a.button { background: #2563eb; color: white; }
+      button.secondary { background: #e8eef9; color: #17315f; }
+      button.danger { background: #fee2e2; color: #991b1b; }
+      code { background: #eef2f7; border-radius: 5px; padding: 2px 5px; }
+      .status { color: #526078; font-size: .95rem; }
+      table { width: 100%; border-collapse: collapse; }
+      th, td { text-align: left; padding: 10px 8px; border-bottom: 1px solid #e8edf4; }
+      th { font-size: .83rem; color: #526078; }
+      td:nth-child(n+2) { font-variant-numeric: tabular-nums; }
+      .good { color: #087443; font-weight: 700; }
+      .warn { color: #a15c00; font-weight: 700; }
+      .muted { color: #7b879a; }
+      .small { font-size: .88rem; }
+      @media (max-width: 620px) { th, td { padding: 8px 4px; font-size: .88rem; } }
+    </style>
+  </head>
+  <body>
+    <main>
+      <section class="card">
+        <h1>EmbedBot performance-test</h1>
+        <p>
+          Denne side måler den samme testside med og uden EmbedBot. Kør hver variant flere gange
+          på samme enhed og netværk, og sammenlign medianen.
+        </p>
+        <div class="actions">
+          <button class="secondary" id="without">Kør uden chatbot</button>
+          <button class="primary" id="with">Kør med EmbedBot</button>
+          <button class="danger" id="clear">Ryd resultater</button>
+        </div>
+        <p class="status" id="status">Vælg en test for at begynde.</p>
+      </section>
+
+      <section class="card">
+        <h2>Seneste måling</h2>
+        <table>
+          <thead><tr><th>Måling</th><th>Resultat</th><th>Vurdering</th></tr></thead>
+          <tbody id="latest"><tr><td colspan="3" class="muted">Ingen måling endnu.</td></tr></tbody>
+        </table>
+      </section>
+
+      <section class="card">
+        <h2>Sammenligning</h2>
+        <table>
+          <thead><tr><th>Måling</th><th>Uden</th><th>Med</th><th>Forskel</th></tr></thead>
+          <tbody id="comparison"><tr><td colspan="4" class="muted">Kør begge varianter for at se forskellen.</td></tr></tbody>
+        </table>
+        <p class="small muted">Målingerne gemmes kun i denne browsers localStorage.</p>
+      </section>
+
+      <section class="card small">
+        <h2>Sådan får du retvisende data</h2>
+        <p>
+          Kør mindst 5 målinger af hver variant. Brug helst et inkognito-vindue eller ryd cachen
+          mellem testene, og gentag testen på mobil med 4G. Se især på LCP, INP og CLS.
+          En enkelt test er ikke nok til at konkludere noget sikkert.
+        </p>
+      </section>
+    </main>
+
+    <script>
+      (() => {
+        const KEY = "embedbot-performance-test-v1";
+        const EMBED_URL = "https://www.embedbot.dk/widget.js?id=a2678b5f-6d8b-415f-bbc0-ef3ce2a148bc";
+        const state = JSON.parse(localStorage.getItem(KEY) || '{"without":[],"with":[]}');
+        const $ = (id) => document.getElementById(id);
+        const round = (value) => value == null ? null : Math.round(value * 100) / 100;
+        const format = (value, unit = " ms") => value == null ? "—" : `${round(value)}${unit}`;
+
+        function percentile(values, p = 0.5) {
+          const sorted = values.filter(Number.isFinite).sort((a, b) => a - b);
+          if (!sorted.length) return null;
+          return sorted[Math.min(sorted.length - 1, Math.floor(sorted.length * p))];
+        }
+
+        function getCLS() {
+          let value = 0;
+          new PerformanceObserver((list) => {
+            for (const entry of list.getEntries()) if (!entry.hadRecentInput) value += entry.value;
+            window.__ebCLS = value;
+          }).observe({ type: "layout-shift", buffered: true });
+        }
+
+        function getLCP() {
+          new PerformanceObserver((list) => {
+            const entries = list.getEntries();
+            if (entries.length) window.__ebLCP = entries[entries.length - 1].startTime;
+          }).observe({ type: "largest-contentful-paint", buffered: true });
+        }
+
+        function getINP() {
+          const durations = [];
+          new PerformanceObserver((list) => {
+            for (const entry of list.getEntries()) durations.push(entry.duration);
+            window.__ebINP = percentile(durations, 0.98);
+          }).observe({ type: "event", buffered: true, durationThreshold: 16 });
+        }
+
+        function metricRows(result) {
+          const rows = [
+            ["FCP", format(result.fcp, " ms"), result.fcp <= 1800 ? "God" : "Needs improvement"],
+            ["LCP", format(result.lcp, " ms"), result.lcp <= 2500 ? "God" : "Needs improvement"],
+            ["INP", format(result.inp, " ms"), result.inp == null ? "Interagér med siden" : (result.inp <= 200 ? "God" : "Needs improvement")],
+            ["CLS", round(result.cls), result.cls <= 0.1 ? "God" : "Needs improvement"],
+            ["TTFB", format(result.ttfb, " ms"), result.ttfb <= 800 ? "God" : "Needs improvement"],
+            ["EmbedBot requests", result.embedRequests, result.embedRequests ? "Indlæst" : "Ikke indlæst"],
+            ["EmbedBot bytes", result.embedBytes == null ? "—" : `${Math.round(result.embedBytes / 1024)} KB`, ""],
+          ];
+          return rows.map(([name, value, verdict]) => `<tr><td>${name}</td><td>${value}</td><td class="${verdict === "God" ? "good" : verdict === "Needs improvement" ? "warn" : "muted"}">${verdict}</td></tr>`).join("");
+        }
+
+        function medianResult(mode) {
+          const runs = state[mode] || [];
+          if (!runs.length) return null;
+          const medianMetric = (key) => percentile(runs.map((run) => run[key]).filter(Number.isFinite), 0.5);
+          return {
+            fcp: medianMetric("fcp"),
+            lcp: medianMetric("lcp"),
+            inp: medianMetric("inp"),
+            cls: medianMetric("cls"),
+            ttfb: medianMetric("ttfb"),
+            embedBytes: medianMetric("embedBytes"),
+          };
+        }
+
+        function render() {
+          const latest = state.latest;
+          $("latest").innerHTML = latest ? metricRows(latest) : '<tr><td colspan="3" class="muted">Ingen måling endnu.</td></tr>';
+          const a = medianResult("without");
+          const b = medianResult("with");
+          if (!a || !b) return;
+          const rows = [["FCP", a.fcp, b.fcp, " ms"], ["LCP", a.lcp, b.lcp, " ms"], ["INP", a.inp, b.inp, " ms"], ["CLS", a.cls, b.cls, ""], ["TTFB", a.ttfb, b.ttfb, " ms"], ["EmbedBot bytes", 0, b.embedBytes / 1024, " KB"]];
+          $("comparison").innerHTML = rows.map(([name, x, y, unit]) => `<tr><td>${name}</td><td>${format(x, unit)}</td><td>${format(y, unit)}</td><td>${x != null && y != null ? `${y - x >= 0 ? "+" : ""}${round(y - x)}${unit}` : "—"}</td></tr>`).join("");
+          $("comparison").insertAdjacentHTML("afterbegin", `<tr><td><strong>Antal målinger</strong></td><td>${state.without.length}</td><td>${state.with.length}</td><td class="muted">Median</td></tr>`);
+        }
+
+        function run(mode) {
+          sessionStorage.setItem("embedbot-test-mode", mode);
+          $("status").textContent = `Starter test ${mode === "with" ? "med" : "uden"} EmbedBot…`;
+          location.reload();
+        }
+
+        $("without").onclick = () => run("without");
+        $("with").onclick = () => run("with");
+        $("clear").onclick = () => { localStorage.removeItem(KEY); location.reload(); };
+        render();
+
+        const mode = sessionStorage.getItem("embedbot-test-mode");
+        if (!mode) return;
+        sessionStorage.removeItem("embedbot-test-mode");
+        getCLS(); getLCP(); getINP();
+        if (mode === "with") {
+          const script = document.createElement("script");
+          script.src = EMBED_URL;
+          script.async = true;
+          document.body.appendChild(script);
+        }
+        window.setTimeout(() => {
+          const nav = performance.getEntriesByType("navigation")[0];
+          const paints = performance.getEntriesByType("paint");
+          const resources = performance.getEntriesByType("resource").filter((entry) => entry.name.includes("embedbot.dk"));
+          const result = {
+            mode,
+            fcp: (paints.find((entry) => entry.name === "first-contentful-paint") || {}).startTime || null,
+            lcp: window.__ebLCP || null,
+            inp: window.__ebINP || null,
+            cls: window.__ebCLS || 0,
+            ttfb: nav ? nav.responseStart : null,
+            embedRequests: resources.length,
+            embedBytes: resources.reduce((sum, entry) => sum + (entry.transferSize || 0), 0),
+            timestamp: new Date().toISOString()
+          };
+          state[mode].push(result);
+          state.latest = result;
+          localStorage.setItem(KEY, JSON.stringify(state));
+          $("status").textContent = `Måling gemt: ${mode === "with" ? "med" : "uden"} EmbedBot. Kør gerne flere gange.`;
+          render();
+        }, 3500);
+      })();
+    </script>
+  </body>
+</html>
