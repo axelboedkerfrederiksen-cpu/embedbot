@@ -11,12 +11,9 @@ export default function UniversalBackButton() {
   }
 
   function handleBack() {
-    if (typeof window !== "undefined" && window.history.length > 1) {
-      router.back();
-      return;
-    }
-
-    router.push("/");
+    // Browser history can include an external OAuth provider after sign-in.
+    // Navigate to our own landing page instead of returning to that provider.
+    router.replace("/");
   }
 
   return (
