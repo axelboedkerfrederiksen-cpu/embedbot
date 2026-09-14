@@ -177,6 +177,10 @@ function canStartManualPilot(business: Business): boolean {
   return !Number.isFinite(trialEnd) || trialEnd <= Date.now();
 }
 
+function canPreparePrivateDemo(business: Business): boolean {
+  return !business.activated && Boolean((business.website_url || "").trim()) && Boolean((business.support_email || "").trim());
+}
+
 function normalizeMessages(raw: unknown): Array<{ role: string; content: string }> {
   if (!Array.isArray(raw)) return [];
   return raw.map((item) => {
@@ -495,6 +499,10 @@ export default function AdminPage() {
   }
 
   async function startManualPilot(business: Business) {
+    if (!window.confirm("Start kun den offentlige 14-dages pilot, når webshoppen har godkendt demoen. Send installationskoden nu?")) {
+      return;
+    }
+
     setSavingId(business.id);
     setError("");
 
@@ -519,6 +527,41 @@ export default function AdminPage() {
       pushToast(`Pilot startet. Udløber ${endDate}`, "success");
     } catch (pilotError) {
       const message = pilotError instanceof Error ? pilotError.message : "Kunne ikke starte pilotforløbet.";
+      setError(message);
+      pushToast(message, "error");
+    } finally {
+      setSavingId(null);
+    }
+  }
+
+  async function preparePrivateDemo(business: Business) {
+    if (!window.confirm("Byg og send en privat chatbot-demo til webshoppen? Der starter ingen pilot endnu.")) {
+      return;
+    }
+
+    const demoWindow = window.open("about:blank", "_blank", "noopener,noreferrer");
+    setSavingId(business.id);
+    setError("");
+
+    try {
+      const res = await fetch("/api/admin/prepare-demo", {
+        method: "POST",
+        headers: buildAdminHeaders(),
+        body: JSON.stringify({ business_id: business.id }),
+      });
+      const data = await res.json();
+      if (!res.ok || !data.success) {
+        demoWindow?.close();
+        throw new Error(data.error || "Kunne ikke bygge den private demo.");
+      }
+
+      if (demoWindow) {
+        demoWindow.location.href = data.previewUrl;
+      }
+      const knowledgeMessage = data.reusedExistingKnowledge ? "eksisterende viden genbrugt" : `${data.chunks || 0} tekststykker indlæst`;
+      pushToast(`Privat demo sendt (${knowledgeMessage}).`, "success");
+    } catch (demoError) {
+      const message = demoError instanceof Error ? demoError.message : "Kunne ikke bygge den private demo.";
       setError(message);
       pushToast(message, "error");
     } finally {
@@ -1185,6 +1228,8 @@ export default function AdminPage() {
 
                                 if (value === "edit") {
                                   startEditing(business);
+                                } else if (value === "demo") {
+                                  void preparePrivateDemo(business);
                                 } else if (value === "pilot") {
                                   void startManualPilot(business);
                                 } else if (value === "delete") {
@@ -1199,7 +1244,8 @@ export default function AdminPage() {
                             >
                               <option value="">Quick actions</option>
                               <option value="edit">Rediger</option>
-                              {canStartManualPilot(business) ? <option value="pilot">Start 14-dages pilot</option> : null}
+                              {canPreparePrivateDemo(business) ? <option value="demo">Byg og send privat demo</option> : null}
+                              {canStartManualPilot(business) ? <option value="pilot">Start offentlig 14-dages pilot</option> : null}
                               <option value="delete">Slet</option>
                             </select>
 

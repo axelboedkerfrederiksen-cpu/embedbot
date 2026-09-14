@@ -4,6 +4,7 @@ import OpenAI from "openai";
 import { createHash } from "node:crypto";
 import { isBusinessSubscriptionActive } from "@/lib/subscription";
 import { getAnswerLimit, getPlan } from "@/lib/plans";
+import { getPreviewTokenSecret, verifyPreviewToken } from "@/lib/preview-access";
 
 const RATE_LIMIT_MAX = 50;
 const RATE_LIMIT_WINDOW_SECONDS = 24 * 60 * 60;
@@ -31,6 +32,30 @@ function getClientIp(req: NextRequest): string {
   }
 
   return "unknown";
+}
+
+function isValidPreviewRequest(
+  req: NextRequest,
+  businessId: string,
+  pageUrl: string,
+  previewToken: string,
+): boolean {
+  const secret = getPreviewTokenSecret();
+  if (!secret || !previewToken) return false;
+
+  const origin = req.headers.get("origin");
+  if (!origin || origin !== req.nextUrl.origin) return false;
+
+  try {
+    const parsedPageUrl = new URL(pageUrl);
+    if (parsedPageUrl.origin !== req.nextUrl.origin || parsedPageUrl.pathname !== `/preview/${businessId}`) {
+      return false;
+    }
+  } catch {
+    return false;
+  }
+
+  return verifyPreviewToken(previewToken, businessId, secret);
 }
 
 function hashClientIp(ip: string, businessId: string) {
@@ -113,9 +138,10 @@ async function consumeAnswerAllowance(
 export async function POST(req: NextRequest) {
   try {
     const clientIp = getClientIp(req);
-    const { message, business_id, page_url, history } = await req.json();
+    const { message, business_id, page_url, preview_token, history } = await req.json();
     const stableBusinessId = typeof business_id === "string" ? business_id.trim() : "";
     const stablePageUrl = typeof page_url === "string" && page_url.trim() ? page_url.trim() : "";
+    const stablePreviewToken = typeof preview_token === "string" ? preview_token.trim() : "";
 
     if (!stableBusinessId) {
       return NextResponse.json(
@@ -173,7 +199,8 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    if (!isBusinessSubscriptionActive(business)) {
+    const previewAccess = isValidPreviewRequest(req, stableBusinessId, stablePageUrl, stablePreviewToken);
+    if (!isBusinessSubscriptionActive(business) && !previewAccess) {
       return NextResponse.json(
         { error: "Abonnement kræves for at bruge chatbotten." },
         { status: 402 }

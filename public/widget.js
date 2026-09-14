@@ -1,6 +1,7 @@
 (function () {
   const scriptTag = document.currentScript;
   const businessId = new URL(scriptTag.src).searchParams.get("id");
+  const previewToken = (scriptTag.getAttribute("data-preview-token") || "").trim();
   const apiOrigin = new URL(scriptTag.src).origin;
   const API_URL = `${apiOrigin}/api/chat`;
   const CONFIG_URL = `${apiOrigin}/api/widget-config?id=${encodeURIComponent(businessId || "")}`;
@@ -716,7 +717,7 @@
       const res = await fetch(API_URL, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ message: text, business_id: businessId, page_url: window.location.href, history: conversationHistory.slice(-10) }),
+        body: JSON.stringify({ message: text, business_id: businessId, page_url: window.location.href, preview_token: previewToken || undefined, history: conversationHistory.slice(-10) }),
       });
 
       if (!res.ok) {
