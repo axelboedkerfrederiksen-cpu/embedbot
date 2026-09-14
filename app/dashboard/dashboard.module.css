@@ -752,6 +752,86 @@
   font-size: 10px;
 }
 
+.customerMessageList {
+  display: grid;
+  gap: 10px;
+}
+
+.customerMessage {
+  border: 1px solid var(--dash-border);
+  border-radius: 13px;
+  background: #fcfaf7;
+  padding: 17px;
+}
+
+.customerMessageUnread {
+  border-color: rgba(35, 122, 87, 0.24);
+  background: var(--dash-accent-soft);
+}
+
+.customerMessageHeader {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+}
+
+.customerMessageTitleRow {
+  min-width: 0;
+  display: flex;
+  align-items: center;
+  gap: 9px;
+}
+
+.customerMessageTitleRow h3 {
+  margin: 0;
+  font-size: 13px;
+  font-weight: 650;
+  letter-spacing: -0.015em;
+}
+
+.customerMessageHeader time {
+  flex: 0 0 auto;
+  color: var(--dash-muted);
+  font-size: 10px;
+}
+
+.unreadMark {
+  flex: 0 0 auto;
+  width: 7px;
+  height: 7px;
+  border-radius: 999px;
+  background: var(--dash-accent);
+  box-shadow: 0 0 0 4px rgba(35, 122, 87, 0.1);
+}
+
+.customerMessage > p {
+  margin: 9px 0 0;
+  color: var(--dash-muted);
+  font-size: 12px;
+  line-height: 1.65;
+  white-space: pre-wrap;
+}
+
+.customerMessageActions {
+  display: flex;
+  margin-top: 14px;
+}
+
+.supportCard {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 20px;
+  margin-top: 16px;
+  padding: 20px;
+}
+
+.supportCard .cardDescription {
+  max-width: 620px;
+  margin-top: 5px;
+}
+
 .topicBarTrack {
   height: 5px;
   margin-top: 7px;
@@ -1305,6 +1385,9 @@
   .filterButton { flex: 1; }
   .messageUser, .messageAssistant { max-width: 90%; }
   .previewStage { min-height: 410px; padding: 16px; }
+  .customerMessageHeader, .supportCard { align-items: flex-start; flex-direction: column; }
+  .customerMessageHeader { gap: 6px; }
+  .customerMessageActions .buttonSecondary, .supportCard .buttonSecondary { width: 100%; }
 }
 
 @media (prefers-reduced-motion: reduce) {

@@ -7,7 +7,7 @@ import type { LucideIcon } from "lucide-react";
 import {
   AlertCircle, ArrowRight, BarChart3, BookOpenText, Bot, Check, CheckCircle2,
   ChevronDown, Code2, Copy, CreditCard, ExternalLink, Eye, HelpCircle,
-  LayoutDashboard, LogOut, Menu, MessagesSquare, Palette, Plus, Search,
+  Inbox, LayoutDashboard, LogOut, Menu, MessagesSquare, Palette, Plus, Search,
   Settings, SlidersHorizontal, Sparkles, TrendingUp, UserRoundPlus,
   UsersRound, X, Zap,
 } from "lucide-react";
@@ -15,7 +15,7 @@ import { createClient } from "@/lib/supabase";
 import { isBusinessSubscriptionActive } from "@/lib/subscription";
 import styles from "./dashboard.module.css";
 
-type DashboardView = "overview" | "conversations" | "leads" | "knowledge" | "behavior" | "appearance" | "installation" | "analytics" | "billing" | "settings";
+type DashboardView = "overview" | "messages" | "conversations" | "leads" | "knowledge" | "behavior" | "appearance" | "installation" | "analytics" | "billing" | "settings";
 
 type Business = {
   id: string;
@@ -67,6 +67,17 @@ type Business = {
 };
 
 type ConversationRow = { id: string; business_id: string; created_at: string | null; messages: unknown };
+type CustomerMessage = {
+  id: string;
+  business_id: string;
+  sender: "admin" | "system";
+  title: string;
+  body: string;
+  action_url: string | null;
+  action_label: string | null;
+  read_at: string | null;
+  created_at: string;
+};
 type ChatMessage = { role: string; content: string };
 type LeadRow = { email: string; message: string; pageUrl: string; createdAt: string | null };
 type SubscriptionInvoice = { id: string; status: string | null; hostedInvoiceUrl: string | null; invoicePdf: string | null; amountDue: number | null; amountPaid: number | null; currency: string | null; dueDate: string | null };
@@ -84,10 +95,11 @@ type SubscriptionInfo = {
 
 type FieldType = "text" | "textarea" | "select" | "color" | "range";
 type FieldDefinition = { key: string; label: string; type: FieldType; placeholder?: string; hint?: string; options?: Array<{ label: string; value: string }>; min?: number; max?: number; step?: number; suffix?: string };
-type NavItem = { view: DashboardView; label: string; icon: LucideIcon; badge?: "attention" };
+type NavItem = { view: DashboardView; label: string; icon: LucideIcon; badge?: "attention" | "messages" };
 
 const NAV_PRIMARY: NavItem[] = [
   { view: "overview", label: "Overblik", icon: LayoutDashboard },
+  { view: "messages", label: "Beskeder", icon: Inbox, badge: "messages" },
   { view: "conversations", label: "Samtaler", icon: MessagesSquare, badge: "attention" },
   { view: "leads", label: "Leads", icon: UserRoundPlus },
 ];
@@ -150,6 +162,7 @@ const ALL_FIELDS = [...IDENTITY_FIELDS, ...CONTACT_FIELDS, ...KNOWLEDGE_FIELDS, 
 
 const VIEW_COPY: Record<DashboardView, { eyebrow: string; title: string; description: string }> = {
   overview: { eyebrow: "Dit arbejdsområde", title: "Overblik", description: "Det vigtigste om din chatbot — og hvad der kræver din opmærksomhed." },
+  messages: { eyebrow: "Fra EmbedBot", title: "Beskeder", description: "Chatbot-demoer, opdateringer og praktiske beskeder fra EmbedBot." },
   conversations: { eyebrow: "Kundedialog", title: "Samtaler", description: "Gennemgå kundernes spørgsmål og find svar, der kan forbedres." },
   leads: { eyebrow: "Muligheder", title: "Leads", description: "Kontaktoplysninger, som kunder har delt med chatbotten." },
   knowledge: { eyebrow: "Forbedr botten", title: "Viden & svar", description: "Hold botten opdateret med produkter, politikker og gode standardsvar." },
@@ -202,6 +215,7 @@ function formatConversationDate(value: string | null) { if (!value) return "Uken
 function formatCurrency(amount: number | null, currency: string | null) { return typeof amount !== "number" || !currency ? "Ikke oplyst" : new Intl.NumberFormat("da-DK", { style: "currency", currency: currency.toUpperCase(), maximumFractionDigits: 0 }).format(amount / 100); }
 function formatSubscriptionStatus(status: string) { switch (status.toLowerCase()) { case "active": return "Aktivt"; case "trialing": return "Prøveperiode"; case "past_due": return "Betaling mangler"; case "canceled": return "Opsagt"; case "unpaid": return "Ubetalt"; case "paused": return "Pauset"; default: return "Afventer"; } }
 function normalizeExternalUrl(value: string | null | undefined) { const trimmed = (value || "").trim(); return !trimmed ? "" : /^https?:\/\//i.test(trimmed) ? trimmed : `https://${trimmed}`; }
+function normalizeMessageActionUrl(value: string | null | undefined) { const trimmed = (value || "").trim(); if (!trimmed) return ""; if (trimmed.startsWith("/") && !trimmed.startsWith("//")) return trimmed; try { const parsed = new URL(trimmed); return parsed.protocol === "https:" ? parsed.toString() : ""; } catch { return ""; } }
 function sanitizeColor(value: string, fallback: string) { return /^#([0-9a-f]{3}|[0-9a-f]{6})$/i.test(value.trim()) ? value.trim() : fallback; }
 function buildDraft(business: Business): Record<string, string> { return Object.fromEntries(ALL_FIELDS.map((field) => { const value = business[field.key]; if (typeof value === "boolean") return [field.key, value ? "true" : "false"]; return [field.key, value === null || value === undefined ? "" : String(value)]; })); }
 function getConversationQuestion(conversation: ConversationRow) { return normalizeMessages(conversation.messages).find((message) => message.role.toLowerCase().includes("user"))?.content || "Samtale uden spørgsmål"; }
@@ -273,6 +287,7 @@ export default function DashboardPage() {
   const [businesses, setBusinesses] = useState<Business[]>([]);
   const [selectedBusinessId, setSelectedBusinessId] = useState("");
   const [conversations, setConversations] = useState<ConversationRow[]>([]);
+  const [customerMessages, setCustomerMessages] = useState<CustomerMessage[]>([]);
   const [subscriptions, setSubscriptions] = useState<SubscriptionInfo[]>([]);
   const [subscriptionLoading, setSubscriptionLoading] = useState(false);
   const [subscriptionError, setSubscriptionError] = useState("");
@@ -314,6 +329,30 @@ export default function DashboardPage() {
           { id: "preview-2", business_id: previewBusiness.id, created_at: new Date(previewNow - 28 * 60 * 60 * 1000).toISOString(), messages: [{ role: "user", content: "Kan lampen dæmpes? Min mail er ida@example.com" }, { role: "assistant", content: "Beklager, jeg ved det ikke. Kontakt os venligst." }] },
           { id: "preview-3", business_id: previewBusiness.id, created_at: new Date(previewNow - 52 * 60 * 60 * 1000).toISOString(), messages: [{ role: "user", content: "Kan jeg returnere en vare købt på tilbud?" }, { role: "assistant", content: "Ja, I har 30 dages returret — også på tilbudsvarer." }] },
         ];
+        const previewCustomerMessages: CustomerMessage[] = [
+          {
+            id: "preview-message-1",
+            business_id: previewBusiness.id,
+            sender: "admin",
+            title: "Din nye chatbot er klar",
+            body: "Vi har gjort en ny version af chatbotten klar til jer. Gennemgå den gerne og send os en besked, hvis noget skal justeres.",
+            action_url: `/preview/${previewBusiness.id}`,
+            action_label: "Åbn chatbot-demo",
+            read_at: null,
+            created_at: new Date(previewNow - 18 * 60 * 1000).toISOString(),
+          },
+          {
+            id: "preview-message-2",
+            business_id: previewBusiness.id,
+            sender: "admin",
+            title: "Velkommen til EmbedBot",
+            body: "Her får I fremover besked om nye versioner, vigtige opdateringer og hjælp til jeres chatbot.",
+            action_url: null,
+            action_label: null,
+            read_at: new Date(previewNow - 2 * 86400000).toISOString(),
+            created_at: new Date(previewNow - 3 * 86400000).toISOString(),
+          },
+        ];
         const previewSubscription: SubscriptionInfo = {
           businessId: previewBusiness.id, businessName: previewBusiness.name || "", source: "stripe", status: "active",
           paymentStatus: "paid", isActive: true, isTrialing: false, trialEndsAt: null, trialDaysRemaining: null,
@@ -327,7 +366,7 @@ export default function DashboardPage() {
         setEmail("kunde@nordicliving.dk");
         setBusinesses([previewBusiness]); setSelectedBusinessId(previewBusiness.id);
         setEditDrafts({ [previewBusiness.id]: buildDraft(previewBusiness) });
-        setConversations(previewConversations); setSubscriptions([previewSubscription]); setLoading(false);
+        setConversations(previewConversations); setCustomerMessages(previewCustomerMessages); setSubscriptions([previewSubscription]); setLoading(false);
         return;
       }
       const { data: userData } = await supabase.auth.getUser();
@@ -347,12 +386,15 @@ export default function DashboardPage() {
       const businessIds = rows.map((business) => business.id).filter(Boolean);
       const subscriptionPromise = fetch("/api/dashboard/subscription").then(async (response) => { const result = await response.json() as { success?: boolean; error?: string; subscriptions?: SubscriptionInfo[] }; if (!response.ok || !result.success) throw new Error(result.error || "Subscription request failed"); return result.subscriptions || []; });
       const conversationsPromise = businessIds.length ? supabase.from("conversations").select("id,business_id,created_at,messages").in("business_id", businessIds).order("created_at", { ascending: false }).limit(600) : Promise.resolve({ data: [], error: null });
-      const [subscriptionResult, conversationResult] = await Promise.allSettled([subscriptionPromise, conversationsPromise]);
+      const customerMessagesPromise = businessIds.length ? supabase.from("customer_messages").select("id,business_id,sender,title,body,action_url,action_label,read_at,created_at").in("business_id", businessIds).order("created_at", { ascending: false }).limit(200) : Promise.resolve({ data: [], error: null });
+      const [subscriptionResult, conversationResult, customerMessagesResult] = await Promise.allSettled([subscriptionPromise, conversationsPromise, customerMessagesPromise]);
       if (!mounted) return;
       if (subscriptionResult.status === "fulfilled") setSubscriptions(subscriptionResult.value);
       else setSubscriptionError("Abonnementsdata kunne ikke opdateres lige nu. Vi viser stadig din gemte adgangsstatus.");
       if (conversationResult.status === "fulfilled" && !conversationResult.value.error) setConversations((conversationResult.value.data || []) as ConversationRow[]);
       else setFetchError("Samtaler kunne ikke hentes lige nu. Dine chatbot-indstillinger virker stadig.");
+      if (customerMessagesResult.status === "fulfilled" && !customerMessagesResult.value.error) setCustomerMessages((customerMessagesResult.value.data || []) as CustomerMessage[]);
+      else setFetchError((current) => current || "Beskeder kunne ikke hentes lige nu. Resten af dashboardet virker stadig.");
       setSubscriptionLoading(false);
       setLoading(false);
     }
@@ -365,7 +407,22 @@ export default function DashboardPage() {
   const selectedBusiness = useMemo(() => businesses.find((business) => business.id === selectedBusinessId) || businesses[0] || null, [businesses, selectedBusinessId]);
   const selectedSubscription = useMemo(() => subscriptions.find((subscription) => subscription.businessId === selectedBusiness?.id) || null, [selectedBusiness, subscriptions]);
   const selectedConversations = useMemo(() => conversations.filter((conversation) => conversation.business_id === selectedBusiness?.id), [conversations, selectedBusiness]);
+  const selectedCustomerMessages = useMemo(() => customerMessages.filter((message) => message.business_id === selectedBusiness?.id), [customerMessages, selectedBusiness]);
+  const unreadCustomerMessageCount = selectedCustomerMessages.filter((message) => !message.read_at).length;
   const draft = selectedBusiness ? editDrafts[selectedBusiness.id] || buildDraft(selectedBusiness) : {};
+
+  useEffect(() => {
+    if (activeView !== "messages" || !selectedBusinessId) return;
+    const unreadIds = customerMessages.filter((message) => message.business_id === selectedBusinessId && !message.read_at).map((message) => message.id);
+    if (!unreadIds.length) return;
+    const readAt = new Date().toISOString();
+    setCustomerMessages((current) => current.map((message) => unreadIds.includes(message.id) ? { ...message, read_at: readAt } : message));
+    const previewMode = process.env.NODE_ENV === "development" && new URLSearchParams(window.location.search).get("preview") === "1";
+    if (previewMode) return;
+    void supabase.from("customer_messages").update({ read_at: readAt }).in("id", unreadIds).then(({ error }) => {
+      if (error) setActionError("Beskederne kunne ikke markeres som læst, men du kan stadig læse dem.");
+    });
+  }, [activeView, customerMessages, selectedBusinessId, supabase]);
 
   const analytics = useMemo(() => {
     const anchorDate = new Date(analyticsAnchor);
@@ -405,6 +462,7 @@ export default function DashboardPage() {
   const usagePercent = selectedSubscription?.answerLimit ? Math.min(100, Math.round((selectedSubscription.answersUsed / selectedSubscription.answerLimit) * 100)) : 0;
   const websiteUrl = normalizeExternalUrl(selectedBusiness?.website_url);
   const embedCode = selectedBusiness ? `<script src="https://www.embedbot.dk/widget.js?id=${selectedBusiness.id}"></script>` : "";
+  const supportUrl = `/support?type=complaint&business=${encodeURIComponent(selectedBusiness?.name || "")}`;
 
   function changeView(view: DashboardView) { setActiveView(view); setMobileNavOpen(false); const previewMode = process.env.NODE_ENV === "development" && new URLSearchParams(window.location.search).get("preview") === "1"; const nextUrl = view === "overview" ? "/dashboard" : `/dashboard?view=${view}`; window.history.replaceState(null, "", previewMode ? `${nextUrl}${nextUrl.includes("?") ? "&" : "?"}preview=1` : nextUrl); window.scrollTo({ top: 0, behavior: "smooth" }); }
   function updateDraftValue(key: string, value: string) { if (!selectedBusiness) return; setEditDrafts((current) => ({ ...current, [selectedBusiness.id]: { ...(current[selectedBusiness.id] || buildDraft(selectedBusiness)), [key]: value } })); }
@@ -466,6 +524,20 @@ export default function DashboardPage() {
       </section></>;
   }
 
+  function renderCustomerMessages() {
+    return <>{renderPageHeader(<Link className={styles.button} href={supportUrl}><HelpCircle size={14} />Skriv til os</Link>)}
+      <section className={cx(styles.card, styles.sectionCard)}>
+        <div className={styles.cardHeader}><div><h2 className={styles.cardTitle}>Indbakke</h2><p className={styles.cardDescription}>Beskederne gælder {selectedBusiness?.name || "den valgte chatbot"}.</p></div></div>
+        {selectedCustomerMessages.length ? <div className={styles.customerMessageList}>{selectedCustomerMessages.map((message) => <article className={cx(styles.customerMessage, !message.read_at && styles.customerMessageUnread)} key={message.id}>
+          <div className={styles.customerMessageHeader}><div className={styles.customerMessageTitleRow}>{!message.read_at ? <span className={styles.unreadMark} aria-label="Ulæst besked" /> : null}<h3>{message.title}</h3></div><time dateTime={message.created_at}>{formatConversationDate(message.created_at)}</time></div>
+          <p>{message.body}</p>
+          {normalizeMessageActionUrl(message.action_url) ? <div className={styles.customerMessageActions}><a className={styles.buttonSecondary} href={normalizeMessageActionUrl(message.action_url)} target={normalizeMessageActionUrl(message.action_url).startsWith("https://") ? "_blank" : undefined} rel={normalizeMessageActionUrl(message.action_url).startsWith("https://") ? "noreferrer" : undefined}><ExternalLink size={14} />{message.action_label || "Åbn link"}</a></div> : null}
+        </article>)}</div> : <EmptyState icon={Inbox} title="Ingen beskeder endnu" description="Når der er en ny chatbot-demo eller en vigtig opdatering, lander den her." />}
+      </section>
+      <section className={cx(styles.card, styles.supportCard)}><div><h2 className={styles.cardTitle}>Har du brug for hjælp?</h2><p className={styles.cardDescription}>Send en klage eller supportbesked direkte til EmbedBot. Vi udfylder din virksomhed på forhånd.</p></div><Link className={styles.buttonSecondary} href={supportUrl}><HelpCircle size={14} />Åbn kontaktformular</Link></section>
+    </>;
+  }
+
   function renderLeads() { return <>{renderPageHeader(<button className={styles.buttonSecondary} type="button" onClick={exportLeads} disabled={!analytics.leads.length}><ExternalLink size={14} />Eksportér CSV</button>)}<section className={cx(styles.card, styles.sectionCard)}><div className={styles.cardHeader}><div><h2 className={styles.cardTitle}>{analytics.leads.length} unikke leads</h2><p className={styles.cardDescription}>Fundet i samtaler fra de seneste {rangeDays} dage.</p></div>{renderDatePills()}</div>{analytics.leads.length ? <div className={styles.tableWrap}><table className={styles.table}><thead><tr><th>Kontakt</th><th>Besked</th><th>Side</th><th>Dato</th></tr></thead><tbody>{analytics.leads.map((lead) => <tr key={lead.email}><td><div className={styles.tablePrimary}>{lead.email}</div></td><td>{lead.message}</td><td>{lead.pageUrl}</td><td>{formatDate(lead.createdAt)}</td></tr>)}</tbody></table></div> : <EmptyState icon={UserRoundPlus} title="Ingen leads i perioden" description="Når en kunde deler sin e-mail i chatten, samles kontakten automatisk her." />}</section></>; }
 
   function renderKnowledge() { return <>{renderPageHeader()}{faqCandidate ? <section className={styles.candidateCard}><h3>Nyt svar fra en samtale</h3><p className={styles.candidateQuestion}>{faqCandidate.question}</p><label className={styles.field}><span className={styles.fieldLabel}>Det korrekte svar</span><textarea className={styles.textarea} rows={4} autoFocus value={faqCandidate.answer} onChange={(event) => setFaqCandidate({ ...faqCandidate, answer: event.target.value })} placeholder="Skriv det svar, botten skal kunne give fremover…" /></label><div className={styles.buttonRow} style={{ marginTop: 12 }}><button className={styles.button} type="button" onClick={addFaqCandidate} disabled={!faqCandidate.answer.trim()}>Føj til FAQ</button><button className={styles.buttonGhost} type="button" onClick={() => setFaqCandidate(null)}>Annuller</button></div></section> : null}<EditorSection title="Det botten skal vide" description="Opdater indholdet her, når produkter, vilkår eller tilbud ændrer sig." fields={KNOWLEDGE_FIELDS} draft={draft} onChange={updateDraftValue} onSave={() => void saveFields("knowledge", KNOWLEDGE_FIELDS)} saving={savingSection === "knowledge"} /></>; }
@@ -482,8 +554,8 @@ export default function DashboardPage() {
   }
 
   function renderSettings() { return <>{renderPageHeader()}<div style={{ display: "grid", gap: 16 }}><EditorSection title="Virksomhed" description="De grundlæggende oplysninger, kunden ser og botten bruger." fields={IDENTITY_FIELDS} draft={draft} onChange={updateDraftValue} onSave={() => void saveFields("identity", IDENTITY_FIELDS)} saving={savingSection === "identity"} /><EditorSection title="Kontakt og åbningstider" description="Bruges når botten skal sende en kunde videre til jer." fields={CONTACT_FIELDS} draft={draft} onChange={updateDraftValue} onSave={() => void saveFields("contact", CONTACT_FIELDS)} saving={savingSection === "contact"} /></div></>; }
-  function renderActiveView() { switch (activeView) { case "conversations": return renderConversations(); case "leads": return renderLeads(); case "knowledge": return renderKnowledge(); case "behavior": return renderBehavior(); case "appearance": return renderAppearance(); case "installation": return renderInstallation(); case "analytics": return renderAnalytics(); case "billing": return renderBilling(); case "settings": return renderSettings(); default: return renderOverview(); } }
-  function renderNavItems(items: NavItem[]) { return items.map((item) => { const Icon = item.icon; const badgeCount = item.badge === "attention" ? analytics.missed.length : 0; return <button className={cx(styles.navButton, activeView === item.view && styles.navActive)} type="button" key={item.view} onClick={() => changeView(item.view)}><Icon size={17} aria-hidden="true" /><span>{item.label}</span>{badgeCount ? <span className={styles.navBadge}>{badgeCount}</span> : null}</button>; }); }
+  function renderActiveView() { switch (activeView) { case "messages": return renderCustomerMessages(); case "conversations": return renderConversations(); case "leads": return renderLeads(); case "knowledge": return renderKnowledge(); case "behavior": return renderBehavior(); case "appearance": return renderAppearance(); case "installation": return renderInstallation(); case "analytics": return renderAnalytics(); case "billing": return renderBilling(); case "settings": return renderSettings(); default: return renderOverview(); } }
+  function renderNavItems(items: NavItem[]) { return items.map((item) => { const Icon = item.icon; const badgeCount = item.badge === "attention" ? analytics.missed.length : item.badge === "messages" ? unreadCustomerMessageCount : 0; return <button className={cx(styles.navButton, activeView === item.view && styles.navActive)} type="button" key={item.view} onClick={() => changeView(item.view)}><Icon size={17} aria-hidden="true" /><span>{item.label}</span>{badgeCount ? <span className={styles.navBadge}>{badgeCount}</span> : null}</button>; }); }
 
   if (loading) return <main className={styles.loadingRoot}><div className={styles.loadingCard}><span className={styles.spinner} />Gør dit dashboard klar…</div></main>;
 
@@ -493,7 +565,7 @@ export default function DashboardPage() {
       <Link className={styles.brand} href="/"><span className={styles.brandMark}><Bot size={18} /></span>EmbedBot</Link>
       <div className={styles.botPickerHeader}><label className={styles.botPickerLabel} htmlFor="dashboard-bot-picker">Din chatbot</label><Link className={styles.newBotLink} href="/setup"><Plus size={12} />Ny</Link></div>
       <div className={styles.botPickerWrap}><select id="dashboard-bot-picker" className={styles.botPicker} value={selectedBusiness?.id || ""} onChange={(event) => { setSelectedBusinessId(event.target.value); setSelectedConversationId(""); }}>{businesses.map((business) => <option key={business.id} value={business.id}>{business.name || "Unavngiven chatbot"}</option>)}</select><ChevronDown className={styles.pickerChevron} size={14} /></div>
-      <nav className={styles.nav} aria-label="Dashboard navigation">{renderNavItems(NAV_PRIMARY)}<div className={styles.navGroup}><span className={styles.navGroupLabel}>Forbedr botten</span>{renderNavItems(NAV_IMPROVE)}</div><div className={styles.navGroup}><span className={styles.navGroupLabel}>Konto</span>{renderNavItems(NAV_MANAGE)}</div><Link className={styles.navLink} href="/support"><HelpCircle size={17} />Hjælp</Link></nav>
+      <nav className={styles.nav} aria-label="Dashboard navigation">{renderNavItems(NAV_PRIMARY)}<div className={styles.navGroup}><span className={styles.navGroupLabel}>Forbedr botten</span>{renderNavItems(NAV_IMPROVE)}</div><div className={styles.navGroup}><span className={styles.navGroupLabel}>Konto</span>{renderNavItems(NAV_MANAGE)}</div><Link className={styles.navLink} href={supportUrl}><HelpCircle size={17} />Skriv til os</Link></nav>
       <div className={styles.sidebarFooter}><div className={styles.accountBlock}><span className={styles.avatar}>{(email[0] || "E").toUpperCase()}</span><div className={styles.accountText}><p className={styles.accountEmail}>{email || "Ukendt bruger"}</p></div><button className={styles.logoutButton} type="button" title="Log ud" aria-label="Log ud" onClick={() => void handleLogout()}><LogOut size={16} /></button></div></div>
     </aside>
     <div className={styles.mainArea}><div className={styles.mobileTopbar}><button className={styles.mobileMenuButton} type="button" aria-label={mobileNavOpen ? "Luk menu" : "Åbn menu"} onClick={() => setMobileNavOpen((open) => !open)}>{mobileNavOpen ? <X size={18} /> : <Menu size={18} />}</button><span className={styles.mobileBotName}>{selectedBusiness?.name || "EmbedBot"}</span><Link className={styles.mobileMenuButton} href="/setup" aria-label="Opret ny chatbot"><Plus size={18} /></Link></div><div className={styles.content}>{fetchError ? <div className={styles.errorBanner}><AlertCircle size={16} />{fetchError}</div> : null}{actionError ? <div className={styles.errorBanner}><AlertCircle size={16} />{actionError}</div> : null}{subscriptionLoading && activeView === "billing" ? <div className={styles.infoBanner}><span className={styles.spinner} />Henter den nyeste abonnementsstatus fra Stripe…</div> : null}{renderActiveView()}</div></div>

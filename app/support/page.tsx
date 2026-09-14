@@ -2,7 +2,7 @@
 
 import Image from "next/image";
 import Link from "next/link";
-import { FormEvent, useState } from "react";
+import { FormEvent, useEffect, useState } from "react";
 import { motion } from "framer-motion";
 import logoImage from "@/media/86a91d6a-f484-4e7d-a05c-55ab0979c3b1.png";
 
@@ -16,6 +16,16 @@ export default function SupportPage() {
   const [message, setMessage] = useState("");
   const [status, setStatus] = useState<"idle" | "sending" | "success" | "error">("idle");
   const [feedback, setFeedback] = useState("");
+
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    const requestedBusiness = params.get("business")?.trim();
+    const frame = window.requestAnimationFrame(() => {
+      if (params.get("type") === "complaint") setType("complaint");
+      if (requestedBusiness) setBusinessName(requestedBusiness);
+    });
+    return () => window.cancelAnimationFrame(frame);
+  }, []);
 
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();

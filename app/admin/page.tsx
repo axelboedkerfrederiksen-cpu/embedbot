@@ -66,6 +66,18 @@ type SupportMessage = {
   created_at?: string | null;
 };
 
+type CustomerMessage = {
+  id: string;
+  business_id: string;
+  sender: "admin" | "system";
+  title: string;
+  body: string;
+  action_url?: string | null;
+  action_label?: string | null;
+  read_at?: string | null;
+  created_at: string;
+};
+
 type Conversation = {
   id: string;
   business_id: string;
@@ -77,6 +89,7 @@ type CustomerDetail = {
   business: Business;
   conversations: Conversation[];
   knowledgeChunkCount: number;
+  customerMessages: CustomerMessage[];
 };
 
 type AdminView = "overview" | "businesses" | "billing" | "support" | "system";
@@ -222,6 +235,11 @@ export default function AdminPage() {
   const [customerDetailLoading, setCustomerDetailLoading] = useState(false);
   const [customerDetailError, setCustomerDetailError] = useState("");
   const [openCustomerConversations, setOpenCustomerConversations] = useState<Record<string, boolean>>({});
+  const [customerMessageTitle, setCustomerMessageTitle] = useState("");
+  const [customerMessageBody, setCustomerMessageBody] = useState("");
+  const [customerMessageActionUrl, setCustomerMessageActionUrl] = useState("");
+  const [customerMessageActionLabel, setCustomerMessageActionLabel] = useState("");
+  const [sendingCustomerMessage, setSendingCustomerMessage] = useState(false);
 
   function selectView(view: AdminView) {
     setActiveView(view);
@@ -574,6 +592,10 @@ export default function AdminPage() {
     setCustomerDetailError("");
     setCustomerDetail(null);
     setOpenCustomerConversations({});
+    setCustomerMessageTitle("");
+    setCustomerMessageBody("");
+    setCustomerMessageActionUrl("");
+    setCustomerMessageActionLabel("");
 
     try {
       const res = await fetch(`/api/admin/customer?business_id=${encodeURIComponent(business.id)}`, {
@@ -586,6 +608,52 @@ export default function AdminPage() {
       setCustomerDetailError(detailError instanceof Error ? detailError.message : "Kunne ikke hente kundens data.");
     } finally {
       setCustomerDetailLoading(false);
+    }
+  }
+
+  function fillDemoMessageTemplate(business: Business) {
+    setCustomerMessageTitle("Din nye chatbot er klar");
+    setCustomerMessageBody("Vi har gjort en ny version af jeres chatbot klar. Gennemgå gerne svar og udseende, og skriv til os, hvis noget skal justeres.");
+    setCustomerMessageActionUrl(`https://www.embedbot.dk/preview/${business.id}`);
+    setCustomerMessageActionLabel("Åbn chatbot-demo");
+  }
+
+  async function sendCustomerMessage(event: FormEvent<HTMLFormElement>, business: Business) {
+    event.preventDefault();
+    setSendingCustomerMessage(true);
+    setCustomerDetailError("");
+
+    try {
+      const res = await fetch("/api/admin/customer-messages", {
+        method: "POST",
+        headers: buildAdminHeaders(),
+        body: JSON.stringify({
+          business_id: business.id,
+          title: customerMessageTitle,
+          body: customerMessageBody,
+          action_url: customerMessageActionUrl,
+          action_label: customerMessageActionLabel,
+        }),
+      });
+      const data = await res.json();
+      if (!res.ok || !data.success) {
+        throw new Error(data.error || "Kunne ikke sende beskeden.");
+      }
+
+      setCustomerDetail((current) => current && current.business.id === business.id
+        ? { ...current, customerMessages: [data.message as CustomerMessage, ...current.customerMessages] }
+        : current);
+      setCustomerMessageTitle("");
+      setCustomerMessageBody("");
+      setCustomerMessageActionUrl("");
+      setCustomerMessageActionLabel("");
+      pushToast("Beskeden er sendt til kundens dashboard", "success");
+    } catch (messageError) {
+      const message = messageError instanceof Error ? messageError.message : "Kunne ikke sende beskeden.";
+      setCustomerDetailError(message);
+      pushToast(message, "error");
+    } finally {
+      setSendingCustomerMessage(false);
     }
   }
 
@@ -1411,6 +1479,29 @@ export default function AdminPage() {
                   <section className="grid gap-4 lg:grid-cols-[1.2fr_.8fr]">
                     <article className="rounded-2xl bg-[#111111] p-5 text-white"><p className="text-xs font-bold uppercase tracking-[0.16em] text-white/55">Plan og forbrug</p><div className="mt-4 grid gap-4 sm:grid-cols-[190px_1fr]"><label className="grid gap-1 text-xs font-semibold text-white/65"><span>Kundens plan</span><select value={plan} onChange={(event) => void updateBusiness(business, { plan: event.target.value }, "Kundeplan opdateret")} disabled={savingId === business.id} className="rounded-xl border border-white/15 bg-white/10 px-3 py-2.5 text-sm font-semibold text-white outline-none"><option className="bg-[#111111]" value="starter">Starter · 1.000 svar</option><option className="bg-[#111111]" value="growth">Growth · 5.000 svar</option><option className="bg-[#111111]" value="scale">Scale · 15.000 svar</option><option className="bg-[#111111]" value="enterprise">Enterprise · individuel</option></select></label><div><div className="flex justify-between gap-3 text-xs text-white/65"><span>AI-forbrug denne måned</span><span>{used.toLocaleString("da-DK")} / {limit.toLocaleString("da-DK")}</span></div><div className="mt-2 h-2 overflow-hidden rounded-full bg-white/15"><div className="h-full rounded-full bg-white" style={{ width: `${Math.min(100, Math.round((used / Math.max(limit, 1)) * 100))}%` }} /></div><button onClick={() => void updateBusiness(business, { ai_answers_used: 0 }, "AI-forbrug nulstillet")} disabled={savingId === business.id} className="mt-3 text-xs font-semibold text-white underline underline-offset-4 disabled:opacity-50">Nulstil forbrug</button></div></div></article>
                     <article className="rounded-2xl border border-[rgba(17,17,17,0.08)] bg-white p-5"><p className="text-xs font-bold uppercase tracking-[0.16em] text-[#8a7e70]">Chatbotstatus</p><div className="mt-4 grid gap-3 text-sm"><div className="flex justify-between gap-3"><span className="text-[#6b6258]">Abonnement</span><span className="font-semibold">{business.subscription_status || "Ukendt"}</span></div><div className="flex justify-between gap-3"><span className="text-[#6b6258]">Betaling</span><span className="font-semibold">{business.payment_status || "Ukendt"}</span></div><div className="flex justify-between gap-3"><span className="text-[#6b6258]">Aktiv chatbot</span><span className="font-semibold">{business.activated ? "Ja" : "Nej"}</span></div><div className="flex justify-between gap-3"><span className="text-[#6b6258]">Indekseret viden</span><span className="font-semibold">{customerDetail.knowledgeChunkCount} tekststykker</span></div></div></article>
+                  </section>
+
+                  <section className="grid gap-4 lg:grid-cols-[1fr_.9fr]">
+                    <form onSubmit={(event) => void sendCustomerMessage(event, business)} className="rounded-2xl border border-[rgba(17,17,17,0.08)] bg-white p-5">
+                      <div className="flex flex-wrap items-start justify-between gap-3">
+                        <div><p className="text-xs font-bold uppercase tracking-[0.16em] text-[#8a7e70]">Besked til kunden</p><h3 className="mt-1 text-xl font-semibold">Send til dashboardet</h3><p className="mt-1 text-sm text-[#6b6258]">Kunden ser beskeden som ulæst under Beskeder.</p></div>
+                        <button type="button" onClick={() => fillDemoMessageTemplate(business)} className="rounded-xl border border-[rgba(17,17,17,0.1)] px-3 py-2 text-xs font-semibold hover:bg-[#f6f3ed]">Brug demo-skabelon</button>
+                      </div>
+                      <div className="mt-4 grid gap-3">
+                        <label className="grid gap-1 text-xs font-semibold text-[#6b6258]"><span>Overskrift</span><input required maxLength={160} value={customerMessageTitle} onChange={(event) => setCustomerMessageTitle(event.target.value)} className="rounded-xl border border-[rgba(17,17,17,0.12)] px-3 py-2.5 text-sm text-[#111111] outline-none focus:border-[rgba(17,17,17,0.28)]" placeholder="Fx Din nye chatbot er klar" /></label>
+                        <label className="grid gap-1 text-xs font-semibold text-[#6b6258]"><span>Besked</span><textarea required maxLength={5000} rows={5} value={customerMessageBody} onChange={(event) => setCustomerMessageBody(event.target.value)} className="rounded-xl border border-[rgba(17,17,17,0.12)] px-3 py-2.5 text-sm leading-6 text-[#111111] outline-none focus:border-[rgba(17,17,17,0.28)]" placeholder="Skriv beskeden, som kunden skal se" /></label>
+                        <div className="grid gap-3 sm:grid-cols-[1fr_180px]">
+                          <label className="grid gap-1 text-xs font-semibold text-[#6b6258]"><span>Valgfrit link</span><input value={customerMessageActionUrl} onChange={(event) => setCustomerMessageActionUrl(event.target.value)} className="rounded-xl border border-[rgba(17,17,17,0.12)] px-3 py-2.5 text-sm text-[#111111] outline-none focus:border-[rgba(17,17,17,0.28)]" placeholder="https://…" /></label>
+                          <label className="grid gap-1 text-xs font-semibold text-[#6b6258]"><span>Knaptekst</span><input value={customerMessageActionLabel} onChange={(event) => setCustomerMessageActionLabel(event.target.value)} className="rounded-xl border border-[rgba(17,17,17,0.12)] px-3 py-2.5 text-sm text-[#111111] outline-none focus:border-[rgba(17,17,17,0.28)]" placeholder="Åbn demo" /></label>
+                        </div>
+                        <button type="submit" disabled={sendingCustomerMessage} className="rounded-xl bg-[#111111] px-4 py-3 text-sm font-semibold text-white hover:bg-[#292524] disabled:cursor-wait disabled:opacity-60">{sendingCustomerMessage ? "Sender…" : "Send besked"}</button>
+                      </div>
+                    </form>
+
+                    <article className="rounded-2xl border border-[rgba(17,17,17,0.08)] bg-white p-5">
+                      <div className="flex items-center justify-between gap-3"><div><p className="text-xs font-bold uppercase tracking-[0.16em] text-[#8a7e70]">Sendte beskeder</p><h3 className="mt-1 text-xl font-semibold">Historik</h3></div><span className="rounded-full bg-[#f6f3ed] px-3 py-1 text-xs font-semibold text-[#6b6258]">{customerDetail.customerMessages.length}</span></div>
+                      {customerDetail.customerMessages.length ? <div className="mt-4 grid max-h-[430px] gap-3 overflow-y-auto pr-1">{customerDetail.customerMessages.map((message) => <div key={message.id} className="rounded-xl border border-[rgba(17,17,17,0.08)] bg-[#f6f3ed] p-3"><div className="flex items-start justify-between gap-3"><strong className="text-sm">{message.title}</strong><span className={`shrink-0 rounded-full px-2 py-0.5 text-[10px] font-semibold ${message.read_at ? "bg-[#e8f6f0] text-[#31795d]" : "bg-white text-[#6b6258]"}`}>{message.read_at ? "Læst" : "Ulæst"}</span></div><p className="mt-2 whitespace-pre-wrap text-sm leading-6 text-[#4f4942]">{message.body}</p><p className="mt-2 text-xs text-[#8a7e70]">{new Date(message.created_at).toLocaleString("da-DK")}</p></div>)}</div> : <div className="mt-4 rounded-xl border border-dashed border-[rgba(17,17,17,0.12)] bg-[#f6f3ed] px-4 py-8 text-center text-sm text-[#6b6258]">Ingen beskeder sendt endnu.</div>}
+                    </article>
                   </section>
 
                   <section className="rounded-2xl border border-[rgba(17,17,17,0.08)] bg-white p-5"><div className="flex items-center justify-between gap-3"><div><p className="text-xs font-bold uppercase tracking-[0.16em] text-[#8a7e70]">Chatbot-data</p><h3 className="mt-1 text-xl font-semibold">Det botten ved og siger</h3></div><button onClick={() => { startEditing(business); setCustomerDetail(null); }} className="rounded-xl border border-[rgba(17,17,17,0.1)] px-3 py-2 text-sm font-semibold hover:bg-[#f6f3ed]">Redigér data</button></div><div className="mt-4 grid gap-3 md:grid-cols-2">{chatbotFields.map(([label, key]) => { const value = business[key]; return <div key={key} className="rounded-xl bg-[#f6f3ed] p-3"><p className="text-xs font-semibold text-[#8a7e70]">{label}</p><p className="mt-1 whitespace-pre-wrap break-words text-sm leading-6">{typeof value === "string" && value.trim() ? value : "Ikke angivet"}</p></div>; })}</div></section>

@@ -23,7 +23,7 @@ export async function GET(req: NextRequest) {
       return NextResponse.json({ error: "Mangler business_id." }, { status: 400 });
     }
 
-    const [businessResult, conversationsResult, documentsResult] = await Promise.all([
+    const [businessResult, conversationsResult, documentsResult, customerMessagesResult] = await Promise.all([
       supabase.from("businesses").select("*").eq("id", businessId).maybeSingle(),
       supabase
         .from("conversations")
@@ -35,6 +35,12 @@ export async function GET(req: NextRequest) {
         .from("documents")
         .select("id", { count: "exact", head: true })
         .eq("business_id", businessId),
+      supabase
+        .from("customer_messages")
+        .select("id,business_id,sender,title,body,action_url,action_label,read_at,created_at")
+        .eq("business_id", businessId)
+        .order("created_at", { ascending: false })
+        .limit(100),
     ]);
 
     if (businessResult.error) {
@@ -49,11 +55,15 @@ export async function GET(req: NextRequest) {
     if (documentsResult.error) {
       return NextResponse.json({ error: documentsResult.error.message }, { status: 500 });
     }
+    if (customerMessagesResult.error) {
+      return NextResponse.json({ error: customerMessagesResult.error.message }, { status: 500 });
+    }
 
     return NextResponse.json({
       business: businessResult.data,
       conversations: conversationsResult.data || [],
       knowledgeChunkCount: documentsResult.count || 0,
+      customerMessages: customerMessagesResult.data || [],
     });
   } catch (error) {
     return NextResponse.json(
