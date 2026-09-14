@@ -339,7 +339,7 @@ export default function DashboardPage() {
       if (businessError) { setFetchError("Vi kunne ikke hente dine chatbots. Prøv at genindlæse siden."); setLoading(false); return; }
       const rows = (businessData || []) as Business[];
       const activeBusiness = rows.find((business) => isBusinessSubscriptionActive(business));
-      if (!activeBusiness) { router.replace("/setup/provider?reason=subscription_required"); return; }
+      if (!activeBusiness) { router.replace("/setup"); return; }
       setBusinesses(rows);
       setSelectedBusinessId(activeBusiness.id);
       setEditDrafts(Object.fromEntries(rows.map((business) => [business.id, buildDraft(business)])));
