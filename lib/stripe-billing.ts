@@ -97,6 +97,16 @@ export function getPlanFromPrice(price: Stripe.Price | null | undefined): PlanSl
   return plansByMonthlyAmount[price.unit_amount];
 }
 
+export function getStripePriceIdForPlan(plan: PlanSlug): string | null {
+  const priceIds: Partial<Record<PlanSlug, string | undefined>> = {
+    starter: process.env.STRIPE_STARTER_PRICE_ID,
+    growth: process.env.STRIPE_GROWTH_PRICE_ID,
+    scale: process.env.STRIPE_SCALE_PRICE_ID,
+  };
+
+  return priceIds[plan]?.trim() || null;
+}
+
 export function getPlanFromSubscription(subscription: Stripe.Subscription): PlanSlug | undefined {
   return getPlanFromPrice(subscription.items.data[0]?.price);
 }

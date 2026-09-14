@@ -5,6 +5,7 @@ import { cookies } from "next/headers";
 import Stripe from "stripe";
 import { getAnswerLimit, getPlan } from "@/lib/plans";
 import { isBusinessSubscriptionActive } from "@/lib/subscription";
+import { getPlanFromPrice } from "@/lib/stripe-billing";
 
 export const runtime = "nodejs";
 
@@ -136,6 +137,63 @@ function getInvoiceStatus(invoice: Stripe.Subscription["latest_invoice"]) {
   };
 }
 
+function getPaymentMethodSummary(paymentMethod: Stripe.PaymentMethod | string | null | undefined) {
+  if (!paymentMethod || typeof paymentMethod === "string") {
+    return null;
+  }
+
+  if (paymentMethod.card) {
+    return {
+      type: "card",
+      brand: paymentMethod.card.brand || null,
+      last4: paymentMethod.card.last4 || null,
+      expMonth: paymentMethod.card.exp_month || null,
+      expYear: paymentMethod.card.exp_year || null,
+    };
+  }
+
+  return { type: paymentMethod.type || "payment_method", brand: null, last4: null, expMonth: null, expYear: null };
+}
+
+function getCustomerPaymentMethod(customer: Stripe.Subscription["customer"]) {
+  if (typeof customer === "string" || ("deleted" in customer && customer.deleted)) {
+    return null;
+  }
+
+  return getPaymentMethodSummary(customer.invoice_settings?.default_payment_method);
+}
+
+function getActivePrice(value: Stripe.SubscriptionSchedule.Phase["items"][number]["price"] | undefined) {
+  if (!value || typeof value === "string" || ("deleted" in value && value.deleted)) {
+    return null;
+  }
+
+  return value;
+}
+
+function getScheduledPlanChange(subscription: Stripe.Subscription, periodEnd: number | null) {
+  if (!subscription.schedule || typeof subscription.schedule === "string" || !periodEnd) {
+    return null;
+  }
+
+  const nextPhase = subscription.schedule.phases.find((phase) => phase.start_date >= periodEnd);
+  const nextPrice = getActivePrice(nextPhase?.items[0]?.price);
+  const plan = getPlanFromPrice(nextPrice);
+  if (!nextPhase || !plan) {
+    return null;
+  }
+
+  const definition = getPlan(plan);
+  return {
+    plan,
+    planName: definition.name,
+    amount: definition.monthlyPriceDkk ? definition.monthlyPriceDkk * 100 : null,
+    currency: nextPrice?.currency || "dkk",
+    interval: nextPrice?.recurring?.interval || "month",
+    effectiveAt: toIsoFromSeconds(nextPhase.start_date),
+  };
+}
+
 async function getStripeSubscriptionInfo(stripe: Stripe | null, business: BusinessBillingRow) {
   if (!stripe || !business.stripe_subscription_id) {
     return {
@@ -163,6 +221,8 @@ async function getStripeSubscriptionInfo(stripe: Stripe | null, business: Busine
       customerEmail: null,
       subscriptionId: business.stripe_subscription_id,
       latestInvoice: null,
+      paymentMethod: null,
+      scheduledChange: null,
       updatedAt: business.subscription_updated_at,
       error: "Stripe er ikke konfigureret, eller abonnementet mangler Stripe-data.",
       ...getUsageInfo(business),
@@ -171,7 +231,7 @@ async function getStripeSubscriptionInfo(stripe: Stripe | null, business: Busine
 
   try {
     const subscription = await stripe.subscriptions.retrieve(business.stripe_subscription_id, {
-      expand: ["customer", "items.data.price.product", "latest_invoice"],
+      expand: ["customer", "default_payment_method", "customer.invoice_settings.default_payment_method", "items.data.price.product", "latest_invoice", "schedule"],
     });
     const primaryItem = subscription.items.data[0] || null;
     const price = primaryItem?.price || null;
@@ -209,6 +269,8 @@ async function getStripeSubscriptionInfo(stripe: Stripe | null, business: Busine
       customerEmail: getCustomerEmail(subscription.customer),
       subscriptionId: subscription.id,
       latestInvoice: getInvoiceStatus(subscription.latest_invoice),
+      paymentMethod: getPaymentMethodSummary(subscription.default_payment_method) || getCustomerPaymentMethod(subscription.customer),
+      scheduledChange: getScheduledPlanChange(subscription, periodEnd),
       updatedAt: new Date().toISOString(),
       error: null,
       ...getUsageInfo(business),
@@ -239,6 +301,8 @@ async function getStripeSubscriptionInfo(stripe: Stripe | null, business: Busine
       customerEmail: null,
       subscriptionId: business.stripe_subscription_id,
       latestInvoice: null,
+      paymentMethod: null,
+      scheduledChange: null,
       updatedAt: business.subscription_updated_at,
       error: error instanceof Error ? error.message : "Kunne ikke hente abonnement fra Stripe.",
       ...getUsageInfo(business),

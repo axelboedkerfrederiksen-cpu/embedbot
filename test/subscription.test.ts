@@ -4,6 +4,7 @@ import { isBusinessSubscriptionActive } from "../lib/subscription.ts";
 import {
   getPaymentStatusForSubscription,
   getPlanFromPrice,
+  getStripePriceIdForPlan,
   getStripeObjectId,
   getSubscriptionIdFromInvoice,
   isCurrentSubscriptionInvoice,
@@ -66,6 +67,23 @@ test("plan mapping prefers configured price IDs and falls back to known DKK amou
     } else {
       process.env.STRIPE_GROWTH_PRICE_ID = previousGrowthPriceId;
     }
+  }
+});
+
+test("self-serve plan changes use only the configured Stripe price", () => {
+  const previousStarterPriceId = process.env.STRIPE_STARTER_PRICE_ID;
+  const previousGrowthPriceId = process.env.STRIPE_GROWTH_PRICE_ID;
+  process.env.STRIPE_STARTER_PRICE_ID = "price_starter";
+  process.env.STRIPE_GROWTH_PRICE_ID = "price_growth";
+  try {
+    assert.equal(getStripePriceIdForPlan("starter"), "price_starter");
+    assert.equal(getStripePriceIdForPlan("growth"), "price_growth");
+    assert.equal(getStripePriceIdForPlan("enterprise"), null);
+  } finally {
+    if (previousStarterPriceId === undefined) delete process.env.STRIPE_STARTER_PRICE_ID;
+    else process.env.STRIPE_STARTER_PRICE_ID = previousStarterPriceId;
+    if (previousGrowthPriceId === undefined) delete process.env.STRIPE_GROWTH_PRICE_ID;
+    else process.env.STRIPE_GROWTH_PRICE_ID = previousGrowthPriceId;
   }
 });
 
