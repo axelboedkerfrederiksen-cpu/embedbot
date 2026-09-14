@@ -82,7 +82,7 @@ export default function PilotPage() {
         }
         .pilot-title {
           margin: 22px 0 22px; max-width: 11ch; font-size: clamp(2.65rem, 6vw, 5.4rem);
-          font-weight: 700; line-height: .98; letter-spacing: -.055em;
+          font-weight: 700; line-height: 1.08; letter-spacing: -.055em;
         }
         .pilot-lead { margin: 0; max-width: 55ch; color: #5f584f; font-size: 1.08rem; line-height: 1.8; }
         .pilot-steps { display: grid; gap: 16px; margin: 34px 0 0; padding: 0; list-style: none; }
