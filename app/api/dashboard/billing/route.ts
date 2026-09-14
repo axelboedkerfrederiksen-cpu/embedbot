@@ -38,6 +38,10 @@ function getScheduleId(subscription: Stripe.Subscription) {
   return getStripeObjectId(subscription.schedule);
 }
 
+function toIsoFromSeconds(value: number | null | undefined) {
+  return typeof value === "number" && value > 0 ? new Date(value * 1000).toISOString() : null;
+}
+
 function toScheduledChange(plan: PlanSlug, effectiveAt: number) {
   const definition = getPlan(plan);
   return {
@@ -185,7 +189,7 @@ export async function POST(req: NextRequest) {
     const body = await req.json();
     const businessId = readString(body.business_id, 80);
     const action = readString(body.action, 40);
-    if (!businessId || !["schedule_plan_change", "open_billing_portal"].includes(action)) {
+    if (!businessId || !["schedule_plan_change", "open_billing_portal", "schedule_cancellation", "resume_subscription"].includes(action)) {
       return NextResponse.json({ success: false, error: "Ugyldig abonnementsanmodning." }, { status: 400 });
     }
 
@@ -225,6 +229,39 @@ export async function POST(req: NextRequest) {
     const subscription = await stripe.subscriptions.retrieve(business.stripe_subscription_id, { expand: ["schedule"] });
     if (getStripeObjectId(subscription.customer) !== business.stripe_customer_id) {
       return NextResponse.json({ success: false, error: "Abonnementet matcher ikke denne chatbot." }, { status: 403 });
+    }
+
+    if (action === "schedule_cancellation") {
+      if (!["active", "trialing"].includes(subscription.status)) {
+        return NextResponse.json({ success: false, error: "Dette abonnement er allerede afsluttet og kan ikke opsiges igen." }, { status: 409 });
+      }
+      if (subscription.cancel_at_period_end) {
+        return NextResponse.json({ success: false, error: "Abonnementet er allerede opsagt ved periodens udløb." }, { status: 409 });
+      }
+      const updatedSubscription = await stripe.subscriptions.update(subscription.id, { cancel_at_period_end: true });
+      return NextResponse.json({
+        success: true,
+        cancellation: {
+          cancelAtPeriodEnd: updatedSubscription.cancel_at_period_end,
+          cancelAt: toIsoFromSeconds(updatedSubscription.cancel_at) || toIsoFromSeconds(getSubscriptionPeriodEnd(updatedSubscription)),
+          currentPeriodEnd: toIsoFromSeconds(getSubscriptionPeriodEnd(updatedSubscription)),
+        },
+      });
+    }
+
+    if (action === "resume_subscription") {
+      if (!["active", "trialing"].includes(subscription.status) || !subscription.cancel_at_period_end) {
+        return NextResponse.json({ success: false, error: "Dette abonnement kan ikke genaktiveres her. Skriv til os, så hjælper vi." }, { status: 409 });
+      }
+      const updatedSubscription = await stripe.subscriptions.update(subscription.id, { cancel_at_period_end: false });
+      return NextResponse.json({
+        success: true,
+        cancellation: {
+          cancelAtPeriodEnd: updatedSubscription.cancel_at_period_end,
+          cancelAt: toIsoFromSeconds(updatedSubscription.cancel_at),
+          currentPeriodEnd: toIsoFromSeconds(getSubscriptionPeriodEnd(updatedSubscription)),
+        },
+      });
     }
 
     const scheduledChange = await schedulePlanChange(stripe, subscription, targetPlan);

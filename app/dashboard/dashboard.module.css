@@ -1307,6 +1307,17 @@
 .planConfirmation strong { display: block; font-size: 12px; }
 .planConfirmation p { max-width: 600px; margin: 4px 0 0; color: var(--dash-muted); font-size: 10px; line-height: 1.55; }
 
+.cancellationCard { margin-top: 16px; padding: 18px; }
+.cancellationAction,
+.cancellationSummary { display: flex; align-items: center; justify-content: space-between; gap: 16px; border-top: 1px solid var(--dash-border); padding-top: 15px; }
+.cancellationAction strong,
+.cancellationSummary strong { display: block; font-size: 12px; }
+.cancellationAction p,
+.cancellationSummary p { margin: 4px 0 0; color: var(--dash-muted); font-size: 10px; line-height: 1.55; }
+.cancellationSummary > svg { flex: 0 0 auto; color: var(--dash-success); }
+.cancellationSummary > div { margin-right: auto; }
+.cancelConfirmation { margin-top: 0; border-color: #f0cbc7; background: #fff9f8; }
+
 .statusPill,
 .warningPill,
 .neutralPill {
@@ -1445,6 +1456,8 @@
   .paymentMethodRow { grid-template-columns: auto minmax(0, 1fr); }
   .paymentMethodRow .buttonSecondary { grid-column: 1 / -1; width: 100%; }
   .planConfirmation { align-items: flex-start; flex-direction: column; }
+  .cancellationAction, .cancellationSummary { align-items: flex-start; flex-direction: column; }
+  .cancellationAction .buttonDanger, .cancellationSummary .buttonSecondary { width: 100%; }
 }
 
 @media (prefers-reduced-motion: reduce) {

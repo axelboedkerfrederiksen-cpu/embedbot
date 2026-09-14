@@ -310,8 +310,9 @@ export default function DashboardPage() {
   const [savingSection, setSavingSection] = useState("");
   const [actionError, setActionError] = useState("");
   const [toast, setToast] = useState("");
-  const [billingAction, setBillingAction] = useState<"" | "plan" | "portal">("");
+  const [billingAction, setBillingAction] = useState<"" | "plan" | "portal" | "cancel" | "resume">("");
   const [planChangeCandidate, setPlanChangeCandidate] = useState<typeof SELF_SERVE_BILLING_PLANS[number] | null>(null);
+  const [cancelConfirmationOpen, setCancelConfirmationOpen] = useState(false);
   const [copied, setCopied] = useState(false);
   const [faqCandidate, setFaqCandidate] = useState<{ question: string; answer: string } | null>(null);
 
@@ -562,6 +563,36 @@ export default function DashboardPage() {
     }
   }
 
+  async function handleCancellation(action: "schedule_cancellation" | "resume_subscription") {
+    if (!selectedBusiness || !selectedSubscription) {
+      setActionError("Vi kan ikke finde abonnementet lige nu.");
+      return;
+    }
+    setActionError("");
+    setBillingAction(action === "schedule_cancellation" ? "cancel" : "resume");
+    try {
+      const previewMode = process.env.NODE_ENV === "development" && new URLSearchParams(window.location.search).get("preview") === "1";
+      const cancellation = previewMode
+        ? { cancelAtPeriodEnd: action === "schedule_cancellation", cancelAt: action === "schedule_cancellation" ? selectedSubscription.currentPeriodEnd : null, currentPeriodEnd: selectedSubscription.currentPeriodEnd }
+        : await fetch("/api/dashboard/billing", {
+          method: "POST",
+          headers: { "content-type": "application/json", "x-csrf-token": "dashboard-billing" },
+          body: JSON.stringify({ business_id: selectedBusiness.id, action }),
+        }).then(async (response) => {
+          const result = await response.json() as { success?: boolean; error?: string; cancellation?: { cancelAtPeriodEnd: boolean; cancelAt: string | null; currentPeriodEnd: string | null } };
+          if (!response.ok || !result.success || !result.cancellation) throw new Error(result.error || "Abonnementet kunne ikke opdateres.");
+          return result.cancellation;
+        });
+      setSubscriptions((current) => current.map((subscription) => subscription.businessId === selectedBusiness.id ? { ...subscription, ...cancellation } : subscription));
+      setCancelConfirmationOpen(false);
+      setToast(action === "schedule_cancellation" ? `Abonnementet er opsagt. Adgang fortsætter til ${formatDate(cancellation.currentPeriodEnd)}.` : "Opsigelsen er fortrudt. Abonnementet fornyes igen som normalt.");
+    } catch (error) {
+      setActionError(error instanceof Error ? error.message : "Abonnementet kunne ikke opdateres.");
+    } finally {
+      setBillingAction("");
+    }
+  }
+
   function renderPageHeader(actions?: React.ReactNode) { const copy = VIEW_COPY[activeView]; return <header className={styles.pageHeader}><div><p className={styles.eyebrow}>{copy.eyebrow}</p><h1 className={styles.pageTitle}>{copy.title}</h1><p className={styles.pageDescription}>{copy.description}</p></div>{actions ? <div className={styles.headerActions}>{actions}</div> : null}</header>; }
   function renderDatePills() { return <div className={styles.datePills} aria-label="Vælg periode">{([7, 30] as const).map((days) => <button key={days} className={cx(styles.datePill, rangeDays === days && styles.datePillActive)} type="button" onClick={() => setRangeDays(days)}>{days} dage</button>)}</div>; }
 
@@ -622,7 +653,12 @@ export default function DashboardPage() {
 
   function renderBilling() {
     const subscription = selectedSubscription;
-    const canManageSubscription = Boolean(subscription?.isActive && subscription.subscriptionId && subscription.customerId && !subscription.cancelAtPeriodEnd);
+    const subscriptionHasEnded = subscription?.status === "canceled" || Boolean(subscription?.canceledAt);
+    const subscriptionEndingAtPeriodEnd = Boolean(subscription?.cancelAtPeriodEnd);
+    const canManageSubscription = Boolean(subscription?.isActive && subscription.subscriptionId && subscription.customerId && !subscriptionEndingAtPeriodEnd);
+    const canCancelSubscription = Boolean(subscription?.isActive && subscription.subscriptionId && subscription.customerId && !subscriptionEndingAtPeriodEnd);
+    const canResumeSubscription = Boolean(subscription?.isActive && subscription.subscriptionId && subscription.customerId && subscriptionEndingAtPeriodEnd);
+    const nextChargeDate = subscription?.cancelAt || subscription?.currentPeriodEnd;
     const scheduledChange = subscription?.scheduledChange;
     return <>
       {renderPageHeader()}
@@ -636,8 +672,8 @@ export default function DashboardPage() {
           <p className={styles.billingHeroNote}><ShieldCheck size={14} />Sikker betaling og fakturering via Stripe</p>
         </div>
         <div className={styles.billingHeroStatus}>
-          <span className={subscription?.isActive || activeBusiness ? styles.statusPill : styles.warningPill}>{subscription?.isActive || activeBusiness ? <CheckCircle2 size={13} /> : <AlertCircle size={13} />}{subscription ? formatSubscriptionStatus(subscription.status) : activeBusiness ? "Aktivt" : "Kontrollér betaling"}</span>
-          <span className={styles.billingRenewal}>Fornyes {formatDate(subscription?.currentPeriodEnd)}</span>
+          <span className={(subscription?.isActive || activeBusiness) && !subscriptionHasEnded && !subscriptionEndingAtPeriodEnd ? styles.statusPill : styles.warningPill}>{(subscription?.isActive || activeBusiness) && !subscriptionHasEnded && !subscriptionEndingAtPeriodEnd ? <CheckCircle2 size={13} /> : <AlertCircle size={13} />}{subscription ? formatSubscriptionStatus(subscription.status) : activeBusiness ? "Aktivt" : "Kontrollér betaling"}</span>
+          <span className={styles.billingRenewal}>{subscriptionHasEnded || subscriptionEndingAtPeriodEnd ? `Adgang til ${formatDate(nextChargeDate)}` : `Fornyes ${formatDate(subscription?.currentPeriodEnd)}`}</span>
         </div>
       </section>
 
@@ -658,7 +694,7 @@ export default function DashboardPage() {
           <div className={styles.statusList}>
             <div className={styles.statusRow}><span className={styles.statusLabel}>Fornyelse</span><span className={styles.statusValue}>{formatDate(subscription?.currentPeriodEnd)}</span></div>
             <div className={styles.statusRow}><span className={styles.statusLabel}>Betaling</span><span className={styles.statusValue}>{subscription?.paymentStatus === "paid" ? "Betalt" : subscription?.paymentStatus || "Afventer"}</span></div>
-            <div className={styles.statusRow}><span className={styles.statusLabel}>Fornyes automatisk</span><span className={styles.statusValue}>{subscription?.cancelAtPeriodEnd ? "Nej" : "Ja"}</span></div>
+            <div className={styles.statusRow}><span className={styles.statusLabel}>Fornyes automatisk</span><span className={styles.statusValue}>{subscriptionHasEnded || subscriptionEndingAtPeriodEnd ? "Nej" : "Ja"}</span></div>
           </div>
           {subscription?.latestInvoice?.hostedInvoiceUrl ? <a className={styles.buttonSecondary} style={{ marginTop: 14 }} href={subscription.latestInvoice.hostedInvoiceUrl} target="_blank" rel="noreferrer"><ReceiptText size={14} />Åbn seneste faktura</a> : null}
         </article>
@@ -687,11 +723,19 @@ export default function DashboardPage() {
             </article>;
           })}
         </div>
-        {!canManageSubscription ? <p className={styles.planHelpText}><AlertCircle size={14} />Planændringer er ikke tilgængelige, mens abonnementet er opsagt eller Stripe-data mangler. <Link href={supportUrl}>Skriv til os</Link>, så hjælper vi.</p> : null}
+        {subscriptionHasEnded ? <p className={styles.planHelpText}><AlertCircle size={14} />Abonnementet er allerede afsluttet og fornyes ikke igen. <Link href={supportUrl}>Skriv til os</Link>, hvis du vil oprette et nyt abonnement.</p> : subscriptionEndingAtPeriodEnd ? <p className={styles.planHelpText}><AlertCircle size={14} />Planændringer er sat på pause, mens abonnementet er opsagt. Fortryd opsigelsen nedenfor for at vælge en ny plan.</p> : !canManageSubscription ? <p className={styles.planHelpText}><AlertCircle size={14} />Planændringer er ikke tilgængelige, fordi Stripe-data mangler. <Link href={supportUrl}>Skriv til os</Link>, så hjælper vi.</p> : null}
         {planChangeCandidate ? <div className={styles.planConfirmation}>
           <div><strong>Skift til {planChangeCandidate.name} fra {formatDate(subscription?.currentPeriodEnd)}</strong><p>Du betaler fortsat for {subscription?.planName || "din nuværende plan"} resten af denne periode. Den nye pris bliver {formatCurrency(planChangeCandidate.amount, "dkk")} pr. måned fra næste fornyelse.</p></div>
           <div className={styles.buttonRow}><button className={styles.button} type="button" onClick={() => void handleSchedulePlanChange()} disabled={billingAction === "plan"}>{billingAction === "plan" ? <LoaderCircle className={styles.spinner} size={14} /> : <CalendarClock size={14} />}Planlæg skift</button><button className={styles.buttonGhost} type="button" onClick={() => setPlanChangeCandidate(null)} disabled={billingAction === "plan"}>Annuller</button></div>
         </div> : null}
+      </section>
+
+      <section className={cx(styles.card, styles.cancellationCard)}>
+        <div className={styles.cardHeader}><div><h2 className={styles.cardTitle}>Opsig abonnement</h2><p className={styles.cardDescription}>Du bevarer adgang til chatbotten resten af den betalte periode.</p></div></div>
+        {subscriptionHasEnded ? <div className={styles.cancellationSummary}><AlertCircle size={16} /><div><strong>Abonnementet er allerede afsluttet</strong><p>Der kommer ingen ny betaling. Adgang og data følger Stripe-perioden frem til {formatDate(nextChargeDate)}.</p></div></div>
+          : subscriptionEndingAtPeriodEnd ? <div className={styles.cancellationSummary}><CheckCircle2 size={16} /><div><strong>Abonnementet er opsagt</strong><p>Der trækkes ikke for næste periode. Du har adgang til {formatDate(nextChargeDate)}.</p></div><button className={styles.buttonSecondary} type="button" onClick={() => void handleCancellation("resume_subscription")} disabled={!canResumeSubscription || billingAction === "resume"}>{billingAction === "resume" ? <LoaderCircle className={styles.spinner} size={14} /> : <CheckCircle2 size={14} />}Fortryd opsigelse</button></div>
+            : cancelConfirmationOpen ? <div className={cx(styles.planConfirmation, styles.cancelConfirmation)}><div><strong>Vil du opsige abonnementet?</strong><p>Der bliver ikke trukket for næste periode. Din chatbot og adgang fortsætter til {formatDate(subscription?.currentPeriodEnd)}. Du kan fortryde opsigelsen indtil den dato.</p></div><div className={styles.buttonRow}><button className={styles.buttonDanger} type="button" onClick={() => void handleCancellation("schedule_cancellation")} disabled={billingAction === "cancel"}>{billingAction === "cancel" ? <LoaderCircle className={styles.spinner} size={14} /> : <AlertCircle size={14} />}Ja, opsig abonnement</button><button className={styles.buttonGhost} type="button" onClick={() => setCancelConfirmationOpen(false)} disabled={billingAction === "cancel"}>Behold abonnement</button></div></div>
+              : <div className={styles.cancellationAction}><div><strong>Stop næste betaling</strong><p>Opsigelsen træder først i kraft ved næste fornyelse.</p></div><button className={styles.buttonDanger} type="button" onClick={() => setCancelConfirmationOpen(true)} disabled={!canCancelSubscription}>Opsig abonnement</button></div>}
       </section>
 
       {subscription?.error ? <div className={styles.infoBanner} style={{ marginTop: 16 }}><AlertCircle size={15} />Live Stripe-data kunne ikke hentes. Den senest gemte abonnementsstatus vises, mens webhook-synkroniseringen fortsætter i baggrunden.</div> : null}
