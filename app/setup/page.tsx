@@ -207,7 +207,7 @@ export default function Home() {
 
       const { data: business, error: businessError } = await supabase
         .from("businesses")
-        .select("id, user_id, subscription_status, payment_status, stripe_subscription_id, activated")
+        .select("id, user_id, subscription_status, payment_status, stripe_subscription_id, current_period_end, activated")
         .eq("id", storedId)
         .eq("user_id", authUser.id)
         .maybeSingle();

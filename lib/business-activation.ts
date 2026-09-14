@@ -8,6 +8,9 @@ type BusinessRecord = {
   website_url: string | null;
   support_email: string | null;
   activated: boolean | null;
+  subscription_status: string | null;
+  payment_status: string | null;
+  stripe_subscription_id: string | null;
 };
 
 type ActivationResult = {
@@ -18,6 +21,7 @@ type ActivationResult = {
 };
 
 type ActivationBillingUpdate = {
+  accessSource?: "stripe" | "manual_pilot";
   paymentConfirmed?: boolean;
   subscriptionStatus?: string;
   paymentStatus?: string;
@@ -27,11 +31,6 @@ type ActivationBillingUpdate = {
   customerEmail?: string;
   plan?: PlanSlug;
 };
-
-const supabase = createClient(
-  process.env.SUPABASE_URL!,
-  process.env.SUPABASE_SERVICE_KEY!
-);
 
 const resend = process.env.RESEND_API_KEY
   ? new Resend(process.env.RESEND_API_KEY)
@@ -79,8 +78,10 @@ function buildBillingUpdatePayload(
 function buildCustomerEmailHtml(
   businessId: string,
   businessName: string | null,
+  manualPilotEndsAt?: string,
 ) {
   const embedScript = `<script src="https://www.embedbot.dk/widget.js?id=${businessId}"></script>`;
+  const previewUrl = `https://www.embedbot.dk/preview/${businessId}`;
   const firstName = (businessName || "").split(" ")[0] || "der";
   const escapedFirstName = firstName.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
   const escapedScript = embedScript
@@ -88,11 +89,17 @@ function buildCustomerEmailHtml(
     .replace(/</g, "&lt;")
     .replace(/>/g, "&gt;");
 
+  const pilotParagraph = manualPilotEndsAt
+    ? `<p style="margin:0 0 20px;font-size:15px;line-height:1.7;color:#111;">Jeres gratis pilot løber til og med ${new Intl.DateTimeFormat("da-DK", { dateStyle: "long", timeZone: "Europe/Copenhagen" }).format(new Date(manualPilotEndsAt))}. Der er intet betalingskort og ingen binding.</p>`
+    : "";
+
   return `
     <div style="margin:0;padding:32px 16px;background:#f9f9f9;font-family:Arial,sans-serif;color:#111;">
       <div style="max-width:560px;margin:0 auto;background:#ffffff;border:1px solid #e6e6e6;border-radius:8px;padding:36px 32px;">
         <p style="margin:0 0 20px;font-size:15px;line-height:1.7;color:#111;">Hej ${escapedFirstName},</p>
         <p style="margin:0 0 20px;font-size:15px;line-height:1.7;color:#111;">Din AI-chatbot er nu klar til at gå live på din webshop.</p>
+        ${pilotParagraph}
+        <p style="margin:0 0 20px;font-size:15px;line-height:1.7;color:#111;">Test først svar og udseende på jeres demoside: <a href="${previewUrl}" style="color:#111;font-weight:700;">Åbn privat demo</a>.</p>
         <p style="margin:0 0 10px;font-size:15px;line-height:1.7;color:#111;">Indsæt denne kode lige før <code style="font-family:Consolas,Monaco,monospace;font-size:13px;">&lt;/body&gt;</code> på din hjemmeside:</p>
         <div style="background:#111111;color:#f9f9f9;border-radius:6px;padding:16px;font-family:Consolas,Monaco,monospace;font-size:13px;line-height:1.5;word-break:break-all;margin:0 0 24px;">
           ${escapedScript}
@@ -118,23 +125,41 @@ export async function activateBusinessAndSendEmail(
     return { success: false, error: "Serveren mangler environment variables.", status: 500 };
   }
 
+  const supabase = createClient(
+    process.env.SUPABASE_URL,
+    process.env.SUPABASE_SERVICE_KEY,
+  );
+
   const normalizedSubscriptionStatus = (billingUpdate?.subscriptionStatus || "").trim().toLowerCase();
   const normalizedPaymentStatus = (billingUpdate?.paymentStatus || "").trim().toLowerCase();
   const hasConfirmedPaidAccess = normalizedPaymentStatus === "paid";
   const hasConfirmedTrialAccess = normalizedSubscriptionStatus === "trialing";
+  const manualPilotEnd = billingUpdate?.currentPeriodEnd ? new Date(billingUpdate.currentPeriodEnd).getTime() : Number.NaN;
+  const hasConfirmedManualPilotAccess =
+    billingUpdate?.accessSource === "manual_pilot"
+    && hasConfirmedTrialAccess
+    && normalizedPaymentStatus === "unpaid"
+    && Number.isFinite(manualPilotEnd)
+    && manualPilotEnd > Date.now()
+    && !billingUpdate.stripeCustomerId
+    && !billingUpdate.stripeSubscriptionId;
+  const hasConfirmedStripeAccess =
+    billingUpdate?.accessSource !== "manual_pilot"
+    && billingUpdate?.paymentConfirmed
+    && (hasConfirmedPaidAccess || hasConfirmedTrialAccess);
 
-  // Hard guard: chatbot activation is only allowed after Stripe confirms paid or trial access.
-  if (!billingUpdate?.paymentConfirmed || (!hasConfirmedPaidAccess && !hasConfirmedTrialAccess)) {
+  // Hard guard: access must come from Stripe or an authenticated, expiring admin pilot.
+  if (!hasConfirmedStripeAccess && !hasConfirmedManualPilotAccess) {
     return {
       success: false,
-      error: "Aktivering er blokeret: Stripe har ikke bekræftet betalt eller trial adgang.",
+      error: "Aktivering er blokeret: adgang er hverken bekræftet af Stripe eller som en gyldig admin-pilot.",
       status: 402,
     };
   }
 
   const { data: businessRows, error: businessError } = await supabase
     .from("businesses")
-    .select("id, name, website_url, support_email, activated")
+    .select("id, name, website_url, support_email, activated, subscription_status, payment_status, stripe_subscription_id")
     .eq("id", stableBusinessId)
     .order("created_at", { ascending: false })
     .limit(1)
@@ -147,6 +172,21 @@ export async function activateBusinessAndSendEmail(
       success: false,
       error: businessError?.message || "Virksomhed ikke fundet.",
       status: 404,
+    };
+  }
+
+  if (
+    hasConfirmedManualPilotAccess
+    && (
+      Boolean((business.stripe_subscription_id || "").trim())
+      || (business.subscription_status || "").trim().toLowerCase() === "active"
+      || (business.payment_status || "").trim().toLowerCase() === "paid"
+    )
+  ) {
+    return {
+      success: false,
+      error: "En betalende eller Stripe-administreret kunde kan ikke overskrives med en manuel pilot.",
+      status: 409,
     };
   }
 
@@ -215,7 +255,11 @@ export async function activateBusinessAndSendEmail(
     from: "axel@embedbot.dk",
     to: recipientEmail,
     subject: "Din EmbedBot er klar! 🎉",
-    html: buildCustomerEmailHtml(stableBusinessId, business.name),
+    html: buildCustomerEmailHtml(
+      stableBusinessId,
+      business.name,
+      hasConfirmedManualPilotAccess ? billingUpdate?.currentPeriodEnd : undefined,
+    ),
   });
 
   if (mailError) {

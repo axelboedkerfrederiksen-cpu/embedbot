@@ -570,21 +570,21 @@ export default function Home() {
           🇩🇰 Dansk AI-kundeservice til WooCommerce
         </motion.span>
         <motion.h1 className="headline" variants={fadeUp}>
-          Få styr på kundeservice—automatisk.
+          Lad kunderne få svar, mens I laver noget andet.
         </motion.h1>
         <motion.p className="lead" variants={fadeUp}>
-          EmbedBot svarer på spørgsmål om produkter, levering og retur direkte på din webshop—døgnet rundt.
+          Vi bygger og opsætter en chatbot ud fra jeres webshop. I afprøver den på siden i 14 dage og ser præcis, hvad kunderne spørger om.
         </motion.p>
         <motion.div className="cta-row" variants={fadeUp}>
-          <Link href="/setup" className="btn btn-primary">
-            Prøv gratis i 14 dage
+          <Link href="/pilot" className="btn btn-primary">
+            Få en gratis 14-dages pilot
           </Link>
           <button onClick={handleDemoClick} className="btn btn-outline">
             Se demo
           </button>
         </motion.div>
         <motion.p className="trial-badge" variants={fadeUp}>
-          Klar på få minutter · Ingen kodning · Planer fra 299 kr./md.
+          Vi står for opsætningen · Intet betalingskort · Ingen binding
         </motion.p>
       </motion.section>
 

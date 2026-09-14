@@ -44,6 +44,8 @@ type Business = {
   ai_answers_used?: number | null;
   ai_answer_limit_override?: number | null;
   ai_usage_period_start?: string | null;
+  current_period_end?: string | null;
+  stripe_subscription_id?: string | null;
   [key: string]: unknown;
 };
 
@@ -156,6 +158,23 @@ function formatRelativeDate(input?: string | null): string {
     month: "short",
     year: "numeric",
   });
+}
+
+function canStartManualPilot(business: Business): boolean {
+  if (
+    (business.stripe_subscription_id || "").trim()
+    || (business.subscription_status || "").trim().toLowerCase() === "active"
+    || (business.payment_status || "").trim().toLowerCase() === "paid"
+  ) {
+    return false;
+  }
+
+  if ((business.subscription_status || "").trim().toLowerCase() !== "trialing") {
+    return true;
+  }
+
+  const trialEnd = business.current_period_end ? new Date(business.current_period_end).getTime() : Number.NaN;
+  return !Number.isFinite(trialEnd) || trialEnd <= Date.now();
 }
 
 function normalizeMessages(raw: unknown): Array<{ role: string; content: string }> {
@@ -468,6 +487,38 @@ export default function AdminPage() {
       pushToast(successMessage, "success");
     } catch (updateError) {
       const message = updateError instanceof Error ? updateError.message : "Kunne ikke gemme ændringen.";
+      setError(message);
+      pushToast(message, "error");
+    } finally {
+      setSavingId(null);
+    }
+  }
+
+  async function startManualPilot(business: Business) {
+    setSavingId(business.id);
+    setError("");
+
+    try {
+      const res = await fetch("/api/activate", {
+        method: "POST",
+        headers: buildAdminHeaders(),
+        body: JSON.stringify({ business_id: business.id }),
+      });
+      const data = await res.json();
+      if (!res.ok || !data.success) {
+        throw new Error(data.error || "Kunne ikke starte pilotforløbet.");
+      }
+
+      await fetchBusinesses();
+      if (customerDetail?.business.id === business.id) {
+        await openCustomerCenter(business);
+      }
+      const endDate = data.pilotEndsAt
+        ? new Date(data.pilotEndsAt).toLocaleDateString("da-DK")
+        : "om 14 dage";
+      pushToast(`Pilot startet. Udløber ${endDate}`, "success");
+    } catch (pilotError) {
+      const message = pilotError instanceof Error ? pilotError.message : "Kunne ikke starte pilotforløbet.";
       setError(message);
       pushToast(message, "error");
     } finally {
@@ -1134,6 +1185,8 @@ export default function AdminPage() {
 
                                 if (value === "edit") {
                                   startEditing(business);
+                                } else if (value === "pilot") {
+                                  void startManualPilot(business);
                                 } else if (value === "delete") {
                                   setPendingDeleteBusiness(business);
                                 }
@@ -1146,6 +1199,7 @@ export default function AdminPage() {
                             >
                               <option value="">Quick actions</option>
                               <option value="edit">Rediger</option>
+                              {canStartManualPilot(business) ? <option value="pilot">Start 14-dages pilot</option> : null}
                               <option value="delete">Slet</option>
                             </select>
 

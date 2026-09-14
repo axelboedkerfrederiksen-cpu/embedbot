@@ -30,12 +30,26 @@ export function isBusinessSubscriptionActive(
     return false;
   }
 
-  if (ACTIVE_SUBSCRIPTION_STATUSES.has(subscriptionStatus)) {
+  const stripeSubscriptionId = business["stripe_subscription_id"];
+  const hasStripeSubscription = typeof stripeSubscriptionId === "string" && Boolean(stripeSubscriptionId.trim());
+
+  if (subscriptionStatus === "trialing") {
+    // Stripe keeps its own trial status authoritative. Card-free admin pilots
+    // have no Stripe subscription and must carry a future expiry timestamp.
+    if (hasStripeSubscription) {
+      return true;
+    }
+
+    const trialEnd = business["current_period_end"];
+    const trialEndTime = typeof trialEnd === "string" ? new Date(trialEnd).getTime() : Number.NaN;
+    return Number.isFinite(trialEndTime) && trialEndTime > Date.now();
+  }
+
+  if (subscriptionStatus === "active") {
     return true;
   }
 
-  const stripeSubscriptionId = business["stripe_subscription_id"];
-  if (typeof stripeSubscriptionId === "string" && stripeSubscriptionId.trim()) {
+  if (hasStripeSubscription) {
     return false;
   }
 
