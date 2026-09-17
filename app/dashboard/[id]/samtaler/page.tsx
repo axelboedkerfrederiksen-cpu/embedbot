@@ -152,6 +152,7 @@ export default function SamtalerPage() {
   if (loading) {
     return (
       <main
+        id="main-content"
         style={{
           minHeight: "100dvh",
           display: "grid",
@@ -166,6 +167,7 @@ export default function SamtalerPage() {
 
   return (
     <main
+      id="main-content"
       style={{
         minHeight: "100dvh",
         background: "#030712",

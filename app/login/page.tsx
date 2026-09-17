@@ -60,6 +60,7 @@ export default function LoginPage() {
 
   return (
     <main
+      id="main-content"
       style={{
         minHeight: "100dvh",
         display: "grid",

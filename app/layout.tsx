@@ -1,16 +1,20 @@
 import type { Metadata } from "next";
-import { Poppins } from "next/font/google";
-import { Analytics } from "@vercel/analytics/next";
-import { SpeedInsights } from "@vercel/speed-insights/next";
+import { DM_Sans, DM_Serif_Display, Inter, Lora, Poppins } from "next/font/google";
 import logoImage from "@/media/86a91d6a-f484-4e7d-a05c-55ab0979c3b1.png";
 import "./globals.css";
 import UniversalBackButton from "./components/universal-back-button";
+import CookieConsent from "./components/cookie-consent";
 
 const poppins = Poppins({
   variable: "--font-poppins",
   subsets: ["latin"],
   weight: ["400", "500", "600", "700"],
 });
+
+const inter = Inter({ variable: "--font-inter", subsets: ["latin"], weight: ["400", "500", "700"] });
+const dmSans = DM_Sans({ variable: "--font-dm-sans", subsets: ["latin"], weight: ["400", "500", "700"] });
+const dmSerifDisplay = DM_Serif_Display({ variable: "--font-dm-serif-display", subsets: ["latin"], weight: ["400"] });
+const lora = Lora({ variable: "--font-lora", subsets: ["latin"], weight: ["400", "600", "700"] });
 
 export const metadata: Metadata = {
   title: "EmbedBot",
@@ -28,24 +32,17 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en">
-      <head>
-        <script async src="https://plausible.io/js/pa-S_z8kpW-DSXLjSuxMoAre.js"></script>
-        <script
-          dangerouslySetInnerHTML={{
-            __html:
-              "window.plausible=window.plausible||function(){(plausible.q=plausible.q||[]).push(arguments)},plausible.init=plausible.init||function(i){plausible.o=i||{}};plausible.init()",
-          }}
-        />
-      </head>
+    <html lang="da">
       <body
         suppressHydrationWarning
-        className={`${poppins.variable} antialiased`}
+        className={`${poppins.variable} ${inter.variable} ${dmSans.variable} ${dmSerifDisplay.variable} ${lora.variable} antialiased`}
       >
+        <a className="skip-link" href="#main-content">
+          Spring til hovedindhold
+        </a>
         <UniversalBackButton />
         {children}
-        <Analytics />
-        <SpeedInsights />
+        <CookieConsent />
       </body>
     </html>
   );

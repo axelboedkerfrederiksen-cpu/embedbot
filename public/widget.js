@@ -206,26 +206,26 @@
   
   const container = document.createElement("div");
   container.innerHTML = `
-    <button type="button" id="eb-bubble" aria-label="Open support chat" style="position:fixed;bottom:24px;right:24px;width:56px;height:56px;background:#ffffff;color:#1a1a1a;border-radius:50%;border:none;cursor:pointer;display:flex;align-items:center;justify-content:center;z-index:9999;box-shadow:0 6px 18px rgba(0,0,0,0.10);opacity:0;transition:opacity 0.16s ease, transform 0.16s ease, box-shadow 0.16s ease;">${OPEN_ICON}</button>
-    <div id="eb-box" style="position:fixed;bottom:90px;right:24px;width:352px;height:510px;background:#ffffff;border:none;border-radius:18px;box-shadow:0 10px 28px rgba(15,23,42,0.10);z-index:9999;display:flex;flex-direction:column;overflow:hidden;color:#1a1a1a;opacity:0;visibility:hidden;transform:translateY(10px) scale(0.985);pointer-events:none;transition:opacity 0.18s ease, transform 0.18s ease, visibility 0.18s ease;">
+    <button type="button" id="eb-bubble" aria-label="Åbn supportchat" aria-controls="eb-box" aria-expanded="false" style="position:fixed;bottom:24px;right:24px;width:56px;height:56px;background:#ffffff;color:#1a1a1a;border-radius:50%;border:none;cursor:pointer;display:flex;align-items:center;justify-content:center;z-index:9999;box-shadow:0 6px 18px rgba(0,0,0,0.10);opacity:0;transition:opacity 0.16s ease, transform 0.16s ease, box-shadow 0.16s ease;">${OPEN_ICON}</button>
+    <div id="eb-box" role="dialog" aria-label="Supportchat" aria-hidden="true" style="position:fixed;bottom:90px;right:24px;width:352px;height:510px;background:#ffffff;border:none;border-radius:18px;box-shadow:0 10px 28px rgba(15,23,42,0.10);z-index:9999;display:flex;flex-direction:column;overflow:hidden;color:#1a1a1a;opacity:0;visibility:hidden;transform:translateY(10px) scale(0.985);pointer-events:none;transition:opacity 0.18s ease, transform 0.18s ease, visibility 0.18s ease;">
       <div id="eb-header" style="background:#f9f9f9;color:#1a1a1a;padding:8px 14px;font-weight:600;display:flex;align-items:center;gap:10px;">
-        <img id="eb-logo" alt="Company logo" style="display:none;height:24px;width:auto;max-width:120px;object-fit:contain;filter:brightness(0) invert(1);" />
+        <img id="eb-logo" alt="Virksomhedslogo" style="display:none;height:24px;width:auto;max-width:120px;object-fit:contain;filter:brightness(0) invert(1);" />
         <div style="display:flex;flex-direction:column;line-height:1.2;">
           <span id="eb-title">Support Chat</span>
         </div>
       </div>
-      <div id="eb-messages" style="flex:1;overflow-y:auto;padding:28px 24px 16px 24px;display:flex;flex-direction:column;gap:0;height:356px;background:#ffffff;"></div>
+      <div id="eb-messages" role="log" aria-live="polite" aria-relevant="additions text" style="flex:1;overflow-y:auto;padding:28px 24px 16px 24px;display:flex;flex-direction:column;gap:0;height:356px;background:#ffffff;"></div>
       <div id="eb-composer" style="padding:12px 24px 11px 24px;border-top:1px solid rgba(17,17,17,0.06);display:flex;flex-direction:column;gap:6px;align-items:stretch;background:#ffffff;">
         <div id="eb-input-wrap" style="display:flex;align-items:center;gap:8px;flex:1;border:1px solid rgba(17,17,17,0.10);border-radius:15px;padding:7px 7px 7px 14px;background:#ffffff;transition:border-color 0.18s ease, box-shadow 0.18s ease;">
-          <input id="eb-input" aria-label="Message input" type="text" placeholder="Skriv dit spørgsmål..." style="flex:1;padding:11px 0;border:none;outline:none;pointer-events:all;position:relative;z-index:99999;color:#1a1a1a;background:#ffffff;cursor:text;user-select:text;-webkit-user-select:text;font-size:14px;font-family:inherit;line-height:1.45;caret-color:#1a1a1a;"/>
-          <button id="eb-send" aria-label="Send message" style="background:#ffffff;color:#1a1a1a;border:none;padding:8px;border-radius:10px;cursor:pointer;white-space:nowrap;font-weight:600;line-height:1;display:flex;align-items:center;justify-content:center;transition:transform 0.16s ease, box-shadow 0.16s ease, background-color 0.16s ease;">
+          <input id="eb-input" aria-label="Skriv en besked" type="text" placeholder="Skriv dit spørgsmål..." style="flex:1;padding:11px 0;border:none;outline:none;pointer-events:all;position:relative;z-index:99999;color:#1a1a1a;background:#ffffff;cursor:text;user-select:text;-webkit-user-select:text;font-size:14px;font-family:inherit;line-height:1.45;caret-color:#1a1a1a;"/>
+          <button id="eb-send" aria-label="Send besked" style="background:#ffffff;color:#1a1a1a;border:none;padding:8px;border-radius:10px;cursor:pointer;white-space:nowrap;font-weight:600;line-height:1;display:flex;align-items:center;justify-content:center;transition:transform 0.16s ease, box-shadow 0.16s ease, background-color 0.16s ease;">
             <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" aria-hidden="true">
               <path d="M4 12h14" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>
               <path d="M13 7l5 5-5 5" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
             </svg>
           </button>
         </div>
-        <div id="eb-watermark" aria-label="Lavet af EmbedBot" style="color:#a39b91;font-size:10px;line-height:1.2;text-align:center;letter-spacing:0.01em;user-select:none;">Lavet af EmbedBot</div>
+        <div id="eb-watermark" aria-label="Lavet af EmbedBot" style="color:#6b6258;font-size:10px;line-height:1.2;text-align:center;letter-spacing:0.01em;user-select:none;">Lavet af EmbedBot</div>
       </div>
     </div>
   `;
@@ -271,6 +271,12 @@
       #eb-send:active {
         transform: translateY(0);
       }
+      #eb-bubble:focus-visible,
+      #eb-send:focus-visible,
+      #eb-input:focus-visible {
+        outline: 3px solid #6d28d9 !important;
+        outline-offset: 3px !important;
+      }
       #eb-input-wrap:focus-within {
         border-color: rgba(17, 17, 17, 0.28);
         box-shadow: 0 0 0 4px rgba(17, 17, 17, 0.06);
@@ -288,7 +294,7 @@
         align-items: center;
         gap: 6px;
         margin-top: 4px;
-        color: #9ca3af;
+        color: #6b7280;
         font-size: 10px;
         line-height: 1;
       }
@@ -573,7 +579,9 @@
     box.style.transform = chatOpen ? "translateY(0) scale(1)" : "translateY(10px) scale(0.985)";
     box.style.pointerEvents = chatOpen ? "auto" : "none";
     bubble.innerHTML = chatOpen ? CLOSE_ICON : OPEN_ICON;
-    bubble.setAttribute("aria-label", chatOpen ? "Close support chat" : "Open support chat");
+    bubble.setAttribute("aria-label", chatOpen ? "Luk supportchat" : "Åbn supportchat");
+    bubble.setAttribute("aria-expanded", String(chatOpen));
+    box.setAttribute("aria-hidden", String(!chatOpen));
     if (chatOpen) {
       tryShowWelcomeMessage();
       input.focus();
@@ -583,6 +591,13 @@
   bubble.onclick = () => {
     setChatOpen(!chatOpen);
   };
+
+  document.addEventListener("keydown", (event) => {
+    if (event.key === "Escape" && chatOpen) {
+      setChatOpen(false);
+      bubble.focus();
+    }
+  });
 
   function renderAssistantText(target, text) {
     if (!target) return;
@@ -654,7 +669,7 @@
 
     const meta = document.createElement("span");
     meta.className = "eb-meta";
-    meta.style.cssText = "all:unset;display:inline-flex;align-items:center;gap:6px;margin-top:3px;color:#9ca3af;font-size:10px;line-height:1;";
+    meta.style.cssText = "all:unset;display:inline-flex;align-items:center;gap:6px;margin-top:3px;color:#6b7280;font-size:10px;line-height:1;";
 
     const time = document.createElement("span");
     time.className = "eb-time";

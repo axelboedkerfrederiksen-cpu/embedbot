@@ -9,6 +9,7 @@ These reports are project sources for future work about EmbedBot's effect on web
 - Online test: `/Users/axel/Desktop/Embed/EmbedBot speed test online.docx`
 - Local test: `/Users/axel/Desktop/Embed/Embedbot speed test Offline.docx`
 - Test page: `/Users/axel/embedbot/public/performance-test.html`
+- Corrected median speed metrics chart: `/Users/axel/embedbot/docs/sources/corrected-median-speed-metrics-by-test-condition.png`
 
 ## Main result from the online test
 

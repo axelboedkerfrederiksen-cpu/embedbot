@@ -94,6 +94,7 @@ export default function ResetPasswordPage() {
 
   return (
     <main
+      id="main-content"
       style={{
         minHeight: "100dvh",
         display: "grid",

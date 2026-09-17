@@ -289,10 +289,10 @@ export default function Home() {
   }
 
   const previewFontFamily: Record<string, string> = {
-    "DM Sans": '"DM Sans", sans-serif',
-    Inter: '"Inter", sans-serif',
-    Poppins: '"Poppins", sans-serif',
-    Lora: '"Lora", serif',
+    "DM Sans": 'var(--font-dm-sans), sans-serif',
+    Inter: 'var(--font-inter), sans-serif',
+    Poppins: 'var(--font-poppins), sans-serif',
+    Lora: 'var(--font-lora), serif',
   };
 
   function normalizeHexForPreview(value: string, fallback: string) {
@@ -548,8 +548,6 @@ export default function Home() {
 
   const styles = (
     <style jsx global>{`
-      @import url("https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;700&family=DM+Serif+Display:ital@0;1&family=Inter:wght@400;500;700&family=Poppins:wght@400;500;700&family=Lora:wght@400;600;700&display=swap");
-
       .eb-page {
         min-height: 100vh;
         background:
@@ -557,7 +555,7 @@ export default function Home() {
           radial-gradient(circle at 88% 14%, rgba(246, 243, 237, 0.9) 0%, rgba(246, 243, 237, 0) 22%),
           linear-gradient(180deg, #ffffff 0%, #fcfaf6 55%, #f8f4ee 100%);
         padding: 28px 16px;
-        font-family: "Poppins", sans-serif;
+        font-family: var(--font-poppins), sans-serif;
         color: #111111;
       }
 
@@ -587,7 +585,7 @@ export default function Home() {
       }
 
       .brand {
-        font-family: "Poppins", sans-serif;
+        font-family: var(--font-poppins), sans-serif;
         font-weight: 700;
         letter-spacing: -0.04em;
         line-height: 1.05;
@@ -646,7 +644,7 @@ export default function Home() {
 
       .section-title {
         margin: 0 0 18px;
-        font-family: "DM Serif Display", serif;
+        font-family: var(--font-dm-serif-display), serif;
         font-size: clamp(1.35rem, 4vw, 1.65rem);
         line-height: 1.2;
       }
@@ -704,7 +702,7 @@ export default function Home() {
         border: 1px solid rgba(17,17,17,0.1);
         border-radius: 14px;
         padding: 13px 14px;
-        font-family: "Poppins", sans-serif;
+        font-family: var(--font-poppins), sans-serif;
         font-size: 14px;
         box-sizing: border-box;
         transition: border-color 150ms ease;
@@ -1037,7 +1035,7 @@ export default function Home() {
         font-weight: 600;
         cursor: pointer;
         transition: opacity 140ms, border-color 140ms, background 140ms, box-shadow 140ms;
-        font-family: "Poppins", sans-serif;
+        font-family: var(--font-poppins), sans-serif;
       }
 
       .btn:disabled {
@@ -1225,7 +1223,7 @@ export default function Home() {
 
       .success-actions-header {
         margin: 0 0 4px;
-        font-family: "DM Serif Display", serif;
+        font-family: var(--font-dm-serif-display), serif;
         font-size: clamp(1.3rem, 3.8vw, 1.6rem);
       }
 
@@ -1360,7 +1358,7 @@ export default function Home() {
       .gen-brand {
         position: absolute;
         top: 28px;
-        font-family: "Poppins", sans-serif;
+        font-family: var(--font-poppins), sans-serif;
         font-weight: 700;
         font-size: 1.1rem;
         letter-spacing: -0.04em;
@@ -1461,7 +1459,7 @@ export default function Home() {
       }
 
       .gen-status {
-        font-family: "Poppins", sans-serif;
+        font-family: var(--font-poppins), sans-serif;
         font-size: 15px;
         font-weight: 500;
         color: #111111;
@@ -1593,7 +1591,7 @@ export default function Home() {
 
   if (!user) {
     return (
-      <main className="eb-page">
+      <main id="main-content" className="eb-page">
         {styles}
         <div className="eb-auth-shell">
           <div className="eb-card eb-animate">
@@ -1891,7 +1889,7 @@ export default function Home() {
             <option value="Poppins">Poppins</option>
             <option value="Lora">Lora</option>
           </select>
-          <p className="font-preview" style={{ fontFamily: previewFontFamily[form.font_choice] || '"Poppins", sans-serif' }}>
+          <p className="font-preview" style={{ fontFamily: previewFontFamily[form.font_choice] || 'var(--font-poppins), sans-serif' }}>
             Preview: Sådan kan teksten se ud i chatten.
           </p>
         </div>
@@ -1904,7 +1902,7 @@ export default function Home() {
               style={{
                 border: previewOutlineStyle,
                 opacity: previewWidgetOpacity / 100,
-                fontFamily: previewFontFamily[form.font_choice] || '"Poppins", sans-serif',
+                fontFamily: previewFontFamily[form.font_choice] || 'var(--font-poppins), sans-serif',
               }}
             >
               <div
@@ -1978,7 +1976,7 @@ export default function Home() {
 
   if (step === 7) {
     return (
-      <main className="eb-page">
+      <main id="main-content" className="eb-page">
         {styles}
         <div className="eb-shell">
           <div className="success-stack">
@@ -2034,7 +2032,7 @@ export default function Home() {
   }
 
   return (
-    <main className="eb-page">
+    <main id="main-content" className="eb-page">
       {styles}
 
       {loading && (

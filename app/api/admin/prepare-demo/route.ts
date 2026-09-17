@@ -114,6 +114,7 @@ export async function POST(req: NextRequest) {
             <p style="margin:0 0 20px;font-size:15px;line-height:1.7;">Siden er kun til gennemgang. Intet bliver vist til jeres kunder, og ingen 14-dages pilot er startet endnu.</p>
             <p style="margin:0;font-size:15px;line-height:1.7;">Svar gerne med de spørgsmål, chatbotten skal kunne besvare — eller skriv bare, hvis I vil have den fjernet.</p>
             <p style="margin:20px 0 0;font-size:15px;line-height:1.7;">// Axel fra EmbedBot</p>
+            <p style="margin:24px 0 0;padding-top:16px;border-top:1px solid #e6e6e6;font-size:12px;line-height:1.6;color:#6b6258;">Ønsker I ikke flere henvendelser om EmbedBot, kan I <a href="mailto:axel@embedbot.dk?subject=Afmeld%20henvendelser%20fra%20EmbedBot" style="color:#6b6258;text-decoration:underline;">afmelde her</a> eller svare på mailen.</p>
           </div>
         </div>
       `,

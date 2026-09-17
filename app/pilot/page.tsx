@@ -56,7 +56,7 @@ export default function PilotPage() {
   }
 
   return (
-    <main className="pilot-page">
+    <main id="main-content" className="pilot-page">
       <style jsx global>{`
         *, *::before, *::after { box-sizing: border-box; }
         html, body { margin: 0; min-height: 100%; background: #f6f3ed; }
@@ -161,7 +161,10 @@ export default function PilotPage() {
           <button className="pilot-button" type="submit" disabled={status === "sending"}>
             {status === "sending" ? "Sender…" : "Bed om en privat demo"}
           </button>
-          <p className="pilot-fineprint">Vi kontakter jer om demoen. Intet bliver installeret uden jeres godkendelse.</p>
+          <p className="pilot-fineprint">
+            Vi bruger oplysningerne til at behandle demoanmodningen og kontakte jer om den.
+            Intet bliver installeret uden jeres godkendelse. Se <Link href="/privacy">privatlivspolitikken</Link>.
+          </p>
           {feedback ? <p className={`pilot-feedback ${status === "error" ? "error" : ""}`}>{feedback}</p> : null}
         </form>
       </section>

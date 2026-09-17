@@ -3,6 +3,7 @@ import Link from "next/link";
 export default function AccountCreatedPage() {
   return (
     <main
+      id="main-content"
       style={{
         minHeight: "100dvh",
         display: "grid",

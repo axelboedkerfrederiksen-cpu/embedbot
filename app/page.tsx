@@ -94,10 +94,8 @@ export default function Home() {
   };
 
   return (
-    <main className="page">
+    <main id="main-content" className="page">
       <style jsx global>{`
-        @import url("https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700;800&display=swap");
-
         *, *::before, *::after { box-sizing: border-box; }
 
         html, body {
@@ -109,7 +107,7 @@ export default function Home() {
 
         .page {
           min-height: 100dvh;
-          font-family: "Poppins", sans-serif;
+          font-family: var(--font-poppins), sans-serif;
           color: #111111;
           max-width: 1080px;
           margin: 0 auto;
@@ -210,7 +208,7 @@ export default function Home() {
         }
 
         .headline {
-          font-family: "Poppins", sans-serif;
+          font-family: var(--font-poppins), sans-serif;
           font-size: clamp(2.35rem, 5.2vw, 4.65rem);
           font-weight: 700;
           line-height: 1.02;
@@ -254,7 +252,7 @@ export default function Home() {
         }
 
         .btn {
-          font-family: "Poppins", sans-serif;
+          font-family: var(--font-poppins), sans-serif;
           font-size: 0.875rem;
           font-weight: 600;
           text-decoration: none;
@@ -409,14 +407,22 @@ export default function Home() {
           text-align: left;
           position: relative;
           z-index: 1;
+          display: flex;
+          flex-wrap: wrap;
+          align-items: center;
+          gap: 8px 14px;
+        }
+
+        .foot a,
+        .foot span {
+          font-size: 0.88rem;
+          color: #6b6258;
+          font-weight: 500;
         }
 
         .foot a {
-          font-size: 0.88rem;
-          color: #6b6258;
           text-decoration: none;
           transition: color 200ms ease;
-          font-weight: 500;
         }
 
         .foot a:hover { color: #111111; }
@@ -682,7 +688,13 @@ export default function Home() {
         viewport={{ once: true }}
         transition={{ duration: 0.7, delay: 0.15 }}
       >
+        <span>EmbedBot / Axel Bødker Frederiksen · Smallegade 42, 4. tv.</span>
         <Link href="/dashboard">Allerede kunde? Log ind her →</Link>
+        <span aria-hidden="true">·</span>
+        <Link href="/privacy">Privatliv</Link>
+        <Link href="/cookies">Cookies</Link>
+        <Link href="/terms">Vilkår</Link>
+        <Link href="/refunds">Betaling og refundering</Link>
       </motion.div>
 
       {showDemoNudge && (

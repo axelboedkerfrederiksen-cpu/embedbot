@@ -44,7 +44,7 @@ function formatPrice(price: number | null) {
 
 export default function PricesPage() {
   return (
-    <main className="prices-page">
+    <main id="main-content" className="prices-page">
       <style jsx global>{`
         *, *::before, *::after { box-sizing: border-box; }
         html, body { margin: 0; padding: 0; min-height: 100%; background: #f6f3ed; }
@@ -143,7 +143,7 @@ export default function PricesPage() {
           const isEnterprise = slug === "enterprise";
           return (
             <article className={`price-card ${featured ? "featured" : ""}`} key={slug}>
-              {featured ? <span className="plan-pill">Mest valgt</span> : null}
+              {featured ? <span className="plan-pill">Anbefalet</span> : null}
               <h2 className="plan-name">{plan.name}</h2>
               <p className="plan-desc">{description}</p>
               <div className="price" aria-label={isEnterprise ? "Individuel pris" : `${plan.monthlyPriceDkk} kroner per måned`}>
@@ -159,7 +159,11 @@ export default function PricesPage() {
         })}
       </motion.section>
 
-      <p className="pricing-note">AI-svar nulstilles hver måned. Alle priser er ekskl. moms.</p>
+      <p className="pricing-note">
+        AI-svar nulstilles hver måned. Alle priser er ekskl. moms. Abonnementet fornyes månedligt,
+        indtil det opsiges, og der er ingen binding ud over den betalte periode. Se{" "}
+        <Link href="/refunds">betaling og refundering</Link>.
+      </p>
     </main>
   );
 }

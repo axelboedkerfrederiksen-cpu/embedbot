@@ -37,6 +37,9 @@ export default function Footer() {
             <h4 className="font-semibold mb-4">Juridisk</h4>
             <ul className="space-y-2 text-sm">
               <li><Link href="/privacy" className="text-gray-300 hover:text-white">Datapolitik</Link></li>
+              <li><Link href="/cookies" className="text-gray-300 hover:text-white">Cookiepolitik</Link></li>
+              <li><Link href="/refunds" className="text-gray-300 hover:text-white">Betaling og refundering</Link></li>
+              <li><Link href="/data-requests" className="text-gray-300 hover:text-white">Dataanmodning</Link></li>
               <li><Link href="/terms" className="text-gray-300 hover:text-white">Vilkår</Link></li>
               <li><a href="https://datatilsynet.dk" className="text-gray-300 hover:text-white">Datatilsynet</a></li>
             </ul>
@@ -47,6 +50,7 @@ export default function Footer() {
           <div className="flex flex-col md:flex-row justify-between items-center">
             <p className="text-gray-400 text-sm">
               © {new Date().getFullYear()} EmbedBot. Alle rettigheder forbeholdt.
+              <br />Axel Bødker Frederiksen · Smallegade 42, 4. tv. · +45 91 55 12 50
             </p>
             <div className="flex gap-6 mt-4 md:mt-0">
               <Link href="/privacy" className="text-gray-400 hover:text-white text-sm">

@@ -62,6 +62,7 @@ export default function ForgotPasswordPage() {
 
   return (
     <main
+      id="main-content"
       style={{
         minHeight: "100dvh",
         display: "grid",

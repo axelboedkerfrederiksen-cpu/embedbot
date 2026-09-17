@@ -92,6 +92,7 @@ export default function ProviderPage() {
   const [selectedPlatform, setSelectedPlatform] = useState("");
   const [selectedPlanSlug, setSelectedPlanSlug] = useState<PlanSlug>("starter");
   const [loading, setLoading] = useState(false);
+  const [acceptedTerms, setAcceptedTerms] = useState(false);
   const [message, setMessage] = useState("");
   const [ready, setReady] = useState(false);
 
@@ -214,6 +215,11 @@ export default function ProviderPage() {
       return;
     }
 
+    if (!acceptedTerms) {
+      setMessage("Bekræft abonnementsvilkårene for at fortsætte til betaling.");
+      return;
+    }
+
     const plan = selectedPlanSlug;
     if (plan === "enterprise") {
       router.push("/support?plan=enterprise");
@@ -255,7 +261,7 @@ export default function ProviderPage() {
   }
 
   return (
-    <main className="provider-page">
+    <main id="main-content" className="provider-page">
       <div className="provider-shell">
         <section className="provider-card provider-intro">
           <div className="provider-kicker">Sidste trin · {selectedPlan.name}</div>
@@ -323,7 +329,7 @@ export default function ProviderPage() {
                   aria-checked={active}
                   role="radio"
                 >
-                  {planSlug === "growth" ? <span className="provider-plan-badge">Mest valgt</span> : null}
+                  {planSlug === "growth" ? <span className="provider-plan-badge">Anbefalet</span> : null}
                   <span className="provider-plan-topline">
                     <span className="provider-plan-name">{plan.name}</span>
                     <span className="provider-plan-radio" aria-hidden="true" />
@@ -343,11 +349,26 @@ export default function ProviderPage() {
 
           {message && <p className="provider-message">{message}</p>}
 
+          <label className="provider-terms">
+            <input
+              type="checkbox"
+              checked={acceptedTerms}
+              onChange={(event) => setAcceptedTerms(event.target.checked)}
+            />
+            <span>
+              Jeg handler på vegne af en virksomhed og accepterer, at planen er et månedligt
+              abonnement, som fornyes automatisk, indtil det opsiges. Prisen er ekskl. moms.
+              Jeg har læst <a href="/terms" target="_blank" rel="noreferrer">vilkårene</a>,{" "}
+              <a href="/refunds" target="_blank" rel="noreferrer">betalings- og refusionspolitikken</a> og{" "}
+              <a href="/privacy" target="_blank" rel="noreferrer">privatlivspolitikken</a>.
+            </span>
+          </label>
+
           <div className="provider-actions">
             <a className="provider-back" href="/setup">
               Tilbage
             </a>
-            <button type="button" className="provider-continue" onClick={handleContinue} disabled={loading || !ready}>
+            <button type="button" className="provider-continue" onClick={handleContinue} disabled={loading || !ready || !acceptedTerms}>
               {loading ? "Sender videre..." : `Fortsæt med ${selectedPlan.name} · til betaling`}
             </button>
           </div>
@@ -367,6 +388,20 @@ export default function ProviderPage() {
           color: #111111;
           font-family: "Poppins", sans-serif;
         }
+
+        .provider-terms {
+          display: grid;
+          grid-template-columns: auto 1fr;
+          gap: 10px;
+          align-items: start;
+          margin-top: 20px;
+          color: #5f584f;
+          font-size: 0.82rem;
+          line-height: 1.6;
+        }
+
+        .provider-terms input { margin-top: 4px; }
+        .provider-terms a { color: #111111; text-underline-offset: 2px; }
 
         .provider-shell {
           width: 100%;

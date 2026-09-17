@@ -52,7 +52,7 @@ const faqGroups = [
     items: [
       {
         question: "Gør EmbedBot min hjemmeside langsommere?",
-        answer: "EmbedBot indlæses asynkront, så sidens vigtigste indhold kan vises først. I en online desktop-test med 10 målinger med og 10 uden EmbedBot var medianresultaterne identiske for FCP, LCP, INP og CLS. Den præcise effekt afhænger dog af hjemmesidens øvrige scripts, hosting, enhed og internetforbindelse.",
+        answer: "EmbedBot indlæses asynkront, så sidens vigtigste indhold kan vises først. I vores afgrænsede online desktop-test med 10 målinger pr. variant blev der ikke målt en væsentlig negativ ændring i de testede hastighedsmål. Resultatet gælder kun testsiden og de konkrete testforhold; den faktiske effekt afhænger af hjemmesidens øvrige scripts, hosting, enhed og internetforbindelse.",
       },
       {
         question: "Hvordan måler I performancepåvirkningen?",
@@ -91,7 +91,7 @@ export default function FAQPage() {
   const [openQuestion, setOpenQuestion] = useState<string | null>(null);
 
   return (
-    <main className="faq-page">
+    <main id="main-content" className="faq-page">
       <style jsx global>{`
         *, *::before, *::after { box-sizing: border-box; }
         html, body { margin: 0; padding: 0; min-height: 100%; background: #f6f3ed; }

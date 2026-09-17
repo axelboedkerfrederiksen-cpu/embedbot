@@ -798,7 +798,7 @@ export default function AdminPage() {
 
   if (!isAuthenticated) {
     return (
-      <main className="min-h-screen bg-[radial-gradient(circle_at_12%_18%,rgba(246,243,237,0.92)_0%,rgba(246,243,237,0)_24%),radial-gradient(circle_at_88%_14%,rgba(246,243,237,0.9)_0%,rgba(246,243,237,0)_22%),linear-gradient(180deg,#ffffff_0%,#fcfaf6_55%,#f8f4ee_100%)] px-4 py-16 text-[#111111]">
+      <main id="main-content" className="min-h-screen bg-[radial-gradient(circle_at_12%_18%,rgba(246,243,237,0.92)_0%,rgba(246,243,237,0)_24%),radial-gradient(circle_at_88%_14%,rgba(246,243,237,0.9)_0%,rgba(246,243,237,0)_22%),linear-gradient(180deg,#ffffff_0%,#fcfaf6_55%,#f8f4ee_100%)] px-4 py-16 text-[#111111]">
         <div className="mx-auto w-full max-w-md rounded-3xl border border-[rgba(17,17,17,0.08)] bg-[rgba(255,255,255,0.94)] p-8 shadow-[0_20px_50px_rgba(17,17,17,0.08)] backdrop-blur">
           <h1 className="text-3xl font-semibold tracking-tight">EmbedBot Admin</h1>
           <p className="mt-2 text-sm text-[#6b6258]">Indtast admin-email og adgangskode for at fortsatte.</p>
@@ -847,7 +847,7 @@ export default function AdminPage() {
   }
 
   return (
-    <main className="min-h-screen bg-[radial-gradient(circle_at_12%_18%,rgba(246,243,237,0.92)_0%,rgba(246,243,237,0)_24%),radial-gradient(circle_at_88%_14%,rgba(246,243,237,0.9)_0%,rgba(246,243,237,0)_22%),linear-gradient(180deg,#ffffff_0%,#fcfaf6_55%,#f8f4ee_100%)] text-[#111111]">
+    <main id="main-content" className="min-h-screen bg-[radial-gradient(circle_at_12%_18%,rgba(246,243,237,0.92)_0%,rgba(246,243,237,0)_24%),radial-gradient(circle_at_88%_14%,rgba(246,243,237,0.9)_0%,rgba(246,243,237,0)_22%),linear-gradient(180deg,#ffffff_0%,#fcfaf6_55%,#f8f4ee_100%)] text-[#111111]">
       <div className="pointer-events-none fixed inset-0 -z-10 bg-[radial-gradient(circle_at_20%_10%,rgba(246,243,237,0.55),transparent_35%),radial-gradient(circle_at_80%_20%,rgba(17,17,17,0.03),transparent_30%),radial-gradient(circle_at_50%_80%,rgba(246,243,237,0.35),transparent_35%)]" />
 
       <div className="flex min-h-screen">

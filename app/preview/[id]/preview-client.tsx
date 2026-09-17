@@ -23,7 +23,7 @@ export default function PreviewClient({ businessId, previewToken }: { businessId
   }
 
   return (
-    <main className="preview-page">
+    <main id="main-content" className="preview-page">
       <style jsx global>{`
         *, *::before, *::after { box-sizing: border-box; }
         html, body { margin: 0; min-height: 100%; background: #f6f3ed; }

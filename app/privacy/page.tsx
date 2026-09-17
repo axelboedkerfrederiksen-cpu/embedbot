@@ -2,8 +2,8 @@ import Link from "next/link";
 
 export default function PrivacyPolicy() {
   return (
-    <main className="min-h-screen bg-white px-4 py-12 text-gray-900 sm:px-6 lg:px-8">
-      <article className="prose prose-lg mx-auto max-w-4xl prose-headings:text-gray-900 prose-a:text-blue-700">
+    <main id="main-content" className="min-h-screen bg-white px-4 py-12 text-gray-900 sm:px-6 lg:px-8">
+      <article className="privacy-policy mx-auto max-w-4xl">
         <div className="mb-10 not-prose">
           <Link href="/" className="text-sm font-medium text-gray-600 hover:text-gray-900">
             ← Tilbage til EmbedBot
@@ -12,7 +12,7 @@ export default function PrivacyPolicy() {
             Privatlivspolitik
           </h1>
           <p className="mt-3 text-base text-gray-600">
-            Senest opdateret: <time dateTime="2026-09-13">13. september 2026</time>
+            Senest opdateret: <time dateTime="2026-09-17">17. september 2026</time>
           </p>
         </div>
 
@@ -35,7 +35,19 @@ export default function PrivacyPolicy() {
           </p>
         </div>
 
-        <section>
+        <nav aria-label="Indhold" className="privacy-policy-toc not-prose">
+          <p className="text-sm font-semibold uppercase tracking-wider text-gray-500">Indhold</p>
+          <div className="mt-3 grid gap-2 sm:grid-cols-2">
+            <a href="#data" className="privacy-policy-toc-link">Oplysninger og formål</a>
+            <a href="#leverandorer" className="privacy-policy-toc-link">Leverandører og OpenAI</a>
+            <a href="#opbevaring" className="privacy-policy-toc-link">Opbevaring og sletning</a>
+            <a href="#rettigheder" className="privacy-policy-toc-link">Dine rettigheder</a>
+            <a href="#cookies" className="privacy-policy-toc-link">Cookies og sikkerhed</a>
+            <a href="#kontakt" className="privacy-policy-toc-link">Kontakt</a>
+          </div>
+        </nav>
+
+        <section id="data">
           <h2>1. Hvem er dataansvarlig?</h2>
           <p>
             Den dataansvarlige for EmbedBots egen konto-, betalings-, support- og
@@ -52,7 +64,7 @@ export default function PrivacyPolicy() {
           </address>
         </section>
 
-        <section>
+        <section id="formaal">
           <h2>2. Hvilke oplysninger indsamler vi?</h2>
 
           <h3>2.1 Konto og opsætning</h3>
@@ -117,9 +129,14 @@ export default function PrivacyPolicy() {
             referrer, browser, enhed, land, tidspunkt og web vitals. Vi bruger ikke
             Google Analytics, Hotjar eller annoncecookies i den nuværende version.
           </p>
+          <p>
+            Analyse- og ydeevneværktøjerne indlæses først, når du aktivt accepterer
+            analyse i cookiebanneret. Du kan til enhver tid ændre valget fra vores{" "}
+            <Link href="/cookies">cookie- og teknologipolitik</Link>.
+          </p>
         </section>
 
-        <section>
+        <section id="grundlag">
           <h2>3. Hvorfor bruger vi oplysningerne?</h2>
           <p>Vi bruger oplysningerne til følgende formål:</p>
           <ul>
@@ -139,7 +156,7 @@ export default function PrivacyPolicy() {
           </p>
         </section>
 
-        <section>
+        <section id="leverandorer">
           <h2>4. Behandlingsgrundlag</h2>
           <p>
             Vi behandler normalt personoplysninger på disse grundlag efter GDPR:
@@ -167,7 +184,7 @@ export default function PrivacyPolicy() {
           </ul>
         </section>
 
-        <section>
+        <section id="openai">
           <h2>5. Hvem deler vi oplysninger med?</h2>
           <p>
             Vi bruger databehandlere og andre leverandører, når det er nødvendigt
@@ -223,7 +240,7 @@ export default function PrivacyPolicy() {
           </p>
         </section>
 
-        <section>
+        <section id="stripe">
           <h2>6. Særligt om OpenAI</h2>
           <p>
             For at generere et svar kan vi sende brugerens besked samt relevant
@@ -249,7 +266,7 @@ export default function PrivacyPolicy() {
           </p>
         </section>
 
-        <section>
+        <section id="overforsler">
           <h2>7. Særligt om Stripe</h2>
           <p>
             Når du starter et betalt abonnement, bliver du sendt til Stripe, som
@@ -267,7 +284,7 @@ export default function PrivacyPolicy() {
           </p>
         </section>
 
-        <section>
+        <section id="opbevaring">
           <h2>8. Internationale overførsler</h2>
           <p>
             Nogle leverandører kan behandle personoplysninger uden for EU/EØS.
@@ -279,7 +296,7 @@ export default function PrivacyPolicy() {
           </p>
         </section>
 
-        <section>
+        <section id="sletning">
           <h2>9. Hvor længe gemmer vi oplysningerne?</h2>
           <ul>
             <li>
@@ -314,7 +331,7 @@ export default function PrivacyPolicy() {
           </p>
         </section>
 
-        <section>
+        <section id="rettigheder">
           <h2>10. Sletning og dataportabilitet</h2>
           <p>
             Du kan bede om eksport eller sletning af de personoplysninger, EmbedBot
@@ -324,13 +341,13 @@ export default function PrivacyPolicy() {
             bogføring, juridiske krav, sikkerhed, tvister eller sikkerhedskopier.
           </p>
           <p>
-            Send en anmodning til <a href="mailto:axel@embedbot.dk">axel@embedbot.dk</a>.
+            Brug siden <Link href="/data-requests">Anmodning om dine data</Link>, eller send en anmodning til <a href="mailto:axel@embedbot.dk">axel@embedbot.dk</a>.
             Vi kan bede om oplysninger, der bekræfter din identitet, før vi
             udleverer eller sletter data.
           </p>
         </section>
 
-        <section>
+        <section id="gdpr-rettigheder">
           <h2>11. Dine rettigheder efter GDPR</h2>
           <p>Afhængigt af situationen har du ret til at:</p>
           <ul>
@@ -351,7 +368,7 @@ export default function PrivacyPolicy() {
           </p>
         </section>
 
-        <section>
+        <section id="cookies">
           <h2>12. Cookies og browserlagring</h2>
           <p>
             EmbedBot kan bruge nødvendig session- og browserlagring, herunder
@@ -364,9 +381,10 @@ export default function PrivacyPolicy() {
             Browserens udvikler- og privatlivsindstillinger kan begrænse visse
             målinger. Vi bruger ikke annoncecookies i den nuværende version.
           </p>
+          <p>Se den samlede oversigt i vores <Link href="/cookies">cookie- og teknologipolitik</Link>.</p>
         </section>
 
-        <section>
+        <section id="sikkerhed">
           <h2>13. Sikkerhed</h2>
           <p>
             Vi bruger rimelige tekniske og organisatoriske sikkerhedsforanstaltninger,
@@ -381,16 +399,22 @@ export default function PrivacyPolicy() {
           </p>
         </section>
 
-        <section>
+        <section id="born">
           <h2>14. Børn</h2>
           <p>
             EmbedBot er en erhvervstjeneste og er ikke målrettet børn. Vi forsøger
             ikke bevidst at indsamle personoplysninger fra børn uden relevant
             forældres eller værges involvering.
           </p>
+          <p>
+            Kunder må ikke målrette chatbotten mod børn eller basere behandling af
+            børns oplysninger på samtykke uden selv at etablere et gyldigt alders-
+            og forældresamtykkeforløb. Oplysninger om børn slettes eller begrænses,
+            når vi bliver bekendt med, at de er indsamlet uden gyldigt grundlag.
+          </p>
         </section>
 
-        <section>
+        <section id="aendringer">
           <h2>15. Ændringer til privatlivspolitikken</h2>
           <p>
             Vi kan opdatere denne privatlivspolitik, når tjenesten, leverandørerne
@@ -400,7 +424,7 @@ export default function PrivacyPolicy() {
           </p>
         </section>
 
-        <section>
+        <section id="kontakt">
           <h2>16. Kontakt</h2>
           <p>
             Spørgsmål om privatliv, sletning eller dine rettigheder kan sendes til:
@@ -415,8 +439,9 @@ export default function PrivacyPolicy() {
             <a href="mailto:axel@embedbot.dk">axel@embedbot.dk</a>
           </address>
           <p>
-            Du kan også besøge vores <Link href="/support">supportside</Link> eller
-            læse <Link href="/terms">handelsbetingelserne</Link>.
+            Du kan også besøge vores <Link href="/support">supportside</Link>, læse{" "}
+            <Link href="/terms">handelsbetingelserne</Link> eller sende en{" "}
+            <Link href="/data-requests">dataanmodning</Link>.
           </p>
         </section>
       </article>

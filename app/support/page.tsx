@@ -67,7 +67,7 @@ export default function SupportPage() {
   }
 
   return (
-    <main className="support-page">
+    <main id="main-content" className="support-page">
       <style jsx global>{`
         *, *::before, *::after { box-sizing: border-box; }
 
@@ -407,6 +407,11 @@ export default function SupportPage() {
           <button className="support-button" type="submit" disabled={status === "sending"}>
             {status === "sending" ? "Sender..." : "Send besked"}
           </button>
+
+          <p className="support-feedback">
+            Vi bruger oplysningerne til at behandle og dokumentere din henvendelse. Se{" "}
+            <Link href="/privacy">privatlivspolitikken</Link>.
+          </p>
 
           {feedback ? (
             <p className={`support-feedback ${status === "error" ? "error" : ""}`}>

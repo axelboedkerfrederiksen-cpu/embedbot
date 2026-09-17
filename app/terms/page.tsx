@@ -1,235 +1,35 @@
-"use client";
+import Link from "next/link";
 
 export default function TermsOfService() {
   return (
-    <div className="min-h-screen bg-white py-12 px-4 sm:px-6 lg:px-8">
-      <div className="max-w-3xl mx-auto">
-        <h1 className="text-3xl font-bold text-gray-900 mb-8">Vilkår for Brug</h1>
-        
-        <div className="prose prose-lg max-w-none">
-          <p className="text-gray-600 mb-6">
-            Senest opdateret: {new Date().toLocaleDateString("da-DK")}
-          </p>
-
-          <section className="mb-8">
-            <h2 className="text-2xl font-semibold text-gray-900 mb-4">1. Vilkår</h2>
-            <p>
-              Ved at få adgang til og bruge EmbedBot (embedbot.dk), accepterer du at være bundet af disse vilkår. Hvis du er uenig i noget af disse vilkår, bør du ikke bruge denne tjeneste.
-            </p>
-          </section>
-
-          <section className="mb-8">
-            <h2 className="text-2xl font-semibold text-gray-900 mb-4">2. Licens til at bruge tjenesten</h2>
-            <p>
-              Med forbehold for disse vilkår giver vi dig en begrænset, ikke-eksklusiv, ikke-overførbar licens til at få adgang til og bruge EmbedBot til egne forretningsformål.
-            </p>
-          </section>
-
-          <section className="mb-8">
-            <h2 className="text-2xl font-semibold text-gray-900 mb-4">3. Brugerkonto</h2>
-            <p>
-              Du er ansvarlig for at vedligeholde fortroligheden af dine loginoplysninger. Du accepterer at være fuldt ansvarlig for alle aktiviteter, der forekommer under din konto.
-            </p>
-            <p className="mt-4">
-              <strong>Du skal:</strong>
-            </p>
-            <ul className="list-disc list-inside mb-4">
-              <li>Give sandfærdige oplysninger ved tilmelding</li>
-              <li>Straks notificere os om uautoriseret adgang</li>
-              <li>Ikke dele dine loginoplysninger</li>
-              <li>Ikke bruge andres konti</li>
-            </ul>
-          </section>
-
-          <section className="mb-8">
-            <h2 className="text-2xl font-semibold text-gray-900 mb-4">4. Forbud mod misbrug</h2>
-            <p>
-              Du accepterer IKKE at:
-            </p>
-            <ul className="list-disc list-inside mb-4">
-              <li>Bruge EmbedBot til ulovligt formål</li>
-              <li>Manipulere eller hacke tjenesten</li>
-              <li>Spamme eller misbruge chatten (spam, sexuelle eller stødende beskeder)</li>
-              <li>Forsøge prompt injection for at ændre chatbot-adfærd</li>
-              <li>Uploade malware eller skadelig indhold</li>
-              <li>Circumvent rate limits eller sikkerhedsmechanismer</li>
-              <li>Bruge tjenesten til at generere ulovligt indhold</li>
-              <li>Skrabesiderne på en måde, der overtræder deres vilkår</li>
-              <li>Reverse-engineer eller dekompilere tjenesten</li>
-              <li>Sende spam eller phishing-forsøg via chatten</li>
-            </ul>
-          </section>
-
-          <section className="mb-8">
-            <h2 className="text-2xl font-semibold text-gray-900 mb-4">5. Chat-sikkerhed og begrænseringer</h2>
-            <p>
-              <strong>Rate limiting:</strong> Vi begrænser chatten til 15 beskeder pr. IP per 24 timer for at forebygge misbrug.
-            </p>
-            <p className="mt-4">
-              <strong>Prompt injection:</strong> Systemprompten er beskyttet mod manipulation. Forsøg på at få AI’en til at ignorere instruktioner vil blive filtreret.
-            </p>
-            <p className="mt-4">
-              <strong>FAQ og kontekst:</strong> Al kontekst, der sendes til AI’en, skal være brugerdefineret af virksomhedsejeren. EmbedBot er ikke ansvarlig for urimeligt eller ulovligt indhold fra virksomhedens side.
-            </p>
-          </section>
-
-          <section className="mb-8">
-            <h2 className="text-2xl font-semibold text-gray-900 mb-4">6. Ansvar for indhold</h2>
-            <p>
-              <strong>Din virksomhedsindhold:</strong> Du beholder fuld ejendomsret til de data, du uploader (FAQ, instruktioner, website-content).
-            </p>
-            <p className="mt-4">
-              <strong>Du garanterer:</strong>
-            </p>
-            <ul className="list-disc list-inside mb-4">
-              <li>At dit indhold ikke overtræder nogen rettigheder</li>
-              <li>At dit indhold ikke er ulovligt eller stødende</li>
-              <li>At du har ret til at dele indholdet på EmbedBot</li>
-            </ul>
-            <p className="mt-4">
-              <strong>Vi er IKKE ansvarlige for:</strong>
-            </p>
-            <ul className="list-disc list-inside mb-4">
-              <li>Indhold du uploader eller dets nøjagtighed</li>
-              <li>Svarene som AI’en genererer baseret på dit indhold</li>
-              <li>Besøgendes beskedinger i chatten</li>
-              <li>Brug af data fra dine websteder</li>
-            </ul>
-          </section>
-
-          <section className="mb-8">
-            <h2 className="text-2xl font-semibold text-gray-900 mb-4">7. Intellektuel ejendomsret</h2>
-            <p>
-              EmbedBot, dets widget, design og funktionalitet er vores intellektuelle ejendom. Du må ikke kopiere, modificere eller distribuere uden tilladelse.
-            </p>
-            <p className="mt-4">
-              <strong>Chat-svar:</strong> AI-genererede svar er arbejder oprettet af tjenesten og kan bruges frit til dine forretningsformål.
-            </p>
-          </section>
-
-          <section className="mb-8">
-            <h2 className="text-2xl font-semibold text-gray-900 mb-4">8. Tredjeparters tjenester</h2>
-            <p>
-              EmbedBot bruger:
-            </p>
-            <ul className="list-disc list-inside mb-4">
-              <li><strong>OpenAI:</strong> For chat-completions og embeddings (se deres vilkår)</li>
-              <li><strong>Supabase:</strong> For hosting og database (se deres vilkår)</li>
-              <li><strong>Resend:</strong> For email-leverance (se deres vilkår)</li>
-            </ul>
-            <p className="mt-4">
-              Vi er ikke ansvarlige for disse tredjeparters tjenester. Se deres vilkår for mere information.
-            </p>
-          </section>
-
-          <section className="mb-8">
-            <h2 className="text-2xl font-semibold text-gray-900 mb-4">9. Betaling og fakturering</h2>
-            <p>
-              EmbedBot tilbydes som et månedligt abonnement. De aktuelle planer, priser og inkluderede AI-svar fremgår af prissiden. Priser vises eksklusive moms, medmindre andet er angivet.
-            </p>
-            <p className="mt-4">
-              Abonnementet fornyes automatisk hver måned, indtil det opsiges. Ved opsigelse bevares adgangen normalt frem til udgangen af den allerede betalte periode. Ved manglende betaling kan chatbotten suspenderes, indtil betalingen er gennemført.
-            </p>
-            <ul className="list-disc list-inside mb-4">
-              <li>Betaling og fakturering håndteres sikkert af Stripe</li>
-              <li>Planens forbrugsgrænse nulstilles ved månedsskiftet</li>
-              <li>Allerede leverede abonnementsperioder refunderes som udgangspunkt ikke</li>
-              <li>Fejlbehæftede betalinger kan medføre midlertidig suspension</li>
-            </ul>
-          </section>
-
-          <section className="mb-8">
-            <h2 className="text-2xl font-semibold text-gray-900 mb-4">10. Afslutning og suspension</h2>
-            <p>
-              Vi kan suspendere eller afsluttte din konto hvis:
-            </p>
-            <ul className="list-disc list-inside mb-4">
-              <li>Du overtræder disse vilkår</li>
-              <li>Du bruger tjenesten til ulovligt formål</li>
-              <li>Du spammer eller misbruger chatten</li>
-              <li>Du forsøger at hacke tjenesten</li>
-              <li>Du ikke betaler for premium-features (hvis relevant)</li>
-            </ul>
-            <p className="mt-4">
-              <strong>Konsekvenser af suspension:</strong>
-            </p>
-            <ul className="list-disc list-inside mb-4">
-              <li>Din chatbot vil blive deaktiveret</li>
-              <li>Du mister adgang til dine data (muligvis permanent)</li>
-              <li>Du kan blive forment adgang til tjenesten</li>
-            </ul>
-          </section>
-
-          <section className="mb-8">
-            <h2 className="text-2xl font-semibold text-gray-900 mb-4">11. Ansvarsbegrænsninger</h2>
-            <p>
-              <strong>SOM DER ER:</strong> EmbedBot leveres ”AS IS” uden garantier af nogen art.
-            </p>
-            <p className="mt-4">
-              <strong>VI GARANTERER IKKE:</strong>
-            </p>
-            <ul className="list-disc list-inside mb-4">
-              <li>At tjenesten vil være fejlfri</li>
-              <li>At tjenesten vil være tilgængelig 24/7 (men vi stiler mod høj tilgængelighed)</li>
-              <li>At AI-svarene altid er nøjagtige</li>
-              <li>At dine data ikke vil blive mistet</li>
-            </ul>
-            <p className="mt-4">
-              <strong>ANSVARSBEGRÆNSNING:</strong> I det maksimalt mulige omfang tilladt af lov, er vores totale ansvar for dig maksimalt det beløb, du har betalt os i de seneste 12 måneder (eller $0 hvis du ikke har betalt).
-            </p>
-          </section>
-
-          <section className="mb-8">
-            <h2 className="text-2xl font-semibold text-gray-900 mb-4">12. Ændringer til tjenesten</h2>
-            <p>
-              Vi kan ændre, suspendere eller afvikle EmbedBot (eller dele af den) til enhver tid uden forudgående varsel.
-            </p>
-            <p className="mt-4">
-              Vi vil give mindst 30 dages varsel før vilkår ændres materielt.
-            </p>
-          </section>
-
-          <section className="mb-8">
-            <h2 className="text-2xl font-semibold text-gray-900 mb-4">13. Indemnifikation</h2>
-            <p>
-              Du indemnificerer og holdes harmløs os (og vores ejere, medarbejdere, agenter) mod eventuelle krav, skader eller udgifter som skyldes:
-            </p>
-            <ul className="list-disc list-inside mb-4">
-              <li>Din brug af EmbedBot</li>
-              <li>Dit indhold eller virksomhedsinformation</li>
-              <li>Din krænkelse af disse vilkår</li>
-              <li>Din krænkelse af andres rettigheder</li>
-            </ul>
-          </section>
-
-          <section className="mb-8">
-            <h2 className="text-2xl font-semibold text-gray-900 mb-4">14. Uplinks og ændringer</h2>
-            <p>
-              Vi kan opdatere disse vilkår til enhver tid. Fortsatte brug af tjenesten betyder accept.
-            </p>
-            <p className="mt-4">
-              Vi vil notificere dig om væsentlige ændringer via email.
-            </p>
-          </section>
-
-          <section className="mb-8">
-            <h2 className="text-2xl font-semibold text-gray-900 mb-4">15. Lovgivning</h2>
-            <p>
-              Disse vilkår skal fortolkes i overensstemmelse med dansk lov, uden hensyn til dets modstridende juridiske principper.
-            </p>
-            <p className="mt-4">
-              Enhver tvist skal afregnes ved domstolene i Danmark.
-            </p>
-          </section>
-
-          <section className="mb-8">
-            <h2 className="text-2xl font-semibold text-gray-900 mb-4">16. Kontakt</h2>
-            <p>
-              For spørgsmål: axel@embedbot.dk
-            </p>
-          </section>
+    <main id="main-content" className="min-h-screen bg-white px-4 py-12 text-gray-900 sm:px-6 lg:px-8">
+      <article className="privacy-policy mx-auto max-w-4xl">
+        <div className="mb-10 not-prose">
+          <Link href="/" className="text-sm font-medium text-gray-600 hover:text-gray-900">← Tilbage til EmbedBot</Link>
+          <h1 className="mt-8 text-4xl font-bold tracking-tight text-gray-900">Vilkår for EmbedBot</h1>
+          <p className="mt-3 text-base text-gray-600">Senest opdateret: <time dateTime="2026-09-17">17. september 2026</time></p>
         </div>
-      </div>
-    </div>
+        <div className="not-prose my-8 rounded-2xl border border-amber-200 bg-amber-50 p-5 text-amber-950">
+          <p className="font-semibold">Kun for erhverv</p>
+          <p className="mt-2 text-sm leading-6">EmbedBot udbydes til virksomheder og personer, der handler som led i deres erhverv. Du skal være mindst 18 år og have ret til at indgå aftalen på virksomhedens vegne.</p>
+        </div>
+        <section><h2>1. Aftalen</h2><p>Disse vilkår gælder for virksomhedens brug af EmbedBot, herunder dashboard, chatbot-widget, support, pilot og betalte abonnementer. Aftalen indgås med EmbedBot / Axel Bødker Frederiksen, Smallegade 42, 4. tv., e-mail <a href="mailto:axel@embedbot.dk">axel@embedbot.dk</a>, telefon <a href="tel:+4591551250">+45 91 55 12 50</a>.</p></section>
+        <section><h2>2. Tjenesten</h2><p>EmbedBot leverer en AI-baseret chatbot, som kan bruge virksomhedens egne oplysninger og websiteindhold til at besvare besøgendes spørgsmål. Funktioner, kapacitet og inkluderede AI-svar afhænger af den valgte plan. Vi kan foretage rimelige produktændringer, når tjenestens væsentlige funktion ikke forringes væsentligt.</p></section>
+        <section><h2>3. Pilot</h2><p>En angivet gratis pilot kræver ikke betalingskort og bliver ikke automatisk til et betalt abonnement. Efter pilotperioden vælger virksomheden selv, om den vil købe en plan. En privat demo eller pilot må ikke offentliggøres uden aftale.</p></section>
+        <section><h2>4. Pris, betaling og fornyelse</h2><p>Aktuelle priser og plangrænser fremgår af <Link href="/prices">prissiden</Link>. Priser er i danske kroner pr. måned og eksklusive moms, medmindre andet er angivet. Betaling håndteres af Stripe.</p><p>Et betalt abonnement fornyes automatisk månedligt, indtil det opsiges. Den valgte pris, betalingsperiode og fornyelse vises før betaling. Virksomheden kan opsige i dashboardet; opsigelsen gælder ved udgangen af den allerede betalte periode. Se <Link href="/refunds">betalings- og refusionspolitikken</Link>.</p></section>
+        <section><h2>5. Konto og adgang</h2><p>Virksomheden skal give korrekte oplysninger, beskytte loginoplysninger og straks kontakte os ved mistanke om misbrug. Virksomheden er ansvarlig for handlinger foretaget fra dens konto, medmindre de skyldes forhold, som EmbedBot er ansvarlig for.</p></section>
+        <section><h2>6. Virksomhedens indhold og instruktioner</h2><p>Virksomheden beholder sine rettigheder til indhold, som den leverer. Virksomheden giver EmbedBot en begrænset ret til at behandle indholdet for at levere, sikre og supportere tjenesten.</p><p>Virksomheden er ansvarlig for, at den har ret til at bruge og dele indholdet, og for at produkt-, pris-, leverings-, retur-, garanti- og kontaktoplysninger er korrekte. Virksomheden skal gennemgå væsentlige chatbot-svar og må ikke instruere chatbotten i at vildlede kunder eller overtræde lovgivning.</p></section>
+        <section><h2>7. Personoplysninger</h2><p>Når EmbedBot behandler virksomhedens besøgendes oplysninger efter virksomhedens instruktioner, er virksomheden normalt dataansvarlig og EmbedBot databehandler. Virksomheden skal give de nødvendige oplysninger til sine besøgende, vælge et lovligt behandlingsgrundlag og undgå at indsamle flere oplysninger end nødvendigt. En databehandleraftale kan indgås efter behov. Se <Link href="/privacy">privatlivspolitikken</Link> og <Link href="/cookies">cookiepolitikken</Link>.</p></section>
+        <section><h2>8. Børn og følsomme oplysninger</h2><p>Tjenesten er ikke målrettet børn. Virksomheden må ikke målrette chatbotten mod børn eller indsamle børns oplysninger på grundlag af samtykke uden selv at sikre et gyldigt alders- og forældresamtykkeforløb. Chatbotten bør ikke bruges til CPR-numre, helbredsoplysninger, betalingskortoplysninger eller andre følsomme oplysninger, medmindre det er særskilt aftalt og lovligt.</p></section>
+        <section><h2>9. Acceptabel brug</h2><p>EmbedBot må ikke bruges til ulovligt indhold, spam, phishing, chikane, malware, krænkelse af tredjemands rettigheder, omgåelse af sikkerhed eller belastning af tjenesten ud over normal brug. Sikkerhedsforanstaltninger må ikke testes uden skriftlig tilladelse.</p></section>
+        <section><h2>10. AI-begrænsninger</h2><p>AI-genererede svar kan være ufuldstændige eller forkerte. EmbedBot bruger tekniske og instruktionelle sikkerhedsforanstaltninger, men kan ikke garantere, at alle fejl, manipulationer eller prompt-injection-forsøg bliver opdaget. Chatbotten må ikke være eneste grundlag for juridisk, medicinsk, finansiel eller anden højrisikorådgivning.</p></section>
+        <section><h2>11. Tredjeparter</h2><p>Tjenesten anvender blandt andet OpenAI, Supabase, Stripe, Resend, Vercel og Plausible. Driftsforstyrrelser eller ændringer hos disse leverandører kan påvirke tjenesten. Vi vælger og administrerer leverandører med rimelig omhu, men kan ikke kontrollere deres tjenester fuldt ud.</p></section>
+        <section><h2>12. Tilgængelighed, support og sikkerhed</h2><p>Vi tilstræber stabil drift og rimelig support, men lover ikke uafbrudt eller fejlfri adgang. Planlagt vedligeholdelse, sikkerhedshændelser eller forhold uden for vores kontrol kan give afbrydelser. Vi anvender rimelige tekniske og organisatoriske sikkerhedsforanstaltninger.</p></section>
+        <section><h2>13. Suspension og ophør</h2><p>Vi kan suspendere adgang ved manglende betaling, væsentlig misligholdelse, sikkerhedsrisiko eller ulovlig brug. Hvor det er rimeligt, giver vi mulighed for at rette forholdet først. Ved ophør bør virksomheden eksportere nødvendige data. Sletning og opbevaring følger privatlivspolitikken og gældende lov.</p></section>
+        <section><h2>14. Ansvar</h2><p>Parterne er ansvarlige efter dansk rets almindelige regler med de begrænsninger, der lovligt kan aftales mellem erhvervsdrivende. EmbedBot er ikke ansvarlig for indirekte tab, driftstab, tabt avance eller tab, der skyldes virksomhedens urigtige indhold eller brug af AI-svar uden relevant kontrol. EmbedBots samlede ansvar er, i det omfang loven tillader det, begrænset til det beløb, virksomheden har betalt for tjenesten i de seneste 12 måneder. Begrænsningen gælder ikke ved forsæt, grov uagtsomhed eller ansvar, som ikke lovligt kan begrænses.</p></section>
+        <section><h2>15. Ændringer</h2><p>Væsentlige ændringer til priser eller vilkår varsles normalt mindst 30 dage før ikrafttræden. Hvis en ændring har væsentlig negativ betydning, kan virksomheden opsige abonnementet inden ændringen træder i kraft.</p></section>
+        <section><h2>16. Lovvalg og kontakt</h2><p>Aftalen er underlagt dansk ret. Tvister søges først løst i dialog og kan derefter indbringes for de danske domstole efter de almindelige værnetingsregler. Spørgsmål kan sendes til <a href="mailto:axel@embedbot.dk">axel@embedbot.dk</a> eller via <Link href="/support">support</Link>.</p></section>
+      </article>
+    </main>
   );
 }
