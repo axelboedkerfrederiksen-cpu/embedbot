@@ -272,8 +272,7 @@
         transform: translateY(0);
       }
       #eb-bubble:focus-visible,
-      #eb-send:focus-visible,
-      #eb-input:focus-visible {
+      #eb-send:focus-visible {
         outline: 3px solid #6d28d9 !important;
         outline-offset: 3px !important;
       }
