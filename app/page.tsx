@@ -295,6 +295,37 @@ export default function Home() {
           margin-top: 22px;
         }
 
+        .pilot-callout {
+          position: relative;
+          z-index: 1;
+          display: flex;
+          align-items: center;
+          justify-content: space-between;
+          gap: 20px;
+          margin-top: 16px;
+          padding: 22px 24px;
+          border: 1px solid rgba(17, 17, 17, 0.07);
+          border-radius: 22px;
+          background: rgba(255, 255, 255, 0.68);
+          box-shadow: 0 12px 30px rgba(17, 17, 17, 0.035);
+        }
+
+        .pilot-callout-copy { display: grid; gap: 4px; }
+        .pilot-callout-title {
+          margin: 0;
+          color: #111111;
+          font-size: 1rem;
+          font-weight: 700;
+          letter-spacing: -0.015em;
+        }
+        .pilot-callout-text {
+          margin: 0;
+          color: #6b6258;
+          font-size: 0.86rem;
+          line-height: 1.55;
+        }
+        .pilot-callout-link { flex: 0 0 auto; }
+
         .feat {
           padding: 28px 24px;
           border: 1px solid rgba(17, 17, 17, 0.06);
@@ -533,6 +564,11 @@ export default function Home() {
           .feat {
             padding: 24px 20px !important;
           }
+          .pilot-callout {
+            align-items: flex-start;
+            flex-direction: column;
+            padding: 20px;
+          }
 
           .demo-nudge {
             right: 16px;
@@ -579,11 +615,11 @@ export default function Home() {
           Lad kunderne få svar, mens I laver noget andet.
         </motion.h1>
         <motion.p className="lead" variants={fadeUp}>
-          Vi bygger og opsætter en chatbot ud fra jeres webshop. I afprøver den på siden i 14 dage og ser præcis, hvad kunderne spørger om.
+          Udfyld opsætningen, så bygger vi en chatbot ud fra jeres webshop og gør den klar til jeres hjemmeside.
         </motion.p>
         <motion.div className="cta-row" variants={fadeUp}>
-          <Link href="/pilot" className="btn btn-primary">
-            Få en gratis 14-dages pilot
+          <Link href="/setup" className="btn btn-primary">
+            Opsæt din chatbot
           </Link>
           <button onClick={handleDemoClick} className="btn btn-outline">
             Se demo
@@ -610,6 +646,23 @@ export default function Home() {
           </motion.div>
         ))}
       </motion.div>
+
+      <motion.aside
+        className="pilot-callout"
+        initial={{ opacity: 0, y: 16 }}
+        whileInView={{ opacity: 1, y: 0 }}
+        viewport={{ once: true, margin: "-40px" }}
+        transition={{ duration: 0.5, ease }}
+        aria-label="Gratis prøveperiode"
+      >
+        <div className="pilot-callout-copy">
+          <p className="pilot-callout-title">Vil I prøve den først?</p>
+          <p className="pilot-callout-text">Få en gratis 14-dages pilot uden betalingskort eller binding.</p>
+        </div>
+        <Link href="/pilot" className="btn btn-outline pilot-callout-link">
+          Start 14 dage gratis
+        </Link>
+      </motion.aside>
 
       {/* Platforms — scroll-triggered with logo stagger */}
       <motion.div
