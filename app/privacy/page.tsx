@@ -56,8 +56,6 @@ export default function PrivacyPolicy() {
           <address className="not-italic">
             <strong>EmbedBot / Axel Bødker Frederiksen</strong>
             <br />
-            Smallegade 42, 4. tv.
-            <br />
             Telefon: <a href="tel:+4591551250">+45 91 55 12 50</a>
             <br />
             E-mail: <a href="mailto:axel@embedbot.dk">axel@embedbot.dk</a>
@@ -431,8 +429,6 @@ export default function PrivacyPolicy() {
           </p>
           <address className="not-italic">
             <strong>Axel Bødker Frederiksen / EmbedBot</strong>
-            <br />
-            Smallegade 42, 4. tv.
             <br />
             <a href="tel:+4591551250">+45 91 55 12 50</a>
             <br />

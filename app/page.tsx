@@ -688,7 +688,7 @@ export default function Home() {
         viewport={{ once: true }}
         transition={{ duration: 0.7, delay: 0.15 }}
       >
-        <span>EmbedBot / Axel Bødker Frederiksen · Smallegade 42, 4. tv.</span>
+        <span>EmbedBot / Axel Bødker Frederiksen</span>
         <Link href="/dashboard">Allerede kunde? Log ind her →</Link>
         <span aria-hidden="true">·</span>
         <Link href="/privacy">Privatliv</Link>
