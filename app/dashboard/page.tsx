@@ -14,8 +14,10 @@ import {
 import { createClient } from "@/lib/supabase";
 import { isBusinessSubscriptionActive } from "@/lib/subscription";
 import styles from "./dashboard.module.css";
+import CommercePanel from "./commerce-panel";
+import TicketsPanel from "./tickets-panel";
 
-type DashboardView = "overview" | "messages" | "conversations" | "leads" | "knowledge" | "behavior" | "appearance" | "installation" | "analytics" | "billing" | "settings";
+type DashboardView = "integrations" | "tickets" | "overview" | "messages" | "conversations" | "leads" | "knowledge" | "behavior" | "appearance" | "installation" | "analytics" | "billing" | "settings";
 
 type Business = {
   id: string;
@@ -103,9 +105,11 @@ const NAV_PRIMARY: NavItem[] = [
   { view: "overview", label: "Overblik", icon: LayoutDashboard },
   { view: "messages", label: "Beskeder", icon: Inbox, badge: "messages" },
   { view: "conversations", label: "Samtaler", icon: MessagesSquare, badge: "attention" },
+  { view: "tickets", label: "Supportsager", icon: ReceiptText },
   { view: "leads", label: "Leads", icon: UserRoundPlus },
 ];
 const NAV_IMPROVE: NavItem[] = [
+  { view: "integrations", label: "Integrationer", icon: ShieldCheck },
   { view: "knowledge", label: "Viden & svar", icon: BookOpenText },
   { view: "behavior", label: "Adfærd", icon: SlidersHorizontal },
   { view: "appearance", label: "Udseende", icon: Palette },
@@ -168,6 +172,8 @@ const APPEARANCE_FIELDS: FieldDefinition[] = [
 const ALL_FIELDS = [...IDENTITY_FIELDS, ...CONTACT_FIELDS, ...KNOWLEDGE_FIELDS, ...BEHAVIOR_FIELDS, ...APPEARANCE_FIELDS];
 
 const VIEW_COPY: Record<DashboardView, { eyebrow: string; title: string; description: string }> = {
+  integrations: { eyebrow: "Din webshop", title: "Integrationer", description: "Forbind butikkens data med chatbotten, og vælg hvor supportnotifikationer skal sendes." },
+  tickets: { eyebrow: "Kundeservice", title: "Supportsager", description: "Følg op på spørgsmål, klager og henvendelser, der kræver din hjælp." },
   overview: { eyebrow: "Dit arbejdsområde", title: "Overblik", description: "Det vigtigste om din chatbot — og hvad der kræver din opmærksomhed." },
   messages: { eyebrow: "Fra EmbedBot", title: "Beskeder", description: "Chatbot-demoer, opdateringer og praktiske beskeder fra EmbedBot." },
   conversations: { eyebrow: "Kundedialog", title: "Samtaler", description: "Gennemgå kundernes spørgsmål og find svar, der kan forbedres." },
@@ -291,6 +297,7 @@ export default function DashboardPage() {
   const supabase = useMemo(() => createClient(), []);
   const [analyticsAnchor] = useState(() => Date.now());
   const [loading, setLoading] = useState(true);
+  const [dashboardPreview, setDashboardPreview] = useState(false);
   const [email, setEmail] = useState("");
   const [businesses, setBusinesses] = useState<Business[]>([]);
   const [selectedBusinessId, setSelectedBusinessId] = useState("");
@@ -319,12 +326,15 @@ export default function DashboardPage() {
   useEffect(() => {
     const requestedView = new URLSearchParams(window.location.search).get("view");
     if (requestedView && requestedView in VIEW_COPY) setActiveView(requestedView as DashboardView);
+    const oauth = new URLSearchParams(window.location.search).get("commerce");
+    if (oauth) { setActiveView("integrations"); if (oauth === "connected") setToast("Shopify er forbundet."); else if (oauth === "woocommerce_return") setToast("Godkendelsen er afsluttet. Forbindelsesstatus vises efter serverens test."); else setActionError("Shopify kunne ikke forbindes. Kontrollér appopsætning, læseadgang og godkendelse af kundedata."); }
   }, []);
 
   useEffect(() => {
     let mounted = true;
     async function loadDashboard() {
       if (process.env.NODE_ENV === "development" && new URLSearchParams(window.location.search).get("preview") === "1") {
+        setDashboardPreview(true);
         const previewBusiness: Business = {
           id: "11111111-1111-4111-8111-111111111111", name: "Nordic Living", website_url: "https://example.com",
           industry: "Webshop", description: "Dansk interiør til hverdagen", support_email: "hej@nordicliving.dk",
@@ -416,6 +426,11 @@ export default function DashboardPage() {
   }, [router, supabase]);
 
   useEffect(() => { if (!toast) return; const timer = window.setTimeout(() => setToast(""), 3200); return () => window.clearTimeout(timer); }, [toast]);
+
+  useEffect(() => {
+    const requestedId = new URLSearchParams(window.location.search).get("business_id");
+    if (requestedId && businesses.some(b => b.id === requestedId)) setSelectedBusinessId(requestedId);
+  }, [businesses]);
 
   const selectedBusiness = useMemo(() => businesses.find((business) => business.id === selectedBusinessId) || businesses[0] || null, [businesses, selectedBusinessId]);
   const selectedSubscription = useMemo(() => subscriptions.find((subscription) => subscription.businessId === selectedBusiness?.id) || null, [selectedBusiness, subscriptions]);
@@ -743,7 +758,7 @@ export default function DashboardPage() {
   }
 
   function renderSettings() { return <>{renderPageHeader()}<div style={{ display: "grid", gap: 16 }}><EditorSection title="Virksomhed" description="De grundlæggende oplysninger, kunden ser og botten bruger." fields={IDENTITY_FIELDS} draft={draft} onChange={updateDraftValue} onSave={() => void saveFields("identity", IDENTITY_FIELDS)} saving={savingSection === "identity"} /><EditorSection title="Kontakt og åbningstider" description="Bruges når botten skal sende en kunde videre til jer." fields={CONTACT_FIELDS} draft={draft} onChange={updateDraftValue} onSave={() => void saveFields("contact", CONTACT_FIELDS)} saving={savingSection === "contact"} /><section className={cx(styles.card, styles.sectionCard)}><div className={styles.cardHeader}><div><h2 className={styles.cardTitle}>Dine data og din konto</h2><p className={styles.cardDescription}>Hent en kopi, eller bed om rettelse og sletning.</p></div></div><div className={styles.buttonRow}><a className={styles.buttonSecondary} href="/api/auth/export-data"><ExternalLink size={14} />Download kontodata</a><Link className={styles.buttonSecondary} href="/data-requests">Anmod om rettelse eller sletning</Link></div></section></div></>; }
-  function renderActiveView() { switch (activeView) { case "messages": return renderCustomerMessages(); case "conversations": return renderConversations(); case "leads": return renderLeads(); case "knowledge": return renderKnowledge(); case "behavior": return renderBehavior(); case "appearance": return renderAppearance(); case "installation": return renderInstallation(); case "analytics": return renderAnalytics(); case "billing": return renderBilling(); case "settings": return renderSettings(); default: return renderOverview(); } }
+  function renderActiveView() { switch (activeView) { case "integrations": return <>{renderPageHeader()}{selectedBusiness ? <CommercePanel key={selectedBusiness.id} businessId={selectedBusiness.id} demo={dashboardPreview} /> : null}</>; case "tickets": return <>{renderPageHeader()}{selectedBusiness ? <TicketsPanel key={selectedBusiness.id} businessId={selectedBusiness.id} demo={dashboardPreview} /> : null}</>; case "messages": return renderCustomerMessages(); case "conversations": return renderConversations(); case "leads": return renderLeads(); case "knowledge": return renderKnowledge(); case "behavior": return renderBehavior(); case "appearance": return renderAppearance(); case "installation": return renderInstallation(); case "analytics": return renderAnalytics(); case "billing": return renderBilling(); case "settings": return renderSettings(); default: return renderOverview(); } }
   function renderNavItems(items: NavItem[]) { return items.map((item) => { const Icon = item.icon; const badgeCount = item.badge === "attention" ? analytics.missed.length : item.badge === "messages" ? unreadCustomerMessageCount : 0; return <button className={cx(styles.navButton, activeView === item.view && styles.navActive)} type="button" key={item.view} onClick={() => changeView(item.view)}><Icon size={17} aria-hidden="true" /><span>{item.label}</span>{badgeCount ? <span className={styles.navBadge}>{badgeCount}</span> : null}</button>; }); }
 
   if (loading) return <main id="main-content" className={styles.loadingRoot}><div className={styles.loadingCard}><span className={styles.spinner} />Gør dit dashboard klar…</div></main>;

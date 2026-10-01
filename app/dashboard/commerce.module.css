@@ -1,0 +1,45 @@
+.stack { display: grid; gap: 20px; min-width: 0; }
+.section { padding: 26px; display: grid; gap: 22px; min-width: 0; }
+.heading { display: flex; gap: 14px; align-items: flex-start; }
+.heading > div:not(.icon) { flex: 1; min-width: 0; }
+.section h2 { font-size: 17px; font-weight: 650; margin: 0 0 6px; letter-spacing: -.025em; }
+.section h3 { font-size: 13px; font-weight: 650; margin: 0 0 10px; }
+.heading p, .connected p { margin: 0; color: var(--dash-muted); font-size: 12px; line-height: 1.65; overflow-wrap: anywhere; }
+.icon { padding: 11px; background: var(--dash-accent-soft); border-radius: 13px; flex-shrink: 0; }
+.tag { border-radius: 100px; padding: 5px 9px; background: var(--dash-accent-soft); color: var(--dash-muted); font-size: 10px; font-weight: 600; white-space: nowrap; }
+.green { background: var(--dash-success-soft); color: var(--dash-success); }
+.platforms { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+.platform { display: grid; gap: 8px; justify-items: start; text-align: left; padding: 20px; border: 1px solid var(--dash-border-strong); border-radius: 14px; background: var(--dash-card); font-family: inherit; cursor: pointer; color: var(--dash-text); }
+.platform strong { font-size: 14px; }
+.platform small { font-size: 11px; color: var(--dash-muted); }
+.platform:hover { background: #f9f7f2; }
+.selected { border-color: var(--dash-text); box-shadow: 0 0 0 1px var(--dash-text); }
+.form { display: grid; gap: 14px; max-width: 640px; }
+.field { display: grid; gap: 7px; font-size: 12px; font-weight: 600; }
+.field input, .field select, .filter select { width: 100%; border: 1px solid var(--dash-border-strong); border-radius: 10px; background: white; color: var(--dash-text); padding: 11px 12px; font: inherit; font-size: 13px; }
+.field input:focus-visible, .field select:focus-visible, .filter select:focus-visible { outline: 2px solid var(--dash-success); outline-offset: 2px; }
+.twoColumns { display: grid; grid-template-columns: 1fr 1fr; gap: 18px; }
+.hint, .connected small { color: var(--dash-muted); font-size: 11px; line-height: 1.6; margin: 0; }
+.checkbox { display: flex; gap: 8px; align-items: center; font-size: 11px; }
+.checkbox input { accent-color: var(--dash-success); }
+.safety { display: flex; gap: 8px; align-items: flex-start; color: var(--dash-muted); font-size: 11px; border-top: 1px solid var(--dash-border); padding-top: 18px; }
+.safety svg { flex-shrink: 0; color: var(--dash-success); }
+.connected { border: 1px solid var(--dash-border); border-radius: 12px; padding: 18px; display: grid; gap: 12px; font-size: 13px; }
+.confirm { border-top: 1px solid var(--dash-border); padding-top: 14px; display: flex; flex-wrap: wrap; gap: 10px; }
+.confirm p { width: 100%; }
+.filter { display: flex; align-items: center; gap: 12px; font-size: 12px; }
+.filter select { width: auto; min-width: 180px; }
+.ticketList { display: grid; min-width: 0; }
+.ticketRow { display: flex; min-width: 0; width: 100%; align-items: flex-start; justify-content: space-between; gap: 20px; padding: 18px 4px; border: 0; border-bottom: 1px solid var(--dash-border); background: transparent; font: inherit; text-align: left; cursor: pointer; color: var(--dash-text); }
+.ticketRow:hover { background: var(--dash-accent-soft); }
+.ticketRow > div { min-width: 0; flex: 1; }
+.ticketRow strong { font-size: 12px; }
+.ticketRow p { max-width: 600px; font-size: 13px; margin: 5px 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.ticketRow small { color: var(--dash-muted); font-size: 10px; }
+.description p, .context p { white-space: pre-wrap; overflow-wrap: anywhere; font-size: 13px; line-height: 1.7; margin: 0 0 12px; }
+.description small { font-size: 11px; color: var(--dash-muted); }
+.context { display: grid; gap: 14px; padding: 18px; background: #f8f6f1; border-radius: 12px; }
+.context strong { font-size: 10px; color: var(--dash-muted); }
+.context p { margin: 4px 0 0; }
+.mail { display: inline-flex; gap: 8px; align-items: center; color: var(--dash-success); font-size: 13px; word-break: break-all; margin-bottom: 10px; }
+@media (max-width: 650px) { .section { padding: 18px; gap: 18px; } .heading { flex-wrap: wrap; } .heading .tag { margin-left: auto; } .platforms, .twoColumns { grid-template-columns: 1fr; } .ticketRow { gap: 10px; } }

@@ -10,6 +10,14 @@ Den indeholder:
 - Indlejrbar widget-script (`/widget.js`) til eksterne sider
 - API-endpoints til admin- og virksomhedsadministration
 
+## EmbedBot 2.0
+
+Dashboardet har nu **Integrationer** og **Supportsager**. Shopify og WooCommerce leverer live produkter, varianter og lager via fælles læseadaptere. Ordrestatus kræver en engangskode sendt til ordrens faktiske mailadresse. Kundebekræftede supportsager gemmes før mailnotifikationen og har status og beskyttelse mod dubletter.
+
+Se [opsætning, sikkerhed, fælles API-format og produktionskrav](docs/embedbot-2.0.md). De nye servervariabler er `COMMERCE_ENCRYPTION_KEY`, `COMMERCE_EMAIL_FROM`, `SHOPIFY_CLIENT_ID` og `SHOPIFY_CLIENT_SECRET`; eksisterende Supabase, Resend og app-URL bruges fortsat. Databaseopsætningen findes i `supabase/migrations/20261001173453_embedbot_commerce.sql`.
+
+Ingen rigtig webshop er live-testet endnu. Funktionen aktiveres først, når database, credentials og platformgodkendelser er konfigureret. Automatiske tests bruger mocks og isoleret PostgreSQL.
+
 ## Teknologistak
 
 - Next.js 16 (App Router)
@@ -81,7 +89,7 @@ npm run dev
 - `npm run build` - lav produktionsbuild
 - `npm run start` - kør produktionsserver
 - `npm run lint` - kør ESLint
-- `npm test` - kør enhedstests for abonnement, adgang og Stripe-mapping
+- `npm test` - kør tests for abonnement, adgang, Stripe samt webshopadaptere, ordreverificering, supportsager og sikre serverruter (Node.js 22.15+ eller 24 anbefales)
 
 ## Kerneflow
 

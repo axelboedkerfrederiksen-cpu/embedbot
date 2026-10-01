@@ -704,9 +704,218 @@
     return { row, msg, status };
   }
 
+  // The nonce lives only in this widget instance. Order inputs, OTPs and private
+  // responses never enter conversationHistory or browser storage.
+  const commerceSession = Array.from(crypto.getRandomValues(new Uint8Array(32)), n => n.toString(16).padStart(2, "0")).join("");
+  async function commerceCall(path, payload) {
+    const response = await fetch(`${apiOrigin}/api/commerce/${path}`, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ business_id: businessId, session: commerceSession, ...payload }) });
+    const data = await response.json();
+    if (!response.ok) throw new Error(data.error || "Funktionen er ikke tilgængelig lige nu.");
+    return data;
+  }
+  function element(tag, text, parent) {
+    const node = document.createElement(tag);
+    if (text !== undefined) node.textContent = text;
+    if (parent) parent.appendChild(node);
+    return node;
+  }
+  function actionButton(parent, label, action, secondary = false) {
+    const button = element("button", label, parent);
+    button.type = "button";
+    button.className = secondary ? "eb-commerce-button eb-commerce-secondary" : "eb-commerce-button";
+    button.onclick = action;
+    return button;
+  }
+  function formField(form, label, type, required = true) {
+    const wrapper = element("label", undefined, form);
+    wrapper.className = "eb-commerce-field";
+    element("span", label, wrapper);
+    const field = element(type === "textarea" ? "textarea" : "input", undefined, wrapper);
+    if (type !== "textarea") field.type = type;
+    field.required = required;
+    field.maxLength = type === "textarea" ? 5000 : 254;
+    if (type === "textarea") field.rows = 4;
+    return field;
+  }
+  function commerceCard(target) {
+    const card = element("div", undefined, target);
+    card.className = "eb-commerce-card";
+    return card;
+  }
+  function supportAction(target) {
+    actionButton(target, "Opret en supportsag", () => {
+      const message = addMessage("Beskriv din henvendelse. Du får mulighed for at gennemse og bekræfte den, inden den sendes.", false);
+      supportForm(message.msg);
+      messages.scrollTop = messages.scrollHeight;
+    }, true);
+  }
+  function notificationText(state) {
+    if (state === "sent") return "Mailnotifikationen er sendt til webshoppens mailudbyder.";
+    if (state === "failed") return "Mailnotifikationen kunne ikke sendes. Sagen er gemt i webshoppens dashboard og kan forsøges sendt igen.";
+    if (state === "not_configured") return "Mailnotifikationen er ikke konfigureret. Sagen er gemt i webshoppens dashboard.";
+    return "Sagen er gemt i webshoppens dashboard. Mailnotifikationen afventer afsendelse.";
+  }
+  function supportForm(target) {
+    const card = commerceCard(target);
+    const form = element("form", undefined, card);
+    const description = formField(form, "Hvad skal webshoppen hjælpe med?", "textarea");
+    description.minLength = 10;
+    const email = formField(form, "Din kontaktmail", "email");
+    const number = formField(form, "Ordrenummer (valgfrit)", "text", false);
+    number.maxLength = 40;
+    const contextLabel = element("label", undefined, form);
+    contextLabel.className = "eb-commerce-consent";
+    const context = element("input", undefined, contextLabel);
+    context.type = "checkbox";
+    element("span", "Vedlæg de seneste beskeder fra denne samtale", contextLabel);
+    const honeypot = element("input", undefined, form);
+    honeypot.name = "website"; honeypot.tabIndex = -1; honeypot.autocomplete = "off";
+    honeypot.setAttribute("aria-hidden", "true"); honeypot.style.display = "none";
+    const error = element("p", "", form); error.setAttribute("role", "alert");
+    const review = element("button", "Gennemse henvendelsen", form); review.type = "submit"; review.className = "eb-commerce-button";
+    form.onsubmit = async event => {
+      event.preventDefault(); if (review.disabled) return;
+      review.disabled = true; error.textContent = "";
+      try {
+        const data = await commerceCall("support", { action: "prepare", contactEmail: email.value, description: description.value, orderNumber: number.value, context: context.checked ? conversationHistory.slice(-10) : [], website: honeypot.value });
+        form.hidden = true;
+        const summary = element("div", undefined, card);
+        element("strong", "Kontrollér din henvendelse", summary);
+        element("p", data.summary.description, summary);
+        element("p", `Kontaktmail: ${data.summary.contactEmail}`, summary);
+        if (data.summary.orderNumber) element("p", `Ordrenummer: ${data.summary.orderNumber}`, summary);
+        element("p", data.text, summary);
+        const status = element("p", "", summary); status.setAttribute("role", "status");
+        const confirm = actionButton(summary, "Send henvendelse", async () => {
+          if (confirm.disabled) return;
+          confirm.disabled = true; edit.disabled = true; status.textContent = "Opretter din sag…";
+          try {
+            const result = await commerceCall("support", { action: "confirm", confirmation: data.confirmation, confirmed: true });
+            card.textContent = "";
+            element("strong", `Sagsnummer: ${result.caseNumber}`, card);
+            element("p", result.text, card);
+            element("p", notificationText(result.notificationStatus), card);
+          } catch (error) { status.textContent = error.message || "Sagen kunne ikke oprettes. Prøv igen."; confirm.disabled = false; edit.disabled = false; }
+        });
+        const edit = actionButton(summary, "Ret henvendelsen", () => { summary.remove(); form.hidden = false; description.focus(); }, true);
+      } catch (failure) { error.textContent = failure.message || "Opsummeringen kunne ikke oprettes."; }
+      finally { review.disabled = false; messages.scrollTop = messages.scrollHeight; }
+    };
+  }
+  function renderOrder(target, data) {
+    const card = commerceCard(target);
+    element("strong", `Ordrestatus: ${data.order.status}`, card);
+    element("p", `Hentet ${new Date(data.fetchedAt).toLocaleString("da-DK")}`, card);
+    if (!data.order.shipments.length) element("p", "Ingen trackingoplysninger tilgængelige fra webshoppen.", card);
+    data.order.shipments.forEach(shipment => {
+      if (shipment.carrier) element("p", shipment.carrier, card);
+      if (shipment.trackingNumber) element("p", `Trackingnummer: ${shipment.trackingNumber}`, card);
+      if (shipment.shippedAt) element("p", `Afsendt: ${new Date(shipment.shippedAt).toLocaleDateString("da-DK")}`, card);
+      const url = safeCommerceUrl(shipment.trackingUrl);
+      if (url) { const link = element("a", "Følg forsendelsen", card); link.href = url; link.target = "_blank"; link.rel = "noopener noreferrer"; }
+    });
+  }
+  function orderForm(target, data) {
+    const card = commerceCard(target), form = element("form", undefined, card);
+    const number = formField(form, data.copy?.number || "Ordrenummer", "text"); number.maxLength = 40;
+    const email = formField(form, data.copy?.email || "E-mail brugt ved købet", "email");
+    const status = element("p", "", form); status.setAttribute("role", "status");
+    const submit = element("button", data.copy?.submit || "Send engangskode", form); submit.type = "submit"; submit.className = "eb-commerce-button";
+    form.onsubmit = async event => {
+      event.preventDefault(); if (submit.disabled) return;
+      submit.disabled = true; status.textContent = "Forbereder verificering…";
+      try {
+        const request = await commerceCall("orders", { action: "request", order: { number: number.value, email: email.value } });
+        form.hidden = true;
+        const verifyForm = element("form", undefined, card);
+        element("p", request.text, verifyForm);
+        const code = formField(verifyForm, "Engangskode fra mailen", "text"); code.inputMode = "numeric"; code.autocomplete = "one-time-code"; code.pattern = "[0-9]{6}"; code.maxLength = 6; code.minLength = 6;
+        const verifyStatus = element("p", "", verifyForm); verifyStatus.setAttribute("role", "status");
+        const verify = element("button", "Bekræft og hent ordrestatus", verifyForm); verify.type = "submit"; verify.className = "eb-commerce-button";
+        actionButton(verifyForm, "Bed om en ny kode", () => { verifyForm.remove(); form.hidden = false; status.textContent = ""; }, true);
+        verifyForm.onsubmit = async event => {
+          event.preventDefault(); if (verify.disabled) return;
+          verify.disabled = true; verifyStatus.textContent = "Kontrollerer kode…";
+          try {
+            const result = await commerceCall("orders", { action: "verify", challenge: request.challenge, code: code.value });
+            card.remove(); renderOrder(target, result); messages.scrollTop = messages.scrollHeight;
+          } catch (error) { code.value = ""; verifyStatus.textContent = error.message || "Ordreopslaget kunne ikke gennemføres."; verify.disabled = false; }
+        };
+        code.focus();
+      } catch (error) { status.textContent = error.message || "Ordreopslag er ikke tilgængeligt."; }
+      finally { submit.disabled = false; messages.scrollTop = messages.scrollHeight; }
+    };
+  }
+  function safeCommerceUrl(value) {
+    try { const url = new URL(value); return url.protocol === "https:" && !url.username && !url.password ? url.href : null; } catch { return null; }
+  }
+  function productPrice(price, currency) {
+    if (price === null || !currency) return "Pris ikke bekræftet";
+    try { return new Intl.NumberFormat("da-DK", { style: "currency", currency }).format(Number(price)); } catch { return "Pris ikke bekræftet"; }
+  }
+  function renderCommerce(target, data) {
+    target.classList.remove("eb-thinking-host");
+    renderAssistantText(target, data.text || "");
+    if (data.kind === "products") {
+      (data.products || []).forEach(product => {
+        const card = commerceCard(target);
+        element("strong", product.name, card);
+        element("p", product.description, card);
+        const details = element("p", "", card);
+        const display = item => {
+          details.textContent = `${productPrice(item.price, item.currency)} · ${item.available === true ? "Lager registreret som tilgængeligt" : item.available === false ? "Ikke tilgængelig" : "Lagerstatus ikke bekræftet"}${typeof item.stock === "number" ? ` · Lager: ${item.stock}` : ""}`;
+        };
+        display(product);
+        if (product.variants?.length) {
+          const label = element("label", "Vælg variant", card); label.className = "eb-commerce-field";
+          const select = element("select", undefined, label);
+          const prompt = element("option", "Alle varianter", select); prompt.value = "";
+          product.variants.forEach((variant,index) => { const option = element("option", variant.name, select); option.value = String(index); });
+          select.onchange = () => display(select.value === "" ? product : product.variants[Number(select.value)]);
+          if (product.requestedVariant?.id) {
+            const matched = product.variants.findIndex(v => v.id === product.requestedVariant.id);
+            if (matched >= 0) { select.value = String(matched); display(product.variants[matched]); }
+          }
+        }
+        if (product.requestedVariant && !product.requestedVariant.id) element("p", product.requestedVariant.complete ? `Varianten “${product.requestedVariant.value}” blev ikke fundet blandt produktets varianter.` : `Jeg kan ikke bekræfte varianten “${product.requestedVariant.value}”, fordi listen over varianter er ufuldstændig.`, card);
+        if (!product.variantsComplete) element("p", "Der kan være flere varianter. Se alle varianter i webshoppen.", card);
+        const url = safeCommerceUrl(product.url);
+        if (url) { const link = element("a", "Se produkt i webshoppen", card); link.href = url; link.target = "_blank"; link.rel = "noopener noreferrer"; }
+      });
+      if (data.fetchedAt) element("p", `Hentet ${new Date(data.fetchedAt).toLocaleTimeString("da-DK")} · Data kan være op til ${data.cacheSeconds || 30} sekunder gamle. Pris og lager kan ændre sig.`, target);
+      if (data.more) element("p", data.moreText || "Der er flere produkter. Prøv et mere præcist produktnavn.", target);
+    }
+    if (data.needsOrderInput) orderForm(target, data);
+    if (data.needsSupportInput) supportForm(target);
+    else if (data.offerSupport) supportAction(target);
+    messages.scrollTop = messages.scrollHeight;
+  }
+  const supportShortcut = actionButton(composer, "Opret en supportsag", () => {
+    const message = addMessage("Jeg hjælper dig med at sende din henvendelse videre til webshoppen.", false);
+    supportForm(message.msg); messages.scrollTop = messages.scrollHeight;
+  }, true);
+  supportShortcut.classList.add("eb-support-shortcut");
+  const commerceStyles = element("style", undefined, document.head);
+  commerceStyles.textContent = `
+    #eb-box .eb-commerce-card { border:1px solid #e8e3db; border-radius:12px; padding:12px; margin:10px 0; background:#fdfcf9; max-width:100%; font-size:13px; }
+    #eb-box .eb-commerce-card p { margin:8px 0; white-space:pre-wrap; overflow-wrap:anywhere; font-size:12px; line-height:1.55; }
+    #eb-box .eb-commerce-card a { color:#237a57; font-size:12px; text-decoration:underline; }
+    #eb-box .eb-commerce-field { display:flex; flex-direction:column; gap:5px; margin:10px 0; font-size:12px; font-weight:500; }
+    #eb-box .eb-commerce-field input, #eb-box .eb-commerce-field textarea, #eb-box .eb-commerce-field select { border:1px solid #d8d2c8; border-radius:8px; padding:9px; background:white; color:#171716; font:inherit; font-size:13px; width:100%; min-width:0; box-sizing:border-box; }
+    #eb-box .eb-commerce-field input:focus, #eb-box .eb-commerce-field textarea:focus, #eb-box .eb-commerce-field select:focus { outline:2px solid #237a57; outline-offset:1px; }
+    #eb-box .eb-commerce-button { border:1px solid #171716; border-radius:8px; padding:8px 10px; background:#171716; color:white; font:inherit; font-size:12px; cursor:pointer; margin:6px 5px 0 0; line-height:1.4; }
+    #eb-box .eb-commerce-secondary { background:transparent; color:#575149; border-color:#d8d2c8; }
+    #eb-box .eb-commerce-button:disabled { opacity:.5; cursor:wait; }
+    #eb-box .eb-commerce-consent { display:flex; gap:8px; align-items:flex-start; font-size:11px; margin:10px 0; line-height:1.5; }
+    #eb-box .eb-commerce-consent input { width:auto; }
+    #eb-box .eb-support-shortcut { border:0; font-size:10px; padding:0; margin:0; align-self:center; text-decoration:underline; }
+  `;
+
+  let messageSending = false;
   async function sendMessage() {
     const text = input.value.trim();
-    if (!text) return;
+    if (!text || messageSending) return;
+    messageSending = true; send.disabled = true;
 
     const language = detectLanguage(text);
     const labels = language === "en"
@@ -735,6 +944,16 @@
         throw new Error(apiError);
       }
 
+      if ((res.headers.get("content-type") || "").includes("application/json")) {
+        const data = await res.json();
+        renderCommerce(botMessage.msg, data);
+        if (userMessage.status) userMessage.status.textContent = "";
+        // Structured private flows never enter the model's conversation history.
+        if (data.kind === "products") {
+          conversationHistory.push({ role: "user", content: text }, { role: "assistant", content: (data.products || []).map(p => p.name).join(", ") || data.text });
+        }
+        return;
+      }
       if (!res.body) {
         throw new Error(labels.errorReply);
       }
@@ -789,7 +1008,7 @@
         userMessage.status.textContent = labels.failed;
         userMessage.status.style.color = "#b91c1c";
       }
-    }
+    } finally { messageSending = false; send.disabled = false; }
   }
 
   send.onclick = sendMessage;
