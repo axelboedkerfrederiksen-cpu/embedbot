@@ -39,7 +39,7 @@ export async function fetchWebsiteHtml(input: string): Promise<string> {
         if (stopped) return;
         if (!addresses.length || addresses.some(a => !publicAddress(a.address))) return fail();
         const address = addresses[0];
-        active = request(url, { headers: { Accept: "text/html", "User-Agent": "EmbedBot/2.0" }, lookup: (_name, _options, callback) => callback(null, address.address, address.family) }, res => {
+        active = request(url, { family: address.family, headers: { Accept: "text/html", "User-Agent": "EmbedBot/2.0" }, lookup: (_name, _options, callback) => callback(null, address.address, address.family) }, res => {
           if ([301,302,303,307,308].includes(res.statusCode || 0) && res.headers.location) {
             clearTimeout(deadline); res.destroy();
             try { void load(websiteUrl(new URL(res.headers.location, url).href), hops + 1).then(resolve, reject); } catch { fail(); }

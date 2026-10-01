@@ -30,6 +30,9 @@ export async function shopJson<T>(url: URL, headers: Record<string, string>, bod
       const form = body instanceof URLSearchParams;
       const payload = body === undefined ? undefined : form ? body.toString() : JSON.stringify(body);
       active = request(url, {
+        // Match the pinned address family so Node requests a single DNS result.
+        // Automatic family selection otherwise expects an array from lookup.
+        family: address.family,
         method: payload ? "POST" : "GET",
         headers: { ...headers, Accept: "application/json", ...(payload ? { "Content-Type": form ? "application/x-www-form-urlencoded" : "application/json", "Content-Length": String(Buffer.byteLength(payload)) } : {}) },
         lookup: (_hostname, _options, callback) => callback(null, address.address, address.family),
