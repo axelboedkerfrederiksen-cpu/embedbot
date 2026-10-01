@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import type { LucideIcon } from "lucide-react";
@@ -16,6 +16,7 @@ import { isBusinessSubscriptionActive } from "@/lib/subscription";
 import styles from "./dashboard.module.css";
 import CommercePanel from "./commerce-panel";
 import TicketsPanel from "./tickets-panel";
+import { commerceRequest } from "@/lib/commerce-request";
 
 type DashboardView = "integrations" | "tickets" | "overview" | "messages" | "conversations" | "leads" | "knowledge" | "behavior" | "appearance" | "installation" | "analytics" | "billing" | "settings";
 
@@ -99,13 +100,13 @@ type SubscriptionInfo = {
 
 type FieldType = "text" | "textarea" | "select" | "color" | "range";
 type FieldDefinition = { key: string; label: string; type: FieldType; placeholder?: string; hint?: string; options?: Array<{ label: string; value: string }>; min?: number; max?: number; step?: number; suffix?: string };
-type NavItem = { view: DashboardView; label: string; icon: LucideIcon; badge?: "attention" | "messages" };
+type NavItem = { view: DashboardView; label: string; icon: LucideIcon; badge?: "attention" | "messages" | "tickets" };
 
 const NAV_PRIMARY: NavItem[] = [
   { view: "overview", label: "Overblik", icon: LayoutDashboard },
   { view: "messages", label: "Beskeder", icon: Inbox, badge: "messages" },
   { view: "conversations", label: "Samtaler", icon: MessagesSquare, badge: "attention" },
-  { view: "tickets", label: "Supportsager", icon: ReceiptText },
+  { view: "tickets", label: "Supportsager", icon: ReceiptText, badge: "tickets" },
   { view: "leads", label: "Leads", icon: UserRoundPlus },
 ];
 const NAV_IMPROVE: NavItem[] = [
@@ -302,6 +303,9 @@ export default function DashboardPage() {
   const [businesses, setBusinesses] = useState<Business[]>([]);
   const [selectedBusinessId, setSelectedBusinessId] = useState("");
   const [conversations, setConversations] = useState<ConversationRow[]>([]);
+  const [ticketSummary, setTicketSummary] = useState({ businessId: "", count: 0 });
+  const [ticketRefresh, setTicketRefresh] = useState(0);
+  const handleTicketsUpdated = useCallback(() => setTicketRefresh(n => n + 1), []);
   const [customerMessages, setCustomerMessages] = useState<CustomerMessage[]>([]);
   const [subscriptions, setSubscriptions] = useState<SubscriptionInfo[]>([]);
   const [subscriptionLoading, setSubscriptionLoading] = useState(false);
@@ -433,6 +437,26 @@ export default function DashboardPage() {
   }, [businesses]);
 
   const selectedBusiness = useMemo(() => businesses.find((business) => business.id === selectedBusinessId) || businesses[0] || null, [businesses, selectedBusinessId]);
+  const ticketBusinessId = selectedBusiness?.id || "";
+  const newTicketCount = ticketSummary.businessId === ticketBusinessId ? ticketSummary.count : 0;
+  useEffect(() => {
+    if (!ticketBusinessId || dashboardPreview) return;
+    let controller: AbortController | undefined;
+    const refresh = () => {
+      if (document.visibilityState === "hidden") return;
+      controller?.abort();
+      const current = new AbortController();
+      controller = current;
+      void commerceRequest(`/api/dashboard/tickets?business_id=${encodeURIComponent(ticketBusinessId)}&summary=1`, undefined, current.signal)
+        .then(data => { if (!current.signal.aborted) setTicketSummary({ businessId: ticketBusinessId, count: data.newCount }); })
+        .catch(() => { /* Keep the last known count on a temporary network error. */ });
+    };
+    refresh();
+    const timer = window.setInterval(refresh, 30000);
+    window.addEventListener("focus", refresh);
+    document.addEventListener("visibilitychange", refresh);
+    return () => { controller?.abort(); window.clearInterval(timer); window.removeEventListener("focus", refresh); document.removeEventListener("visibilitychange", refresh); };
+  }, [ticketBusinessId, dashboardPreview, ticketRefresh]);
   const selectedSubscription = useMemo(() => subscriptions.find((subscription) => subscription.businessId === selectedBusiness?.id) || null, [selectedBusiness, subscriptions]);
   const selectedConversations = useMemo(() => conversations.filter((conversation) => conversation.business_id === selectedBusiness?.id), [conversations, selectedBusiness]);
   const selectedCustomerMessages = useMemo(() => customerMessages.filter((message) => message.business_id === selectedBusiness?.id), [customerMessages, selectedBusiness]);
@@ -758,8 +782,8 @@ export default function DashboardPage() {
   }
 
   function renderSettings() { return <>{renderPageHeader()}<div style={{ display: "grid", gap: 16 }}><EditorSection title="Virksomhed" description="De grundlæggende oplysninger, kunden ser og botten bruger." fields={IDENTITY_FIELDS} draft={draft} onChange={updateDraftValue} onSave={() => void saveFields("identity", IDENTITY_FIELDS)} saving={savingSection === "identity"} /><EditorSection title="Kontakt og åbningstider" description="Bruges når botten skal sende en kunde videre til jer." fields={CONTACT_FIELDS} draft={draft} onChange={updateDraftValue} onSave={() => void saveFields("contact", CONTACT_FIELDS)} saving={savingSection === "contact"} /><section className={cx(styles.card, styles.sectionCard)}><div className={styles.cardHeader}><div><h2 className={styles.cardTitle}>Dine data og din konto</h2><p className={styles.cardDescription}>Hent en kopi, eller bed om rettelse og sletning.</p></div></div><div className={styles.buttonRow}><a className={styles.buttonSecondary} href="/api/auth/export-data"><ExternalLink size={14} />Download kontodata</a><Link className={styles.buttonSecondary} href="/data-requests">Anmod om rettelse eller sletning</Link></div></section></div></>; }
-  function renderActiveView() { switch (activeView) { case "integrations": return <>{renderPageHeader()}{selectedBusiness ? <CommercePanel key={selectedBusiness.id} businessId={selectedBusiness.id} websiteUrl={selectedBusiness.website_url || ""} demo={dashboardPreview} /> : null}</>; case "tickets": return <>{renderPageHeader()}{selectedBusiness ? <TicketsPanel key={selectedBusiness.id} businessId={selectedBusiness.id} demo={dashboardPreview} /> : null}</>; case "messages": return renderCustomerMessages(); case "conversations": return renderConversations(); case "leads": return renderLeads(); case "knowledge": return renderKnowledge(); case "behavior": return renderBehavior(); case "appearance": return renderAppearance(); case "installation": return renderInstallation(); case "analytics": return renderAnalytics(); case "billing": return renderBilling(); case "settings": return renderSettings(); default: return renderOverview(); } }
-  function renderNavItems(items: NavItem[]) { return items.map((item) => { const Icon = item.icon; const badgeCount = item.badge === "attention" ? analytics.missed.length : item.badge === "messages" ? unreadCustomerMessageCount : 0; return <button className={cx(styles.navButton, activeView === item.view && styles.navActive)} type="button" key={item.view} onClick={() => changeView(item.view)}><Icon size={17} aria-hidden="true" /><span>{item.label}</span>{badgeCount ? <span className={styles.navBadge}>{badgeCount}</span> : null}</button>; }); }
+  function renderActiveView() { switch (activeView) { case "integrations": return <>{renderPageHeader()}{selectedBusiness ? <CommercePanel key={selectedBusiness.id} businessId={selectedBusiness.id} websiteUrl={selectedBusiness.website_url || ""} demo={dashboardPreview} /> : null}</>; case "tickets": return <>{renderPageHeader()}{selectedBusiness ? <TicketsPanel key={selectedBusiness.id} businessId={selectedBusiness.id} demo={dashboardPreview} onUpdated={handleTicketsUpdated} /> : null}</>; case "messages": return renderCustomerMessages(); case "conversations": return renderConversations(); case "leads": return renderLeads(); case "knowledge": return renderKnowledge(); case "behavior": return renderBehavior(); case "appearance": return renderAppearance(); case "installation": return renderInstallation(); case "analytics": return renderAnalytics(); case "billing": return renderBilling(); case "settings": return renderSettings(); default: return renderOverview(); } }
+  function renderNavItems(items: NavItem[]) { return items.map((item) => { const Icon = item.icon; const badgeCount = item.badge === "attention" ? analytics.missed.length : item.badge === "messages" ? unreadCustomerMessageCount : item.badge === "tickets" ? newTicketCount : 0; return <button className={cx(styles.navButton, activeView === item.view && styles.navActive)} type="button" key={item.view} onClick={() => changeView(item.view)}><Icon size={17} aria-hidden="true" /><span>{item.label}</span>{badgeCount ? <span className={styles.navBadge} aria-label={item.badge === "tickets" ? `${badgeCount} nye supportsager` : undefined}>{badgeCount}</span> : null}</button>; }); }
 
   if (loading) return <main id="main-content" className={styles.loadingRoot}><div className={styles.loadingCard}><span className={styles.spinner} />Gør dit dashboard klar…</div></main>;
 

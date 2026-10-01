@@ -7,7 +7,7 @@ import ui from "./commerce.module.css";
 type Ticket = { id: string; case_number: number; contact_email: string; description: string; order_number: string | null; context: { role: string; content: string }[]; status: string; notification_status: string; created_at: string };
 const statuses: Record<string,string> = { new: "Ny", in_progress: "Under behandling", closed: "Afsluttet" };
 const mailStatuses: Record<string,string> = { pending: "Afventer afsendelse", sending: "Afsendelse behandles", sent: "Sendt til mailudbyder", failed: "Mail kunne ikke sendes", not_configured: "Mail er ikke konfigureret" };
-export default function TicketsPanel({ businessId, demo = false }: { businessId: string; demo?: boolean }) {
+export default function TicketsPanel({ businessId, demo = false, onUpdated }: { businessId: string; demo?: boolean; onUpdated?: () => void }) {
   const [tickets, setTickets] = useState<Ticket[]>([]);
   const [status, setStatus] = useState("");
   const [activeId, setActiveId] = useState("");
@@ -26,7 +26,7 @@ export default function TicketsPanel({ businessId, demo = false }: { businessId:
   async function update(action: string, fields: Record<string,unknown> = {}) {
     if (!active) return;
     setBusy(true); setError("");
-    try { await commerceRequest("/api/dashboard/tickets", { business_id: businessId, id: active.id, action, ...fields }); setReload(n => n + 1); } catch (error) { setError(error instanceof Error ? error.message : "Sagen kunne ikke opdateres."); } finally { setBusy(false); }
+    try { await commerceRequest("/api/dashboard/tickets", { business_id: businessId, id: active.id, action, ...fields }); setReload(n => n + 1); onUpdated?.(); } catch (error) { setError(error instanceof Error ? error.message : "Sagen kunne ikke opdateres."); } finally { setBusy(false); }
   }
   return <div className={ui.stack}>
     {error ? <div className={styles.errorBanner} role="alert">{error}</div> : null}

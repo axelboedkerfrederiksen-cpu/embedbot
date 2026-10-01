@@ -13,13 +13,13 @@ export async function testDatabase() {
   await pg.exec(await readFile(new URL("../../sql/add_website_sources.sql", import.meta.url), "utf8"));
   const column = (name: string) => { if (!/^[a-z_]+$/.test(name)) throw new Error("Invalid test column"); return name; };
   class Query {
-    table: string; operation = "select"; values: Record<string, unknown> = {}; filters: [string,string,unknown][] = []; selected = "*"; returning = false; conflict = ""; ignore = false;
+    table: string; operation = "select"; values: Record<string, unknown> = {}; filters: [string,string,unknown][] = []; selected = "*"; countOnly = false; returning = false; conflict = ""; ignore = false;
     constructor(table: string) { this.table = column(table); }
     insert(value: Record<string,unknown>) { this.operation = "insert"; this.values = value; return this; }
     upsert(value: Record<string,unknown>, options: { onConflict?: string; ignoreDuplicates?: boolean } = {}) { this.insert(value); this.conflict = options.onConflict || "business_id"; this.ignore = options.ignoreDuplicates || false; return this; }
     delete() { this.operation = "delete"; return this; }
     update(value: Record<string,unknown>) { this.operation = "update"; this.values = value; return this; }
-    select(value = "*") { this.selected = value; this.returning = this.operation !== "select"; return this; }
+    select(value = "*", options: {count?: string; head?: boolean} = {}) { this.countOnly = options.count === "exact" && options.head === true; this.selected = value; this.returning = this.operation !== "select"; return this; }
     eq(name: string, value: unknown) { this.filters.push([name,"=",value]); return this; }
     neq(name: string, value: unknown) { this.filters.push([name,"<>",value]); return this; }
     in(name: string, value: unknown[]) { this.filters.push([name,"in",value]); return this; }
@@ -30,7 +30,7 @@ export async function testDatabase() {
         const add = (v: unknown) => { params.push(v); return `$${params.length}`; };
         const fields = this.selected === "*" ? "*" : this.selected.split(",").map(name => column(name.trim())).join(",");
         let sql = "";
-        if (this.operation === "select") sql = `select ${fields} from public.${this.table}`;
+        if (this.operation === "select") sql = `select ${this.countOnly ? "count(*) as total" : fields} from public.${this.table}`;
         if (this.operation === "insert") {
           const keys = Object.keys(this.values);
           sql = `insert into public.${this.table} (${keys.map(column).join(",")}) values (${keys.map(k => add(k === "context" ? JSON.stringify(this.values[k]) : this.values[k])).join(",")})`;
@@ -40,8 +40,8 @@ export async function testDatabase() {
         if (this.operation === "update") sql = `update public.${this.table} set ${Object.entries(this.values).map(([k,v]) => `${column(k)}=${add(v)}`).join(",")}`;
         if (this.filters.length) sql += " where " + this.filters.map(([name,op,value]) => op === "in" ? `${column(name)} = any(${add(value)}::text[])` : op === "refresh" ? `(${column(name)} is null or ${column(name)} < ${add(value)}::timestamptz)` : `${column(name)} ${op} ${add(value)}`).join(" and ");
         if (this.returning) sql += ` returning ${fields}`;
-        const result = await pg.query(sql, params);
-        return { data: single ? result.rows[0] || null : result.rows, error: null };
+        const result = await pg.query<Record<string, unknown>>(sql, params);
+        return { data: this.countOnly ? null : single ? result.rows[0] || null : result.rows, count: this.countOnly ? Number(result.rows[0]?.total) : null, error: null };
       } catch (error) { return { data: null, error }; }
     }
     order() { return this; }

@@ -6,6 +6,11 @@ export const runtime = "nodejs";
 export async function GET(req: NextRequest) {
   try {
     const { db, business } = await owner(req, req.nextUrl.searchParams.get("business_id"));
+    if (req.nextUrl.searchParams.get("summary") === "1") {
+      const { count, error } = await db.from("commerce_tickets").select("id", { count: "exact", head: true }).eq("business_id", business.id).eq("status", "new");
+      if (error) throw new CommerceError("Supportsager er ikke konfigureret endnu.");
+      return json({ newCount: count || 0 });
+    }
     const status = req.nextUrl.searchParams.get("status") || "";
     let query = db.from("commerce_tickets").select("id,case_number,contact_email,description,order_number,customer_verified,context,status,notification_status,notification_attempts,notification_first_attempt_at,created_at,updated_at").eq("business_id", business.id).order("created_at", { ascending: false }).limit(100);
     if (["new","in_progress","closed"].includes(status)) query = query.eq("status", status);

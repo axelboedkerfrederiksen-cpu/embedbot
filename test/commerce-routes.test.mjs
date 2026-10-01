@@ -117,6 +117,19 @@ test('dashboard HTTP routes require login, enforce owner isolation and reject cr
   const result=await commerce.GET(new NextRequest(`${origin}/api/dashboard/commerce?business_id=${own}`)); assert.equal(result.status,200);
   assert.equal((await result.json()).notificationEmail,'owner@example.com');
 });
+test('support badge counts all new cases for the owner and decreases after status changes',async () => {
+  const userId=randomUUID(),business_id=await tenant(userId),other=await tenant();
+  state.user={id:userId};
+  await database.pg.query("insert into commerce_tickets(business_id,submission_key,contact_email,description,status) select $1,'badge-' || n,'customer@example.com','Please help me with my question','new' from generate_series(1,105) n",[business_id]);
+  await database.pg.query("insert into commerce_tickets(business_id,submission_key,contact_email,description,status) values($1,'closed','customer@example.com','A completed customer question','closed'),($2,'other','customer@example.com','A different business question','new')",[business_id,other]);
+  const url=`${origin}/api/dashboard/tickets?business_id=${business_id}&summary=1`;
+  assert.deepEqual(await (await tickets.GET(new NextRequest(url))).json(),{newCount:105});
+  assert.equal((await tickets.GET(new NextRequest(`${origin}/api/dashboard/tickets?business_id=${other}&summary=1`))).status,404);
+  const id=(await database.pg.query("select id from commerce_tickets where business_id=$1 and status='new' limit 1",[business_id])).rows[0].id;
+  assert.equal((await tickets.POST(request('/api/dashboard/tickets',{business_id,id,action:'status',status:'in_progress'}))).status,200);
+  assert.deepEqual(await (await tickets.GET(new NextRequest(url))).json(),{newCount:104});
+  state.user=null;assert.equal((await tickets.GET(new NextRequest(url))).status,401);
+});
 test('notification email saves without a commerce key and retains ownership, validation and throttling',async () => {
   const userId=randomUUID(),business_id=await tenant(userId),other=await tenant();
   state.user={id:userId};
