@@ -22,14 +22,19 @@ export async function POST(req: NextRequest) {
   try {
     const input = await body(req);
     const { db, business, user } = await owner(req, input.business_id, true);
-    await limit(db, req, business.id, "integration", 15, 900);
     if (input.action === "settings") {
+      // Owner-only settings contain no webshop credentials or private proofs.
+      // Limit by bot without depending on the optional commerce encryption key.
+      const { data: limited, error: rateError } = await db.rpc("enforce_chat_rate_limit", { p_ip_hash: `commerce-settings:${business.id}`, p_limit: 15, p_window_seconds: 900 });
+      if (rateError) throw new CommerceError("Beskyttelsen mod gentagne forsøg er ikke konfigureret.");
+      if (limited === true) throw new CommerceError("For mange forsøg. Vent lidt og prøv igen.", 429);
       const email = typeof input.notificationEmail === "string" ? input.notificationEmail.trim().toLowerCase() : "";
       if (email && !validEmail(email)) throw new CommerceError("Indtast en gyldig e-mailadresse.", 400);
       const { error } = await db.from("commerce_settings").upsert({ business_id: business.id, notification_email: email || null, updated_at: new Date().toISOString() });
       if (error) throw new CommerceError("Supportsager er ikke konfigureret endnu.");
       return json({ success: true });
     }
+    await limit(db, req, business.id, "integration", 15, 900);
     if (input.action === "disconnect") {
       const { error } = await db.from("commerce_integrations").update({ credentials: null, status: "disconnected", revision: randomUUID(), updated_at: new Date().toISOString() }).eq("business_id", business.id);
       if (error) throw new CommerceError("Forbindelsen kunne ikke afbrydes.");

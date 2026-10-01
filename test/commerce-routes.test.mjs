@@ -95,6 +95,22 @@ test('dashboard HTTP routes require login, enforce owner isolation and reject cr
   const result=await commerce.GET(new NextRequest(`${origin}/api/dashboard/commerce?business_id=${own}`)); assert.equal(result.status,200);
   assert.equal((await result.json()).notificationEmail,'owner@example.com');
 });
+test('notification email saves without a commerce key and retains ownership, validation and throttling',async () => {
+  const userId=randomUUID(),business_id=await tenant(userId),other=await tenant();
+  state.user={id:userId};
+  const savedKey=process.env.COMMERCE_ENCRYPTION_KEY;
+  delete process.env.COMMERCE_ENCRYPTION_KEY;
+  try {
+    const input={business_id,action:'settings',notificationEmail:' Owner@Example.com '};
+    assert.equal((await commerce.POST(request('/api/dashboard/commerce',{...input,business_id:other}))).status,404);
+    assert.equal((await commerce.POST(request('/api/dashboard/commerce',input,'https://evil.example'))).status,403);
+    assert.equal((await commerce.POST(request('/api/dashboard/commerce',{...input,notificationEmail:'invalid'}))).status,400);
+    assert.equal((await commerce.POST(request('/api/dashboard/commerce',input))).status,200);
+    assert.equal((await database.pg.query('select notification_email from commerce_settings where business_id=$1',[business_id])).rows[0].notification_email,'owner@example.com');
+    for(let n=0;n<12;n++) assert.equal((await commerce.POST(request('/api/dashboard/commerce',input))).status,200);
+    assert.equal((await commerce.POST(request('/api/dashboard/commerce',input))).status,429);
+  } finally { process.env.COMMERCE_ENCRYPTION_KEY=savedKey; }
+});
 test('WooCommerce authorizes read scope and receives credentials exclusively in the server callback',async () => {
   const userId=randomUUID(), business_id=await tenant(userId); state.user={id:userId}; state.jobs=[];
   const response=await commerce.POST(request('/api/dashboard/commerce',{business_id,action:'woocommerce',origin:'https://shop.example',currency:'DKK'}));
