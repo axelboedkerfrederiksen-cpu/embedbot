@@ -30,7 +30,7 @@ De eksisterende Supabase-, OpenAI-, login- og Resend-indstillinger bruges fortsa
 | Variabel | Betydning |
 | --- | --- |
 | `COMMERCE_ENCRYPTION_KEY` | Tilfældig 32-byte nøgle kodet som base64; præcis 44 tegn inklusive afsluttende `=`. Kun server. |
-| `COMMERCE_EMAIL_FROM` | Verificeret Resend-afsender, fx `EmbedBot <support@dit-domæne.dk>`. |
+| `COMMERCE_EMAIL_FROM` | Valgfri verificeret Resend-afsender. Uden override bruges appens eksisterende afsender `EmbedBot <axel@embedbot.dk>`. Domænet skal fortsat være verificeret hos Resend. |
 | `RESEND_API_KEY` | Eksisterende servernøgle til Resend. |
 | `SHOPIFY_CLIENT_ID` | Client ID fra Shopify Dev Dashboard. |
 | `SHOPIFY_CLIENT_SECRET` | Serverhemmelighed til Shopify OAuth. |

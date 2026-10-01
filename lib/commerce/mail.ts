@@ -1,10 +1,11 @@
 import { resend } from "../resend.ts";
 import type { SupabaseClient } from "@supabase/supabase-js";
-export const mailConfigured = () => Boolean(process.env.RESEND_API_KEY?.trim() && process.env.COMMERCE_EMAIL_FROM?.trim());
+export const commerceEmailFrom = () => process.env.COMMERCE_EMAIL_FROM?.trim() || "EmbedBot <axel@embedbot.dk>";
+export const mailConfigured = () => Boolean(process.env.RESEND_API_KEY?.trim());
 export type Ticket = { id: string; business_id: string; case_number: number; contact_email: string; description: string; order_number: string | null; context: { role: string; content: string }[]; status: string; notification_email: string | null; notification_status: string; notification_attempts: number; notification_first_attempt_at: string | null; created_at: string };
 export type MailSender = (ticket: Ticket) => Promise<string>;
 export const sendTicket: MailSender = async ticket => {
-  const { data, error } = await resend.emails.send({ from: process.env.COMMERCE_EMAIL_FROM!, to: ticket.notification_email!, replyTo: ticket.contact_email, subject: `Ny supportsag EB-${ticket.case_number}`, text: `Supportsag EB-${ticket.case_number}\n\nKontakt: ${ticket.contact_email}\nOrdrenummer (oplyst af kunden, ikke verificeret): ${ticket.order_number || 'Ikke angivet'}\n\n${ticket.description}\n\nKunden har eksplicit bekræftet indsendelsen. Oplysningerne er indsendt af kunden og er ikke verificeret.\n\nÅbn EmbedBot-dashboardet for samtalekontekst og status.` }, { idempotencyKey: `commerce-ticket-${ticket.id}` });
+  const { data, error } = await resend.emails.send({ from: commerceEmailFrom(), to: ticket.notification_email!, replyTo: ticket.contact_email, subject: `Ny supportsag EB-${ticket.case_number}`, text: `Supportsag EB-${ticket.case_number}\n\nKontakt: ${ticket.contact_email}\nOrdrenummer (oplyst af kunden, ikke verificeret): ${ticket.order_number || 'Ikke angivet'}\n\n${ticket.description}\n\nKunden har eksplicit bekræftet indsendelsen. Oplysningerne er indsendt af kunden og er ikke verificeret.\n\nÅbn EmbedBot-dashboardet for samtalekontekst og status.` }, { idempotencyKey: `commerce-ticket-${ticket.id}` });
   if (error || !data?.id) throw new Error("Mail unavailable");
   return data.id;
 };

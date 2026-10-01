@@ -72,8 +72,8 @@ test('support HTTP flow requires explicit confirmation, rejects cross-tenant/ses
 });
 test('support-only chatbot saves confirmed requests without a shop key or mail provider',async () => {
   const business_id=await tenant(),other=await tenant();
-  const oldKey=process.env.COMMERCE_ENCRYPTION_KEY,oldService=process.env.SUPABASE_SERVICE_KEY,oldMail=process.env.COMMERCE_EMAIL_FROM;
-  delete process.env.COMMERCE_ENCRYPTION_KEY; delete process.env.COMMERCE_EMAIL_FROM;
+  const oldKey=process.env.COMMERCE_ENCRYPTION_KEY,oldService=process.env.SUPABASE_SERVICE_KEY,oldMail=process.env.RESEND_API_KEY;
+  delete process.env.COMMERCE_ENCRYPTION_KEY; delete process.env.RESEND_API_KEY;
   process.env.SUPABASE_SERVICE_KEY=randomBytes(32).toString('base64');
   try {
     assert.throws(() => seal({consumerSecret:'private'},`credentials:${business_id}`));
@@ -90,7 +90,20 @@ test('support-only chatbot saves confirmed requests without a shop key or mail p
     assert.match(saved.caseNumber,/^EB-/);assert.equal(saved.notificationStatus,'not_configured');
     assert.equal((await support.POST(request('/api/commerce/support',input))).status,200);
     assert.equal((await database.pg.query('select id from commerce_tickets where business_id=$1',[business_id])).rows.length,1);
-  } finally { process.env.COMMERCE_ENCRYPTION_KEY=oldKey;process.env.SUPABASE_SERVICE_KEY=oldService;process.env.COMMERCE_EMAIL_FROM=oldMail; }
+  } finally { process.env.COMMERCE_ENCRYPTION_KEY=oldKey;process.env.SUPABASE_SERVICE_KEY=oldService;process.env.RESEND_API_KEY=oldMail; }
+});
+test('support mail reuses the app sender when no commerce sender override is configured',async () => {
+  const business_id=await tenant(),oldFrom=process.env.COMMERCE_EMAIL_FROM;
+  delete process.env.COMMERCE_EMAIL_FROM; state.mails=[];state.mailError=null;
+  try {
+    await database.pg.query('insert into commerce_settings(business_id,notification_email) values($1,$2)',[business_id,'owner@example.com']);
+    const prepared=await support.POST(request('/api/commerce/support',{business_id,session,action:'prepare',contactEmail:'customer@example.com',description:'Please help me with this question'}));
+    const draft=await prepared.json();
+    const saved=await support.POST(request('/api/commerce/support',{business_id,session,action:'confirm',confirmation:draft.confirmation,confirmed:true}));
+    assert.equal(saved.status,200);assert.equal((await saved.json()).notificationStatus,'sent');
+    assert.equal(state.mails.length,1);assert.equal(state.mails[0].message.from,'EmbedBot <axel@embedbot.dk>');
+    assert.equal(state.mails[0].message.to,'owner@example.com');assert.equal(state.mails[0].message.replyTo,'customer@example.com');
+  } finally { process.env.COMMERCE_EMAIL_FROM=oldFrom; }
 });
 test('order HTTP flow sends only to canonical API email and blocks all status until code confirmation',async () => {
   const business_id = await connectedTenant(); state.jobs=[]; state.mails=[];
@@ -164,9 +177,9 @@ test('WooCommerce authorizes read scope and receives credentials exclusively in 
   assert.equal((await database.pg.query('select credentials from commerce_integrations where business_id=$1',[business_id])).rows[0].credentials,null);
 });
 test('order verification reports missing configuration and IP throttling fails closed',async () => {
-  const business_id=await connectedTenant(); const old=process.env.COMMERCE_EMAIL_FROM; delete process.env.COMMERCE_EMAIL_FROM;
+  const business_id=await connectedTenant(); const old=process.env.RESEND_API_KEY; delete process.env.RESEND_API_KEY;
   const missing=await orders.POST(request('/api/commerce/orders',{business_id,session,action:'request',order:{number:'123',email:'customer@example.com'}})); assert.equal(missing.status,503);
-  process.env.COMMERCE_EMAIL_FROM=old;
+  process.env.RESEND_API_KEY=old;
   for(let n=0;n<16;n++) await orders.POST(request('/api/commerce/orders',{business_id,session,action:'invalid'}));
   const limited=await orders.POST(request('/api/commerce/orders',{business_id,session,action:'invalid'})); assert.equal(limited.status,429);
 });
