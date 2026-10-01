@@ -104,7 +104,6 @@ export async function GET(req: NextRequest) {
     }
 
     const business = asRecord(businessRaw);
-    console.log("Widget config from Supabase:", businessRaw);
 
     const name = asString(business?.name);
     const primaryColor = asString(business?.primary_color);

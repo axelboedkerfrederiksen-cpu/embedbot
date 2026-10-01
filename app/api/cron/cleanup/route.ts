@@ -1,24 +1,12 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@supabase/supabase-js";
 
-const supabase = createClient(
-  process.env.SUPABASE_URL!,
-  process.env.SUPABASE_SERVICE_KEY!
-);
-
 /**
  * Cron endpoint to clean up expired conversations based on retention policy
- * 
- * Call this regularly (e.g., daily) using:
- * - Vercel Cron (if deployed on Vercel)
- * - External cron service
- * - GitHub Actions
- * 
- * Requires CRON_SECRET environment variable for security
+ * Requires CRON_SECRET environment variable for security.
  */
-export async function POST(req: NextRequest) {
+async function runCleanup(req: NextRequest) {
   try {
-    // Verify request is authorized (prevent unauthorized access)
     const authHeader = req.headers.get("authorization");
     const expectedToken = process.env.CRON_SECRET?.trim();
 
@@ -37,22 +25,36 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    // Call RPC function to cleanup expired conversations
+    const supabaseUrl = process.env.SUPABASE_URL;
+    const serviceKey = process.env.SUPABASE_SERVICE_KEY;
+
+    if (!supabaseUrl || !serviceKey) {
+      console.error("Cleanup job is missing Supabase server credentials");
+      return NextResponse.json(
+        { error: "Cleanup job not configured" },
+        { status: 503 }
+      );
+    }
+
+    const supabase = createClient(supabaseUrl, serviceKey, {
+      auth: { persistSession: false, autoRefreshToken: false },
+    });
+
     const { data, error } = await supabase.rpc("cleanup_expired_conversations");
 
     if (error) {
       console.error("Cleanup error:", error);
       return NextResponse.json(
-        { error: "Cleanup failed", details: error.message },
+        { error: "Cleanup failed" },
         { status: 500 }
       );
     }
 
-    const deletedCount = data?.[0]?.deleted_count || 0;
+    const deletedCount = Number(data?.[0]?.deleted_count ?? 0);
 
     return NextResponse.json({
       success: true,
-      message: `Cleanup completed. ${deletedCount} conversations marked as deleted.`,
+      message: `Cleanup completed. ${deletedCount} conversations permanently deleted.`,
       deleted_count: deletedCount,
       timestamp: new Date().toISOString(),
     });
@@ -69,4 +71,14 @@ export async function POST(req: NextRequest) {
       { status: 500 }
     );
   }
+}
+
+// Vercel Cron invokes configured paths with GET requests.
+export async function GET(req: NextRequest) {
+  return runCleanup(req);
+}
+
+// Keep POST available for authenticated manual runs during operations.
+export async function POST(req: NextRequest) {
+  return runCleanup(req);
 }
