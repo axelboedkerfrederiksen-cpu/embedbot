@@ -57,7 +57,7 @@ export async function POST(req: NextRequest) {
       const url = new URL(`https://${domain}/admin/oauth/authorize`);
       url.search = new URLSearchParams({ client_id: process.env.SHOPIFY_CLIENT_ID, scope: SHOPIFY_SCOPES.join(","), redirect_uri: callback.href, state: nonce }).toString();
       const response = json({ url: url.href });
-      response.cookies.set("commerce_oauth", seal({ businessId: business.id, userId: user.id, domain, nonce, revision, expires: Date.now() + 600000 }, "shopify-oauth"), { httpOnly: true, secure: callback.protocol === "https:", sameSite: "lax", path: "/api/commerce/shopify/callback", maxAge: 600 });
+      response.cookies.set("commerce_oauth", seal({ businessId: business.id, userId: user.id, domain, nonce, revision, returnTo: input.returnTo === "setup" ? "setup" : "dashboard", expires: Date.now() + 600000 }, "shopify-oauth"), { httpOnly: true, secure: callback.protocol === "https:", sameSite: "lax", path: "/api/commerce/shopify/callback", maxAge: 600 });
       return response;
     }
     if (input.action === "woocommerce") {
@@ -71,7 +71,7 @@ export async function POST(req: NextRequest) {
       if (pendingError) throw new CommerceError("Integrationer er ikke konfigureret endnu.");
       const { error: stateError } = await db.from("commerce_connection_attempts").insert({ token_hash: digest(`woo-connect:${nonce}`), business_id: business.id, origin: origin.origin, currency, revision, expires_at: new Date(Date.now() + 600000).toISOString() });
       if (stateError) throw new CommerceError("Forbindelsen kunne ikke forberedes.");
-      const returnUrl = new URL("/dashboard", process.env.NEXT_PUBLIC_APP_URL);
+      const returnUrl = new URL(input.returnTo === "setup" ? "/setup" : "/dashboard", process.env.NEXT_PUBLIC_APP_URL);
       returnUrl.searchParams.set("commerce", "woocommerce_return");
       returnUrl.searchParams.set("business_id", business.id);
       const callback = new URL("/api/commerce/woocommerce/callback", process.env.NEXT_PUBLIC_APP_URL);

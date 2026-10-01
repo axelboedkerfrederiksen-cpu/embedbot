@@ -14,7 +14,8 @@ export async function GET(req: NextRequest) {
     const store = await cookies();
     const token = store.get("commerce_oauth")?.value || "";
     store.delete({ name: "commerce_oauth", path: "/api/commerce/shopify/callback" });
-    const state = unseal<{ businessId: string; userId: string; domain: string; nonce: string; revision: string; expires: number }>(token, "shopify-oauth");
+    const state = unseal<{ businessId: string; userId: string; domain: string; nonce: string; revision: string; returnTo?: string; expires: number }>(token, "shopify-oauth");
+    if (state.returnTo === "setup") { returnUrl.pathname = "/setup"; returnUrl.searchParams.set("business_id", state.businessId); }
     const params = req.nextUrl.searchParams;
     const domain = params.get("shop") || "";
     const timestamp = Number(params.get("timestamp"));

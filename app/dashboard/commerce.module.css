@@ -8,7 +8,7 @@
 .icon { padding: 11px; background: var(--dash-accent-soft); border-radius: 13px; flex-shrink: 0; }
 .tag { border-radius: 100px; padding: 5px 9px; background: var(--dash-accent-soft); color: var(--dash-muted); font-size: 10px; font-weight: 600; white-space: nowrap; }
 .green { background: var(--dash-success-soft); color: var(--dash-success); }
-.platforms { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+.platforms { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 14px; }
 .platform { display: grid; gap: 8px; justify-items: start; text-align: left; padding: 20px; border: 1px solid var(--dash-border-strong); border-radius: 14px; background: var(--dash-card); font-family: inherit; cursor: pointer; color: var(--dash-text); }
 .platform strong { font-size: 14px; }
 .platform small { font-size: 11px; color: var(--dash-muted); }
@@ -42,4 +42,5 @@
 .context strong { font-size: 10px; color: var(--dash-muted); }
 .context p { margin: 4px 0 0; }
 .mail { display: inline-flex; gap: 8px; align-items: center; color: var(--dash-success); font-size: 13px; word-break: break-all; margin-bottom: 10px; }
+.onboarding { min-height: 0; background: transparent; }
 @media (max-width: 650px) { .section { padding: 18px; gap: 18px; } .heading { flex-wrap: wrap; } .heading .tag { margin-left: auto; } .platforms, .twoColumns { grid-template-columns: 1fr; } .ticketRow { gap: 10px; } }

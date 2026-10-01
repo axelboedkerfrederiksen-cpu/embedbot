@@ -132,7 +132,7 @@ test("new tables deny browser roles, functions are service-only, and deleting a 
   await database.pg.query("delete from public.businesses where id=$1",[businessId]);
   assert.equal((await database.pg.query("select id from public.commerce_tickets where business_id=$1",[businessId])).rows.length,0);
   const sql = await readFile(new URL("../sql/add_embedbot_commerce.sql",import.meta.url),"utf8");
-  const migration = await readFile(new URL("../supabase/migrations/20261001173453_embedbot_commerce.sql",import.meta.url),"utf8");
+  const migration = await readFile(new URL("../supabase/migrations/20261001201311_embedbot_commerce.sql",import.meta.url),"utf8");
   assert.equal(sql,migration);
 });
 test("product cache isolates tenants/revisions, expires after 30 seconds and never serves stale data after errors", async () => {

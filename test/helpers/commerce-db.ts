@@ -10,12 +10,14 @@ export async function testDatabase() {
     create table public.conversations (id uuid primary key default gen_random_uuid(), business_id uuid, messages jsonb, created_at timestamptz default now());`);
   await pg.exec(await readFile(new URL("../../sql/add_embedbot_commerce.sql", import.meta.url), "utf8"));
   await pg.exec(await readFile(new URL("../../sql/create_chat_rate_limit.sql", import.meta.url), "utf8"));
+  await pg.exec(await readFile(new URL("../../sql/add_website_sources.sql", import.meta.url), "utf8"));
   const column = (name: string) => { if (!/^[a-z_]+$/.test(name)) throw new Error("Invalid test column"); return name; };
   class Query {
     table: string; operation = "select"; values: Record<string, unknown> = {}; filters: [string,string,unknown][] = []; selected = "*"; returning = false; conflict = ""; ignore = false;
     constructor(table: string) { this.table = column(table); }
     insert(value: Record<string,unknown>) { this.operation = "insert"; this.values = value; return this; }
     upsert(value: Record<string,unknown>, options: { onConflict?: string; ignoreDuplicates?: boolean } = {}) { this.insert(value); this.conflict = options.onConflict || "business_id"; this.ignore = options.ignoreDuplicates || false; return this; }
+    delete() { this.operation = "delete"; return this; }
     update(value: Record<string,unknown>) { this.operation = "update"; this.values = value; return this; }
     select(value = "*") { this.selected = value; this.returning = this.operation !== "select"; return this; }
     eq(name: string, value: unknown) { this.filters.push([name,"=",value]); return this; }
@@ -26,7 +28,7 @@ export async function testDatabase() {
       try {
         const params: unknown[] = [];
         const add = (v: unknown) => { params.push(v); return `$${params.length}`; };
-        const fields = this.selected === "*" ? "*" : this.selected.split(",").map(column).join(",");
+        const fields = this.selected === "*" ? "*" : this.selected.split(",").map(name => column(name.trim())).join(",");
         let sql = "";
         if (this.operation === "select") sql = `select ${fields} from public.${this.table}`;
         if (this.operation === "insert") {
@@ -34,6 +36,7 @@ export async function testDatabase() {
           sql = `insert into public.${this.table} (${keys.map(column).join(",")}) values (${keys.map(k => add(k === "context" ? JSON.stringify(this.values[k]) : this.values[k])).join(",")})`;
           if (this.conflict) sql += ` on conflict (${this.conflict.split(",").map(column).join(",")}) do ${this.ignore ? "nothing" : "update set " + Object.keys(this.values).filter(k => !this.conflict.split(",").includes(k)).map(k => `${column(k)}=excluded.${column(k)}`).join(",")}`;
         }
+        if (this.operation === "delete") sql = `delete from public.${this.table}`;
         if (this.operation === "update") sql = `update public.${this.table} set ${Object.entries(this.values).map(([k,v]) => `${column(k)}=${add(v)}`).join(",")}`;
         if (this.filters.length) sql += " where " + this.filters.map(([name,op,value]) => op === "in" ? `${column(name)} = any(${add(value)}::text[])` : op === "refresh" ? `(${column(name)} is null or ${column(name)} < ${add(value)}::timestamptz)` : `${column(name)} ${op} ${add(value)}`).join(" and ");
         if (this.returning) sql += ` returning ${fields}`;
@@ -42,6 +45,7 @@ export async function testDatabase() {
       } catch (error) { return { data: null, error }; }
     }
     order() { return this; }
+    returns() { return this; }
     limit() { return this; }
     maybeSingle() { return this.run(true); }
     single() { return this.run(true); }

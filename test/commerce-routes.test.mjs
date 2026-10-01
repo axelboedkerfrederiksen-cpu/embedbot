@@ -9,7 +9,7 @@ import { state } from './helpers/runtime.mjs';
 const root = fileURLToPath(new URL('../', import.meta.url));
 const fixture = name => new URL(`./helpers/${name}.mjs`, import.meta.url).href;
 registerHooks({ resolve(specifier, context, nextResolve) {
-  const mocks = { '@supabase/supabase-js': 'supabase-js', '@supabase/ssr': 'supabase-ssr', 'next/server': 'next-server', 'next/headers': 'next-headers', '@/lib/resend': 'resend' };
+  const mocks = { '@supabase/supabase-js': 'supabase-js', '@supabase/ssr': 'supabase-ssr', 'next/server': 'next-server', 'next/headers': 'next-headers', '@/lib/resend': 'resend', 'resend': 'resend' };
   if (mocks[specifier]) return { url: fixture(mocks[specifier]), shortCircuit: true };
   if (specifier.startsWith('@/')) {
     const path = resolvePath(root,specifier.slice(2));
@@ -26,13 +26,14 @@ registerHooks({ resolve(specifier, context, nextResolve) {
   return nextResolve(specifier,context);
 } });
 const { testDatabase } = await import('./helpers/commerce-db.ts');
-const { seal } = await import('../lib/commerce/security.ts');
+const { seal, unseal } = await import('../lib/commerce/security.ts');
 const { NextRequest } = await import('next/server.js');
 const support = await import('../app/api/commerce/support/route.ts');
 const orders = await import('../app/api/commerce/orders/route.ts');
 const tickets = await import('../app/api/dashboard/tickets/route.ts');
 const commerce = await import('../app/api/dashboard/commerce/route.ts');
 const wooCallback = await import('../app/api/commerce/woocommerce/callback/route.ts');
+const websiteSource = await import('../app/api/dashboard/website-source/route.ts');
 let database;
 process.env.COMMERCE_ENCRYPTION_KEY = randomBytes(32).toString('base64');
 process.env.SUPABASE_URL = 'https://mock.invalid'; process.env.SUPABASE_SERVICE_KEY = 'mock';
@@ -117,4 +118,61 @@ test('order verification reports missing configuration and IP throttling fails c
   process.env.COMMERCE_EMAIL_FROM=old;
   for(let n=0;n<16;n++) await orders.POST(request('/api/commerce/orders',{business_id,session,action:'invalid'}));
   const limited=await orders.POST(request('/api/commerce/orders',{business_id,session,action:'invalid'})); assert.equal(limited.status,429);
+});
+test('HTML upload is owner-only, needs no commerce key, stores only text and isolates replacement/removal per bot', async () => {
+  const userId=randomUUID(),business_id=await tenant(userId),other=await tenant();
+  state.user={id:userId};
+  const savedKey=process.env.COMMERCE_ENCRYPTION_KEY; delete process.env.COMMERCE_ENCRYPTION_KEY;
+  try {
+    const input={business_id,action:'html',filename:'index.html',html:'<h1>Vores HTML-butik</h1><p>Håndlavede lamper med to års garanti.</p><script>secret()</script>'};
+    assert.equal((await websiteSource.POST(request('/api/dashboard/website-source',{...input,business_id:other}))).status,404);
+    assert.equal((await websiteSource.POST(request('/api/dashboard/website-source',input,'https://evil.example'))).status,403);
+    assert.equal((await websiteSource.POST(request('/api/dashboard/website-source',input))).status,200);
+    const stored=(await database.pg.query('select * from website_sources where business_id=$1',[business_id])).rows[0];
+    assert.equal(stored.content_text.includes('secret'),false); assert.equal(stored.content_text.includes('<'),false);
+    assert.ok(stored.content_text.includes('to års garanti'));
+    const status=await websiteSource.GET(new NextRequest(`${origin}/api/dashboard/website-source?business_id=${business_id}`));
+    const summary=await status.json(); assert.equal(summary.source.source_name,'index.html'); assert.equal(summary.source.content_text,undefined);
+    assert.equal((await websiteSource.POST(request('/api/dashboard/website-source',{...input,filename:'script.js'}))).status,400);
+    assert.equal((await websiteSource.POST(request('/api/dashboard/website-source',{...input,html:'<p>Opdateret viden om butikkens services.</p>'}))).status,200);
+    assert.equal((await database.pg.query('select * from website_sources where business_id=$1',[business_id])).rows.length,1);
+    await database.pg.exec('set role authenticated');
+    await assert.rejects(database.pg.query('select * from website_sources'));
+    await database.pg.exec('reset role');
+    assert.equal((await websiteSource.POST(request('/api/dashboard/website-source',{business_id,action:'disconnect'}))).status,200);
+    assert.equal((await database.pg.query('select * from website_sources where business_id=$1',[business_id])).rows.length,0);
+  } finally { process.env.COMMERCE_ENCRYPTION_KEY=savedKey; }
+});
+test('onboarding WooCommerce authorization returns to setup and arbitrary return URLs are ignored',async()=>{
+  const userId=randomUUID(),business_id=await tenant(userId);state.user={id:userId};
+  const input={business_id,action:'woocommerce',origin:'https://shop.example',currency:'DKK',returnTo:'setup'};
+  const response=await commerce.POST(request('/api/dashboard/commerce',input));assert.equal(response.status,200);
+  const authorize=new URL((await response.json()).url),back=new URL(authorize.searchParams.get('return_url'));
+  assert.equal(back.pathname,'/setup');assert.equal(back.searchParams.get('business_id'),business_id);
+  const safe=await commerce.POST(request('/api/dashboard/commerce',{...input,returnTo:'https://evil.example'}));
+  assert.equal(new URL(new URL((await safe.json()).url).searchParams.get('return_url')).pathname,'/dashboard');
+});
+test('Shopify binds the onboarding return destination and bot to encrypted server state',async()=>{
+  const userId=randomUUID(),business_id=await tenant(userId);state.user={id:userId};
+  process.env.SHOPIFY_CLIENT_ID='mock-client';process.env.SHOPIFY_CLIENT_SECRET='mock-secret';
+  const response=await commerce.POST(request('/api/dashboard/commerce',{business_id,action:'shopify',domain:'mock.myshopify.com',returnTo:'setup'}));
+  assert.equal(response.status,200);
+  const encrypted=decodeURIComponent(response.headers.get('set-cookie').match(/commerce_oauth=([^;]+)/)[1]);
+  const stateToken=unseal(encrypted,'shopify-oauth');
+  assert.equal(stateToken.returnTo,'setup');assert.equal(stateToken.businessId,business_id);assert.equal(stateToken.userId,userId);
+  assert.ok(stateToken.expires>Date.now());
+});
+test('a local HTML source activates without a website fetch and still requires confirmed billing',async()=>{
+  await database.pg.exec(`alter table businesses add column subscription_status text, add column payment_status text, add column stripe_subscription_id text, add column subscription_updated_at timestamptz, add column activated_at timestamptz`);
+  const business_id=await tenant();
+  await database.pg.query('update businesses set activated=false,support_email=$2,name=$3 where id=$1',[business_id,'owner@example.com','HTML shop']);
+  await database.pg.query("insert into website_sources(business_id,source_kind,source_name,content_text,character_count) values($1,'html','index.html','Indhold om vores butik og dens services.',40)",[business_id]);
+  const {activateBusinessAndSendEmail}=await import('../lib/business-activation.ts');
+  assert.equal((await activateBusinessAndSendEmail(business_id)).status,402);
+  const savedFetch=globalThis.fetch;globalThis.fetch=async()=>{throw new Error('Unexpected external website request')};state.mails=[];state.mailError=null;
+  try {
+    const result=await activateBusinessAndSendEmail(business_id,{paymentConfirmed:true,subscriptionStatus:'active',paymentStatus:'paid'});
+    assert.equal(result.success,true,JSON.stringify(result));assert.equal(state.mails.length,1);
+    assert.equal((await database.pg.query('select activated from businesses where id=$1',[business_id])).rows[0].activated,true);
+  } finally {globalThis.fetch=savedFetch;}
 });

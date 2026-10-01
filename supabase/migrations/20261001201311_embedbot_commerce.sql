@@ -21,6 +21,7 @@ create table if not exists public.commerce_connection_attempts (
   expires_at timestamptz not null,
   consumed_at timestamptz
 );
+create index if not exists commerce_connection_business on public.commerce_connection_attempts(business_id);
 create index if not exists commerce_connection_expiry on public.commerce_connection_attempts(expires_at);
 create table if not exists public.commerce_settings (
   business_id uuid primary key references public.businesses(id) on delete cascade,
@@ -39,6 +40,7 @@ create table if not exists public.commerce_order_challenges (
   consumed_at timestamptz,
   created_at timestamptz not null default now()
 );
+create index if not exists commerce_challenge_business on public.commerce_order_challenges(business_id);
 create index if not exists commerce_challenge_expiry on public.commerce_order_challenges(expires_at);
 create table if not exists public.commerce_tickets (
   id uuid primary key default gen_random_uuid(),

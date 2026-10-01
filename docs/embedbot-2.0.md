@@ -4,7 +4,7 @@ Denne version udvider den eksisterende chatbot, widget og dashboard. Shopify og 
 
 ## For webshop-ejere
 
-1. Åbn **Dashboard → Integrationer**, og vælg din platform.
+1. Vælg forbindelsen i **Opsæt din chatbot → Trin 7: Forbind din hjemmeside**. Eksisterende bots kan fortsat bruge **Dashboard → Integrationer**. Godkendelse hos Shopify/WooCommerce sender dig tilbage til den samme chatbotkladde. Forbindelsen er valgfri, så du kan fortsætte til planvalg og tilkoble den senere.
 2. Shopify: angiv butikkens `*.myshopify.com`-adresse, og godkend læseadgang hos Shopify.
 3. WooCommerce: angiv den offentlige HTTPS-adresse og butikkens valuta. Du sendes til WooCommerce for at godkende **Read**. WooCommerce sender de genererede nøgler direkte til EmbedBots server; de vises ikke i dashboardet.
 4. Kontrollér forbindelsesstatus og brug **Test forbindelsen**. Afbryd forbindelsen her, hvis den ikke længere skal bruges. Det sletter EmbedBots lagrede credentials og ugyldiggør tidligere ordreudfordringer. Fjern også appen/nøglen i platformen, hvis dens platformadgang skal tilbagekaldes.
@@ -12,6 +12,16 @@ Denne version udvider den eksisterende chatbot, widget og dashboard. Shopify og 
 6. Åbn **Supportsager** for at læse kundens henvendelse, se tilvalgt samtalekontekst, ændre status og kontakte kunden via mail.
 
 Kunden gennemser en opsummering og trykker selv **Send henvendelse**. En uverificeret kunde kan oprette en sag, men mailadresse og ordrenummer mærkes som kundeoplysninger, der ikke er verificeret. En sag giver aldrig adgang til ordredata. Botten lover ikke refundering, erstatning eller en svartid uden butikkens eksplicitte konfiguration.
+
+## Almindelig hjemmeside eller HTML-fil
+
+Vælg **Hjemmeside / HTML** under opsætningen eller i dashboardet. Du kan importere én offentlig HTTPS-side eller uploade en `.html`/`.htm`-fil på højst 1 MB. Der kræves ingen Shopify-/WooCommerce-nøgle. Kun læsbar tekst gemmes; scripts, formularer, skjult markeret indhold og indlejrede sider fjernes og køres aldrig. Importen medtager op til 30.000 tegn og viser tydeligt, hvis teksten er afkortet. Ny import erstatter den tidligere import for denne bot. Du kan også fjerne importen.
+
+Dette indhold bruges direkte som afgrænset, ubetroet hjemmesidekontekst i den fælles systemprompt og er ikke et live produkt-/ordre-API. Importér igen, når siden ændres. En enkelt URL-import crawler ikke undersider og kan ikke læse indhold, der kun vises efter JavaScript-kørsel. Der følger ingen offentlig filhosting med uploaden; botten viser heller ikke sidens HTML til kunderne.
+
+En uploadet HTML-fil kan bruges under aktivering, selv om hjemmesiden endnu ikke er online. Billing-kontrollen ændres ikke. Efter opsætning indsættes EmbedBots widgetscript før `</body>` på den almindelige HTML-hjemmeside. Hosting og browserens scriptregler skal tillade EmbedBots script. Brug en lokal webserver ved lokal widgettest; private ordre-/supportformularer kræver en almindelig browser-Origin og virker ikke direkte fra `file://`.
+
+Installer `supabase/migrations/20261001201321_website_sources.sql` (eller det identiske `sql/add_website_sources.sql`, kun én af dem) før import. Den nye `website_sources`-tabel er adskilt pr. bot, RLS-beskyttet og kun tilgængelig for service-role-serverruter med ejerkontrol. Den indeholder tekst og importmetadata og slettes med botten. Import kræver det eksisterende rate-limit-skema: højst 10 importer/fjernelseshandlinger pr. time pr. bot. URL-fetch bruger kun offentlig HTTPS, DNS-pinning, kontrol af hvert redirect, højst tre redirects, et samlet 20-sekunders timeout og en 1 MB svargrænse.
 
 ## Serveropsætning
 
@@ -31,7 +41,7 @@ De eksisterende Supabase-, OpenAI-, login- og Resend-indstillinger bruges fortsa
 
 Generér krypteringsnøglen i dit sikre miljø, fx `openssl rand -base64 32`. Del den aldrig i chat, logs eller `NEXT_PUBLIC_*`-variabler. Gem nøglebackup sikkert: mister du nøglen, må integrationerne forbindes igen. Nøglerotation kræver dekryptering med den gamle nøgle og genkryptering med den nye; det sker ikke automatisk.
 
-Anvend migrationen `supabase/migrations/20261001173453_embedbot_commerce.sql` i en stagingdatabase først. Samme SQL findes i `sql/add_embedbot_commerce.sql` som alternativ til manuel installation; kør kun én af de to. Det eksisterende rate-limit-skema og RPC fra `sql/create_chat_rate_limit.sql` skal også være installeret og hærdet som i projektets eksisterende sikkerhedsmigrationer.
+Anvend migrationen `supabase/migrations/20261001201311_embedbot_commerce.sql` i en stagingdatabase først. Samme SQL findes i `sql/add_embedbot_commerce.sql` som alternativ til manuel installation; kør kun én af de to. Det eksisterende rate-limit-skema og RPC fra `sql/create_chat_rate_limit.sql` skal også være installeret og hærdet som i projektets eksisterende sikkerhedsmigrationer.
 
 Migrationen opretter fem tabeller samt tre atomare funktioner. Tabellerne har RLS og ingen adgang for `anon`/`authenticated`; service-role-serverruter kontrollerer ejerskab før dashboardadgang. Alle rækker refererer til `businesses` og slettes med botten via `ON DELETE CASCADE`. Der ændres ikke i eksisterende tabeller, login eller betalingsflow.
 
@@ -62,6 +72,12 @@ WooCommerce sender nøglerne i et server-til-server POST. Callback afviser `writ
 Alle webshopdata læses med GET fra `/wp-json/wc/v3` med Basic Authentication over HTTPS. Nøgler lægges aldrig i query-parametre. Butikkens administrator skal have adgang til produkter, ordrer og generelle indstillinger. WordPress-installationer i en undermappe, specialplugins til ordrenumre og andre særtilpasninger kræver tilpasning af adapteren; denne adapter bruger standardinstallationens origin og numeriske ordrenumre.
 
 WooCommerce core indeholder ikke trackinglinks. Adapteren læser den officielle Shipment Tracking-udvidelses `_wc_shipment_tracking_items`, når metadata findes, og returnerer kun et sikkert faktisk `custom_tracking_link`, trackingnummer og transportør. Der konstrueres aldrig et trackinglink. Hvis udvidelsen ikke er installeret eller data mangler, vises ingen trackingdata. Se [Shipment Tracking](https://woocommerce.com/document/shipment-tracking/).
+
+## Fælles systemprompt
+
+Alle chatbotter bruger `lib/chat-system-prompt.ts` via den fælles chatrute. Prompten tilpasses virksomhedens navn, branche, sprog, tone og viden. Serveren angiver særskilt, om live produkter, ordreopslag med mailkode, supportsager og supportnotifikationer er konfigureret for netop denne bot. Manglende konfiguration beskrives som utilgængelig; konfiguration er ikke en garanti for et vellykket opslag eller mailafsendelse.
+
+Prompten forklarer formularernes bekræftelsesflow, cache, privatliv og funktionernes grænser. Selve opslagene, engangskoder og sagsoprettelsen kontrolleres fortsat af serverruterne. Ejeren skal ikke kopiere den fælles prompt ind i de individuelle chatbotindstillinger. Eksisterende virksomhedsoplysninger og relevante ejerinstrukser bruges inden for de fælles sikkerhedsregler.
 
 ## Arkitektur og data
 
@@ -164,8 +180,10 @@ Ukendt pris/lager/tracking angives med `null`, aldrig med gættede værdier. `co
 
 ## Test og produktionsaktivering
 
-Kør `npm test`, `npm run lint`, `npx tsc --noEmit` og `npm run build`. Tests bruger en isoleret PGlite/PostgreSQL-database med migrations-SQL og mocks for Supabase-transport, Shopify, WooCommerce og Resend. De indeholder HTTP-handlerflows for eksplicit supportbekræftelse, mailfejl/duplikater, OTP, ejeradgang, CSRF, WooCommerce-callback og rate limiting; unit-/databasetests dækker udløb, forsøg, engangsforbrug, kryptering, tenant/session/revision, cache, refresh og RLS/grants. Ingen produktionstabeller, mails eller webshops bruges af tests.
+Kør `npm test`, `npm run lint`, `npx tsc --noEmit` og `npm run build`. Tests bruger en isoleret PGlite/PostgreSQL-database med migrations-SQL og mocks for Supabase-transport, Shopify, WooCommerce og Resend. De indeholder HTTP-handlerflows for eksplicit supportbekræftelse, mailfejl/duplikater, OTP, ejeradgang, CSRF, WooCommerce-callback og rate limiting; unit-/databasetests dækker udløb, forsøg, engangsforbrug, kryptering, tenant/session/revision, cache, refresh og RLS/grants. Ingen produktionstabeller, mails eller webshops bruges af tests. HTML-tests dækker tekstudtræk, scripts/formularer, fil-/tekstgrænser, URL-validering, ejeradgang, CSRF, isolation, opdatering/fjernelse og aktivering fra en fil uden hjemmeside-fetch. Opsætningssnapshot og return-URL testes, og browserkontrol med mocks dækker syv trin, HTML-upload, tilbage-navigation, mobil, genindlæsning og planvalg.
 
 **Rigtige webshops:** Ingen Shopify- eller WooCommerce-butik er live-testet under denne implementering. Ingen simuleret integration vises som aktiv i dashboardforhåndsvisningen. Browserkontrol bruger isolerede mocks.
 
 Før produktion skal databaseopsætningen anvendes, miljøvariablerne konfigureres, afsenderdomænet verificeres, Shopify-app/scopes/kundedata godkendes, WooCommerce-callback være tilgængelig, og begge adaptere prøves mod rigtige stagingbutikker med kendte produkter/varianter/ordrer. Bekræft mails, OTP og ordrestatus samt API-/mailfejl og genforsøg. Konfigurér scheduler, hvis automatiske genforsøg ønskes. Appen understøtter ikke annullering, refundering, ordreændring, filvedhæftning eller automatisk kundesession-verifikation i denne version.
+
+Begge nye migrationer er installeret i EmbedBots Supabase-projekt den 1. oktober 2026. Filernes versionsnumre matcher Supabases migrationshistorik. Serveradgang gennem Data API samt RLS-/funktionsrettigheder er verificeret. Dette aktiverer databaseunderstøttelsen; platform- og mailcredentials samt deployment er separate trin.

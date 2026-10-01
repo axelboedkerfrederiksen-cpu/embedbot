@@ -6,6 +6,10 @@ import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase";
 import { isBusinessSubscriptionActive } from "@/lib/subscription";
 import { normalizePlan } from "@/lib/plans";
+import CommercePanel from "../dashboard/commerce-panel";
+import dashboardStyles from "../dashboard/dashboard.module.css";
+import commerceStyles from "../dashboard/commerce.module.css";
+import { readOnboardingSnapshot } from "@/lib/onboarding";
 
 const ONBOARDING_BUSINESS_ID_KEY = "onboarding_business_id";
 const ONBOARDING_FORM_SNAPSHOT_KEY = "onboarding_form_snapshot";
@@ -27,7 +31,7 @@ export default function Home() {
   type SetupUser = { id: string; email?: string | null } | null;
 
   const initialForm = {
-    plan: "starter",
+    plan: "starter", platform: "",
     name: "", website_url: "", industry: "", description: "",
     support_email: "", phone: "", address: "", city: "",
     hours_weekday: "", hours_saturday: "", hours_sunday: "",
@@ -123,6 +127,7 @@ export default function Home() {
   function resetBusinessIdForStepOne() {
     const freshBusinessId = createBusinessId();
     clearPersistedBusinessId();
+    try { localStorage.removeItem(ONBOARDING_FORM_SNAPSHOT_KEY); } catch { /* Storage can be unavailable. */ }
     setBusinessId(freshBusinessId);
     persistBusinessId(freshBusinessId);
     return freshBusinessId;
@@ -223,7 +228,7 @@ export default function Home() {
 
       setBusinessId(storedId);
       clearPersistedBusinessId();
-      setStep(7);
+      setStep(8);
     }
 
     handleSuccessGate();
@@ -234,34 +239,40 @@ export default function Home() {
   }, [router, supabase]);
 
   useEffect(() => {
-    let isMounted = true;
-
-    supabase.auth.getUser().then(({ data }) => {
-      if (!isMounted || !data.user) {
-        return;
+    let mounted = true;
+    async function resumeSetup() {
+      if (new URLSearchParams(window.location.search).get("success") === "true") return;
+      const { data } = await supabase.auth.getUser();
+      if (!mounted || !data.user) return;
+      const params = new URLSearchParams(window.location.search);
+      const returningId = params.get("business_id");
+      let saved = null;
+      try { saved = readOnboardingSnapshot(localStorage.getItem(ONBOARDING_FORM_SNAPSHOT_KEY)); } catch { /* Use a fresh draft when storage is unavailable. */ }
+      if (saved && saved.business_id === getStoredBusinessId() && (!returningId || saved.business_id === returningId)) {
+        const { data: owned, error } = await supabase.from("businesses").select("id").eq("id", saved.business_id).eq("user_id", data.user.id).maybeSingle();
+        if (!mounted) return;
+        if (!error && owned) {
+          setBusinessId(saved.business_id);
+          setForm(current => Object.fromEntries(Object.entries(current).map(([key, value]) => [key, saved.form[key] ?? value])) as FormState);
+          setStep(params.get("commerce") ? 7 : saved.step);
+          if (params.get("commerce")) {
+            setMessageTone(params.get("commerce") === "failed" ? "error" : "info");
+            setMessage(params.get("commerce") === "connected" ? "Shopify er forbundet. Fortsæt din opsætning her." : params.get("commerce") === "failed" ? "Shopify kunne ikke forbindes. Du kan prøve igen eller fortsætte uden integration." : "Tilbage fra WooCommerce. Forbindelsesstatus vises efter serverens test.");
+          }
+          setUser(data.user); return;
+        }
       }
-
+      if (returningId) {
+        setMessage("Forbindelsen hører til en anden eller manglende kladde. Åbn den relevante chatbot i dashboardet.");
+      }
+      resetBusinessIdForStepOne();
       setUser(data.user);
-      resolveOrCreateOnboardingBusinessId();
-    });
-
-    return () => {
-      isMounted = false;
-    };
-    // Creating/resuming an onboarding ID is intentionally tied to auth-client initialization.
+    }
+    void resumeSetup();
+    return () => { mounted = false; };
+    // Resume validates the stored bot against the authenticated owner exactly once.
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [supabase]);
-
-  useEffect(() => {
-    if (!user || step !== 1) {
-      return;
-    }
-
-    // Every arrival at step 1 starts a new onboarding session ID.
-    resetBusinessIdForStepOne();
-    // Entering step one deliberately creates exactly one fresh onboarding session.
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [user, step]);
 
   useEffect(() => {
     if (!loading) {
@@ -473,6 +484,15 @@ export default function Home() {
     persistBusinessId(stableBusinessId);
   }
 
+  function rememberDraft(nextStep: number) {
+    localStorage.setItem(ONBOARDING_FORM_SNAPSHOT_KEY, JSON.stringify({ form: getFormForSubmit(), business_id: ensureDatabaseBusinessId(), step: nextStep }));
+  }
+
+  async function prepareConnection() {
+    await saveBusinessDraft();
+    rememberDraft(7);
+  }
+
   async function handleNextStep() {
     setMessage("");
     setSavingDraft(true);
@@ -480,7 +500,8 @@ export default function Home() {
 
     try {
       await saveBusinessDraft();
-      setStep(s => Math.min(s + 1, 6));
+      rememberDraft(Math.min(step + 1, 7));
+      setStep(s => Math.min(s + 1, 7));
     } catch (error) {
       setMessage(formatSetupError(error));
     } finally {
@@ -507,10 +528,8 @@ export default function Home() {
         throw new Error("Browseren understøtter ikke denne navigation.");
       }
 
-      localStorage.setItem(
-        ONBOARDING_FORM_SNAPSHOT_KEY,
-        JSON.stringify({ form: getFormForSubmit(), business_id: stableBusinessId })
-      );
+      await saveBusinessDraft();
+      rememberDraft(7);
       window.location.href = "/setup/provider";
     } catch (error) {
       setMessage(formatSetupError(error));
@@ -1637,7 +1656,7 @@ export default function Home() {
       <div>
         <h2 className="section-title">1. Virksomhed</h2>
         {input("Virksomhedsnavn", "name", "fx Modebutikken ApS", true)}
-        {input("Hjemmeside URL", "website_url", "https://...", true)}
+        {input("Hjemmeside URL", "website_url", "https://... (kan tilføjes senere ved HTML-upload)")}
         {input("Branche", "industry", "fx webshop, restaurant, klinik", true)}
         {textarea("Kort beskrivelse", "description", "Beskriv kort hvad I tilbyder...", true)}
       </div>
@@ -1972,9 +1991,18 @@ export default function Home() {
         </div>
       </div>
     ),
+    7: (
+      <div>
+        <h2 className="section-title">7. Forbind din hjemmeside</h2>
+        <p className="muted">Tilkobl din webshop eller importér en almindelig hjemmeside / HTML-fil. Du kan også fortsætte nu og forbinde den senere.</p>
+        <div className={`${dashboardStyles.dashboardRoot} ${commerceStyles.onboarding}`}>
+          <CommercePanel businessId={businessId} websiteUrl={form.website_url} initialPlatform={form.platform} onboarding beforeConnect={prepareConnection} onPlatformChange={value => update("platform", value)} />
+        </div>
+      </div>
+    ),
   };
 
-  if (step === 7) {
+  if (step === 8) {
     return (
       <main id="main-content" className="eb-page">
         {styles}
@@ -2068,10 +2096,10 @@ export default function Home() {
       <div className="eb-shell eb-animate">
         <div className="header-row">
           <h1 className="brand brand-main">Opsæt din chatbot</h1>
-          <span className="step-note">Trin {Math.min(step, 6)} af 6</span>
+          <span className="step-note">Trin {Math.min(step, 7)} af 7</span>
         </div>
         <div className="progress-track">
-          <div className="progress-fill" style={{ width: `${(Math.min(step, 6) / 6) * 100}%` }} />
+          <div className="progress-fill" style={{ width: `${(Math.min(step, 7) / 7) * 100}%` }} />
         </div>
 
         <div className="eb-card" style={{ overflow: "hidden" }}>
@@ -2080,7 +2108,7 @@ export default function Home() {
           </div>
         </div>
 
-        {message && <p className="message-error">{message}</p>}
+        {message && <p className={messageTone === "info" ? "message-info" : "message-error"}>{message}</p>}
 
         <div className="actions" style={{ marginTop: 20 }}>
         {step > 1 && (
@@ -2088,7 +2116,7 @@ export default function Home() {
             ← Tilbage
           </button>
         )}
-        {step < 6 ? (
+        {step < 7 ? (
           <button onClick={handleNextStep} disabled={savingDraft || loading} className="btn btn-primary" style={{ marginLeft: "auto" }}>
             {savingDraft ? "Gemmer..." : "Næste →"}
           </button>

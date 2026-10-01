@@ -33,6 +33,7 @@ const PLATFORM_OPTIONS = [
   "Squarespace",
   "Webflow",
   "WooCommerce",
+  "HTML",
   "Other",
 ];
 

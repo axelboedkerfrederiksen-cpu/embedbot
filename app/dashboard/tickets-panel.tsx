@@ -1,7 +1,7 @@
 "use client";
 import { useEffect, useState } from "react";
 import { Inbox, Mail, RefreshCw, ArrowLeft } from "lucide-react";
-import { commerceRequest } from "./commerce-panel";
+import { commerceRequest } from "@/lib/commerce-request";
 import styles from "./dashboard.module.css";
 import ui from "./commerce.module.css";
 type Ticket = { id: string; case_number: number; contact_email: string; description: string; order_number: string | null; context: { role: string; content: string }[]; status: string; notification_status: string; created_at: string };

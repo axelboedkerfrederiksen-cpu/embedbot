@@ -228,7 +228,9 @@ export async function activateBusinessAndSendEmail(
     return { success: false, error: "Resend-klient kunne ikke initialiseres.", status: 500 };
   }
 
-  if (!business.website_url) {
+  const { data: websiteSource } = await supabase.from("website_sources").select("business_id").eq("business_id", stableBusinessId).maybeSingle();
+
+  if (!business.website_url && !websiteSource) {
     return { success: false, error: "Virksomheden mangler website_url.", status: 400 };
   }
 
@@ -236,19 +238,23 @@ export async function activateBusinessAndSendEmail(
     return { success: false, error: "Virksomheden mangler support_email.", status: 400 };
   }
 
-  const ingestRes = await fetch(ingestEndpoint, {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ url: business.website_url, business_id: stableBusinessId }),
-  });
+  // Imported HTML/website text is already available to the chat. A local HTML
+  // upload does not require an online website or a second ingestion request.
+  if (!websiteSource) {
+    const ingestRes = await fetch(ingestEndpoint, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ url: business.website_url, business_id: stableBusinessId }),
+    });
 
-  const ingestData = await ingestRes.json().catch(() => ({} as { success?: boolean; error?: string }));
-  if (!ingestRes.ok || !ingestData.success) {
-    return {
-      success: false,
-      error: ingestData.error || "Ingest fejlede.",
-      status: ingestRes.status || 502,
-    };
+    const ingestData = await ingestRes.json().catch(() => ({} as { success?: boolean; error?: string }));
+    if (!ingestRes.ok || !ingestData.success) {
+      return {
+        success: false,
+        error: ingestData.error || "Ingest fejlede.",
+        status: ingestRes.status || 502,
+      };
+    }
   }
 
   const { error: mailError } = await resend.emails.send({

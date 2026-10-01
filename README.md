@@ -14,7 +14,9 @@ Den indeholder:
 
 Dashboardet har nu **Integrationer** og **Supportsager**. Shopify og WooCommerce leverer live produkter, varianter og lager via fælles læseadaptere. Ordrestatus kræver en engangskode sendt til ordrens faktiske mailadresse. Kundebekræftede supportsager gemmes før mailnotifikationen og har status og beskyttelse mod dubletter.
 
-Se [opsætning, sikkerhed, fælles API-format og produktionskrav](docs/embedbot-2.0.md). De nye servervariabler er `COMMERCE_ENCRYPTION_KEY`, `COMMERCE_EMAIL_FROM`, `SHOPIFY_CLIENT_ID` og `SHOPIFY_CLIENT_SECRET`; eksisterende Supabase, Resend og app-URL bruges fortsat. Databaseopsætningen findes i `supabase/migrations/20261001173453_embedbot_commerce.sql`.
+Se [opsætning, sikkerhed, fælles API-format og produktionskrav](docs/embedbot-2.0.md). De nye servervariabler er `COMMERCE_ENCRYPTION_KEY`, `COMMERCE_EMAIL_FROM`, `SHOPIFY_CLIENT_ID` og `SHOPIFY_CLIENT_SECRET`; eksisterende Supabase, Resend og app-URL bruges fortsat. Databaseopsætningen findes i `supabase/migrations/20261001201311_embedbot_commerce.sql`.
+
+Opsætningen har også et trin til at forbinde Shopify/WooCommerce eller importere en almindelig HTTPS-side/HTML-fil. HTML-import kræver den ekstra migration `supabase/migrations/20261001201321_website_sources.sql` og giver hjemmesideviden; live lager/priser/private ordrer kræver fortsat en webshopintegration.
 
 Ingen rigtig webshop er live-testet endnu. Funktionen aktiveres først, når database, credentials og platformgodkendelser er konfigureret. Automatiske tests bruger mocks og isoleret PostgreSQL.
 
