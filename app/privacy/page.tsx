@@ -50,16 +50,9 @@ export default function PrivacyPolicy() {
         <section id="data">
           <h2>1. Hvem er dataansvarlig?</h2>
           <p>
-            Den dataansvarlige for EmbedBots egen konto-, betalings-, support- og
-            sikkerhedsbehandling er:
+            EmbedBot er dataansvarlig for sin egen konto-, betalings-, support- og
+            sikkerhedsbehandling.
           </p>
-          <address className="not-italic">
-            <strong>EmbedBot / Axel Bødker Frederiksen</strong>
-            <br />
-            Telefon: <a href="tel:+4591551250">+45 91 55 12 50</a>
-            <br />
-            E-mail: <a href="mailto:axel@embedbot.dk">axel@embedbot.dk</a>
-          </address>
         </section>
 
         <section id="formaal">
