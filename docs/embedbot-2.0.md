@@ -77,6 +77,8 @@ WooCommerce core indeholder ikke trackinglinks. Adapteren læser den officielle 
 
 Alle chatbotter bruger `lib/chat-system-prompt.ts` via den fælles chatrute. Prompten tilpasses virksomhedens navn, branche, sprog, tone og viden. Serveren angiver særskilt, om live produkter, ordreopslag med mailkode, supportsager og supportnotifikationer er konfigureret for netop denne bot. Manglende konfiguration beskrives som utilgængelig; konfiguration er ikke en garanti for et vellykket opslag eller mailafsendelse.
 
+Kontaktønsker, Enterprise-henvendelser, tilbud og ønsker om en telefonsamtale kan åbne supportsagsformularen direkte i chatten. Kunden gennemser stadig resuméet og vælger eksplicit “Send henvendelse”, før sagen gemmes under den pågældende chatbots Supportsager. Chattekst alene sender aldrig en besked. Supportsager uden webshopintegration kræver ikke `COMMERCE_ENCRYPTION_KEY`: den eksisterende serverhemmelighed bruges til at aflede en særskilt nøgle til supportbekræftelser, sessionbinding og begrænsning af forsøg. Dette giver aldrig adgang til at kryptere eller bruge webshopcredentials; de kræver fortsat commerce-nøglen. Ændring af serverhemmeligheden eller tilføjelse af commerce-nøglen ugyldiggør åbne supportbekræftelser; allerede gemte sager bevares. Mailnotifikation er valgfri, og uden mailopsætning gemmes sagen stadig i dashboardet.
+
 Prompten forklarer formularernes bekræftelsesflow, cache, privatliv og funktionernes grænser. Selve opslagene, engangskoder og sagsoprettelsen kontrolleres fortsat af serverruterne. Ejeren skal ikke kopiere den fælles prompt ind i de individuelle chatbotindstillinger. Eksisterende virksomhedsoplysninger og relevante ejerinstrukser bruges inden for de fælles sikkerhedsregler.
 
 ## Arkitektur og data

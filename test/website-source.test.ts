@@ -37,3 +37,21 @@ test("onboarding keeps the same bot and step after an authorization return", () 
   assert.equal(readOnboardingSnapshot(JSON.stringify({business_id,form:{name:[]},step:7})),null);
   assert.equal(readOnboardingSnapshot("invalid JSON"),null);
 });
+
+test("contact routing supports contextual human and sales requests", async () => {
+  const { classifyCommerce, supportIntent } = await import("../lib/commerce/chat.ts");
+  const history = [{role:"user",content:"Jeg vil tale med Axel om en Enterprise-aftale."},{role:"assistant",content:"Vil du kontakte ham?"}];
+  const client = {chat:{completions:{create:async (input: {messages: {content:string}[]}) => {
+    assert.match(input.messages[0].content,/support.*Enterprise/);
+    assert.ok(input.messages.some(m => m.content.includes("Enterprise-aftale")));
+    return {choices:[{message:{content:JSON.stringify({intent:"support",language:"da"})}}]};
+  }}}};
+  const result=await classifyCommerce(client as unknown as Parameters<typeof classifyCommerce>[0],"ja kontakt ham",history);
+  assert.equal(result.intent,"support");
+  assert.equal(supportIntent("ham",history),true);
+  assert.equal(supportIntent("send det til ham",history),true);
+  assert.equal(supportIntent("Jeg vil gerne tale med ejeren",[]),true);
+  assert.equal(supportIntent("Hvad er Enterprise?",[]),false);
+  assert.equal(supportIntent("ham",[]),false);
+  assert.equal(supportIntent("ja",history),false);
+});

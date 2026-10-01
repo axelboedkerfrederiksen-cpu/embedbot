@@ -3,12 +3,12 @@ import { createClient } from "@supabase/supabase-js";
 import OpenAI from "openai";
 import { createHash } from "node:crypto";
 import { buildChatSystemPrompt } from "@/lib/chat-system-prompt";
-import { encryptionKey } from "@/lib/commerce/security";
+import { supportKey } from "@/lib/commerce/security";
 import { mailConfigured } from "@/lib/commerce/mail";
 import { cachedProducts } from "@/lib/commerce";
 import { integration } from "@/lib/commerce/server";
 import { safeUrl } from "@/lib/commerce/types";
-import { classifyCommerce, commerceCopy, orderIntent, heuristicLanguage, safeHistory, redact } from "@/lib/commerce/chat";
+import { classifyCommerce, commerceCopy, orderIntent, supportIntent, heuristicLanguage, safeHistory, redact } from "@/lib/commerce/chat";
 import { isBusinessSubscriptionActive } from "@/lib/subscription";
 import { getAnswerLimit, getPlan } from "@/lib/plans";
 import { getPreviewTokenSecret, verifyPreviewToken } from "@/lib/preview-access";
@@ -242,7 +242,7 @@ export async function POST(req: NextRequest) {
     supabase.from("website_sources").select("content_text,imported_at").eq("business_id", stableBusinessId).maybeSingle(),
   ]);
   let secureStorage = false;
-  try { encryptionKey(); secureStorage = true; } catch { /* Report capability only; never expose configuration. */ }
+  try { supportKey(); secureStorage = true; } catch { /* Report capability only; never expose configuration. */ }
   const capabilities = {
     products: Boolean(connected?.adapter.productsEnabled),
     orders: Boolean(connected?.adapter.ordersEnabled && mailConfigured()),
@@ -250,7 +250,7 @@ export async function POST(req: NextRequest) {
     supportEmail: secureStorage && !supportSettings.error && Boolean(supportSettings.data?.notification_email) && mailConfigured(),
   };
   const adapter = connected?.adapter;
-  if (/\b(klage|klager|complaint|supportcase|supportsag)\b|send.*(videre|webshop|butik)|tal.*med.*(medarbejder|menneske)/i.test(trimmedMessage)) {
+  if (supportIntent(trimmedMessage, history)) {
     return NextResponse.json({ kind: "support", text: capabilities.supportCases ? "Jeg kan hjælpe dig med at oprette en henvendelse. Udfyld formularen, gennemse opsummeringen og bekræft, at den skal sendes." : `Supportsager er ikke aktiveret her endnu. Kontakt virksomheden direkte${business.support_email ? ` på ${sanitizeOutput(business.support_email)}` : " via dens hjemmeside"}.`, needsSupportInput: capabilities.supportCases }, { headers: { "Cache-Control": "no-store" } });
   }
   const structuredOrder = order_lookup !== undefined;
@@ -259,6 +259,9 @@ export async function POST(req: NextRequest) {
   if (!obviousOrder) {
     try { routing = await classifyCommerce(openai, trimmedMessage, history); }
     catch { /* Continue using the existing chat when classification is unavailable. */ }
+  }
+  if (routing.intent === "support") {
+    return NextResponse.json({ kind: "support", text: capabilities.supportCases ? "Jeg kan hjælpe dig med at sende en henvendelse til virksomheden. Udfyld kontaktmail og besked, gennemse opsummeringen og vælg ‘Send henvendelse’." : `Henvendelser via chatten er ikke aktiveret her endnu. Kontakt virksomheden direkte${business.support_email ? ` på ${sanitizeOutput(business.support_email)}` : " via dens hjemmeside"}.`, needsSupportInput: capabilities.supportCases }, { headers: { "Cache-Control": "no-store" } });
   }
   const commerceResponse = (payload: Record<string, unknown>) => NextResponse.json(payload, { headers: { "Cache-Control": "no-store", "Referrer-Policy": "no-referrer" } });
   if (routing.intent === "order" || routing.intent === "product") {

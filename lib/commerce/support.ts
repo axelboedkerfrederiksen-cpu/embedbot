@@ -1,4 +1,4 @@
-import { digest, validEmail } from "./security.ts";
+import { digest, supportKey, validEmail } from "./security.ts";
 export type SupportDraft = { contactEmail: string; description: string; orderNumber: string | null; context: { role: "user" | "assistant"; content: string }[] };
 export function supportDraft(value: Record<string, unknown>): SupportDraft | null {
   const email = typeof value.contactEmail === "string" ? value.contactEmail.trim().toLowerCase() : "";
@@ -15,7 +15,7 @@ export function supportDraft(value: Record<string, unknown>): SupportDraft | nul
 }
 export function submissionKey(businessId: string, sessionHash: string, draft: SupportDraft) {
   // Changing transient chat context must not duplicate the same customer case.
-  return digest(JSON.stringify(["ticket",businessId,sessionHash,draft.contactEmail,draft.description,draft.orderNumber]));
+  return digest(JSON.stringify(["ticket",businessId,sessionHash,draft.contactEmail,draft.description,draft.orderNumber]), supportKey());
 }
 export type Confirmation = { businessId: string; sessionHash: string; expires: number; draft: SupportDraft; key: string };
 export function validConfirmation(value: Confirmation, businessId: string, sessionHash: string, now = Date.now()) {

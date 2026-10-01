@@ -6,6 +6,14 @@ export function encryptionKey(value = process.env.COMMERCE_ENCRYPTION_KEY): Buff
   if (key.length !== 32) throw new Error("Commerce not configured");
   return key;
 }
+// Support-only confirmations can use the existing server secret when no shop
+// integration is configured. Never use this fallback to encrypt shop credentials.
+export function supportKey(): Buffer {
+  if (process.env.COMMERCE_ENCRYPTION_KEY) return encryptionKey();
+  const secret = process.env.SUPABASE_SERVICE_KEY;
+  if (!secret || secret.length < 32) throw new Error("Support not configured");
+  return createHmac("sha256", secret).update("embedbot:support-only:v1").digest();
+}
 export function seal(value: unknown, scope: string, key = encryptionKey()): string {
   const iv = randomBytes(12);
   const cipher = createCipheriv("aes-256-gcm", key, iv);

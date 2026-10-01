@@ -1,6 +1,6 @@
 import { NextRequest } from "next/server";
 import { body, CommerceError, failure, json, limit, publicContext } from "@/lib/commerce/server";
-import { seal, unseal } from "@/lib/commerce/security";
+import { seal, supportKey, unseal } from "@/lib/commerce/security";
 import { supportDraft, submissionKey, persistTicket, validConfirmation, type Confirmation } from "@/lib/commerce/support";
 import { notifyTicket } from "@/lib/commerce/mail";
 export const runtime = "nodejs";
@@ -15,12 +15,12 @@ export async function POST(req: NextRequest) {
       if (!draft || input.website) throw new CommerceError("Indtast en gyldig kontaktmail og en beskrivelse på 10–5.000 tegn.", 400);
       const key = submissionKey(business.id, sessionHash, draft);
       const confirmation: Confirmation = { businessId: business.id, sessionHash, expires: Date.now() + 1800000, draft, key };
-      return json({ confirmation: seal(confirmation, `support:${business.id}`), summary: draft, text: "Kontrollér henvendelsen. Den bliver først oprettet, når du vælger ‘Send henvendelse’. Oplysningerne markeres som indsendt af kunden og er ikke verificeret." });
+      return json({ confirmation: seal(confirmation, `support:${business.id}`, supportKey()), summary: draft, text: "Kontrollér henvendelsen. Den bliver først oprettet, når du vælger ‘Send henvendelse’. Oplysningerne markeres som indsendt af kunden og er ikke verificeret." });
     }
     if (input.action === "confirm") {
       if (input.confirmed !== true || typeof input.confirmation !== "string") throw new CommerceError("Bekræft først henvendelsen.", 400);
       let confirmation: Confirmation;
-      try { confirmation = unseal<Confirmation>(input.confirmation, `support:${business.id}`); } catch { throw new CommerceError("Opsummeringen er ikke gyldig. Opret en ny opsummering.", 400); }
+      try { confirmation = unseal<Confirmation>(input.confirmation, `support:${business.id}`, supportKey()); } catch { throw new CommerceError("Opsummeringen er ikke gyldig. Opret en ny opsummering.", 400); }
       if (!validConfirmation(confirmation, business.id, sessionHash)) throw new CommerceError("Opsummeringen er udløbet eller hører til en anden chat. Opret en ny opsummering.", 400);
       const { data: existing, error: existingError } = await db.from("commerce_tickets").select("id,case_number,notification_status").eq("business_id", business.id).eq("submission_key", confirmation.key).maybeSingle();
       if (existingError) throw new CommerceError("Supportsager er ikke konfigureret endnu.");

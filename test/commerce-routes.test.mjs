@@ -70,6 +70,28 @@ test('support HTTP flow requires explicit confirmation, rejects cross-tenant/ses
   assert.equal((await database.pg.query('select id from commerce_tickets where business_id=$1',[business_id])).rows.length,1);
   state.mailError = null;
 });
+test('support-only chatbot saves confirmed requests without a shop key or mail provider',async () => {
+  const business_id=await tenant(),other=await tenant();
+  const oldKey=process.env.COMMERCE_ENCRYPTION_KEY,oldService=process.env.SUPABASE_SERVICE_KEY,oldMail=process.env.COMMERCE_EMAIL_FROM;
+  delete process.env.COMMERCE_ENCRYPTION_KEY; delete process.env.COMMERCE_EMAIL_FROM;
+  process.env.SUPABASE_SERVICE_KEY=randomBytes(32).toString('base64');
+  try {
+    assert.throws(() => seal({consumerSecret:'private'},`credentials:${business_id}`));
+    const prepare=await support.POST(request('/api/commerce/support',{business_id,session,action:'prepare',contactEmail:'customer@example.com',description:'Jeg vil gerne tale med Axel om en Enterprise-aftale.'}));
+    assert.equal(prepare.status,200);
+    const draft=await prepare.json();
+    assert.equal((await database.pg.query('select id from commerce_tickets where business_id=$1',[business_id])).rows.length,0);
+    const input={business_id,session,action:'confirm',confirmation:draft.confirmation,confirmed:true};
+    assert.equal((await support.POST(request('/api/commerce/support',{...input,business_id:other}))).status,400);
+    assert.equal((await support.POST(request('/api/commerce/support',{...input,session:randomBytes(32).toString('hex')}))).status,400);
+    assert.equal((await support.POST(request('/api/commerce/support',{...input,confirmed:false}))).status,400);
+    const response=await support.POST(request('/api/commerce/support',input));
+    assert.equal(response.status,200);const saved=await response.json();
+    assert.match(saved.caseNumber,/^EB-/);assert.equal(saved.notificationStatus,'not_configured');
+    assert.equal((await support.POST(request('/api/commerce/support',input))).status,200);
+    assert.equal((await database.pg.query('select id from commerce_tickets where business_id=$1',[business_id])).rows.length,1);
+  } finally { process.env.COMMERCE_ENCRYPTION_KEY=oldKey;process.env.SUPABASE_SERVICE_KEY=oldService;process.env.COMMERCE_EMAIL_FROM=oldMail; }
+});
 test('order HTTP flow sends only to canonical API email and blocks all status until code confirmation',async () => {
   const business_id = await connectedTenant(); state.jobs=[]; state.mails=[];
   let lookups=0;

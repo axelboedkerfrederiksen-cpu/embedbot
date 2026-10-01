@@ -758,7 +758,7 @@
   function supportForm(target) {
     const card = commerceCard(target);
     const form = element("form", undefined, card);
-    const description = formField(form, "Hvad skal webshoppen hjælpe med?", "textarea");
+    const description = formField(form, "Hvad skal virksomheden hjælpe med?", "textarea");
     description.minLength = 10;
     const email = formField(form, "Din kontaktmail", "email");
     const number = formField(form, "Ordrenummer (valgfrit)", "text", false);
