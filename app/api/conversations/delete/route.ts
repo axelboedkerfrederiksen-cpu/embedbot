@@ -2,19 +2,32 @@ import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@supabase/supabase-js";
 import { createServerClient } from "@supabase/ssr";
 import { cookies } from "next/headers";
-
-const supabase = createClient(
-  process.env.SUPABASE_URL!,
-  process.env.SUPABASE_SERVICE_KEY!
-);
+import { checkCsrfSafety } from "@/lib/csrf";
 
 export async function DELETE(req: NextRequest) {
   try {
+    const csrfCheck = await checkCsrfSafety(req, true);
+    if (!csrfCheck.safe) {
+      return NextResponse.json({ error: csrfCheck.error }, { status: 403 });
+    }
+
+    const publicUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
+    const anonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+    const serviceUrl = process.env.SUPABASE_URL;
+    const serviceKey = process.env.SUPABASE_SERVICE_KEY;
+
+    if (!publicUrl || !anonKey || !serviceUrl || !serviceKey) {
+      return NextResponse.json(
+        { error: "Sletning er ikke konfigureret." },
+        { status: 503 }
+      );
+    }
+
     // Verify user is authenticated
     const cookieStore = await cookies();
     const authSupabase = createServerClient(
-      process.env.NEXT_PUBLIC_SUPABASE_URL!,
-      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+      publicUrl,
+      anonKey,
       {
         cookies: {
           getAll() {
@@ -38,8 +51,13 @@ export async function DELETE(req: NextRequest) {
       );
     }
 
-    const { business_id } = await req.json();
+    const supabase = createClient(serviceUrl, serviceKey, {
+      auth: { persistSession: false, autoRefreshToken: false },
+    });
+
+    const { business_id, conversation_id } = await req.json();
     const stableBusinessId = typeof business_id === "string" ? business_id.trim() : "";
+    const stableConversationId = typeof conversation_id === "string" ? conversation_id.trim() : "";
 
     if (!stableBusinessId) {
       return NextResponse.json(
@@ -69,15 +87,17 @@ export async function DELETE(req: NextRequest) {
       );
     }
 
-    // Soft delete all conversations
-    const { error: deleteError } = await supabase
+    // A user-requested erasure is permanent; retention cleanup uses the same table.
+    let deleteQuery = supabase
       .from("conversations")
-      .update({
-        is_deleted: true,
-        deleted_at: new Date().toISOString(),
-      })
-      .eq("business_id", stableBusinessId)
-      .eq("is_deleted", false);
+      .delete({ count: "exact" })
+      .eq("business_id", stableBusinessId);
+
+    if (stableConversationId) {
+      deleteQuery = deleteQuery.eq("id", stableConversationId);
+    }
+
+    const { count: deletedCount, error: deleteError } = await deleteQuery;
 
     if (deleteError) {
       console.error("Conversation deletion error:", deleteError);
@@ -89,18 +109,15 @@ export async function DELETE(req: NextRequest) {
 
     return NextResponse.json({
       success: true,
-      message: "Alle samtaler er blevet slettet.",
+      deleted_count: deletedCount ?? 0,
+      message: stableConversationId
+        ? "Samtalen er permanent slettet."
+        : "Alle samtaler er permanent slettet.",
     });
   } catch (error) {
     console.error("Conversation deletion error:", error);
-    if (error instanceof Error) {
-      return NextResponse.json(
-        { error: error.message },
-        { status: 500 }
-      );
-    }
     return NextResponse.json(
-      { error: "Ukendt serverfejl." },
+      { error: "Kunne ikke slette samtaler." },
       { status: 500 }
     );
   }

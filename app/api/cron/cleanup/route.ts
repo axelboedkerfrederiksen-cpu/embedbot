@@ -51,11 +51,25 @@ async function runCleanup(req: NextRequest) {
     }
 
     const deletedCount = Number(data?.[0]?.deleted_count ?? 0);
+    const rateLimitCutoff = new Date(Date.now() - 48 * 60 * 60 * 1000).toISOString();
+    const { count: deletedRateLimits, error: rateLimitError } = await supabase
+      .from("chat_rate_limits")
+      .delete({ count: "exact" })
+      .lt("updated_at", rateLimitCutoff);
+
+    if (rateLimitError) {
+      console.error("Rate-limit cleanup error:", rateLimitError);
+      return NextResponse.json(
+        { error: "Cleanup partially failed" },
+        { status: 500 }
+      );
+    }
 
     return NextResponse.json({
       success: true,
       message: `Cleanup completed. ${deletedCount} conversations permanently deleted.`,
       deleted_count: deletedCount,
+      deleted_rate_limit_records: deletedRateLimits ?? 0,
       timestamp: new Date().toISOString(),
     });
   } catch (error) {

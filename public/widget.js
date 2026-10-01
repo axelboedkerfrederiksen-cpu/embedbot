@@ -112,20 +112,17 @@
 
   function tryShowWelcomeMessage() {
     if (hasShownWelcomeMessage) {
-      console.log("[EmbedBot] Welcome already shown, skipping.");
       return;
     }
 
     const welcomeMessage = (widgetConfig.welcome_message || "").trim();
     if (!welcomeMessage) {
-      console.log("[EmbedBot] No welcome_message available yet.");
       return;
     }
 
     addMessage(welcomeMessage, false);
     conversationHistory.push({ role: "assistant", content: welcomeMessage });
     hasShownWelcomeMessage = true;
-    console.log("[EmbedBot] Welcome message shown automatically.");
   }
 
   function nowAsTime() {
@@ -225,7 +222,7 @@
             </svg>
           </button>
         </div>
-        <div id="eb-watermark" aria-label="Lavet af EmbedBot" style="color:#6b6258;font-size:10px;line-height:1.2;text-align:center;letter-spacing:0.01em;user-select:none;">Lavet af EmbedBot</div>
+        <div id="eb-watermark" aria-label="Lavet af EmbedBot" style="color:#6b6258;font-size:10px;line-height:1.2;text-align:center;letter-spacing:0.01em;">Lavet af EmbedBot · <a href="https://www.embedbot.dk/privacy" target="_blank" rel="noopener noreferrer" style="color:inherit;text-decoration:underline;text-underline-offset:2px;">Privatliv</a></div>
       </div>
     </div>
   `;
@@ -510,7 +507,6 @@
     // Try loading from cache first for instant display
     const cachedConfig = getConfigFromCache();
     if (cachedConfig) {
-      console.log("[EmbedBot] Using cached config", cachedConfig);
       widgetConfig = cachedConfig;
       applyWidgetStyles();
       if (chatOpen) {
@@ -530,8 +526,6 @@
       }
 
       const data = await res.json();
-      console.log("[EmbedBot] /api/widget-config response:", data);
-      console.log("[EmbedBot] welcome_message from API:", data.welcome_message);
 
       const resolvedName = (data.name || scriptName || defaultConfig.name || "").trim();
       const freshConfig = {
@@ -570,7 +564,6 @@
   }
 
   function setChatOpen(isOpen) {
-    console.log("[EmbedBot] setChatOpen called:", { isOpen, hasShownWelcomeMessage });
     chatOpen = isOpen;
     box.classList.toggle("eb-open", chatOpen);
     box.style.opacity = chatOpen ? String(activeWidgetOpacity) : "0";

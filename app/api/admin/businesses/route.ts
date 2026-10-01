@@ -2,11 +2,19 @@ import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@supabase/supabase-js";
 import { checkCsrfSafety } from "@/lib/csrf";
 import { verifyAdminSession } from "@/lib/admin-auth";
+import Stripe from "stripe";
 
 const supabase = createClient(
   process.env.SUPABASE_URL!,
   process.env.SUPABASE_SERVICE_KEY!
 );
+
+function isMissingStripeResource(error: unknown) {
+  return (
+    error instanceof Stripe.errors.StripeInvalidRequestError &&
+    error.code === "resource_missing"
+  );
+}
 
 const timestampKeys = new Set([
   "updated_at",
@@ -87,6 +95,46 @@ export async function DELETE(req: NextRequest) {
 
     if (!stableBusinessId) {
       return NextResponse.json({ error: "Mangler business_id." }, { status: 400 });
+    }
+
+    const { data: business, error: businessLookupError } = await supabase
+      .from("businesses")
+      .select("stripe_subscription_id")
+      .eq("id", stableBusinessId)
+      .maybeSingle();
+
+    if (businessLookupError || !business) {
+      return NextResponse.json({ error: "Virksomheden blev ikke fundet." }, { status: 404 });
+    }
+
+    const subscriptionId = typeof business.stripe_subscription_id === "string"
+      ? business.stripe_subscription_id.trim()
+      : "";
+
+    if (subscriptionId) {
+      const stripeSecret = process.env.STRIPE_SECRET_KEY?.trim();
+      if (!stripeSecret) {
+        return NextResponse.json(
+          { error: "Abonnementet kunne ikke stoppes sikkert før sletning." },
+          { status: 503 }
+        );
+      }
+
+      const stripe = new Stripe(stripeSecret);
+      try {
+        const subscription = await stripe.subscriptions.retrieve(subscriptionId);
+        if (subscription.status !== "canceled") {
+          await stripe.subscriptions.cancel(subscriptionId);
+        }
+      } catch (error) {
+        if (!isMissingStripeResource(error)) {
+          console.error("Admin deletion Stripe cancellation failed:", error);
+          return NextResponse.json(
+            { error: "Abonnementet kunne ikke stoppes sikkert før sletning." },
+            { status: 502 }
+          );
+        }
+      }
     }
 
     const { error: docsDeleteError } = await supabase

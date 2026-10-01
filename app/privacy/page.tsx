@@ -303,11 +303,12 @@ export default function PrivacyPolicy() {
               eventuelle lovkrav.
             </li>
             <li>
-              <strong>Chatbeskeder:</strong> efter den retention-indstilling,
-              virksomheden har valgt: 30, 90 eller 180 dage. En indstilling på
-              &quot;aldrig&quot; betyder, at automatisk sletning ikke er slået til. Beskeder
-              kan stadig slettes ved manuel anmodning eller kontosletning, med
-              forbehold for lovkrav og sikkerhedskopier.
+              <strong>Chatbeskeder:</strong> som standard i højst 90 dage, hvorefter
+              de slettes automatisk og permanent. Hvis en anden, kortere eller
+              længere periode er særskilt aftalt og konfigureret for virksomheden,
+              gælder den periode. Beskeder slettes tidligere ved en gyldig manuel
+              anmodning eller kontosletning, med forbehold for lovkrav og midlertidige
+              sikkerhedskopier.
             </li>
             <li>
               <strong>Support:</strong> så længe det er nødvendigt for at behandle
@@ -321,6 +322,8 @@ export default function PrivacyPolicy() {
             <li>
               <strong>Tekniske sikkerhedsdata:</strong> kun så længe det er
               nødvendigt for sikkerhed, rate limiting, fejlfinding og dokumentation.
+              Hashes, der alene bruges til chat-rate limiting, ryddes automatisk,
+              når de ikke har været aktive i mere end 48 timer.
             </li>
           </ul>
           <p>
