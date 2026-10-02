@@ -1,8 +1,8 @@
 "use client";
 import Link from "next/link";
 import Image from "next/image";
-import { useRef, useState } from "react";
-import { ArrowRight, Check, MessageCircle, Plus } from "lucide-react";
+import { useEffect, useRef, useState } from "react";
+import { ArrowRight, Check, MessageCircle, Plus, X } from "lucide-react";
 import logoImage from "@/media/86a91d6a-f484-4e7d-a05c-55ab0979c3b1.png";
 import ChatPreview from "./components/landing-chat-preview";
 import styles from "./landing.module.css";
@@ -14,7 +14,31 @@ const questions = [
 export default function Home() {
     const [demoStatus, setDemoStatus] = useState<"idle" | "loading" | "error">("idle");
     const loading = useRef(false);
+    const [showDemoPrompt, setShowDemoPrompt] = useState(false);
+    const demoPromptTimer = useRef<number | null>(null);
+
+    useEffect(() => {
+        demoPromptTimer.current = window.setTimeout(() => setShowDemoPrompt(true), 1500);
+        return () => {
+            if (demoPromptTimer.current !== null) window.clearTimeout(demoPromptTimer.current);
+        };
+    }, []);
+
+    useEffect(() => {
+        if (!showDemoPrompt) return;
+        const closeOnEscape = (event: KeyboardEvent) => {
+            if (event.key === "Escape") setShowDemoPrompt(false);
+        };
+        window.addEventListener("keydown", closeOnEscape);
+        return () => window.removeEventListener("keydown", closeOnEscape);
+    }, [showDemoPrompt]);
+
+    function dismissDemoPrompt() {
+        if (demoPromptTimer.current !== null) window.clearTimeout(demoPromptTimer.current);
+        setShowDemoPrompt(false);
+    }
     async function openDemo() {
+        dismissDemoPrompt();
         if (loading.current)
             return;
         const openBubble = () => {
@@ -106,5 +130,12 @@ export default function Home() {
 
       <section className={`${styles.finalCta} ${styles.container}`}><p className={styles.eyebrow}>SE HVAD EMBEDBOT KAN GØRE FOR JER</p><h2>Mere hjælp til kunderne.<br /><span>Mere tid til webshoppen.</span></h2><Link href="/setup" className={styles.button}>Start 14 dage gratis <ArrowRight size={17}/></Link><p>14 dage gratis. Betalingskort påkrævet.</p></section>
       <footer className={`${styles.footer} ${styles.container}`}><div><Link href="/" className={styles.logo}><Image src={logoImage} alt=""/><span>EmbedBot</span></Link><p>AI-kundeservice. Med plads til mennesker.</p><small>EmbedBot / Axel Bødker Frederiksen</small></div><div className={styles.footerLinks}><Link href="/support">Kontakt</Link><Link href="/prices">Priser</Link><Link href="/privacy">Privatliv</Link><Link href="/cookies">Cookies</Link><Link href="/terms">Vilkår</Link><Link href="/refunds">Betaling og refundering</Link></div></footer>
+      {showDemoPrompt && <aside className={styles.demoPrompt} aria-labelledby="demo-prompt-title">
+        <button type="button" className={styles.demoPromptClose} onClick={dismissDemoPrompt} aria-label="Luk demo-invitation"><X size={17} /></button>
+        <span className={styles.demoPromptKicker}>PRØV EMBEDBOT</span>
+        <h3 id="demo-prompt-title">Vil du se den i aktion?</h3>
+        <p>Prøv chatbotten her på siden, og se hvordan den hjælper dine kunder.</p>
+        <button type="button" className={styles.button} onClick={openDemo} disabled={demoStatus === "loading"}>Prøv demoen <ArrowRight size={16} /></button>
+      </aside>}
     </main>);
 }
