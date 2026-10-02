@@ -5,6 +5,10 @@ import { publicAddress } from "./commerce/http.ts";
 
 export const MAX_HTML_BYTES = 1_000_000;
 export const MAX_SOURCE_TEXT = 30_000;
+export function sameWebsiteOrigin(a: string, b: string) {
+  const left = websiteUrl(a), right = websiteUrl(b);
+  return left.protocol === right.protocol && left.port === right.port && left.hostname.replace(/^www\./i, "") === right.hostname.replace(/^www\./i, "");
+}
 export function websiteUrl(value: string) {
   if (value.length > 2048) throw new Error("Invalid website URL");
   const url = new URL(value);
@@ -26,11 +30,12 @@ export function extractWebsiteText(html: string) {
 
 // Public HTTPS only. Pin DNS on every hop, including redirects; never execute
 // scripts or send credentials. The total deadline bounds the entire import.
-export async function fetchWebsiteHtml(input: string): Promise<string> {
-  const expires = Date.now() + 20000;
-  async function load(url: URL, hops: number): Promise<string> {
+export async function fetchWebsitePage(input: string, options: { xml?: boolean; timeoutMs?: number; origin?: string } = {}): Promise<{ html: string; url: string }> {
+  const expires = Date.now() + Math.min(options.timeoutMs ?? 20000, 20000);
+  async function load(url: URL, hops: number): Promise<{ html: string; url: string }> {
+    if (options.origin && !sameWebsiteOrigin(url.origin, options.origin)) throw new Error("Cross-site redirect blocked");
     if (hops > 3 || Date.now() >= expires) throw new Error("Website unavailable");
-    return new Promise<string>((resolve, reject) => {
+    return new Promise((resolve, reject) => {
       let active: ReturnType<typeof request> | undefined;
       let stopped = false;
       const deadline = setTimeout(() => { stopped = true; active?.destroy(); reject(new Error("Website unavailable")); }, Math.min(8000, expires - Date.now()));
@@ -45,15 +50,20 @@ export async function fetchWebsiteHtml(input: string): Promise<string> {
             try { void load(websiteUrl(new URL(res.headers.location, url).href), hops + 1).then(resolve, reject); } catch { fail(); }
             return;
           }
-          if (res.statusCode !== 200 || !/^(text\/html|application\/xhtml\+xml)\b/i.test(res.headers["content-type"] || "")) { res.destroy(); fail(); return; }
+          const allowedType = options.xml ? /^(text\/xml|application\/xml|text\/html|application\/xhtml\+xml)\b/i : /^(text\/html|application\/xhtml\+xml)\b/i;
+          if (res.statusCode !== 200 || !allowedType.test(res.headers["content-type"] || "")) { res.destroy(); fail(); return; }
           const chunks: Buffer[] = []; let size = 0;
           res.on("data", (chunk: Buffer) => { size += chunk.length; if (size > MAX_HTML_BYTES) { res.destroy(); fail(); } else chunks.push(chunk); });
           res.on("error", fail);
-          res.on("end", () => { clearTimeout(deadline); resolve(Buffer.concat(chunks).toString("utf8")); });
+          res.on("end", () => { clearTimeout(deadline); resolve({ html: Buffer.concat(chunks).toString("utf8"), url: url.href }); });
         });
         active.on("error", fail); active.end();
       }).catch(fail);
     });
   }
   return load(websiteUrl(input), 0);
+}
+
+export async function fetchWebsiteHtml(input: string): Promise<string> {
+  return (await fetchWebsitePage(input)).html;
 }

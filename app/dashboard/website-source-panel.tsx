@@ -32,17 +32,17 @@ export default function WebsiteSourcePanel({ businessId, websiteUrl = "", demo =
           payload.filename = file.name; payload.html = await file.text();
         }
       }
-      await commerceRequest("/api/dashboard/website-source", payload);
+      const imported = await commerceRequest("/api/dashboard/website-source", payload);
       const fresh = await commerceRequest(`/api/dashboard/website-source?business_id=${encodeURIComponent(businessId)}`);
       setSource(fresh.source); setConfigured(fresh.configured);
-      setNotice(disconnect ? "Det importerede indhold er fjernet." : "Indholdet er importeret og kan nu bruges af chatbotten.");
+      setNotice(disconnect ? "Det importerede indhold er fjernet." : mode === "url" ? `${imported.pages} sider er læst og kan nu bruges af chatbotten.` : "Indholdet er importeret og kan nu bruges af chatbotten.");
     } catch (e) { setError(e instanceof Error ? e.message : "Indholdet kunne ikke importeres."); } finally { setBusy(false); }
   }
   return <div className={ui.stack}>
     {error ? <div className={styles.errorBanner} role="alert">{error}</div> : null}
     {notice ? <div className={styles.infoBanner} role="status"><CheckCircle2 size={16} />{notice}</div> : null}
-    <div className={ui.heading}><div className={ui.icon}><FileCode2 size={21} /></div><div><h3>Hjemmesidens indhold</h3><p>Brug indhold fra en almindelig hjemmeside eller en HTML-fil som viden til chatbotten.</p></div></div>
-    {source ? <div className={ui.connected}><strong>Indhold tilkoblet</strong><p>{source.source_name}</p><small>Importeret {new Date(source.imported_at).toLocaleString("da-DK")} · {source.character_count.toLocaleString("da-DK")} tegn</small>{source.truncated ? <p className={ui.hint}>De første 30.000 tegn er importeret. Resten er ikke med.</p> : null}<div><button type="button" className={styles.buttonGhost} disabled={busy || demo} onClick={() => void submit(true)}>Fjern importeret indhold</button></div></div> : null}
+    <div className={ui.heading}><div className={ui.icon}><FileCode2 size={21} /></div><div><h3>Hjemmesidens indhold</h3><p>Indsæt hjemmesidens adresse. Vi finder automatisk undersider, produkter og produktlinks.</p></div></div>
+    {source ? <div className={ui.connected}><strong>Indhold tilkoblet</strong><p>{source.source_name}</p><small>Importeret {new Date(source.imported_at).toLocaleString("da-DK")} · {source.character_count.toLocaleString("da-DK")} tegn</small>{source.truncated ? <p className={ui.hint}>Importen er delvis. Der kan være sider eller oplysninger, som ikke er med.</p> : null}<div><button type="button" className={styles.buttonGhost} disabled={busy || demo} onClick={() => void submit(true)}>Fjern importeret indhold</button></div></div> : null}
     {!configured && !demo ? <p className={ui.hint}>Hjemmesideimport kræver serverens databaseopsætning. Du kan fortsætte opsætningen og tilkoble indhold senere.</p> : null}
     {demo ? <p className={ui.hint}>Forhåndsvisning · Der importeres ikke indhold.</p> : null}
     <div className={styles.buttonRow} role="group" aria-label="Indholdskilde"><button type="button" className={styles.buttonSecondary} aria-pressed={mode === "url"} onClick={() => setMode("url")}>Hjemmesideadresse</button><button type="button" className={styles.buttonSecondary} aria-pressed={mode === "html"} onClick={() => setMode("html")}>Upload HTML-fil</button></div>
@@ -50,6 +50,6 @@ export default function WebsiteSourcePanel({ businessId, websiteUrl = "", demo =
       {mode === "url" ? <label className={ui.field}>Hjemmesidens HTTPS-adresse<input type="url" required value={url} onChange={e => setUrl(e.target.value)} placeholder="https://din-hjemmeside.dk" /></label> : <label className={ui.field}>HTML-fil<input type="file" accept=".html,.htm,text/html" required onChange={e => setFile(e.target.files?.[0] || null)} /><small className={ui.hint}>Højst 1 MB. Kun tekst læses; scripts og formularer køres ikke.</small></label>}
       <div><button className={styles.button} disabled={busy || demo || !configured}>{busy ? "Importerer…" : source ? "Opdatér indhold" : "Importér indhold"}</button></div>
     </form>
-    <p className={ui.hint}>Indholdet er et øjebliksbillede. Importér igen ved ændringer. En HTML-fil giver viden om siden; live priser, lager og private ordrer kræver en webshopintegration. Indsæt efter opsætning EmbedBots script før &lt;/body&gt; for at vise chatten på din HTML-side.</p>
+    <p className={ui.hint}>Vi læser op til 30 offentlige sider og gemmer et udvalg af indhold og links. Ved produktspørgsmål forsøger chatten at genlæse relevante produktsider for pris og lagerstatus. Sider, der blokerer adgang eller kræver JavaScript, kan mangle. Private ordrer kræver stadig en webshopintegration. HTML-filer genlæses ikke automatisk.</p>
   </div>;
 }

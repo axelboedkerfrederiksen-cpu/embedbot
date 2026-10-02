@@ -1,257 +1,34 @@
-import { NextRequest, NextResponse } from "next/server";
-import { createClient } from "@supabase/supabase-js";
-import OpenAI from "openai";
-import * as cheerio from "cheerio";
-import { lookup } from "node:dns/promises";
-import { isIP } from "node:net";
+import { NextRequest } from "next/server";
+import { database, owner, json, failure, CommerceError } from "@/lib/commerce/server";
+import { validId } from "@/lib/commerce/security";
+import { crawlWebsite } from "@/lib/website-crawl";
+import { websiteUrl } from "@/lib/website-source";
+import { verifyWebsiteIngestToken } from "@/lib/website-ingest-token";
 
-const supabase = createClient(
-  process.env.SUPABASE_URL!,
-  process.env.SUPABASE_SERVICE_KEY!
-);
-const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY! });
-
-function chunkText(text: string, size = 500): string[] {
-  const words = text.split(" ");
-  const chunks: string[] = [];
-  for (let i = 0; i < words.length; i += size) {
-    chunks.push(words.slice(i, i + size).join(" "));
-  }
-  return chunks;
-}
-
-function formatIngestError(error: unknown, url?: string) {
-  if (!(error instanceof Error)) {
-    return {
-      message: "Ukendt serverfejl under generering af chatbotten.",
-      status: 500,
-    };
-  }
-
-  if (error.name === "AbortError" || error.message.includes("aborted")) {
-    return {
-      message: "Det tog for lang tid at hente hjemmesiden. Tjek at URL'en virker, og prøv igen.",
-      status: 504,
-    };
-  }
-
-  if (error.message.includes("Failed to fetch") || error.message.includes("fetch failed")) {
-    return {
-      message: `Kunne ikke hente hjemmesiden ${url ? `(${url})` : ""}. Tjek at URL'en er korrekt, offentlig tilgængelig og starter med https://.`,
-      status: 502,
-    };
-  }
-
-  if (error.message.includes("ENOTFOUND") || error.message.includes("getaddrinfo") || error.message.includes("DNS")) {
-    return {
-      message: `Domænet kunne ikke findes ${url ? `for ${url}` : ""}. Tjek stavning og om hjemmesiden faktisk er online.`,
-      status: 502,
-    };
-  }
-
-  return {
-    message: error.message,
-    status: 500,
-  };
-}
-
-function isPrivateOrReservedIpv4(ip: string) {
-  const octets = ip.split(".").map((part) => Number(part));
-  if (octets.length !== 4 || octets.some((part) => !Number.isInteger(part) || part < 0 || part > 255)) {
-    return false;
-  }
-
-  const [a, b] = octets;
-
-  if (a === 10 || a === 127) {
-    return true;
-  }
-
-  if (a === 169 && b === 254) {
-    return true;
-  }
-
-  if (a === 172 && b >= 16 && b <= 31) {
-    return true;
-  }
-
-  if (a === 192 && b === 168) {
-    return true;
-  }
-
-  if (a === 0 || a >= 224) {
-    return true;
-  }
-
-  return false;
-}
-
-function isPrivateOrReservedIpv6(ip: string) {
-  const normalized = ip.toLowerCase();
-
-  if (normalized === "::" || normalized === "::1") {
-    return true;
-  }
-
-  if (normalized.startsWith("fc") || normalized.startsWith("fd")) {
-    return true;
-  }
-
-  if (
-    normalized.startsWith("fe8") ||
-    normalized.startsWith("fe9") ||
-    normalized.startsWith("fea") ||
-    normalized.startsWith("feb")
-  ) {
-    return true;
-  }
-
-  if (normalized.startsWith("ff")) {
-    return true;
-  }
-
-  const mappedIpv4Match = normalized.match(/::ffff:(\d+\.\d+\.\d+\.\d+)$/);
-  if (mappedIpv4Match?.[1]) {
-    return isPrivateOrReservedIpv4(mappedIpv4Match[1]);
-  }
-
-  return false;
-}
-
-function isPrivateOrReservedIp(ip: string) {
-  const family = isIP(ip);
-  if (family === 4) {
-    return isPrivateOrReservedIpv4(ip);
-  }
-
-  if (family === 6) {
-    return isPrivateOrReservedIpv6(ip);
-  }
-
-  return false;
-}
-
-async function isBlockedIngestTarget(hostname: string) {
-  const normalized = hostname.trim().toLowerCase();
-
-  if (!normalized) {
-    return true;
-  }
-
-  if (normalized === "localhost" || normalized.endsWith(".localhost")) {
-    return true;
-  }
-
-  if (isPrivateOrReservedIp(normalized)) {
-    return true;
-  }
-
-  try {
-    const records = await lookup(normalized, { all: true, verbatim: true });
-    return records.some((record) => isPrivateOrReservedIp(record.address));
-  } catch {
-    return false;
-  }
-}
+export const runtime = "nodejs";
+export const maxDuration = 60;
 
 export async function POST(req: NextRequest) {
   try {
-    const { url, business_id } = await req.json();
-
-    if (!url || !business_id) {
-      return NextResponse.json({ success: false, error: "Mangler url eller business_id." }, { status: 400 });
-    }
-
-    let parsedUrl: URL;
-    try {
-      parsedUrl = new URL(url);
-      if (!parsedUrl.hostname || !["http:", "https:"].includes(parsedUrl.protocol)) {
-        return NextResponse.json(
-          { success: false, error: "URL'en skal starte med http:// eller https:// og pege på en gyldig hjemmeside." },
-          { status: 400 }
-        );
-      }
-    } catch {
-      return NextResponse.json(
-        { success: false, error: "URL'en er ugyldig. Indtast en fuld adresse som fx https://example.com." },
-        { status: 400 }
-      );
-    }
-
-    if (await isBlockedIngestTarget(parsedUrl.hostname)) {
-      return NextResponse.json(
-        { success: false, error: "URL'en peger på et privat eller reserveret netværk, som ikke er tilladt." },
-        { status: 400 }
-      );
-    }
-
-    if (!process.env.OPENAI_API_KEY || !process.env.SUPABASE_URL || !process.env.SUPABASE_SERVICE_KEY) {
-      return NextResponse.json(
-        { success: false, error: "Serveren mangler API-nøgler eller database-konfiguration. Tilføj environment variables i Vercel." },
-        { status: 500 }
-      );
-    }
-
-    const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), 20000);
-
-    let html = "";
-
-    try {
-      const res = await fetch(parsedUrl.toString(), {
-        signal: controller.signal,
-        headers: {
-          "User-Agent": "Mozilla/5.0 (compatible; EmbedBot/1.0)",
-        },
-      });
-
-      if (!res.ok) {
-        return NextResponse.json(
-          { success: false, error: `Hjemmesiden svarede med fejl (${res.status}). Tjek at siden er offentlig og kan åbnes i browseren.` },
-          { status: 502 }
-        );
-      }
-
-      html = await res.text();
-    } finally {
-      clearTimeout(timeoutId);
-    }
-
-    const $ = cheerio.load(html);
-    $("script, style, nav, footer").remove();
-    const text = $("body").text().replace(/\s+/g, " ").trim();
-
-    if (!text) {
-      return NextResponse.json({ success: false, error: "Kunne ikke udtrække tekst fra hjemmesiden." }, { status: 422 });
-    }
-
-    const chunks = chunkText(text).filter((chunk) => chunk.trim().length > 0);
-
-    if (chunks.length === 0) {
-      return NextResponse.json({ success: false, error: "Ingen tekst fundet at indeksere." }, { status: 422 });
-    }
-
-    for (const chunk of chunks) {
-      const embeddingRes = await openai.embeddings.create({
-        model: "text-embedding-3-small",
-        input: chunk,
-      });
-
-      const embedding = embeddingRes.data[0].embedding;
-      const { error: insertError } = await supabase.from("documents").insert({
-        business_id,
-        content: chunk,
-        embedding,
-      });
-
-      if (insertError) {
-        throw new Error(`Kunne ikke gemme embeddings: ${insertError.message}`);
-      }
-    }
-
-    return NextResponse.json({ success: true, chunks: chunks.length });
-  } catch (error) {
-    const { message, status } = formatIngestError(error);
-    return NextResponse.json({ success: false, error: message }, { status });
-  }
+    const raw = await req.text();
+    if (raw.length > 5000) throw new CommerceError("Anmodningen er for stor.", 413);
+    let input;
+    try { input = JSON.parse(raw); } catch { throw new CommerceError("Ugyldig anmodning.", 400); }
+    if (!input || !validId(input.business_id)) throw new CommerceError("Ugyldig chatbot.", 400);
+    const internal = verifyWebsiteIngestToken(req.headers.get("x-website-ingest-token"), input.business_id);
+    const db = internal ? database() : (await owner(req, input.business_id, true)).db;
+    const { data: business, error: businessError } = await db.from("businesses").select("website_url,is_deleted").eq("id", input.business_id).maybeSingle();
+    if (businessError || !business || business.is_deleted) throw new CommerceError("Chatbotten blev ikke fundet.", 404);
+    let url: string;
+    try { url = websiteUrl(business.website_url || "").href; } catch { throw new CommerceError("Indtast en gyldig HTTPS-adresse i opsætningen.", 400); }
+    if (typeof input.url !== "string" || input.url !== business.website_url) throw new CommerceError("Adressen skal være den, der er gemt i opsætningen.", 400);
+    const { data: limited, error: rateError } = await db.rpc("enforce_chat_rate_limit", { p_ip_hash: `website-import:${input.business_id}`, p_limit: 10, p_window_seconds: 3600 });
+    if (rateError) throw new CommerceError("Importbeskyttelsen er ikke konfigureret endnu.");
+    if (limited) throw new CommerceError("For mange importer. Vent lidt og prøv igen.", 429);
+    let result;
+    try { result = await crawlWebsite(url); } catch { throw new CommerceError("Hjemmesiden kunne ikke læses. Kontrollér adressen, eller upload en HTML-fil.", 422); }
+    const { error } = await db.from("website_sources").upsert({ business_id: input.business_id, source_kind: "url", source_name: result.sourceUrl, content_text: result.text, character_count: result.text.length, truncated: result.truncated, imported_at: new Date().toISOString() });
+    if (error) throw new CommerceError("Hjemmesideindholdet kunne ikke gemmes.");
+    return json({ success: true, chunks: result.pages, pages: result.pages, truncated: result.truncated });
+  } catch (error) { return failure(error); }
 }

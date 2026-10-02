@@ -1,3 +1,4 @@
+import { chatProgressResponse, type ChatStage } from "@/lib/chat-progress";
 import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@supabase/supabase-js";
 import OpenAI from "openai";
@@ -8,6 +9,7 @@ import { mailConfigured } from "@/lib/commerce/mail";
 import { cachedProducts } from "@/lib/commerce";
 import { integration } from "@/lib/commerce/server";
 import { safeUrl } from "@/lib/commerce/types";
+import { refreshProductPages } from "@/lib/website-crawl";
 import { classifyCommerce, commerceCopy, orderIntent, supportIntent, heuristicLanguage, safeHistory, redact } from "@/lib/commerce/chat";
 import { isBusinessSubscriptionActive } from "@/lib/subscription";
 import { getAnswerLimit, getPlan } from "@/lib/plans";
@@ -143,6 +145,12 @@ async function consumeAnswerAllowance(
 }
 
 export async function POST(req: NextRequest) {
+  const wantsProgress = await req.clone().json().then(body => body.stream_events === true).catch(() => false);
+  if (wantsProgress) return chatProgressResponse(status => handleChat(req, status));
+  return handleChat(req);
+}
+
+async function handleChat(req: NextRequest, status: (stage: ChatStage) => void = () => {}) {
   try {
     const clientIp = getClientIp(req);
     const { message, business_id, page_url, preview_token, history, order_lookup, commerce_language } = await req.json();
@@ -239,7 +247,7 @@ export async function POST(req: NextRequest) {
   const [connected, supportSettings, websiteSource] = await Promise.all([
     integration(supabase, stableBusinessId),
     supabase.from("commerce_settings").select("notification_email").eq("business_id", stableBusinessId).maybeSingle(),
-    supabase.from("website_sources").select("content_text,imported_at").eq("business_id", stableBusinessId).maybeSingle(),
+    supabase.from("website_sources").select("content_text,imported_at,source_kind,source_name").eq("business_id", stableBusinessId).maybeSingle(),
   ]);
   let secureStorage = false;
   try { supportKey(); secureStorage = true; } catch { /* Report capability only; never expose configuration. */ }
@@ -264,7 +272,10 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ kind: "support", text: capabilities.supportCases ? "Jeg kan hjælpe dig med at sende en henvendelse til virksomheden. Udfyld kontaktmail og besked, gennemse opsummeringen og vælg ‘Send henvendelse’." : `Henvendelser via chatten er ikke aktiveret her endnu. Kontakt virksomheden direkte${business.support_email ? ` på ${sanitizeOutput(business.support_email)}` : " via dens hjemmeside"}.`, needsSupportInput: capabilities.supportCases }, { headers: { "Cache-Control": "no-store" } });
   }
   const commerceResponse = (payload: Record<string, unknown>) => NextResponse.json(payload, { headers: { "Cache-Control": "no-store", "Referrer-Policy": "no-referrer" } });
-  if (routing.intent === "order" || routing.intent === "product") {
+  // Website-only bots answer product questions using their imported context.
+  // Only connected shops can perform live product lookups; orders always stay
+  // in the separate verification flow, even without an integration.
+  if (routing.intent === "order" || (routing.intent === "product" && capabilities.products)) {
     const copy = await commerceCopy(openai, routing.language);
     const contact = { email: typeof business.support_email === "string" && /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(business.support_email) ? business.support_email : null, url: safeUrl(business.website_url) };
     if (routing.intent === "order") {
@@ -278,12 +289,18 @@ export async function POST(req: NextRequest) {
     if (adapter?.productsEnabled && routing.search) {
       if (!routing.search.query && routing.search.variant) return commerceResponse({ kind: "products", text: "Hvilket produkt vil du tjekke varianten for? Angiv gerne produktnavnet.", products: [], copy, contact, offerSupport: true });
       try {
+        status("searching");
         const result = await cachedProducts(stableBusinessId, connected!.revision, adapter, routing.search);
         return commerceResponse({ kind: "products", text: result.products.length ? copy.productsFound : copy.noProducts, ...result, moreText: copy.moreProducts, copy, contact, offerSupport: true });
       } catch { /* Return an explicit unavailable response without stale claims. */ }
     }
     return commerceResponse({ kind: "products", text: copy.productUnavailable, products: [], copy, contact, offerSupport: true });
   }
+
+  if (routing.intent === "product" && websiteSource.data?.source_kind === "url") status("searching");
+  const freshProductContext = routing.intent === "product" && websiteSource.data?.source_kind === "url"
+    ? await refreshProductPages(websiteSource.data.content_text, routing.search?.query || trimmedMessage, undefined, websiteSource.data.source_name).catch(() => "")
+    : "";
 
   // Generate embeddings with error handling
   let queryEmbedding: number[] = [];
@@ -361,6 +378,7 @@ EKSTRA INSTRUKSER FRA VIRKSOMHEDEN:
 ${sanitizeOutput(business?.custom_instructions || "Ingen")}
 `;
 
+  status("details");
   const completion = await openai.chat.completions.create({
     model: "gpt-5.6-luna",
     reasoning_effort: "none",
@@ -373,6 +391,7 @@ ${sanitizeOutput(business?.custom_instructions || "Ingen")}
           companyName,
           businessInfo,
           websiteContext: [context, websiteSource.data?.content_text ? `Importeret hjemmeside/HTML (${websiteSource.data.imported_at}, ikke live data):\n${websiteSource.data.content_text}` : ""].filter(Boolean).join("\n\n") || "Ingen relevant hjemmesidekontekst fundet.",
+          publicProductContext: freshProductContext,
           language: sanitizeOutput(business?.language || "dansk"),
           formal: business?.tone === "formel",
           capabilities,

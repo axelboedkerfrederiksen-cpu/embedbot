@@ -1,7 +1,9 @@
 import { NextRequest } from "next/server";
 import { owner, json, failure, CommerceError } from "@/lib/commerce/server";
-import { MAX_HTML_BYTES, extractWebsiteText, fetchWebsiteHtml, websiteUrl } from "@/lib/website-source";
+import { MAX_HTML_BYTES, extractWebsiteText, websiteUrl } from "@/lib/website-source";
+import { crawlWebsite } from "@/lib/website-crawl";
 export const runtime = "nodejs";
+export const maxDuration = 60;
 export async function GET(req: NextRequest) {
   try {
     const { db, business } = await owner(req, req.nextUrl.searchParams.get("business_id"));
@@ -27,19 +29,22 @@ export async function POST(req: NextRequest) {
       return json({ success: true });
     }
     if (!["html","url"].includes(String(input.action))) throw new CommerceError("Vælg en HTML-fil eller en hjemmesideadresse.", 400);
-    let html: string, sourceName: string;
+    let sourceName: string;
+    let extracted: ReturnType<typeof extractWebsiteText>;
+    let pages = 1;
     if (input.action === "url") {
       try { sourceName = websiteUrl(String(input.url || "")).href; } catch { throw new CommerceError("Indtast en gyldig HTTPS-adresse.", 400); }
-      try { html = await fetchWebsiteHtml(sourceName); } catch { throw new CommerceError("Hjemmesiden kunne ikke læses. Kontrollér adressen, eller upload sidens HTML-fil.", 422); }
+      try {
+        const result = await crawlWebsite(sourceName);
+        extracted = result; pages = result.pages; sourceName = result.sourceUrl;
+      } catch { throw new CommerceError("Hjemmesiden kunne ikke læses. Kontrollér adressen, eller upload sidens HTML-fil.", 422); }
     } else {
       sourceName = typeof input.filename === "string" ? input.filename.trim().slice(0, 200) : "";
       if (!/\.(html|htm)$/i.test(sourceName) || typeof input.html !== "string") throw new CommerceError("Vælg en .html- eller .htm-fil.", 400);
-      html = input.html;
+      try { extracted = extractWebsiteText(input.html); } catch { throw new CommerceError("Filen skal indeholde læsbar HTML-tekst og være højst 1 MB.", 422); }
     }
-    let extracted: ReturnType<typeof extractWebsiteText>;
-    try { extracted = extractWebsiteText(html); } catch { throw new CommerceError("Filen skal indeholde læsbar HTML-tekst og være højst 1 MB.", 422); }
     const { error } = await db.from("website_sources").upsert({ business_id: business.id, source_kind: input.action, source_name: sourceName, content_text: extracted.text, character_count: extracted.text.length, truncated: extracted.truncated, imported_at: new Date().toISOString() });
     if (error) throw new CommerceError("Hjemmesideimport er ikke konfigureret på serveren endnu.");
-    return json({ success: true, characters: extracted.text.length, truncated: extracted.truncated });
+    return json({ success: true, characters: extracted.text.length, truncated: extracted.truncated, pages });
   } catch (error) { return failure(error); }
 }

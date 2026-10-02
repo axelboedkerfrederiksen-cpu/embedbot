@@ -207,9 +207,15 @@
     <div id="eb-box" role="dialog" aria-label="Supportchat" aria-hidden="true" style="position:fixed;bottom:90px;right:24px;width:352px;height:510px;background:#ffffff;border:none;border-radius:18px;box-shadow:0 10px 28px rgba(15,23,42,0.10);z-index:9999;display:flex;flex-direction:column;overflow:hidden;color:#1a1a1a;opacity:0;visibility:hidden;transform:translateY(10px) scale(0.985);pointer-events:none;transition:opacity 0.18s ease, transform 0.18s ease, visibility 0.18s ease;">
       <div id="eb-header" style="background:#f9f9f9;color:#1a1a1a;padding:8px 14px;font-weight:600;display:flex;align-items:center;gap:10px;">
         <img id="eb-logo" alt="Virksomhedslogo" style="display:none;height:24px;width:auto;max-width:120px;object-fit:contain;filter:brightness(0) invert(1);" />
-        <div style="display:flex;flex-direction:column;line-height:1.2;">
-          <span id="eb-title">Support Chat</span>
+        <div style="display:flex;flex-direction:column;line-height:1.2;flex:1;min-width:0;">
+          <span id="eb-title" style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">Support Chat</span>
         </div>
+        <button type="button" id="eb-expand" aria-label="Udvid chatten" title="Udvid chatten" aria-controls="eb-box" aria-pressed="false">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M8 3H3v5m13-5h5v5M3 16v5h5m13-5v5h-5" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        </button>
+        <button type="button" id="eb-minimize" aria-label="Minimér chatten" title="Minimér chatten" aria-controls="eb-box">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M5 12h14" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/></svg>
+        </button>
       </div>
       <div id="eb-messages" role="log" aria-live="polite" aria-relevant="additions text" style="flex:1;overflow-y:auto;padding:28px 24px 16px 24px;display:flex;flex-direction:column;gap:0;height:356px;background:#ffffff;"></div>
       <div id="eb-composer" style="padding:12px 24px 11px 24px;border-top:1px solid rgba(17,17,17,0.06);display:flex;flex-direction:column;gap:6px;align-items:stretch;background:#ffffff;">
@@ -231,6 +237,8 @@
   const bubble = document.getElementById("eb-bubble");
   const box = document.getElementById("eb-box");
   const header = document.getElementById("eb-header");
+  const expand = document.getElementById("eb-expand");
+  const minimize = document.getElementById("eb-minimize");
   const title = document.getElementById("eb-title");
   const logo = document.getElementById("eb-logo");
   const composer = document.getElementById("eb-composer");
@@ -252,6 +260,37 @@
     const style = document.createElement("style");
     style.id = "eb-widget-style";
     style.textContent = `
+      #eb-box {
+        width: min(352px, calc(100vw - 32px)) !important;
+        height: min(510px, calc(100dvh - 114px)) !important;
+        transition: opacity 0.18s ease, transform 0.18s ease, visibility 0.18s ease, width 0.24s ease, height 0.24s ease !important;
+      }
+      #eb-box.eb-expanded {
+        width: min(560px, calc(100vw - 32px)) !important;
+        height: min(700px, calc(100dvh - 114px)) !important;
+      }
+      #eb-header, #eb-composer { flex-shrink: 0; }
+      #eb-messages { min-height: 0; }
+      #eb-expand, #eb-minimize {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        flex: 0 0 30px;
+        width: 30px;
+        height: 30px;
+        padding: 0;
+        border: 0;
+        border-radius: 7px;
+        background: transparent;
+        color: inherit;
+        cursor: pointer;
+        opacity: 0.75;
+        transition: opacity 0.15s ease, background 0.15s ease;
+      }
+      #eb-expand:hover, #eb-minimize:hover { opacity: 1; background: rgba(128, 128, 128, 0.12); }
+      #eb-expand:focus-visible, #eb-minimize:focus-visible { outline: 2px solid currentColor; outline-offset: 2px; }
+      @media (max-width: 600px) { #eb-box { right: 16px !important; } }
+      @media (prefers-reduced-motion: reduce) { #eb-box { transition: none !important; } }
       #eb-bubble:hover {
         transform: translateY(-1px);
       }
@@ -331,82 +370,39 @@
         100% { opacity: 1; transform: translateY(0); }
       }
       .eb-thinking-card {
-        display: inline-grid;
-        place-items: center;
-        width: 34px;
-        height: 34px;
-        margin: 2px 0;
+        display: inline-flex;
+        align-items: center;
+        min-height: 28px;
+        margin: 3px 0;
+        color: #68645f;
+        font-size: 13px;
+        font-weight: 500;
+        letter-spacing: 0.015em;
+        animation: eb-answer-reveal 0.25s ease-out;
       }
       #eb-messages .eb-thinking-host + .eb-meta {
-        display: inline-flex !important;
-        width: 34px !important;
-        justify-content: center !important;
-        margin-top: 1px !important;
+        display: none !important;
       }
-      .eb-thinking-orb {
-        position: relative;
-        display: grid;
-        place-items: center;
-        width: 30px;
-        height: 30px;
-        flex: 0 0 30px;
-      }
-      .eb-thinking-core {
-        width: 8px;
-        height: 8px;
-        border-radius: 50%;
-        background: #111111;
-        box-shadow: 0 0 0 4px rgba(17, 17, 17, 0.07), 0 0 14px rgba(17, 17, 17, 0.28);
-        animation: eb-thinking-breathe 1.45s ease-in-out infinite;
-      }
-      .eb-thinking-ring {
-        position: absolute;
-        inset: 2px;
-        border: 1px solid rgba(17, 17, 17, 0.18);
-        border-radius: 50%;
-        animation: eb-thinking-orbit 1.65s linear infinite;
-      }
-      .eb-thinking-ring::after {
-        content: "";
-        position: absolute;
-        top: -2px;
-        left: 50%;
-        width: 5px;
-        height: 5px;
-        border-radius: 50%;
-        background: #111111;
-        box-shadow: 0 0 8px rgba(17, 17, 17, 0.3);
-      }
-      .eb-thinking-ring-secondary {
-        inset: 6px;
-        border-color: rgba(17, 17, 17, 0.11);
-        animation-duration: 1.05s;
-        animation-direction: reverse;
-      }
-      .eb-thinking-ring-secondary::after {
-        top: auto;
-        bottom: -2px;
-        width: 4px;
-        height: 4px;
-        background: #8a8176;
+      .eb-thinking-letter {
+        display: inline-block;
+        white-space: pre;
+        animation: eb-thinking-wave 1.8s ease-in-out infinite;
+        animation-delay: calc(var(--eb-letter) * 45ms);
       }
       .eb-answer-reveal {
         animation: eb-answer-reveal 0.28s cubic-bezier(0.22, 1, 0.36, 1);
       }
-      @keyframes eb-thinking-breathe {
-        0%, 100% { transform: scale(0.82); opacity: 0.68; }
-        50% { transform: scale(1.14); opacity: 1; }
-      }
-      @keyframes eb-thinking-orbit {
-        to { transform: rotate(360deg); }
+      @keyframes eb-thinking-wave {
+        0%, 40%, 100% { transform: translateY(0); opacity: 0.75; }
+        20% { transform: translateY(-3px); opacity: 1; }
       }
       @keyframes eb-answer-reveal {
         from { opacity: 0; transform: translateY(4px); filter: blur(2px); }
         to { opacity: 1; transform: translateY(0); filter: blur(0); }
       }
       @media (prefers-reduced-motion: reduce) {
-        .eb-thinking-core,
-        .eb-thinking-ring,
+        .eb-thinking-card,
+        .eb-thinking-letter,
         .eb-answer-reveal {
           animation: none !important;
         }
@@ -580,6 +576,28 @@
     }
   }
 
+  expand.onclick = () => {
+    const followLatest = messages.scrollHeight - messages.scrollTop - messages.clientHeight < 100;
+    const expanded = box.classList.toggle("eb-expanded");
+    const label = expanded ? "Gør chatten mindre" : "Udvid chatten";
+    expand.setAttribute("aria-pressed", String(expanded));
+    expand.setAttribute("aria-label", label);
+    expand.title = label;
+    expand.innerHTML = expanded
+      ? '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M3 8h5V3m13 5h-5V3M8 21v-5H3m13 5v-5h5" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/></svg>'
+      : '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M8 3H3v5m13-5h5v5M3 16v5h5m13-5v5h-5" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/></svg>';
+    if (followLatest) {
+      const keepLatest = () => { messages.scrollTop = messages.scrollHeight; };
+      requestAnimationFrame(keepLatest);
+      box.addEventListener("transitionend", keepLatest, { once: true });
+    }
+  };
+
+  minimize.onclick = () => {
+    setChatOpen(false);
+    bubble.focus();
+  };
+
   bubble.onclick = () => {
     setChatOpen(!chatOpen);
   };
@@ -607,28 +625,82 @@
       paragraph.style.fontSize = "inherit";
       paragraph.style.lineHeight = "inherit";
       paragraph.style.fontWeight = "400";
-      paragraph.textContent = paragraphText;
+      appendFormattedText(paragraph, paragraphText);
       target.appendChild(paragraph);
     });
   }
 
-  function renderThinkingState(target, language) {
+  // Build a small Markdown subset with DOM nodes. Model output is never HTML.
+  function appendFormattedText(parent, text) {
+    const pattern = /\[([^\]\n]+)\]\(\s*(https?:\/\/[^\s<>]+?)\s*\)|\*\*([^*\n]+)\*\*|https?:\/\/[^\s<>]+/g;
+    let previous = 0;
+    for (const match of text.matchAll(pattern)) {
+      parent.appendChild(document.createTextNode(text.slice(previous, match.index)));
+      if (match[3]) {
+        const strong = document.createElement("strong"); strong.textContent = match[3]; parent.appendChild(strong);
+      } else {
+        const rawUrl = match[2] || match[0].replace(/[.,;!?]+$/, "");
+        let url = null;
+        try { const parsed = new URL(rawUrl); if (["https:", "http:"].includes(parsed.protocol) && !parsed.username && !parsed.password) url = parsed.href; } catch { /* Keep invalid links as text. */ }
+        if (url) {
+          const link = document.createElement("a");
+          link.textContent = match[1] || rawUrl;
+          link.href = url; link.target = "_blank"; link.rel = "noopener noreferrer";
+          link.className = "eb-answer-link"; parent.appendChild(link);
+          if (!match[2]) parent.appendChild(document.createTextNode(match[0].slice(rawUrl.length)));
+        } else parent.appendChild(document.createTextNode(match[0]));
+      }
+      previous = match.index + match[0].length;
+    }
+    parent.appendChild(document.createTextNode(text.slice(previous)));
+  }
+
+  async function addProductPreviews(target) {
+    const urls = [...new Set([...target.querySelectorAll("a.eb-answer-link")].map(link => link.href))].filter(url => url.startsWith("https:")).slice(0, 3);
+    if (!urls.length) return;
+    const previews = document.createElement("div"); previews.className = "eb-product-previews"; target.appendChild(previews);
+    await Promise.all(urls.map(async url => {
+      try {
+        const response = await fetch(`${apiOrigin}/api/product-preview?business_id=${encodeURIComponent(businessId)}&url=${encodeURIComponent(url)}`);
+        if (!response.ok) return;
+        const { product } = await response.json();
+        const href = safeCommerceUrl(product?.url), imageUrl = safeCommerceUrl(product?.image);
+        if (!href || !imageUrl) return;
+        const link = document.createElement("a"); link.className = "eb-product-preview";
+        link.href = href; link.target = "_blank"; link.rel = "noopener noreferrer";
+        const image = document.createElement("img"); image.src = imageUrl; image.alt = product.name || "Produktbillede";
+        image.loading = "lazy"; image.referrerPolicy = "no-referrer";
+        image.onerror = () => link.remove();
+        link.appendChild(image);
+        element("span", product.name || "Se produkt", link);
+        const followAnswer = messages.scrollHeight - messages.scrollTop - messages.clientHeight < 100;
+        previews.appendChild(link);
+        if (followAnswer) messages.scrollTop = messages.scrollHeight;
+      } catch { /* A missing preview never prevents the answer or link. */ }
+    }));
+  }
+
+  function renderThinkingState(target, language, stage = "thinking") {
     if (!target) return;
+    const labels = language === "en"
+      ? { thinking: "Thinking", searching: "Searching the website", details: "Finishing the details" }
+      : { thinking: "Tænker", searching: "Søger på hjemmesiden", details: "Finder sidste detaljer" };
+    const text = labels[stage] || labels.thinking;
     target.textContent = "";
     target.classList.add("eb-thinking-host");
-
     const loader = document.createElement("div");
     loader.className = "eb-thinking-card";
     loader.setAttribute("role", "status");
     loader.setAttribute("aria-live", "polite");
-    loader.setAttribute("aria-label", language === "en" ? "Preparing your answer" : "Forbereder dit svar");
-    loader.innerHTML = `
-      <span class="eb-thinking-orb" aria-hidden="true">
-        <span class="eb-thinking-ring"></span>
-        <span class="eb-thinking-ring eb-thinking-ring-secondary"></span>
-        <span class="eb-thinking-core"></span>
-      </span>
-    `;
+    loader.setAttribute("aria-label", text);
+    Array.from(text).forEach((character, index) => {
+      const letter = document.createElement("span");
+      letter.className = "eb-thinking-letter";
+      letter.textContent = character;
+      letter.setAttribute("aria-hidden", "true");
+      letter.style.setProperty("--eb-letter", index);
+      loader.appendChild(letter);
+    });
     target.appendChild(loader);
   }
 
@@ -897,6 +969,13 @@
   supportShortcut.classList.add("eb-support-shortcut");
   const commerceStyles = element("style", undefined, document.head);
   commerceStyles.textContent = `
+    #eb-box .eb-answer-link { color:#237a57; text-decoration:underline; text-underline-offset:3px; overflow-wrap:anywhere; }
+    #eb-box .eb-answer-link:focus-visible, #eb-box .eb-product-preview:focus-visible { outline:2px solid #237a57; outline-offset:3px; border-radius:4px; }
+    #eb-box .eb-product-previews { display:grid; gap:10px; margin-top:12px; }
+    #eb-box .eb-product-previews:empty { display:none; }
+    #eb-box .eb-product-preview { display:flex; gap:12px; align-items:center; border:1px solid #e8e3db; border-radius:12px; padding:10px; background:#fdfcf9; color:#343b31; text-decoration:none; font-size:13px; font-weight:500; }
+    #eb-box .eb-product-preview img { width:76px; height:88px; object-fit:contain; border-radius:7px; background:white; flex-shrink:0; }
+    #eb-box .eb-product-preview span { overflow-wrap:anywhere; }
     #eb-box .eb-commerce-card { border:1px solid #e8e3db; border-radius:12px; padding:12px; margin:10px 0; background:#fdfcf9; max-width:100%; font-size:13px; }
     #eb-box .eb-commerce-card p { margin:8px 0; white-space:pre-wrap; overflow-wrap:anywhere; font-size:12px; line-height:1.55; }
     #eb-box .eb-commerce-card a { color:#237a57; font-size:12px; text-decoration:underline; }
@@ -933,7 +1012,7 @@
       const res = await fetch(API_URL, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ message: text, business_id: businessId, page_url: window.location.href, preview_token: previewToken || undefined, history: conversationHistory.slice(-10) }),
+        body: JSON.stringify({ stream_events: true, message: text, business_id: businessId, page_url: window.location.href, preview_token: previewToken || undefined, history: conversationHistory.slice(-10) }),
       });
 
       if (!res.ok) {
@@ -965,6 +1044,29 @@
       const reader = res.body.getReader();
       const decoder = new TextDecoder();
 
+      const eventStream = (res.headers.get("content-type") || "").includes("application/x-ndjson");
+      let eventBuffer = "";
+      let structuredResponse = false;
+      const consumeEvent = (event) => {
+        if (event.type === "error") throw new Error(event.message || labels.errorReply);
+        if (event.type === "status" && !hasStartedResponse) {
+          renderThinkingState(botMessage.msg, language, event.stage);
+          messages.scrollTop = messages.scrollHeight;
+        } else if (event.type === "result") {
+          structuredResponse = true;
+          hasStartedResponse = true;
+          renderCommerce(botMessage.msg, event.data);
+          if (event.data.kind === "products") {
+            conversationHistory.push({ role: "user", content: text }, { role: "assistant", content: (event.data.products || []).map(p => p.name).join(", ") || event.data.text });
+          }
+        } else if (event.type === "text") {
+          botStreamText += event.text;
+          hasStartedResponse = true;
+          botMessage.msg.classList.remove("eb-thinking-host");
+          renderAssistantText(botMessage.msg, botStreamText);
+          messages.scrollTop = messages.scrollHeight;
+        }
+      };
       while (true) {
         const { value, done } = await reader.read();
         if (done) {
@@ -976,6 +1078,16 @@
           continue;
         }
 
+        if (eventStream) {
+          eventBuffer += streamedText;
+          let newline;
+          while ((newline = eventBuffer.indexOf("\n")) !== -1) {
+            const line = eventBuffer.slice(0, newline);
+            eventBuffer = eventBuffer.slice(newline + 1);
+            if (line.trim()) consumeEvent(JSON.parse(line));
+          }
+          continue;
+        }
         botStreamText += streamedText;
         if (!hasStartedResponse) {
           hasStartedResponse = true;
@@ -986,11 +1098,18 @@
         messages.scrollTop = messages.scrollHeight;
       }
 
+      if (eventStream && eventBuffer.trim()) consumeEvent(JSON.parse(eventBuffer));
+      if (structuredResponse) {
+        if (userMessage.status) userMessage.status.textContent = "";
+        return;
+      }
       if (!botStreamText.trim()) {
         botStreamText = labels.errorReply;
       }
 
       renderAssistantText(botMessage.msg, botStreamText);
+
+      void addProductPreviews(botMessage.msg);
 
       botMessage.msg.classList.remove("eb-thinking-host");
       if (userMessage.status) {

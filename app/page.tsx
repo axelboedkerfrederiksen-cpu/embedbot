@@ -1,789 +1,110 @@
 "use client";
 import Link from "next/link";
 import Image from "next/image";
+import { useRef, useState } from "react";
+import { ArrowRight, Check, MessageCircle, Plus } from "lucide-react";
 import logoImage from "@/media/86a91d6a-f484-4e7d-a05c-55ab0979c3b1.png";
-import { motion } from "framer-motion";
-import { useEffect, useRef, useState } from "react";
-
-const ease = [0.22, 1, 0.36, 1] as const;
-
-const fadeUp = {
-  hidden: { opacity: 0, y: 22 },
-  show: { opacity: 1, y: 0, transition: { duration: 0.6, ease } },
-};
-
-const stagger = {
-  hidden: {},
-  show: { transition: { staggerChildren: 0.11 } },
-};
-
-const supportedPlatforms = [
-  {
-    name: "WooCommerce på WordPress",
-    logo: "https://cdn.simpleicons.org/woocommerce/96588A",
-    secondaryLogo: "https://cdn.simpleicons.org/wordpress/21759B",
-    scale: 1,
-    featured: true,
-  },
-  { name: "HTML",        logo: "https://cdn.simpleicons.org/html5/E34F26", scale: 0.92 },
-  { name: "Shopify",     logo: "https://cdn.simpleicons.org/shopify/95BF47", scale: 1 },
-  { name: "Squarespace", logo: "https://cdn.simpleicons.org/squarespace/111111", scale: 1.02 },
-  { name: "Wix",         logo: "https://cdn.simpleicons.org/wix/111111", scale: 1.15 },
-  { name: "Webflow",     logo: "https://cdn.simpleicons.org/webflow/146EF5", scale: 1.08 },
+import ChatPreview from "./components/landing-chat-preview";
+import styles from "./landing.module.css";
+const questions = [
+    { title: "Hvad skal jeg gøre for at komme i gang?", answer: "Send os din webshops adresse og lidt information om de spørgsmål, dine kunder typisk stiller. Vi gennemgår siden og hjælper med at gøre chatbotten klar." },
+    { title: "Kan jeg prøve EmbedBot først?", answer: "Ja. Du kan prøve EmbedBot gratis i 14 dage på din egen webshop. Du skal tilføje et betalingskort for at starte prøveperioden." },
+    { title: "Skal jeg kunne kode?", answer: "Nej. Vi hjælper med opsætningen. Chatbotten indsættes på din hjemmeside med et lille stykke kode, og vi guider dig gennem installationen." },
 ];
-
-const features = [
-  {
-    num: "01",
-    title: "Klar på 5 minutter",
-    desc: "Ingen kodning. Udfyld en simpel formular, og din chatbot er klar til at blive indsat på din hjemmeside.",
-  },
-  {
-    num: "02",
-    title: "🇩🇰 Bygget til dansk",
-    desc: "EmbedBot er tilpasset til danske virksomheder og forstår konteksten bag dine produkter og services.",
-  },
-  {
-    num: "03",
-    title: "Svar døgnet rundt",
-    desc: "I stedet for at vente på en mail, får dine kunder svar direkte på din side — hvornår det passer dem.",
-  },
-];
-
 export default function Home() {
-  const DEMO_BUSINESS_ID = "a2678b5f-6d8b-415f-bbc0-ef3ce2a148bc";
-  const [showDemoNudge, setShowDemoNudge] = useState(false);
-  const demoNudgeTimerRef = useRef<number | null>(null);
-
-  useEffect(() => {
-    demoNudgeTimerRef.current = window.setTimeout(() => setShowDemoNudge(true), 1400);
-    return () => {
-      if (demoNudgeTimerRef.current) window.clearTimeout(demoNudgeTimerRef.current);
-    };
-  }, []);
-
-  const hideDemoNudge = () => {
-    if (demoNudgeTimerRef.current) {
-      window.clearTimeout(demoNudgeTimerRef.current);
-      demoNudgeTimerRef.current = null;
+    const [demoStatus, setDemoStatus] = useState<"idle" | "loading" | "error">("idle");
+    const loading = useRef(false);
+    async function openDemo() {
+        if (loading.current)
+            return;
+        const openBubble = () => {
+            const bubble = document.getElementById("eb-bubble") as HTMLButtonElement | null;
+            if (!bubble)
+                return false;
+            if (/open|åbn/i.test(bubble.getAttribute("aria-label") || ""))
+                bubble.click();
+            return true;
+        };
+        if (openBubble())
+            return;
+        loading.current = true;
+        setDemoStatus("loading");
+        try {
+            let script = document.getElementById("embedbot-demo-script") as HTMLScriptElement | null;
+            if (!script) {
+                script = document.createElement("script");
+                script.id = "embedbot-demo-script";
+                script.src = "/widget.js?v=landing-preview-1&id=a2678b5f-6d8b-415f-bbc0-ef3ce2a148bc";
+                script.setAttribute("data-name", "EmbedBot");
+                script.setAttribute("data-primary-color", "#ffffff");
+                script.setAttribute("data-secondary-color", "#f6f3ed");
+                script.setAttribute("data-fab-color", "#ffffff");
+                script.setAttribute("data-font", "Inter");
+                script.onerror = () => script?.remove();
+                document.body.appendChild(script);
+            }
+            await new Promise<void>((resolve, reject) => {
+                let attempts = 0;
+                const timer = window.setInterval(() => {
+                    if (openBubble()) {
+                        window.clearInterval(timer);
+                        resolve();
+                    }
+                    else if (++attempts >= 60) {
+                        window.clearInterval(timer);
+                        reject(new Error("Demo unavailable"));
+                    }
+                }, 200);
+            });
+            setDemoStatus("idle");
+        }
+        catch {
+            setDemoStatus("error");
+        }
+        finally {
+            loading.current = false;
+        }
     }
-    setShowDemoNudge(false);
-  };
+    return (<main id="main-content" className={styles.page}>
+      <header className={styles.header}>
+        <nav className={styles.nav} aria-label="Primær navigation">
+          <Link href="/" className={styles.logo}><Image src={logoImage} alt="" priority/><span>EmbedBot</span></Link>
+          <div className={styles.navCenter}><a href="#saadan-virker-det">Sådan virker det</a><Link href="/prices">Priser</Link><Link href="/support">Kontakt</Link></div>
+          <div className={styles.navActions}><Link href="/login" className={styles.login}>Log ind</Link><Link href="/setup" className={styles.button}>Start gratis <ArrowRight size={15}/></Link></div>
+        </nav>
+      </header>
 
-  const openWidgetIfAvailable = () => {
-    const bubble = document.getElementById("eb-bubble") as HTMLButtonElement | null;
-    if (!bubble) return;
-    const ariaLabel = bubble.getAttribute("aria-label") || "";
-    if (ariaLabel.includes("Open") || ariaLabel.includes("open")) bubble.click();
-  };
-
-  const handleDemoClick = () => {
-    hideDemoNudge();
-    const existingScript = document.getElementById("embedbot-demo-script");
-    if (existingScript) { openWidgetIfAvailable(); return; }
-    const script = document.createElement("script");
-    script.id = "embedbot-demo-script";
-    script.src = `https://www.embedbot.dk/widget.js?v=orbital-loader-4&id=${DEMO_BUSINESS_ID}`;
-    script.setAttribute("data-name", "EmbedBot");
-    script.setAttribute("data-primary-color", "#ffffff");
-    script.setAttribute("data-secondary-color", "#f6f3ed");
-    script.setAttribute("data-fab-color", "#ffffff");
-    script.setAttribute("data-font", "Poppins");
-    script.onload = () => window.setTimeout(openWidgetIfAvailable, 50);
-    document.body.appendChild(script);
-  };
-
-  return (
-    <main id="main-content" className="page">
-      <style jsx global>{`
-        *, *::before, *::after { box-sizing: border-box; }
-
-        html, body {
-          margin: 0;
-          padding: 0;
-          min-height: 100%;
-          background: #f6f3ed;
-        }
-
-        .page {
-          min-height: 100dvh;
-          font-family: var(--font-poppins), sans-serif;
-          color: #111111;
-          max-width: 1080px;
-          margin: 0 auto;
-          padding: 0 28px 64px;
-          background: transparent;
-          position: relative;
-        }
-
-        .page::before {
-          content: "";
-          position: absolute;
-          inset: 8px -24px auto;
-          height: 560px;
-          background:
-            radial-gradient(circle at 82% 12%, rgba(255, 255, 255, 0.86) 0%, rgba(255, 255, 255, 0) 28%),
-            radial-gradient(circle at 20% 28%, rgba(246, 243, 237, 0.88) 0%, rgba(246, 243, 237, 0) 36%);
-          pointer-events: none;
-          z-index: 0;
-          filter: blur(8px);
-        }
-
-        .nav {
-          position: sticky;
-          top: 14px;
-          z-index: 20;
-          display: flex;
-          align-items: center;
-          justify-content: space-between;
-          margin-top: 14px;
-          padding: 18px 22px;
-          border: 1px solid rgba(17, 17, 17, 0.08);
-          border-radius: 20px;
-          background: rgba(255, 255, 255, 0.78);
-          backdrop-filter: blur(18px);
-          -webkit-backdrop-filter: blur(24px);
-          box-shadow: 0 14px 40px rgba(17, 17, 17, 0.045);
-        }
-
-        .nav-logo { display: block; line-height: 0; text-decoration: none; }
-        .nav-logo img {
-          height: 26px;
-          width: auto;
-        }
-
-        .nav-links {
-          display: flex;
-          align-items: center;
-          gap: 18px;
-        }
-
-        .nav-login {
-          font-size: 0.85rem;
-          font-weight: 500;
-          color: #6b6258;
-          text-decoration: none;
-          opacity: 0.82;
-          transition: opacity 200ms ease, color 200ms ease;
-        }
-        .nav-login:hover { opacity: 1; color: #111111; }
-
-        .hero {
-          padding: 92px 0 56px;
-          position: relative;
-          z-index: 1;
-          display: grid;
-          gap: 0;
-        }
-
-        .hero::after {
-          content: "";
-          position: absolute;
-          top: -18px;
-          right: 2%;
-          width: min(38vw, 360px);
-          height: min(38vw, 360px);
-          border-radius: 999px;
-          background: radial-gradient(circle, rgba(246, 243, 237, 0.9) 0%, rgba(246, 243, 237, 0) 70%);
-          z-index: -1;
-          filter: blur(10px);
-        }
-
-        .tag {
-          display: inline-flex;
-          width: fit-content;
-          align-items: center;
-          gap: 8px;
-          padding: 8px 12px;
-          border-radius: 999px;
-          border: 1px solid rgba(17, 17, 17, 0.08);
-          background: #ffffff;
-          font-size: 0.82rem;
-          font-weight: 600;
-          line-height: 1.4;
-          letter-spacing: 0.04em;
-          color: #6b6258;
-          margin-bottom: 22px;
-          max-width: 100%;
-        }
-
-        .headline {
-          font-family: var(--font-poppins), sans-serif;
-          font-size: clamp(2.35rem, 5.2vw, 4.65rem);
-          font-weight: 700;
-          line-height: 1.02;
-          letter-spacing: -0.05em;
-          margin: 0 0 24px;
-          max-width: 20ch;
-          color: #111111;
-        }
-
-        .lead {
-          font-size: clamp(1rem, 2.1vw, 1.18rem);
-          font-weight: 400;
-          line-height: 1.8;
-          color: #5f584f;
-          margin: 0 0 14px;
-          max-width: 54ch;
-        }
-
-        .trial-badge {
-          display: inline-flex;
-          width: fit-content;
-          align-items: center;
-          padding: 8px 13px;
-          border-radius: 999px;
-          border: 1px solid rgba(17, 17, 17, 0.08);
-          background: rgba(255, 255, 255, 0.72);
-          color: #6b6258;
-          font-size: 0.9rem;
-          font-weight: 600;
-          line-height: 1.35;
-          margin: 14px 0 0;
-          box-shadow: 0 10px 28px rgba(17, 17, 17, 0.045);
-          backdrop-filter: blur(12px);
-          -webkit-backdrop-filter: blur(12px);
-        }
-
-        .cta-row {
-          display: flex;
-          flex-wrap: wrap;
-          gap: 10px;
-        }
-
-        .btn {
-          font-family: var(--font-poppins), sans-serif;
-          font-size: 0.875rem;
-          font-weight: 600;
-          text-decoration: none;
-          padding: 13px 22px;
-          border-radius: 999px;
-          border: 1px solid transparent;
-          cursor: pointer;
-          transition: background 200ms ease, box-shadow 200ms ease, border-color 200ms ease, color 200ms ease;
-          display: inline-flex;
-          align-items: center;
-        }
-
-        .btn-primary {
-          background: #ffffff;
-          color: #111111;
-          border-color: rgba(17, 17, 17, 0.1);
-          box-shadow: 0 14px 28px rgba(17, 17, 17, 0.08);
-        }
-        .btn-primary:hover {
-          background: #ffffff;
-          box-shadow: 0 16px 34px rgba(17, 17, 17, 0.12);
-        }
-
-        .btn-outline {
-          background: #ffffff;
-          color: #111111;
-          border-color: rgba(17, 17, 17, 0.08);
-        }
-        .btn-outline:hover {
-          background: #ffffff;
-          border-color: rgba(17, 17, 17, 0.12);
-        }
-
-        .features {
-          display: grid;
-          grid-template-columns: repeat(3, 1fr);
-          gap: 16px;
-          position: relative;
-          z-index: 1;
-          margin-top: 22px;
-        }
-
-        .pilot-callout {
-          position: relative;
-          z-index: 1;
-          display: flex;
-          align-items: center;
-          justify-content: space-between;
-          gap: 20px;
-          margin-top: 16px;
-          padding: 22px 24px;
-          border: 1px solid rgba(17, 17, 17, 0.07);
-          border-radius: 22px;
-          background: rgba(255, 255, 255, 0.68);
-          box-shadow: 0 12px 30px rgba(17, 17, 17, 0.035);
-        }
-
-        .pilot-callout-copy { display: grid; gap: 4px; }
-        .pilot-callout-title {
-          margin: 0;
-          color: #111111;
-          font-size: 1rem;
-          font-weight: 700;
-          letter-spacing: -0.015em;
-        }
-        .pilot-callout-text {
-          margin: 0;
-          color: #6b6258;
-          font-size: 0.86rem;
-          line-height: 1.55;
-        }
-        .pilot-callout-link { flex: 0 0 auto; }
-
-        .feat {
-          padding: 28px 24px;
-          border: 1px solid rgba(17, 17, 17, 0.06);
-          border-radius: 24px;
-          background: rgba(255, 255, 255, 0.94);
-          box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.72), 0 12px 30px rgba(17, 17, 17, 0.035);
-          backdrop-filter: blur(8px);
-        }
-
-        .feat-num {
-          display: block;
-          font-size: 0.63rem;
-          letter-spacing: 0.15em;
-          color: #8a7e70;
-          font-weight: 600;
-          margin-bottom: 16px;
-        }
-
-        .feat-title {
-          font-size: 1rem;
-          font-weight: 600;
-          margin: 0 0 10px;
-          line-height: 1.3;
-          color: #111111;
-        }
-
-        .feat-desc {
-          font-size: 1.06rem;
-          font-weight: 400;
-          color: #5f584f;
-          line-height: 1.75;
-          margin: 0;
-        }
-
-        .platforms {
-          padding: 40px 0 0;
-          display: flex;
-          align-items: center;
-          gap: 20px;
-          flex-wrap: wrap;
-          position: relative;
-          z-index: 1;
-        }
-
-        .platforms-label {
-          font-size: 0.67rem;
-          font-weight: 600;
-          letter-spacing: 0.13em;
-          text-transform: uppercase;
-          color: #8a7e70;
-          white-space: nowrap;
-          flex-shrink: 0;
-        }
-
-        .platforms-logos {
-          display: flex;
-          gap: 18px;
-          align-items: center;
-          flex-wrap: wrap;
-          padding: 14px 18px;
-          border-radius: 999px;
-          background: rgba(255, 255, 255, 0.96);
-          border: 1px solid rgba(17, 17, 17, 0.06);
-          box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.85), 0 10px 24px rgba(17, 17, 17, 0.04);
-        }
-
-        .platform-logo-wrap {
-          width: 34px;
-          height: 24px;
-          display: inline-flex;
-          align-items: center;
-          justify-content: center;
-        }
-
-        .platform-logo-wrap-featured {
-          width: 80px;
-          height: 40px;
-          padding: 7px 9px;
-          border: 1px solid rgba(150, 88, 138, 0.2);
-          border-radius: 999px;
-          background: rgba(150, 88, 138, 0.09);
-          box-shadow: 0 6px 16px rgba(150, 88, 138, 0.1);
-        }
-
-        .platform-logo-pair {
-          display: flex;
-          height: 100%;
-          align-items: center;
-          justify-content: center;
-          gap: 7px;
-        }
-
-        .platform-logo {
-          max-width: 100%;
-          max-height: 100%;
-          display: block;
-          transform-origin: center;
-        }
-
-        .platform-logo-pair .platform-logo {
-          width: 24px;
-          height: 24px;
-          max-width: none;
-          max-height: none;
-          object-fit: contain;
-        }
-
-        .foot {
-          padding-top: 32px;
-          text-align: left;
-          position: relative;
-          z-index: 1;
-          display: flex;
-          flex-wrap: wrap;
-          align-items: center;
-          gap: 8px 14px;
-        }
-
-        .foot a,
-        .foot span {
-          font-size: 0.88rem;
-          color: #6b6258;
-          font-weight: 500;
-        }
-
-        .foot a {
-          text-decoration: none;
-          transition: color 200ms ease;
-        }
-
-        .foot a:hover { color: #111111; }
-
-        .demo-nudge {
-          position: fixed;
-          right: 22px;
-          bottom: 22px;
-          z-index: 30;
-          width: min(340px, calc(100vw - 32px));
-          padding: 16px;
-          border-radius: 22px;
-          border: 1px solid rgba(17, 17, 17, 0.08);
-          background: rgba(255, 255, 255, 0.92);
-          box-shadow: 0 22px 60px rgba(17, 17, 17, 0.14);
-          backdrop-filter: blur(18px);
-          -webkit-backdrop-filter: blur(18px);
-        }
-
-        .demo-nudge-top {
-          display: flex;
-          align-items: center;
-          justify-content: space-between;
-          gap: 12px;
-          margin-bottom: 10px;
-        }
-
-        .demo-nudge-kicker {
-          display: inline-flex;
-          align-items: center;
-          color: #6b6258;
-          font-size: 0.72rem;
-          font-weight: 700;
-          letter-spacing: 0.13em;
-          text-transform: uppercase;
-        }
-
-        .demo-nudge-close {
-          width: 30px;
-          height: 30px;
-          border: 0;
-          border-radius: 999px;
-          background: #f6f3ed;
-          color: #6b6258;
-          cursor: pointer;
-          font-size: 1.2rem;
-          line-height: 1;
-          display: inline-flex;
-          align-items: center;
-          justify-content: center;
-          transition: background 180ms ease, color 180ms ease;
-        }
-
-        .demo-nudge-close:hover {
-          background: #eee8dc;
-          color: #111111;
-        }
-
-        .demo-nudge-title {
-          margin: 0 0 6px;
-          color: #111111;
-          font-size: 1.03rem;
-          font-weight: 700;
-          line-height: 1.25;
-        }
-
-        .demo-nudge-text {
-          margin: 0 0 14px;
-          color: #5f584f;
-          font-size: 0.9rem;
-          line-height: 1.55;
-        }
-
-        .demo-nudge-action {
-          width: 100%;
-          justify-content: center;
-          background: #111111;
-          color: #ffffff;
-          box-shadow: 0 14px 28px rgba(17, 17, 17, 0.14);
-        }
-
-        .demo-nudge-action:hover {
-          background: #2a2927;
-          box-shadow: 0 16px 34px rgba(17, 17, 17, 0.18);
-        }
-
-        @media (max-width: 600px) {
-          .page { padding: 0 20px 44px; }
-          .nav {
-            top: 10px;
-            margin-top: 10px;
-            padding: 15px 16px;
-            border-radius: 16px;
-          }
-          .nav-links { gap: 14px; }
-
-          .hero { padding: 56px 0 38px; }
-          .hero::after {
-            width: 240px;
-            height: 240px;
-            top: 12px;
-            right: -20px;
-          }
-          .headline { max-width: 12ch; }
-          .tag { font-size: 0.76rem; }
-
-          .features { grid-template-columns: 1fr; }
-          .feat {
-            padding: 24px 20px !important;
-          }
-          .pilot-callout {
-            align-items: flex-start;
-            flex-direction: column;
-            padding: 20px;
-          }
-
-          .demo-nudge {
-            right: 16px;
-            bottom: 16px;
-            border-radius: 18px;
-            padding: 14px;
-          }
-
-          .platforms { flex-direction: column; align-items: flex-start; gap: 14px; }
-          .foot { text-align: left; }
-        }
-      `}</style>
-
-      {/* Nav — slides in from top */}
-      <motion.nav
-        className="nav"
-        aria-label="Primær navigation"
-        initial={{ opacity: 0, y: -8 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.5, ease }}
-      >
-        <Link href="/" className="nav-logo">
-          <Image src={logoImage} alt="EmbedBot" priority />
-        </Link>
-        <div className="nav-links">
-          <Link href="/support" className="nav-login">Support</Link>
-          <Link href="/faq" className="nav-login">FAQ</Link>
-          <Link href="/prices" className="nav-login">Priser</Link>
-          <Link href="/login" className="nav-login">Log ind</Link>
+      <section className={`${styles.hero} ${styles.container}`} aria-labelledby="hero-title">
+        <div className={styles.heroCopy}>
+          <p className={styles.eyebrow}>AI-KUNDESERVICE TIL DIN WEBSHOP</p>
+          <h1 id="hero-title">Giv kunderne svar.<br /><span>Giv jer selv mere tid.</span></h1>
+          <p className={styles.lead}>EmbedBot hjælper dine kunder direkte i webshoppen. Med svar om jeres produkter, levering og retur — også når I er gået hjem.</p>
+          <div className={styles.heroActions}><Link href="/setup" className={styles.button}>Start 14 dage gratis <ArrowRight size={17}/></Link><button className={styles.textButton} onClick={openDemo} disabled={demoStatus === "loading"}>{demoStatus === "loading" ? "Åbner demo…" : "Prøv demoen"}<ArrowRight size={16}/></button></div>
+          <div className={styles.reassurance}><span><Check size={14}/> Betalingskort påkrævet</span><span><Check size={14}/> Vi hjælper med opsætningen</span></div>
+          {demoStatus === "error" && <p className={styles.demoError} role="status">Demoen kunne ikke åbnes lige nu. Prøv igen, eller <Link href="/support">kontakt os</Link>.</p>}
         </div>
-      </motion.nav>
+        <ChatPreview />
+      </section>
 
-      {/* Hero — staggered children on load */}
-      <motion.section
-        className="hero"
-        variants={stagger}
-        initial="hidden"
-        animate="show"
-      >
-        <motion.span className="tag" variants={fadeUp}>
-          🇩🇰 Dansk AI-kundeservice til WooCommerce
-        </motion.span>
-        <motion.h1 className="headline" variants={fadeUp}>
-          Lad kunderne få svar, mens I laver noget andet.
-        </motion.h1>
-        <motion.p className="lead" variants={fadeUp}>
-          Udfyld opsætningen, så bygger vi en chatbot ud fra jeres webshop og gør den klar til jeres hjemmeside.
-        </motion.p>
-        <motion.div className="cta-row" variants={fadeUp}>
-          <Link href="/setup" className="btn btn-primary">
-            Opsæt din chatbot
-          </Link>
-          <button onClick={handleDemoClick} className="btn btn-outline">
-            Se demo
-          </button>
-        </motion.div>
-        <motion.p className="trial-badge" variants={fadeUp}>
-          Vi står for opsætningen · Intet betalingskort · Ingen binding
-        </motion.p>
-      </motion.section>
+      <section className={`${styles.platforms} ${styles.container}`} aria-label="Platforme">
+        <p>Bygget til WooCommerce.<br /><span>Kan også indsættes på jeres hjemmeside.</span></p>
+        <div className={styles.platformNames}><span className={styles.woo}>WooCommerce</span><span>WordPress</span><span>Shopify</span><span className={styles.webflow}>Webflow</span><span>Squarespace</span><span>Wix</span></div>
+      </section>
 
-      {/* Features — scroll-triggered stagger */}
-      <motion.div
-        className="features"
-        variants={stagger}
-        initial="hidden"
-        whileInView="show"
-        viewport={{ once: true, margin: "-60px" }}
-      >
-        {features.map((f) => (
-          <motion.div className="feat" key={f.num} variants={fadeUp}>
-            <span className="feat-num">{f.num}</span>
-            <h2 className="feat-title">{f.title}</h2>
-            <p className="feat-desc">{f.desc}</p>
-          </motion.div>
-        ))}
-      </motion.div>
-
-      <motion.aside
-        className="pilot-callout"
-        initial={{ opacity: 0, y: 16 }}
-        whileInView={{ opacity: 1, y: 0 }}
-        viewport={{ once: true, margin: "-40px" }}
-        transition={{ duration: 0.5, ease }}
-        aria-label="Gratis prøveperiode"
-      >
-        <div className="pilot-callout-copy">
-          <p className="pilot-callout-title">Vil I prøve den først?</p>
-          <p className="pilot-callout-text">Få en gratis 14-dages pilot uden betalingskort eller binding.</p>
+      <section id="saadan-virker-det" className={`${styles.section} ${styles.container}`}>
+        <div className={styles.sectionHeading}><p className={styles.eyebrow}>EN NATURLIG DEL AF JERES WEBSHOP</p><h2>De samme spørgsmål.<br /><span>En lettere hverdag.</span></h2><p>Fra det første produktspørgsmål til de praktiske detaljer. Gør det nemt for kunderne at komme videre.</p></div>
+        <div className={styles.features}>
+          {[{ number: "01", title: "Hjælp til at vælge", text: "Guid kunderne til relevante produkter med svar og links fra jeres webshop.", example: "“Hvilken model passer til mig?”" }, { number: "02", title: "Svar på det praktiske", text: "Giv svar om levering, retur og andre vilkår ud fra jeres eget indhold.", example: "“Hvordan returnerer jeg en vare?”" }, { number: "03", title: "Til stede efter lukketid", text: "Lad kunderne finde hjælp på siden, når spørgsmålet opstår. Også uden for åbningstiden.", example: "“Kan jeg få lidt hjælp?”" }].map(feature => <article className={styles.feature} key={feature.number}><span className={styles.number}>{feature.number}</span><h3>{feature.title}</h3><p>{feature.text}</p><div className={styles.example}><MessageCircle size={16}/><span>{feature.example}</span></div></article>)}
         </div>
-        <Link href="/pilot" className="btn btn-outline pilot-callout-link">
-          Start 14 dage gratis
-        </Link>
-      </motion.aside>
+      </section>
 
-      {/* Platforms — scroll-triggered with logo stagger */}
-      <motion.div
-        className="platforms"
-        initial="hidden"
-        whileInView="show"
-        viewport={{ once: true, margin: "-40px" }}
-        variants={{ hidden: {}, show: { transition: { staggerChildren: 0.08 } } }}
-      >
-        <motion.span className="platforms-label" variants={fadeUp}>
-          Understøtter
-        </motion.span>
-        <motion.div
-          className="platforms-logos"
-          variants={{ hidden: {}, show: { transition: { staggerChildren: 0.07 } } }}
-        >
-          {supportedPlatforms.map((p) => (
-            <motion.span
-              className={`platform-logo-wrap${p.featured ? " platform-logo-wrap-featured" : ""}`}
-              key={p.name}
-              title={p.name}
-              variants={{
-                hidden: { opacity: 0, scale: 0.75 },
-                show: {
-                  opacity: 0.9,
-                  scale: 1,
-                  transition: { duration: 0.45, ease },
-                },
-              }}
-              whileHover={{ opacity: 1, scale: 1.04, transition: { duration: 0.15 } }}
-            >
-              {p.secondaryLogo ? (
-                <span className="platform-logo-pair">
-                  <Image
-                    src={p.logo}
-                    alt={p.name}
-                    width={40}
-                    height={40}
-                    unoptimized
-                    className="platform-logo"
-                    style={{ transform: `scale(${p.scale})` }}
-                    loading="lazy"
-                  />
-                  <Image
-                    src={p.secondaryLogo}
-                    alt=""
-                    width={40}
-                    height={40}
-                    unoptimized
-                    className="platform-logo"
-                    loading="lazy"
-                  />
-                </span>
-              ) : (
-                <Image
-                  src={p.logo}
-                  alt={p.name}
-                  width={40}
-                  height={40}
-                  unoptimized
-                  className="platform-logo"
-                  style={{ transform: `scale(${p.scale})` }}
-                  loading="lazy"
-                />
-              )}
-            </motion.span>
-          ))}
-        </motion.div>
-      </motion.div>
+      <section className={styles.setupSection}>
+        <div className={`${styles.container} ${styles.setupGrid}`}><div><p className={styles.eyebrow}>VI HJÆLPER DIG I GANG</p><h2>Din webshop.<br />Jeres viden.<br /><span>En hjælpsom chatbot.</span></h2><Link href="/setup" className={styles.textButton}>Lad os sætte den op <ArrowRight size={17}/></Link></div><ol className={styles.steps}>{[{ title: "Fortæl os om din webshop", text: "Send os jeres hjemmeside og de spørgsmål, kunderne typisk stiller." }, { title: "Vi gør EmbedBot klar", text: "Vi tager udgangspunkt i jeres indhold og hjælper med opsætningen." }, { title: "Prøv den på jeres side", text: "Se, hvordan chatbotten hjælper kunderne, og tilpas den sammen med os." }].map((step, i) => <li key={step.title}><span className={styles.stepNumber}>0{i + 1}</span><div><h3>{step.title}</h3><p>{step.text}</p></div></li>)}</ol></div>
+      </section>
 
-      {/* Footer */}
-      <motion.div
-        className="foot"
-        initial={{ opacity: 0 }}
-        whileInView={{ opacity: 1 }}
-        viewport={{ once: true }}
-        transition={{ duration: 0.7, delay: 0.15 }}
-      >
-        <span>EmbedBot / Axel Bødker Frederiksen</span>
-        <Link href="/dashboard">Allerede kunde? Log ind her →</Link>
-        <span aria-hidden="true">·</span>
-        <Link href="/privacy">Privatliv</Link>
-        <Link href="/cookies">Cookies</Link>
-        <Link href="/terms">Vilkår</Link>
-        <Link href="/refunds">Betaling og refundering</Link>
-      </motion.div>
+      <section className={`${styles.faq} ${styles.container}`}><div><p className={styles.eyebrow}>GODT AT VIDE</p><h2>Lidt færre<br /><span>spørgsmål.</span></h2><Link href="/faq" className={styles.textButton}>Se alle spørgsmål <ArrowRight size={16}/></Link></div><div className={styles.questions}>{questions.map(q => <details key={q.title}><summary>{q.title}<Plus size={18}/></summary><p>{q.answer}</p></details>)}</div></section>
 
-      {showDemoNudge && (
-        <motion.aside
-          className="demo-nudge"
-          initial={{ opacity: 0, y: 18, scale: 0.96 }}
-          animate={{ opacity: 1, y: 0, scale: 1 }}
-          transition={{ duration: 0.45, ease }}
-          aria-label="Demo invitation"
-        >
-          <div className="demo-nudge-top">
-            <span className="demo-nudge-kicker">
-              Demo
-            </span>
-            <button
-              type="button"
-              className="demo-nudge-close"
-              onClick={hideDemoNudge}
-              aria-label="Luk demo-besked"
-            >
-              ×
-            </button>
-          </div>
-          <p className="demo-nudge-title">Vil du se den i aktion?</p>
-          <p className="demo-nudge-text">
-            Prøv EmbedBot direkte her på siden og se, hvordan den svarer kunderne.
-          </p>
-          <button
-            type="button"
-            className="btn demo-nudge-action"
-            onClick={handleDemoClick}
-          >
-            Åbn demo
-          </button>
-        </motion.aside>
-      )}
-    </main>
-  );
+      <section className={`${styles.finalCta} ${styles.container}`}><p className={styles.eyebrow}>SE HVAD EMBEDBOT KAN GØRE FOR JER</p><h2>Mere hjælp til kunderne.<br /><span>Mere tid til webshoppen.</span></h2><Link href="/setup" className={styles.button}>Start 14 dage gratis <ArrowRight size={17}/></Link><p>14 dage gratis. Betalingskort påkrævet.</p></section>
+      <footer className={`${styles.footer} ${styles.container}`}><div><Link href="/" className={styles.logo}><Image src={logoImage} alt=""/><span>EmbedBot</span></Link><p>AI-kundeservice. Med plads til mennesker.</p><small>EmbedBot / Axel Bødker Frederiksen</small></div><div className={styles.footerLinks}><Link href="/support">Kontakt</Link><Link href="/prices">Priser</Link><Link href="/privacy">Privatliv</Link><Link href="/cookies">Cookies</Link><Link href="/terms">Vilkår</Link><Link href="/refunds">Betaling og refundering</Link></div></footer>
+    </main>);
 }

@@ -1,0 +1,26 @@
+<!doctype html>
+<html lang="da">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Min Kreative Verden – chatbot-test</title>
+    <style>
+      * { box-sizing: border-box; }
+      body { margin: 0; min-height: 100vh; display: grid; place-items: center; padding: 32px; background: #faf7f2; color: #343b31; font-family: system-ui, sans-serif; }
+      main { max-width: 560px; padding: 40px; background: white; border: 1px solid #e6e1d8; border-radius: 24px; }
+      h1 { font-size: clamp(28px, 5vw, 40px); margin: 0 0 16px; }
+      p { line-height: 1.7; margin: 0; }
+    </style>
+  </head>
+  <body>
+    <main>
+      <h1>Min Kreative Verden</h1>
+      <p>Velkommen til testsiden. Åbn chatten i hjørnet, og prøv at stille et spørgsmål.</p>
+    </main>
+    <script>
+      const widgetScript = document.createElement("script");
+      widgetScript.src = "https://www.embedbot.dk/widget.js?id=08ca56f7-8ec3-4b87-9c52-8e25aebae662&test=" + Date.now();
+      document.body.appendChild(widgetScript);
+    </script>
+  </body>
+</html>

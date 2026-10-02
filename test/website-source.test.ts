@@ -28,11 +28,12 @@ test("website URLs disallow credentials, clear-text and alternate ports", () => 
   for (const url of ["file:///tmp/shop.html", "http://shop.example", "https://user:secret@shop.example", "https://shop.example:8443"]) assert.throws(() => websiteUrl(url));
   assert.equal(websiteUrl("https://shop.example/page#section").href, "https://shop.example/page");
 });
-test("onboarding keeps the same bot and step after an authorization return", () => {
+test("onboarding preserves drafts and moves the removed connection step to the final setup step", () => {
   const business_id = randomUUID();
   const form = {name:"Min butik",platform:"HTML",website_url:""};
-  assert.deepEqual(readOnboardingSnapshot(JSON.stringify({business_id,form,step:7})), {business_id,form,step:7});
-  assert.equal(readOnboardingSnapshot(JSON.stringify({business_id,form}))!.step,7);
+  assert.deepEqual(readOnboardingSnapshot(JSON.stringify({business_id,form,step:7})), {business_id,form,step:6});
+  assert.equal(readOnboardingSnapshot(JSON.stringify({business_id,form}))!.step,6);
+  for (const step of [1, 3, 6]) assert.equal(readOnboardingSnapshot(JSON.stringify({business_id,form,step}))!.step,step);
   assert.equal(readOnboardingSnapshot(JSON.stringify({business_id:"invalid",form,step:7})),null);
   assert.equal(readOnboardingSnapshot(JSON.stringify({business_id,form:{name:[]},step:7})),null);
   assert.equal(readOnboardingSnapshot("invalid JSON"),null);

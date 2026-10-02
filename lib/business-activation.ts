@@ -1,6 +1,7 @@
 import { createClient } from "@supabase/supabase-js";
 import { Resend } from "resend";
 import type { PlanSlug } from "@/lib/plans";
+import { websiteIngestToken } from "./website-ingest-token.ts";
 
 type BusinessRecord = {
   id: string;
@@ -243,7 +244,7 @@ export async function activateBusinessAndSendEmail(
   if (!websiteSource) {
     const ingestRes = await fetch(ingestEndpoint, {
       method: "POST",
-      headers: { "Content-Type": "application/json" },
+      headers: { "Content-Type": "application/json", "x-website-ingest-token": websiteIngestToken(stableBusinessId) },
       body: JSON.stringify({ url: business.website_url, business_id: stableBusinessId }),
     });
 

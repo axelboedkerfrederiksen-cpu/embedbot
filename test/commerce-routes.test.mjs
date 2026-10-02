@@ -9,7 +9,7 @@ import { state } from './helpers/runtime.mjs';
 const root = fileURLToPath(new URL('../', import.meta.url));
 const fixture = name => new URL(`./helpers/${name}.mjs`, import.meta.url).href;
 registerHooks({ resolve(specifier, context, nextResolve) {
-  const mocks = { '@supabase/supabase-js': 'supabase-js', '@supabase/ssr': 'supabase-ssr', 'next/server': 'next-server', 'next/headers': 'next-headers', '@/lib/resend': 'resend', 'resend': 'resend' };
+  const mocks = { '@supabase/supabase-js': 'supabase-js', '@supabase/ssr': 'supabase-ssr', 'next/server': 'next-server', 'next/headers': 'next-headers', '@/lib/resend': 'resend', 'resend': 'resend', '@/lib/website-crawl': 'website-crawl', '@/lib/website-source': 'website-source' };
   if (mocks[specifier]) return { url: fixture(mocks[specifier]), shortCircuit: true };
   if (specifier.startsWith('@/')) {
     const path = resolvePath(root,specifier.slice(2));
@@ -34,6 +34,9 @@ const tickets = await import('../app/api/dashboard/tickets/route.ts');
 const commerce = await import('../app/api/dashboard/commerce/route.ts');
 const wooCallback = await import('../app/api/commerce/woocommerce/callback/route.ts');
 const websiteSource = await import('../app/api/dashboard/website-source/route.ts');
+const ingest = await import('../app/api/ingest/route.ts');
+const previews = await import('../app/api/product-preview/route.ts');
+const { websiteIngestToken } = await import('../lib/website-ingest-token.ts');
 let database;
 process.env.COMMERCE_ENCRYPTION_KEY = randomBytes(32).toString('base64');
 process.env.SUPABASE_URL = 'https://mock.invalid'; process.env.SUPABASE_SERVICE_KEY = 'mock';
@@ -239,4 +242,62 @@ test('a local HTML source activates without a website fetch and still requires c
     assert.equal(result.success,true,JSON.stringify(result));assert.equal(state.mails.length,1);
     assert.equal((await database.pg.query('select activated from businesses where id=$1',[business_id])).rows[0].activated,true);
   } finally {globalThis.fetch=savedFetch;}
+});
+
+test('URL import crawls product pages and saves isolated source knowledge; internal ingestion is authenticated',async () => {
+  const userId=randomUUID(),business_id=await tenant(userId),other=await tenant();
+  state.user={id:userId};
+  await database.pg.query('update businesses set website_url=$1 where id=$2',['https://shop.example/',business_id]);
+  let reads=0;
+  state.websiteReader=async url=>{
+    reads++;
+    if(url.endsWith('.xml'))throw new Error('no sitemap');
+    return {url,html:new URL(url).pathname==='/' ? '<html><body><h1>Vores butik</h1><p>Vi sælger kreativt tilbehør.</p><a href="/products/project-14">Project 14 Pindeetui</a></body></html>' : '<html><body><h1>Project 14 Pindeetui</h1><p>Et etui til strikkepinde.</p></body></html>'};
+  };
+  try {
+    const input={business_id,action:'url',url:'https://shop.example/'};
+    assert.equal((await websiteSource.POST(request('/api/dashboard/website-source',{...input,business_id:other}))).status,404);
+    assert.equal(reads,0);
+    const imported=await websiteSource.POST(request('/api/dashboard/website-source',input));
+    assert.equal(imported.status,200);
+    assert.equal((await imported.json()).pages,2);
+    const stored=(await database.pg.query('select * from website_sources where business_id=$1',[business_id])).rows[0];
+    assert.match(stored.content_text,/https:\/\/shop.example\/products\/project-14/);
+    assert.equal(stored.source_kind,'url');
+    assert.equal((await database.pg.query('select * from website_sources where business_id=$1',[other])).rows.length,0);
+    state.user=null;
+    const before=reads;
+    assert.equal((await ingest.POST(request('/api/ingest',{business_id,url:input.url}))).status,401);
+    assert.equal(reads,before);
+    const signed=new NextRequest(`${origin}/api/ingest`,{method:'POST',headers:{'Content-Type':'application/json','x-website-ingest-token':websiteIngestToken(business_id)},body:JSON.stringify({business_id,url:input.url})});
+    assert.equal((await ingest.POST(signed)).status,200);
+    const bad=new NextRequest(`${origin}/api/ingest`,{method:'POST',headers:{'Content-Type':'application/json','x-website-ingest-token':websiteIngestToken(business_id)},body:JSON.stringify({business_id,url:'https://evil.example/'})});
+    assert.equal((await ingest.POST(bad)).status,400);
+    const count=reads;
+    const crossTenant=new NextRequest(`${origin}/api/ingest`,{method:'POST',headers:{'Content-Type':'application/json','x-website-ingest-token':websiteIngestToken(business_id)},body:JSON.stringify({business_id:other,url:input.url})});
+    assert.equal((await ingest.POST(crossTenant)).status,403);
+    assert.equal(reads,count);
+  } finally {state.websiteReader=null;state.user=null;}
+});
+
+test('public product previews are restricted to the chatbot website, cache images and omit price/stock data',async()=>{
+  const business_id=await tenant();
+  await database.pg.query('update businesses set website_url=$1 where id=$2',['https://shop.example/',business_id]);
+  let reads=0;
+  state.websiteReader=async(url,options)=>{
+    reads++;assert.equal(options.origin,'https://shop.example');
+    return {url,html:'<html><body><h1>Project 14</h1><script type="application/ld+json">{"@type":"Product","name":"Project 14","image":"https://cdn.example/p14.jpg","offers":{"price":"699","availability":"https://schema.org/InStock"}}</script></body></html>'};
+  };
+  const req=url=>new NextRequest(`${origin}/api/product-preview?business_id=${business_id}&url=${encodeURIComponent(url)}`);
+  try{
+    assert.equal((await previews.GET(req('https://evil.example/products/p14'))).status,400);
+    assert.equal((await previews.GET(req('http://shop.example/products/p14'))).status,400);
+    assert.equal(reads,0);
+    const response=await previews.GET(req('https://shop.example/products/p14'));assert.equal(response.status,200);
+    const data=await response.json();assert.deepEqual(data.product,{name:'Project 14',url:'https://shop.example/products/p14',image:'https://cdn.example/p14.jpg'});
+    assert.equal((await previews.GET(req('https://shop.example/products/p14'))).status,200);assert.equal(reads,1);
+    await database.pg.query('update businesses set is_deleted=true where id=$1',[business_id]);
+    assert.equal((await previews.GET(req('https://shop.example/products/p14'))).status,404);
+    assert.equal(reads,1);
+  }finally{state.websiteReader=null;}
 });

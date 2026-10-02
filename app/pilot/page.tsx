@@ -130,7 +130,7 @@ export default function PilotPage() {
           <span className="pilot-kicker">Gratis 14-dages pilot</span>
           <h1 className="pilot-title">I godkender. Vi gør resten.</h1>
           <p className="pilot-lead">
-            Vi bygger chatbotten ud fra jeres webshop, tilpasser den til jeres brand og hjælper med at få den live. Ingen kortoplysninger og ingen binding.
+            Vi bygger chatbotten ud fra jeres webshop, tilpasser den til jeres brand og hjælper med at få den live. Den gratis 14-dages prøveperiode kræver betalingskort ved aktivering.
           </p>
           <ol className="pilot-steps">
             <li><span className="pilot-step-number">1</span><span>Vi sender en privat demo med svar baseret på jeres eget indhold.</span></li>
@@ -141,7 +141,7 @@ export default function PilotPage() {
 
         <form className="pilot-form" onSubmit={handleSubmit}>
           <h2>Få jeres private demo</h2>
-          <p className="pilot-form-intro">Fire korte felter. Ingen konto og intet betalingskort.</p>
+          <p className="pilot-form-intro">Fire korte felter til en privat demo. Betalingskort kræves, når den gratis 14-dages prøveperiode aktiveres.</p>
           <label className="pilot-field">
             <span className="pilot-label">Navn</span>
             <input className="pilot-input" value={name} onChange={(event) => setName(event.target.value)} autoComplete="name" required />

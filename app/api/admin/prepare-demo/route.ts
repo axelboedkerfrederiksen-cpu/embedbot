@@ -3,6 +3,7 @@ import { createClient } from "@supabase/supabase-js";
 import { Resend } from "resend";
 import { checkCsrfSafety } from "@/lib/csrf";
 import { verifyAdminSession } from "@/lib/admin-auth";
+import { websiteIngestToken } from "@/lib/website-ingest-token";
 
 function escapeHtml(value: string): string {
   return value
@@ -83,7 +84,7 @@ export async function POST(req: NextRequest) {
     if (!existingDocumentCount) {
       const ingestResponse = await fetch(ingestEndpoint, {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: { "Content-Type": "application/json", "x-website-ingest-token": websiteIngestToken(businessId) },
         body: JSON.stringify({ url: websiteUrl, business_id: businessId }),
       });
       const ingestData = await ingestResponse.json().catch(() => ({} as { success?: boolean; error?: string; chunks?: number }));

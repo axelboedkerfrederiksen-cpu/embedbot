@@ -424,9 +424,7 @@ export default function PrivacyPolicy() {
             Spørgsmål om privatliv, sletning eller dine rettigheder kan sendes til:
           </p>
           <address className="not-italic">
-            <strong>Axel Bødker Frederiksen / EmbedBot</strong>
-            <br />
-            <a href="tel:+4591551250">+45 91 55 12 50</a>
+            <strong>Axel Frederiksen / EmbedBot</strong>
             <br />
             <a href="mailto:axel@embedbot.dk">axel@embedbot.dk</a>
           </address>

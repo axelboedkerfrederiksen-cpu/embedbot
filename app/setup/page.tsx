@@ -6,9 +6,6 @@ import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase";
 import { isBusinessSubscriptionActive } from "@/lib/subscription";
 import { normalizePlan } from "@/lib/plans";
-import CommercePanel from "../dashboard/commerce-panel";
-import dashboardStyles from "../dashboard/dashboard.module.css";
-import commerceStyles from "../dashboard/commerce.module.css";
 import { readOnboardingSnapshot } from "@/lib/onboarding";
 
 const ONBOARDING_BUSINESS_ID_KEY = "onboarding_business_id";
@@ -254,10 +251,10 @@ export default function Home() {
         if (!error && owned) {
           setBusinessId(saved.business_id);
           setForm(current => Object.fromEntries(Object.entries(current).map(([key, value]) => [key, saved.form[key] ?? value])) as FormState);
-          setStep(params.get("commerce") ? 7 : saved.step);
+          setStep(params.get("commerce") ? 6 : saved.step);
           if (params.get("commerce")) {
             setMessageTone(params.get("commerce") === "failed" ? "error" : "info");
-            setMessage(params.get("commerce") === "connected" ? "Shopify er forbundet. Fortsæt din opsætning her." : params.get("commerce") === "failed" ? "Shopify kunne ikke forbindes. Du kan prøve igen eller fortsætte uden integration." : "Tilbage fra WooCommerce. Forbindelsesstatus vises efter serverens test.");
+            setMessage(params.get("commerce") === "connected" ? "Shopify er forbundet. Fortsæt din opsætning her." : params.get("commerce") === "failed" ? "Shopify kunne ikke forbindes. Du kan forbinde den senere i dashboardet." : "Tilbage fra WooCommerce. Du kan se forbindelsesstatus i dashboardet.");
           }
           setUser(data.user); return;
         }
@@ -488,11 +485,6 @@ export default function Home() {
     localStorage.setItem(ONBOARDING_FORM_SNAPSHOT_KEY, JSON.stringify({ form: getFormForSubmit(), business_id: ensureDatabaseBusinessId(), step: nextStep }));
   }
 
-  async function prepareConnection() {
-    await saveBusinessDraft();
-    rememberDraft(7);
-  }
-
   async function handleNextStep() {
     setMessage("");
     setSavingDraft(true);
@@ -500,8 +492,20 @@ export default function Home() {
 
     try {
       await saveBusinessDraft();
-      rememberDraft(Math.min(step + 1, 7));
-      setStep(s => Math.min(s + 1, 7));
+      if (step === 1 && form.website_url.trim()) {
+        const response = await fetch("/api/dashboard/website-source", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ business_id: ensureDatabaseBusinessId(), action: "url", url: form.website_url.trim() }),
+        });
+        const result = await response.json();
+        if (!response.ok) {
+          setMessageTone("info");
+          setMessage(result.error || "Hjemmesiden kunne ikke læses. Du kan prøve igen eller tilføje hjemmesiden i dashboardet senere.");
+        }
+      }
+      rememberDraft(Math.min(step + 1, 6));
+      setStep(s => Math.min(s + 1, 6));
     } catch (error) {
       setMessage(formatSetupError(error));
     } finally {
@@ -529,7 +533,7 @@ export default function Home() {
       }
 
       await saveBusinessDraft();
-      rememberDraft(7);
+      rememberDraft(6);
       window.location.href = "/setup/provider";
     } catch (error) {
       setMessage(formatSetupError(error));
@@ -1656,7 +1660,8 @@ export default function Home() {
       <div>
         <h2 className="section-title">1. Virksomhed</h2>
         {input("Virksomhedsnavn", "name", "fx Modebutikken ApS", true)}
-        {input("Hjemmeside URL", "website_url", "https://... (kan tilføjes senere ved HTML-upload)")}
+        {input("Hjemmeside URL", "website_url", "https://din-hjemmeside.dk")}
+        <p className="muted">Vi læser automatisk hjemmesiden og finder undersider og produkter, når du fortsætter.</p>
         {input("Branche", "industry", "fx webshop, restaurant, klinik", true)}
         {textarea("Kort beskrivelse", "description", "Beskriv kort hvad I tilbyder...", true)}
       </div>
@@ -1991,15 +1996,6 @@ export default function Home() {
         </div>
       </div>
     ),
-    7: (
-      <div>
-        <h2 className="section-title">7. Forbind din hjemmeside</h2>
-        <p className="muted">Tilkobl din webshop eller importér en almindelig hjemmeside / HTML-fil. Du kan også fortsætte nu og forbinde den senere.</p>
-        <div className={`${dashboardStyles.dashboardRoot} ${commerceStyles.onboarding}`}>
-          <CommercePanel businessId={businessId} websiteUrl={form.website_url} initialPlatform={form.platform} onboarding beforeConnect={prepareConnection} onPlatformChange={value => update("platform", value)} />
-        </div>
-      </div>
-    ),
   };
 
   if (step === 8) {
@@ -2096,10 +2092,10 @@ export default function Home() {
       <div className="eb-shell eb-animate">
         <div className="header-row">
           <h1 className="brand brand-main">Opsæt din chatbot</h1>
-          <span className="step-note">Trin {Math.min(step, 7)} af 7</span>
+          <span className="step-note">Trin {Math.min(step, 6)} af 6</span>
         </div>
         <div className="progress-track">
-          <div className="progress-fill" style={{ width: `${(Math.min(step, 7) / 7) * 100}%` }} />
+          <div className="progress-fill" style={{ width: `${(Math.min(step, 6) / 6) * 100}%` }} />
         </div>
 
         <div className="eb-card" style={{ overflow: "hidden" }}>
@@ -2116,9 +2112,9 @@ export default function Home() {
             ← Tilbage
           </button>
         )}
-        {step < 7 ? (
+        {step < 6 ? (
           <button onClick={handleNextStep} disabled={savingDraft || loading} className="btn btn-primary" style={{ marginLeft: "auto" }}>
-            {savingDraft ? "Gemmer..." : "Næste →"}
+            {savingDraft ? step === 1 && form.website_url.trim() ? "Læser hjemmeside…" : "Gemmer..." : "Næste →"}
           </button>
         ) : (
           <button onClick={handleSetup} disabled={loading} className="btn btn-primary" style={{ marginLeft: "auto" }}>
