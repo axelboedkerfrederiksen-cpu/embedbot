@@ -2,6 +2,8 @@
 
 Udkast til godkendelse. EmbedBots eksisterende kontakt er axel@embedbot.dk og `/data-requests`. Sikre svar-/identitetskanaler, ansvarlig, stedfortræder og friststyring skal etableres. En indtastet email eller samtalereference er aldrig identitetsbevis.
 
+Axel bekræfter den 3. oktober 2026, at kun han har systemadgang. Ansvarlig for modtagelse, rolleafklaring, assistance og friststyring: Axel Bødker Frederiksen, axel@embedbot.dk, +45 91 55 12 50. Ingen stedfortræder er oplyst. For webshopkundens besøgsdata afgør webshopkunden anmodningen; Axel udfører assistance efter verificeret instruks. Fraværsdækning og sikker svarprocedure skal stadig etableres; juridisk rådgiver er ikke udpeget eller antaget tilgængelig.
+
 1. Registrér dato, type, relevant kunde og intern sagsreference. Undgå at kopiere hele chatten eller identitetsdokumenter til audit/logs.
 2. Afklar rollen. For egne konti, betaling og EmbedBot-support skal EmbedBot vurdere sit dataansvar. For kundens besøgsdata er kunden normalt dataansvarlig og afgør anmodningen; EmbedBot assisterer efter instruks.
 3. Kontroller identitet proportionalt via den eksisterende verificerede kundekanal, konto eller webshopkontakt. Brug ikke blot søgeresultater som verifikation. Kræv ikke fuldt ID-dokument uden konkret nødvendighed og godkendt procedure.

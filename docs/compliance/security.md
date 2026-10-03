@@ -24,3 +24,7 @@ Lokal version 2. oktober 2026. **Verified** betyder kode/test eller konkret læs
 | Leaked-password protection | Requires manual verification | Supabase security-advisor rapporterede disabled. Tilgængelig config/plan var ikke verificeret; præcise instrukser i MANUAL-ACTIONS.md. |
 
 Ejerskab: Axel skal udpege sikkerhedsansvarlig, stedfortræder og reviewkadence. Sikkerhedshændelser eskaleres via dokumenteret beredskab. Ingen politiktekst erstatter implementeret kontrol eller test.
+
+Opdatering 3. oktober 2026: Axel bekræfter sig selv som eneste person med systemadgang; han er ansvarlig kontakt på axel@embedbot.dk / +45 91 55 12 50. Ingen stedfortræder er oplyst. Leverandørernes medlemslister og MFA er endnu ikke kontrolleret. Første krypterede databasebackup er integritetskontrolleret og en ekstra kopi oplyst overført til stationær; restore er udsat. Axel har godkendt chat 30 dage, tickets 90 dage og egne backups højst 30 dage; ændring af drift og rotation udestår. Resend-domænet er verificeret med Enforced TLS. Se leverandørnoterne og beredskabet for evidens og grænser; tidligere tabel beskriver kodegennemgangens udgangspunkt.
+
+Axel bekræfter efterfølgende totrinsbekræftelse på Google-kontoen med godkendelse i Gmail-appen. Dette er brugeroplyst, ikke kontrolleret i kontoen, og dokumenterer ikke automatisk MFA på leverandørkonti med alternative loginmetoder eller EmbedBots adminlogin.

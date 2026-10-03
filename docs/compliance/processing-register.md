@@ -1,6 +1,6 @@
 # Artikel 30 — arbejdsfortegnelse
 
-Udkast baseret på faktisk kode/schema pr. 2. oktober 2026. Dataansvarlig/databehandler-rolle, lovligt grundlag, nødvendighed, modtagere og alle leverandøraftaler kræver kvalificeret review. Officielt navn, CVR, adresse, repræsentant, kontakt og eventuel DPO: **Requires manual verification**. Eksisterende produktkontakt er axel@embedbot.dk; dette fastlægger ingen juridisk enhed.
+Udkast baseret på faktisk kode/schema pr. 2. oktober 2026. Dataansvarlig/databehandler-rolle, lovligt grundlag, nødvendighed, modtagere og alle leverandøraftaler kræver kvalificeret review. Aftalepart og kontaktdata er [bekræftet direkte af Axel den 3. oktober 2026](contracting-party.md): Axel Bødker Frederiksen, ingen CVR, Smallegade 42, 4. tv., 2000 Frederiksberg, Danmark; axel@embedbot.dk, +45 91 55 12 50. Ingen udpeget DPO er oplyst; den foreløbige screening i samme notat viser ikke tegn på et aktuelt krav og skal genbesøges ved ændringer. Oplysningerne er ikke kontrolleret mod et offentligt register.
 
 Leverandørregister: `lib/compliance/suppliers.ts` / `/subprocessors`. Kun databaseprojektets eu-central-1-region er verificeret; ingen samlet residency, SCC eller DPF er verificeret. Internationale overførsler, supportadgang og leverandørretention er **Requires verification** for alle aktiviteter. Perioder nedenfor er tekniske; se `retention.md`.
 

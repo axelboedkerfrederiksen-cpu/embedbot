@@ -1,6 +1,7 @@
 import { NextRequest } from "next/server";
 import { body,CommerceError,failure,json,owner } from "@/lib/commerce/server";
 import { privacyUrl,retentionDays } from "@/lib/compliance/validation";
+import { DEFAULT_CHAT_RETENTION_DAYS,DEFAULT_TICKET_RETENTION_DAYS } from "@/lib/compliance/retention";
 export async function GET(req:NextRequest) {
  try {
   const {db,business}=await owner(req,req.nextUrl.searchParams.get("business_id"));
@@ -10,7 +11,7 @@ export async function GET(req:NextRequest) {
    db.from("maintenance_runs").select("completed_at").eq("job","cleanup").eq("status","completed").order("completed_at",{ascending:false}).limit(1).maybeSingle(),
   ]);
   if(settings.error||account.error||last.error) throw new CommerceError("Privatlivsindstillinger kræver databaseopdateringen.");
-  return json({customerPrivacyUrl:settings.data?.customer_privacy_url??"",ticketRetentionDays:settings.data?.ticket_retention_days??90,chatRetentionDays:account.data?.retention_days??90,lastCleanup:last.data?.completed_at??null});
+  return json({customerPrivacyUrl:settings.data?.customer_privacy_url??"",ticketRetentionDays:settings.data?.ticket_retention_days??DEFAULT_TICKET_RETENTION_DAYS,chatRetentionDays:account.data?.retention_days??DEFAULT_CHAT_RETENTION_DAYS,lastCleanup:last.data?.completed_at??null});
  }catch(error){return failure(error);}
 }
 export async function POST(req:NextRequest) {

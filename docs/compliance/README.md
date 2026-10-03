@@ -4,6 +4,13 @@ Status: implementation 2.–3. oktober 2026. Axel har efter gennemgangen bedt om
 
 - [Implementations- og verificeringsrapport](implementation-report.md)
 - [Manuelle handlinger](MANUAL-ACTIONS.md)
+- [Aftalepart og kontaktdata — bekræftet af Axel](contracting-party.md)
+- [Databehandleraftale — arbejdskopi til færdiggørelse](dpa-working-draft.md)
+- [DPA — samlet leverandørbilag](dpa-supplier-annex.md)
+- [DPA — konkret status før kundeaccept](dpa-readiness.md)
+- [Kundeophør — praktisk procedure](customer-offboarding.md)
+- [Isoleret privatlivstest — resultat og begrænsninger](privacy-browser-verification.md)
+- [Supplerende leverandørkontrol](additional-supplier-review.md)
 - [Behandlingsfortegnelse](processing-register.md)
 - [Retention og datamodel](retention.md)
 - [Sikkerhed](security.md)

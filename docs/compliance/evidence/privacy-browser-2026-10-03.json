@@ -1,0 +1,150 @@
+{
+  "cleanup": {
+    "expiredChat": 0,
+    "freshChat": 1,
+    "expiredTicket": 0,
+    "retainedTicket": 1,
+    "ticketContext": [],
+    "ticketReferences": [],
+    "otherChat": 1,
+    "otherTicket": 1,
+    "ownerBusiness": 1,
+    "otherBusiness": 1,
+    "authUser": 1,
+    "trace": [
+      {
+        "path": "/api/dashboard/privacy",
+        "method": "GET",
+        "status": 200
+      },
+      {
+        "path": "/api/dashboard/legal",
+        "method": "GET",
+        "status": 200
+      },
+      {
+        "path": "/api/auth/export-data",
+        "method": "GET",
+        "status": 200
+      },
+      {
+        "path": "/api/dashboard/privacy",
+        "method": "POST",
+        "status": 200
+      },
+      {
+        "path": "/api/cron/cleanup",
+        "status": 200
+      }
+    ]
+  },
+  "visitor": {
+    "expiredChat": 0,
+    "freshChat": 0,
+    "expiredTicket": 0,
+    "retainedTicket": 0,
+    "ticketContext": null,
+    "ticketReferences": null,
+    "otherChat": 1,
+    "otherTicket": 1,
+    "ownerBusiness": 1,
+    "otherBusiness": 1,
+    "authUser": 1,
+    "trace": [
+      {
+        "path": "/api/dashboard/privacy",
+        "method": "GET",
+        "status": 200
+      },
+      {
+        "path": "/api/dashboard/legal",
+        "method": "GET",
+        "status": 200
+      },
+      {
+        "path": "/api/auth/export-data",
+        "method": "GET",
+        "status": 200
+      },
+      {
+        "path": "/api/dashboard/privacy",
+        "method": "POST",
+        "status": 200
+      },
+      {
+        "path": "/api/cron/cleanup",
+        "status": 200
+      },
+      {
+        "path": "/api/dashboard/visitor-data",
+        "method": "POST",
+        "status": 200
+      },
+      {
+        "path": "/api/dashboard/visitor-data",
+        "method": "POST",
+        "status": 200
+      }
+    ]
+  },
+  "account": {
+    "expiredChat": 0,
+    "freshChat": 0,
+    "expiredTicket": 0,
+    "retainedTicket": 0,
+    "ticketContext": null,
+    "ticketReferences": null,
+    "otherChat": 1,
+    "otherTicket": 1,
+    "ownerBusiness": 0,
+    "otherBusiness": 1,
+    "authUser": 0,
+    "trace": [
+      {
+        "path": "/api/dashboard/privacy",
+        "method": "GET",
+        "status": 200
+      },
+      {
+        "path": "/api/dashboard/legal",
+        "method": "GET",
+        "status": 200
+      },
+      {
+        "path": "/api/auth/export-data",
+        "method": "GET",
+        "status": 200
+      },
+      {
+        "path": "/api/dashboard/privacy",
+        "method": "POST",
+        "status": 200
+      },
+      {
+        "path": "/api/cron/cleanup",
+        "status": 200
+      },
+      {
+        "path": "/api/dashboard/visitor-data",
+        "method": "POST",
+        "status": 200
+      },
+      {
+        "path": "/api/dashboard/visitor-data",
+        "method": "POST",
+        "status": 200
+      },
+      {
+        "path": "/api/auth/delete-account",
+        "method": "POST",
+        "status": 200
+      }
+    ]
+  },
+  "downloads": {
+    "visitor_json_checked": true,
+    "account_json_checked": true,
+    "no_other_tenant_data": true,
+    "no_integration_credentials": true
+  }
+}

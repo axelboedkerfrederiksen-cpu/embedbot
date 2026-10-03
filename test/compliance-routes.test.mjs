@@ -159,6 +159,21 @@ test('cleanup handles expiry, non-expiry, different tenant periods, context, pro
  const old=state.db;state.db={...old,rpc:async()=>({data:null,error:new Error('PRIVATE_PERSON_DATA')})};try{assert.equal((await cleanup.GET(cronReq())).status,503);}finally{state.db=old;}
  assert.equal((await db.pg.query("select status,failure_code from maintenance_runs order by started_at desc limit 1")).rows[0].status,'failed');
 });
+test('agreed default expires chat and copied context at 30 days but keeps support through 90 days; explicit customer periods win',async()=>{
+ const business=await tenant();
+ const settings=await (await privacy.GET(new NextRequest(`${origin}/api/dashboard/privacy?business_id=${business}`))).json();
+ assert.equal(settings.chatRetentionDays,30);assert.equal(settings.ticketRetentionDays,90);
+ const expired=await chat(business,'lead@example.com','31 days'),fresh=await chat(business,'fresh@example.com','29 days');
+ const surviving=await ticket(business,'support@example.com',[{role:'user',content:'lead@example.com'}],[expired],'40 days');
+ const expiredTicket=await ticket(business,'old@example.com',[],[],'91 days');
+ const other=await tenant();await db.pg.query('update businesses set retention_days=90 where id=$1',[other]);
+ const preserved=await chat(other,'custom period','31 days');
+ await db.pg.query('select * from public.compliance_cleanup()');
+ assert.equal((await db.pg.query('select id from conversations where id=$1',[expired])).rows.length,0);
+ for(const id of [fresh,preserved])assert.equal((await db.pg.query('select id from conversations where id=$1',[id])).rows.length,1);
+ assert.equal((await db.pg.query('select id from commerce_tickets where id=$1',[expiredTicket])).rows.length,0);
+ assert.deepEqual((await db.pg.query('select context from commerce_tickets where id=$1',[surviving])).rows[0].context,[]);
+});
 test('admin headers cannot impersonate users, allowlist and MFA are enforced, and authenticated actions are audited',async()=>{
  await tenant();const user=state.user;process.env.ADMIN_EMAIL='admin@example.com';process.env.ADMIN_PASSWORD='obsolete';delete process.env.ADMIN_USER_IDS;
  const req=new Request(origin+'/api/admin/businesses',{headers:{'x-admin-email':'admin@example.com','x-admin-password':'obsolete'}});
@@ -194,6 +209,35 @@ test('account erasure cascades private relations, preserves the other tenant and
  await db.pg.query('delete from auth.users where id=$1',[user.id]);
  assert.ok((await db.pg.query("select id from compliance_audit_events where action='account.delete' and actor_user_id is null")).rows.length>0);
 });
+test('account deletion HTTP route requires confirmation, origin and login; missing billing configuration preserves all data',async()=>{
+ const route=await import('../app/api/auth/delete-account/route.ts');
+ const business=await tenant(),user=state.user;
+ const req=(confirmed=true,requestOrigin=origin)=>new NextRequest(origin+'/api/auth/delete-account',{method:'POST',headers:{Origin:requestOrigin,...(confirmed?{'x-confirm-deletion':'yes-delete-my-account'}:{})}});
+ assert.equal((await route.POST(req(false))).status,400);
+ assert.equal((await route.POST(req(true,'https://evil.example'))).status,403);
+ state.user=null;assert.equal((await route.POST(req())).status,401);state.user=user;
+ const previous=process.env.STRIPE_SECRET_KEY;delete process.env.STRIPE_SECRET_KEY;
+ try{
+  await db.pg.query("update businesses set stripe_subscription_id='sub_synthetic' where id=$1",[business]);
+  assert.equal((await route.POST(req())).status,503);
+  assert.equal((await db.pg.query('select id from businesses where id=$1',[business])).rows.length,1);
+  assert.equal((await db.pg.query('select id from auth.users where id=$1',[user.id])).rows.length,1);
+ }finally{if(previous!==undefined)process.env.STRIPE_SECRET_KEY=previous;}
+});
+test('account deletion HTTP route clears own data and synthetic Auth user while preserving another tenant',async()=>{
+ const route=await import('../app/api/auth/delete-account/route.ts');
+ const business=await tenant(),user=state.user;const other=await tenant();state.user=user;
+ const keep=await chat(other,'Other tenant');await chat(business,'Own account');
+ const originalAuth=db.client.auth;
+ db.client.auth={admin:{async deleteUser(id){await db.pg.query('delete from auth.users where id=$1',[id]);return {error:null};}}};
+ try{
+  const result=await route.POST(new NextRequest(origin+'/api/auth/delete-account',{method:'POST',headers:{Origin:origin,'x-confirm-deletion':'yes-delete-my-account'}}));
+  assert.equal(result.status,200);assert.equal((await result.json()).deleted.deleted_businesses,1);
+  assert.equal((await db.pg.query('select id from businesses where id=$1',[business])).rows.length,0);
+  assert.equal((await db.pg.query('select id from auth.users where id=$1',[user.id])).rows.length,0);
+  assert.equal((await db.pg.query('select id from conversations where id=$1',[keep])).rows.length,1);
+ }finally{db.client.auth=originalAuth;}
+});
 test('generic business endpoint rejects cross-origin/cross-tenant changes and cannot forge id, user, billing, activation or retention',async()=>{
  const route=await import('../app/api/business-draft/route.ts');
  const business=await tenant(),user=state.user;const other=await tenant();state.user=user;
@@ -201,7 +245,7 @@ test('generic business endpoint rejects cross-origin/cross-tenant changes and ca
  assert.equal((await route.POST(request('/api/business-draft',{business_id:business,form},'https://evil.example'))).status,403);
  assert.equal((await route.POST(request('/api/business-draft',{business_id:other,form}))).status,403);
  const saved=await route.POST(request('/api/business-draft',{business_id:business,form}));assert.equal(saved.status,200,JSON.stringify(await saved.json()));
- const row=(await db.pg.query('select id,user_id,name,activated,subscription_status,payment_status,plan,retention_days from businesses where id=$1',[business])).rows[0];assert.equal(row.user_id,user.id);assert.equal(row.name,'Updated safe content');assert.equal(row.activated,false);assert.equal(row.subscription_status,null);assert.equal(row.payment_status,null);assert.equal(row.plan,null);assert.equal(row.retention_days,90);
+ const row=(await db.pg.query('select id,user_id,name,activated,subscription_status,payment_status,plan,retention_days from businesses where id=$1',[business])).rows[0];assert.equal(row.user_id,user.id);assert.equal(row.name,'Updated safe content');assert.equal(row.activated,false);assert.equal(row.subscription_status,null);assert.equal(row.payment_status,null);assert.equal(row.plan,null);assert.equal(row.retention_days,30);
 });
 
 test('support retry scheduler rejects missing auth and records query failures without marking a failed job successful',async()=>{

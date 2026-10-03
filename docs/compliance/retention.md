@@ -2,6 +2,8 @@
 
 Tekniske perioder er adskilt fra juridisk godkendelse. Kundens eksisterende samtalestandard er 90 dage. Supportsager bruger samme tekniske default. Axel/kunden skal godkende perioderne, og politik/aftale skal afspejle dem. Ingen eksisterende kundedata eller produktionsperioder er ændret her.
 
+Axel godkender den 3. oktober 2026 chat 30 dage, supportsager 90 dage og egne backups højst 30 dage som udgangspunkt. Dette er endnu ikke kundens instruks eller gennemført drift; tabel nedenfor beskriver fortsat implementationen. Se retention-proposal.md for beslutningen og resterende forslag.
+
 | Data | Opbevaring i implementation | Sletning / relation |
 |---|---|---|
 | conversations og messages JSON | Positive `businesses.retention_days`; eksisterende default 90 dage | Central cleanup ved udløb, soft-delete og virksomhedens soft-delete. Ejer kan slette straks. Messages er samme record, ikke en ekstra tabel. |

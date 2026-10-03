@@ -2,6 +2,12 @@
 
 Udkast, kræver ejerens godkendelse, bemanding og øvelse. Ingen garanti om døgnbemanding. Eksisterende kontakt axel@embedbot.dk; sikkerhedsansvarlig, stedfortræder, intern telefon og kundernes sikkerhedskontakter skal udfyldes.
 
+## Bekræftet ansvar og kontakt — 3. oktober 2026
+
+Axel oplyser, at kun han har adgang til systemerne. Ansvarlig for håndtering og kundekontakt: Axel Bødker Frederiksen, axel@embedbot.dk, +45 91 55 12 50. Ingen stedfortræder er oplyst. Dette er Axels oplysning, ikke en gennemført kontrol af leverandørernes brugerlister; leverandørernes egen support-/driftsadgang vurderes særskilt.
+
+Henvendelser og alarmer modtages af Axel og håndteres efter proceduren nedenfor. Kundens autoriserede sikkerhedskontakt registreres ved oprettelse/aftaleindgåelse. Ved fravær findes endnu ingen aftalt dækning; aftalen må ikke love døgnberedskab eller faste svartider, før dette er etableret. Faktisk alarmopsætning, overvågningsrutine, adgangsreview og øvelse udestår.
+
 1. **Detection:** Modtag rapport eller alarm. Registrér opdagelsestid og tidspunkt for faktisk kendskab til et muligt persondatabrud separat. Et fejlet cleanup-job er et driftssignal, ikke automatisk et persondatabrud. Bevar minimal, adgangsbegrænset evidens.
 2. **Containment:** Stop berørt endpoint/integration eller deployment, tilbagekald kompromitterede credentials/sessioner, begræns adgang og isolér tenant. Undgå destruktiv sletning af nødvendig evidens og unødig nedlukning af andre kunder.
 3. **Investigation:** Kortlæg hændelse, berørte systemer/tenants/personer, datakategorier, eksfiltration, periode, hvem der havde adgang, og hvad der faktisk er kendt. Brug ikke komplette chats eller tokens i almindelige ticket-/auditlogs.
