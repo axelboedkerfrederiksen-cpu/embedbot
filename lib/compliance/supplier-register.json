@@ -1,0 +1,170 @@
+[
+  {
+    "provider": "Supabase",
+    "legalName": "Supabase Pte. Ltd. (Singapore)",
+    "service": "Database og Auth",
+    "purpose": "Konto, chat, supportsager, videnskilder og integrationer",
+    "data": "Konto- og virksomhedsoplysninger, chat, supportsager og krypterede webshopcredentials",
+    "location": "Projektets database og Auth er placeret i Frankfurt, Tyskland (eu-central-1). Leverandørens support og underleverandører kan behandle oplysninger uden for EU/EØS; projektregionen er ikke en garanti om udelukkende EU-behandling.",
+    "role": "Underdatabehandler for kundens chat- og supportdata; databehandler for EmbedBots egne kontooplysninger.",
+    "transfer": "Supabases DPA indeholder EU-standardkontraktbestemmelser (SCC) for relevante tredjelandsoverførsler. Videreoverførsler følger DPA og underdatabehandlerlisten.",
+    "scope": "Kundens chatbot og EmbedBots kontoadministration",
+    "information": "https://supabase.com/legal/customer-resources/data-processing-addendum",
+    "sources": [
+      [
+        "Databehandleraftale",
+        "https://supabase.com/legal/customer-resources/data-processing-addendum"
+      ],
+      [
+        "Underdatabehandlere",
+        "https://supabase.com/legal/customer-resources/subprocessor-list"
+      ],
+      [
+        "Region og dataresidens",
+        "https://supabase.com/docs/guides/security/gdpr-compliance"
+      ]
+    ],
+    "evidence": "Projektregion kontrolleret i Supabase; offentlige aftaler og dokumentation gennemgået 3. oktober 2026.",
+    "reviewedAt": "2026-10-03"
+  },
+  {
+    "provider": "OpenAI",
+    "legalName": "OpenAI Ireland Ltd. for EØS-/schweiziske kunder; OpenAI OpCo, LLC for øvrige kunder efter standardaftalen.",
+    "service": "AI API",
+    "purpose": "Chatgenerering, klassifikation og embeddings af videnskilder",
+    "data": "Aktuelle spørgsmål, nødvendig samtalehistorik og relevante videnskilder. Private ordreformularer og ordresvar håndteres særskilt.",
+    "location": "Den aktuelle integration bruger det almindelige API uden et konfigureret europæisk API-endpoint. Der gives ingen garanti om EU-behandling. Behandling kan ske i USA og hos leverandørens underdatabehandlere.",
+    "role": "Underdatabehandler for oplysninger behandlet på webshopkundens vegne.",
+    "transfer": "OpenAIs DPA beskriver SCC eller en gældende tilstrækkelighedsafgørelse som grundlag for overførsler af EØS-data til tredjelande.",
+    "scope": "Kundens chatbot og videnssøgning",
+    "information": "https://openai.com/policies/data-processing-addendum/",
+    "sources": [
+      [
+        "Databehandleraftale",
+        "https://openai.com/policies/data-processing-addendum/"
+      ],
+      [
+        "Datakontroller og opbevaring",
+        "https://developers.openai.com/api/docs/guides/your-data"
+      ],
+      [
+        "Underdatabehandlere",
+        "https://platform.openai.com/subprocessors"
+      ]
+    ],
+    "evidence": "API-integration og AI Council-datadeling kontrolleret. Tilvalgt deling til modeltræning var slået fra ved kontokontrollen 3. oktober 2026.",
+    "reviewedAt": "2026-10-03"
+  },
+  {
+    "provider": "Vercel",
+    "legalName": "Vercel Inc. (USA)",
+    "service": "Hosting, serverbehandling, Cron, Web Analytics og Speed Insights",
+    "purpose": "Levering af hjemmeside og API, driftsjobs samt samtykkebaseret besøgs- og ydelsesmåling",
+    "data": "HTTP-trafik, serverbehandlede chatbot- og kontoforespørgsler samt tekniske drifts- og målingsoplysninger",
+    "location": "Vercels offentlige DPA angiver primær behandling i USA og mulig behandling i andre lande hos Vercel og underdatabehandlere. Der loves ikke udelukkende EU-hosting.",
+    "role": "Hosting behandler oplysninger på EmbedBots og kundens vegne. Den offentlige databehandleraftale omfatter Pro/Enterprise; den aktuelle Hobby-plan har ikke dokumenteret dækning under denne aftale.",
+    "transfer": "Vercels DPA beskriver SCC for relevante overførsler. Dette kan ikke registreres som EmbedBots aftalegrundlag på Hobby uden en særskilt dækkende aftale.",
+    "scope": "Kundens chatbot/API og EmbedBots eget website",
+    "information": "https://vercel.com/legal/dpa",
+    "sources": [
+      [
+        "Databehandleraftale",
+        "https://vercel.com/legal/dpa"
+      ],
+      [
+        "Hobby-planens anvendelse",
+        "https://vercel.com/docs/plans/hobby"
+      ],
+      [
+        "Underdatabehandlere",
+        "https://security.vercel.com/"
+      ]
+    ],
+    "evidence": "Hobby-plan bekræftet af kontoejeren 3. oktober 2026. Kommerciel kundedrift kræver passende hostingplan og aftaledækning.",
+    "reviewedAt": "2026-10-03"
+  },
+  {
+    "provider": "Resend",
+    "legalName": "Plus Five Five, Inc. (Resend, USA)",
+    "service": "Transaktionsmail",
+    "purpose": "Aktivering, supportnotifikationer og verifikationskoder",
+    "data": "Modtagermailadresse, relevant mailindhold og leveringsoplysninger",
+    "location": "Mailindhold, leveringslogs og kontooplysninger lagres i USA. EmbedBots afsenderregion er Irland (eu-west-1); dette ændrer ikke lagringsstedet.",
+    "role": "Underdatabehandler for kundens supportnotifikationer; databehandler for EmbedBots egne transaktionsmails.",
+    "transfer": "Resends DPA indeholder SCC, herunder modul 3 ved underdatabehandling. Denne oversigt bygger ikke på en selvstændig bekræftelse af DPF-certificering.",
+    "scope": "Kundens supportfunktioner og EmbedBots kontomails",
+    "information": "https://resend.com/legal/dpa",
+    "sources": [
+      [
+        "Databehandleraftale",
+        "https://resend.com/legal/dpa"
+      ],
+      [
+        "Behandlingssteder og opbevaring",
+        "https://resend.com/security/gdpr"
+      ],
+      [
+        "Underdatabehandlere",
+        "https://resend.com/legal/subprocessors"
+      ]
+    ],
+    "evidence": "Afsenderdomæne og Irland-region kontrolleret. Enforced TLS er aktiveret for embedbot.dk; offentlige kilder gennemgået 3. oktober 2026.",
+    "reviewedAt": "2026-10-03"
+  },
+  {
+    "provider": "Stripe",
+    "legalName": "Stripe Payments Europe, Limited for danske konti efter standardaftalen; Stripe Technology Europe, Limited kan indgå for relevante finansielle tjenester.",
+    "service": "Betalte EmbedBot-abonnementer",
+    "purpose": "Betaling, abonnement, fakturering og opsigelse",
+    "data": "Kunde- og virksomhedsreference, mailadresse, betalingsstatus og betalingsoplysninger hos Stripe. EmbedBot gemmer ikke fulde kortnumre.",
+    "location": "Behandling hos Stripe i EU/EØS og internationalt, herunder overførsel til Stripe, LLC i USA og relevante koncernselskaber og underdatabehandlere.",
+    "role": "Databehandler for visse tjenester og selvstændig dataansvarlig for bl.a. svindelforebyggelse, myndighedskrav og egne driftsformål. Ikke underdatabehandler for kundens chatbotindhold.",
+    "transfer": "Stripes Data Transfers Addendum regulerer relevante tredjelandsoverførsler, herunder SCC og øvrige anvendelige overførselsmekanismer.",
+    "scope": "EmbedBots egen abonnements- og betalingsadministration",
+    "information": "https://stripe.com/legal/dpa",
+    "sources": [
+      [
+        "Danske tjenestevilkår",
+        "https://stripe.com/dk/legal/ssa"
+      ],
+      [
+        "Databehandleraftale",
+        "https://stripe.com/legal/dpa"
+      ],
+      [
+        "Overførselsbilag",
+        "https://stripe.com/legal/dta"
+      ]
+    ],
+    "evidence": "Betalingsintegration og leverandørens offentlige danske standardvilkår gennemgået 3. oktober 2026.",
+    "reviewedAt": "2026-10-03"
+  },
+  {
+    "provider": "Plausible",
+    "legalName": "Plausible Insights OÜ (Estland)",
+    "service": "Webanalyse",
+    "purpose": "Samtykkebaseret besøgsstatistik på EmbedBots eget website",
+    "data": "Sidebesøg og tekniske besøgsoplysninger. URL-parametre og referrer fjernes fra EmbedBots Plausible-måling.",
+    "location": "Websitebesøgsdata behandles i EU. Plausible angiver Hetzner (Tyskland), Bunny (Slovenien) og UpCloud (Finland) som underdatabehandlere for disse data.",
+    "role": "Databehandler for EmbedBots besøgsstatistik; selvstændig dataansvarlig for egen kundekonto, betaling og support. Ikke underdatabehandler for webshopkundens chatbot.",
+    "transfer": "Plausible angiver, at websitebesøgsdata forbliver i EU. Leverandørens behandling af EmbedBots egne kontooplysninger er særskilt og kan omfatte tredjelandsleverandører.",
+    "scope": "EmbedBots eget website efter analysesamtykke",
+    "information": "https://plausible.io/privacy",
+    "sources": [
+      [
+        "Juridisk enhed",
+        "https://plausible.io/imprint"
+      ],
+      [
+        "Roller og behandlingssteder",
+        "https://plausible.io/privacy"
+      ],
+      [
+        "Databehandleraftale",
+        "https://plausible.io/dpa"
+      ]
+    ],
+    "evidence": "Analyseindlæsning og leverandørens offentlige dokumentation gennemgået 3. oktober 2026.",
+    "reviewedAt": "2026-10-03"
+  }
+]

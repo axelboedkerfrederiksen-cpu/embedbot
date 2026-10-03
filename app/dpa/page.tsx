@@ -25,6 +25,7 @@ export default function Page(){
    }
    return <p key={index} className="whitespace-pre-line"><InlineText text={block.text??""}/></p>;
   })}
+  <section><h2>Leverandørernes aftalegrundlag</h2><ul>{publication.sources.map(source=><li key={source.url}><a href={source.url} target="_blank" rel="noopener noreferrer">{source.label}</a></li>)}</ul><p>Oversigten dokumenterer leverandørernes offentliggjorte standardvilkår. Kundeaccept kræver den konkrete aftaledækning og de overførselsbilag, der er beskrevet ovenfor.</p></section>
   <nav className="mt-10 flex flex-wrap gap-4"><Link href="/privacy">Privatliv</Link><Link href="/terms">Vilkår</Link><Link href="/subprocessors">Leverandører</Link><Link href="/data-requests">Dataanmodninger</Link></nav>
  </article></main>;
 }

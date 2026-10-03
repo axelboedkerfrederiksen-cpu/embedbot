@@ -374,7 +374,7 @@ export default function ProviderPage() {
             </span>
           </label>
 
-          <p>{TRIAL.summary}</p><p>DPA’en er fortsat et <a href="/dpa" target="_blank" rel="noreferrer">udkast</a> og kræver særskilt godkendelse før behandling af besøgendes persondata.</p><button type="button" className="provider-back" disabled={loading || !acceptedTerms} onClick={() => void handleContinue(false)}>Køb {selectedPlan.name} nu ({formatMonthlyPrice(selectedPlan.monthlyPriceDkk)} / måned)</button><div className="provider-actions">
+          <p>{TRIAL.summary}</p><p>Læs <a href="/dpa" target="_blank" rel="noreferrer">databehandleraftalen og status for kundeaccept</a>. Behandling af besøgendes persondata kræver en indgået aftale og dækkende hosting- og overførselsbilag.</p><button type="button" className="provider-back" disabled={loading || !acceptedTerms} onClick={() => void handleContinue(false)}>Køb {selectedPlan.name} nu ({formatMonthlyPrice(selectedPlan.monthlyPriceDkk)} / måned)</button><div className="provider-actions">
             <a className="provider-back" href="/setup">
               Tilbage
             </a>

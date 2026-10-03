@@ -28,7 +28,7 @@ export default function Footer() {
             <h4 className="font-medium mb-4">Company</h4>
             <ul className="space-y-2 text-sm">
               <li><Link href="/privacy" className="text-[var(--text-muted)] hover:text-[var(--text-primary)]">Privatlivspolitik</Link></li>
-              <li><Link href="/terms" className="text-[var(--text-muted)] hover:text-[var(--text-primary)]">Vilkår for brug</Link></li><li><Link href="/dpa" className="text-[var(--text-muted)] hover:text-[var(--text-primary)]">DPA (udkast)</Link></li><li><Link href="/subprocessors" className="text-[var(--text-muted)] hover:text-[var(--text-primary)]">Leverandører</Link></li>
+              <li><Link href="/terms" className="text-[var(--text-muted)] hover:text-[var(--text-primary)]">Vilkår for brug</Link></li><li><Link href="/dpa" className="text-[var(--text-muted)] hover:text-[var(--text-primary)]">Databehandleraftale</Link></li><li><Link href="/subprocessors" className="text-[var(--text-muted)] hover:text-[var(--text-primary)]">Leverandører</Link></li>
               <li><a href="mailto:axel@embedbot.dk" className="text-[var(--text-muted)] hover:text-[var(--text-primary)]">Kontakt</a></li>
             </ul>
           </div>

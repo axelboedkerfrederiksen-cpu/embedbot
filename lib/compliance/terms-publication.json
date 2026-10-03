@@ -1,0 +1,244 @@
+{
+  "slug": "terms",
+  "version": "2026-10-03.3",
+  "status": "published",
+  "title": "Vilkår for EmbedBot",
+  "notice": "Disse vilkår gælder ved virksomhedens dokumenterede accept af denne version. Tidligere aftaleversioner og acceptregistreringer bevares.",
+  "sections": [
+    {
+      "title": "1. Aftalen",
+      "text": "Disse vilkår gælder for virksomhedens brug af EmbedBot, herunder dashboard, chatbot-widget, support, gratis prøveadgang og betalte abonnementer. Aftaleparten er Axel Bødker Frederiksen, som driver EmbedBot, Smallegade 42, 4. tv., 2000 Frederiksberg, Danmark. Kontakt: axel@embedbot.dk, telefon +45 91 55 12 50."
+    },
+    {
+      "title": "2. Tjenesten",
+      "text": "EmbedBot leverer en AI-baseret chatbot, som kan bruge virksomhedens egne oplysninger og websiteindhold til at besvare besøgendes spørgsmål. Funktioner, kapacitet og inkluderede AI-svar afhænger af den valgte plan. Vi kan foretage rimelige produktændringer, når tjenestens væsentlige funktion ikke forringes væsentligt."
+    },
+    {
+      "title": "3. Gratis prøveadgang",
+      "text": "Prøveperioden tilbydes som 14 dage uden betalingskort og bliver ikke automatisk til et betalt abonnement. Adgangen afsluttes kun automatisk, hvis EmbedBot og virksomheden har aftalt en slutdato, eksempelvis i en mail. Uden aftalt slutdato fortsætter prøveadgangen, og det videre forløb aftales med virksomheden. Betaling kræver et aktivt køb. Betalte abonnementer fornyes månedligt, indtil de opsiges."
+    },
+    {
+      "title": "4. Pris, betaling og fornyelse",
+      "text": "Aktuelle priser og plangrænser fremgår af prissiden . Priser er i danske kroner pr. måned og eksklusive moms, medmindre andet er angivet. Betaling håndteres af Stripe. Et betalt abonnement fornyes automatisk månedligt, indtil det opsiges. Den valgte pris, betalingsperiode og fornyelse vises før betaling. Virksomheden kan opsige i dashboardet; opsigelsen gælder ved udgangen af den allerede betalte periode. Se betalings- og refusionspolitikken ."
+    },
+    {
+      "title": "5. Konto og adgang",
+      "text": "Virksomheden skal give korrekte oplysninger, beskytte loginoplysninger og straks kontakte os ved mistanke om misbrug. Virksomheden er ansvarlig for handlinger foretaget fra dens konto, medmindre de skyldes forhold, som EmbedBot er ansvarlig for."
+    },
+    {
+      "title": "6. Virksomhedens indhold og instruktioner",
+      "text": "Virksomheden beholder sine rettigheder til indhold, som den leverer. Virksomheden giver EmbedBot en begrænset ret til at behandle indholdet for at levere, sikre og supportere tjenesten. Virksomheden er ansvarlig for, at den har ret til at bruge og dele indholdet, og for at produkt-, pris-, leverings-, retur-, garanti- og kontaktoplysninger er korrekte. Virksomheden skal gennemgå væsentlige chatbot-svar og må ikke instruere chatbotten i at vildlede kunder eller overtræde lovgivning."
+    },
+    {
+      "title": "7. Personoplysninger",
+      "text": "Når EmbedBot behandler virksomhedens besøgendes oplysninger efter virksomhedens instruktioner, er virksomheden normalt dataansvarlig og EmbedBot databehandler. Virksomheden skal give de nødvendige oplysninger til sine besøgende, vælge et lovligt behandlingsgrundlag og undgå at indsamle flere oplysninger end nødvendigt. En databehandleraftale skal være indgået, før EmbedBot bruges til at behandle besøgendes personoplysninger på virksomhedens vegne. Se privatlivspolitikken og cookiepolitikken ."
+    },
+    {
+      "title": "8. Børn og følsomme oplysninger",
+      "text": "Tjenesten er ikke målrettet børn. Virksomheden må ikke målrette chatbotten mod børn eller indsamle børns oplysninger på grundlag af samtykke uden selv at sikre et gyldigt alders- og forældresamtykkeforløb. Chatbotten bør ikke bruges til CPR-numre, helbredsoplysninger, betalingskortoplysninger eller andre følsomme oplysninger, medmindre det er særskilt aftalt og lovligt."
+    },
+    {
+      "title": "9. Acceptabel brug",
+      "text": "EmbedBot må ikke bruges til ulovligt indhold, spam, phishing, chikane, malware, krænkelse af tredjemands rettigheder, omgåelse af sikkerhed eller belastning af tjenesten ud over normal brug. Sikkerhedsforanstaltninger må ikke testes uden skriftlig tilladelse."
+    },
+    {
+      "title": "10. AI-begrænsninger",
+      "text": "AI-genererede svar kan være ufuldstændige eller forkerte. EmbedBot bruger tekniske og instruktionelle sikkerhedsforanstaltninger, men kan ikke garantere, at alle fejl, manipulationer eller prompt-injection-forsøg bliver opdaget. Chatbotten må ikke være eneste grundlag for juridisk, medicinsk, finansiel eller anden højrisikorådgivning."
+    },
+    {
+      "title": "11. Tredjeparter",
+      "text": "Tjenesten anvender blandt andet OpenAI, Supabase, Stripe, Resend, Vercel og Plausible. Driftsforstyrrelser eller ændringer hos disse leverandører kan påvirke tjenesten. Vi vælger og administrerer leverandører med rimelig omhu, men kan ikke kontrollere deres tjenester fuldt ud."
+    },
+    {
+      "title": "12. Tilgængelighed, support og sikkerhed",
+      "text": "Vi tilstræber stabil drift og rimelig support, men lover ikke uafbrudt eller fejlfri adgang. Planlagt vedligeholdelse, sikkerhedshændelser eller forhold uden for vores kontrol kan give afbrydelser. Vi anvender rimelige tekniske og organisatoriske sikkerhedsforanstaltninger."
+    },
+    {
+      "title": "13. Suspension og ophør",
+      "text": "Vi kan suspendere adgang ved manglende betaling, væsentlig misligholdelse, sikkerhedsrisiko eller ulovlig brug. Hvor det er rimeligt, giver vi mulighed for at rette forholdet først. Ved ophør bør virksomheden eksportere nødvendige data. Sletning og opbevaring følger privatlivspolitikken og gældende lov."
+    },
+    {
+      "title": "14. Ansvar",
+      "text": "Parterne er ansvarlige efter dansk rets almindelige regler med de begrænsninger, der lovligt kan aftales mellem erhvervsdrivende. EmbedBot er ikke ansvarlig for indirekte tab, driftstab, tabt avance eller tab, der skyldes virksomhedens urigtige indhold eller brug af AI-svar uden relevant kontrol. EmbedBots samlede ansvar er, i det omfang loven tillader det, begrænset til det beløb, virksomheden har betalt for tjenesten i de seneste 12 måneder. Begrænsningen gælder ikke ved forsæt, grov uagtsomhed eller ansvar, som ikke lovligt kan begrænses."
+    },
+    {
+      "title": "15. Ændringer",
+      "text": "Væsentlige ændringer til priser eller vilkår varsles normalt mindst 30 dage før ikrafttræden. Hvis en ændring har væsentlig negativ betydning, kan virksomheden opsige abonnementet inden ændringen træder i kraft."
+    },
+    {
+      "title": "16. Lovvalg og kontakt",
+      "text": "Aftalen er underlagt dansk ret. Tvister søges først løst i dialog og kan derefter indbringes for de danske domstole efter de almindelige værnetingsregler. Spørgsmål kan sendes til axel@embedbot.dk eller via support ."
+    }
+  ],
+  "suppliers": [
+    {
+      "provider": "Supabase",
+      "legalName": "Supabase Pte. Ltd. (Singapore)",
+      "service": "Database og Auth",
+      "purpose": "Konto, chat, supportsager, videnskilder og integrationer",
+      "data": "Konto- og virksomhedsoplysninger, chat, supportsager og krypterede webshopcredentials",
+      "location": "Projektets database og Auth er placeret i Frankfurt, Tyskland (eu-central-1). Leverandørens support og underleverandører kan behandle oplysninger uden for EU/EØS; projektregionen er ikke en garanti om udelukkende EU-behandling.",
+      "role": "Underdatabehandler for kundens chat- og supportdata; databehandler for EmbedBots egne kontooplysninger.",
+      "transfer": "Supabases DPA indeholder EU-standardkontraktbestemmelser (SCC) for relevante tredjelandsoverførsler. Videreoverførsler følger DPA og underdatabehandlerlisten.",
+      "scope": "Kundens chatbot og EmbedBots kontoadministration",
+      "information": "https://supabase.com/legal/customer-resources/data-processing-addendum",
+      "sources": [
+        [
+          "Databehandleraftale",
+          "https://supabase.com/legal/customer-resources/data-processing-addendum"
+        ],
+        [
+          "Underdatabehandlere",
+          "https://supabase.com/legal/customer-resources/subprocessor-list"
+        ],
+        [
+          "Region og dataresidens",
+          "https://supabase.com/docs/guides/security/gdpr-compliance"
+        ]
+      ],
+      "evidence": "Projektregion kontrolleret i Supabase; offentlige aftaler og dokumentation gennemgået 3. oktober 2026.",
+      "reviewedAt": "2026-10-03"
+    },
+    {
+      "provider": "OpenAI",
+      "legalName": "OpenAI Ireland Ltd. for EØS-/schweiziske kunder; OpenAI OpCo, LLC for øvrige kunder efter standardaftalen.",
+      "service": "AI API",
+      "purpose": "Chatgenerering, klassifikation og embeddings af videnskilder",
+      "data": "Aktuelle spørgsmål, nødvendig samtalehistorik og relevante videnskilder. Private ordreformularer og ordresvar håndteres særskilt.",
+      "location": "Den aktuelle integration bruger det almindelige API uden et konfigureret europæisk API-endpoint. Der gives ingen garanti om EU-behandling. Behandling kan ske i USA og hos leverandørens underdatabehandlere.",
+      "role": "Underdatabehandler for oplysninger behandlet på webshopkundens vegne.",
+      "transfer": "OpenAIs DPA beskriver SCC eller en gældende tilstrækkelighedsafgørelse som grundlag for overførsler af EØS-data til tredjelande.",
+      "scope": "Kundens chatbot og videnssøgning",
+      "information": "https://openai.com/policies/data-processing-addendum/",
+      "sources": [
+        [
+          "Databehandleraftale",
+          "https://openai.com/policies/data-processing-addendum/"
+        ],
+        [
+          "Datakontroller og opbevaring",
+          "https://developers.openai.com/api/docs/guides/your-data"
+        ],
+        [
+          "Underdatabehandlere",
+          "https://platform.openai.com/subprocessors"
+        ]
+      ],
+      "evidence": "API-integration og AI Council-datadeling kontrolleret. Tilvalgt deling til modeltræning var slået fra ved kontokontrollen 3. oktober 2026.",
+      "reviewedAt": "2026-10-03"
+    },
+    {
+      "provider": "Vercel",
+      "legalName": "Vercel Inc. (USA)",
+      "service": "Hosting, serverbehandling, Cron, Web Analytics og Speed Insights",
+      "purpose": "Levering af hjemmeside og API, driftsjobs samt samtykkebaseret besøgs- og ydelsesmåling",
+      "data": "HTTP-trafik, serverbehandlede chatbot- og kontoforespørgsler samt tekniske drifts- og målingsoplysninger",
+      "location": "Vercels offentlige DPA angiver primær behandling i USA og mulig behandling i andre lande hos Vercel og underdatabehandlere. Der loves ikke udelukkende EU-hosting.",
+      "role": "Hosting behandler oplysninger på EmbedBots og kundens vegne. Den offentlige databehandleraftale omfatter Pro/Enterprise; den aktuelle Hobby-plan har ikke dokumenteret dækning under denne aftale.",
+      "transfer": "Vercels DPA beskriver SCC for relevante overførsler. Dette kan ikke registreres som EmbedBots aftalegrundlag på Hobby uden en særskilt dækkende aftale.",
+      "scope": "Kundens chatbot/API og EmbedBots eget website",
+      "information": "https://vercel.com/legal/dpa",
+      "sources": [
+        [
+          "Databehandleraftale",
+          "https://vercel.com/legal/dpa"
+        ],
+        [
+          "Hobby-planens anvendelse",
+          "https://vercel.com/docs/plans/hobby"
+        ],
+        [
+          "Underdatabehandlere",
+          "https://security.vercel.com/"
+        ]
+      ],
+      "evidence": "Hobby-plan bekræftet af kontoejeren 3. oktober 2026. Kommerciel kundedrift kræver passende hostingplan og aftaledækning.",
+      "reviewedAt": "2026-10-03"
+    },
+    {
+      "provider": "Resend",
+      "legalName": "Plus Five Five, Inc. (Resend, USA)",
+      "service": "Transaktionsmail",
+      "purpose": "Aktivering, supportnotifikationer og verifikationskoder",
+      "data": "Modtagermailadresse, relevant mailindhold og leveringsoplysninger",
+      "location": "Mailindhold, leveringslogs og kontooplysninger lagres i USA. EmbedBots afsenderregion er Irland (eu-west-1); dette ændrer ikke lagringsstedet.",
+      "role": "Underdatabehandler for kundens supportnotifikationer; databehandler for EmbedBots egne transaktionsmails.",
+      "transfer": "Resends DPA indeholder SCC, herunder modul 3 ved underdatabehandling. Denne oversigt bygger ikke på en selvstændig bekræftelse af DPF-certificering.",
+      "scope": "Kundens supportfunktioner og EmbedBots kontomails",
+      "information": "https://resend.com/legal/dpa",
+      "sources": [
+        [
+          "Databehandleraftale",
+          "https://resend.com/legal/dpa"
+        ],
+        [
+          "Behandlingssteder og opbevaring",
+          "https://resend.com/security/gdpr"
+        ],
+        [
+          "Underdatabehandlere",
+          "https://resend.com/legal/subprocessors"
+        ]
+      ],
+      "evidence": "Afsenderdomæne og Irland-region kontrolleret. Enforced TLS er aktiveret for embedbot.dk; offentlige kilder gennemgået 3. oktober 2026.",
+      "reviewedAt": "2026-10-03"
+    },
+    {
+      "provider": "Stripe",
+      "legalName": "Stripe Payments Europe, Limited for danske konti efter standardaftalen; Stripe Technology Europe, Limited kan indgå for relevante finansielle tjenester.",
+      "service": "Betalte EmbedBot-abonnementer",
+      "purpose": "Betaling, abonnement, fakturering og opsigelse",
+      "data": "Kunde- og virksomhedsreference, mailadresse, betalingsstatus og betalingsoplysninger hos Stripe. EmbedBot gemmer ikke fulde kortnumre.",
+      "location": "Behandling hos Stripe i EU/EØS og internationalt, herunder overførsel til Stripe, LLC i USA og relevante koncernselskaber og underdatabehandlere.",
+      "role": "Databehandler for visse tjenester og selvstændig dataansvarlig for bl.a. svindelforebyggelse, myndighedskrav og egne driftsformål. Ikke underdatabehandler for kundens chatbotindhold.",
+      "transfer": "Stripes Data Transfers Addendum regulerer relevante tredjelandsoverførsler, herunder SCC og øvrige anvendelige overførselsmekanismer.",
+      "scope": "EmbedBots egen abonnements- og betalingsadministration",
+      "information": "https://stripe.com/legal/dpa",
+      "sources": [
+        [
+          "Danske tjenestevilkår",
+          "https://stripe.com/dk/legal/ssa"
+        ],
+        [
+          "Databehandleraftale",
+          "https://stripe.com/legal/dpa"
+        ],
+        [
+          "Overførselsbilag",
+          "https://stripe.com/legal/dta"
+        ]
+      ],
+      "evidence": "Betalingsintegration og leverandørens offentlige danske standardvilkår gennemgået 3. oktober 2026.",
+      "reviewedAt": "2026-10-03"
+    },
+    {
+      "provider": "Plausible",
+      "legalName": "Plausible Insights OÜ (Estland)",
+      "service": "Webanalyse",
+      "purpose": "Samtykkebaseret besøgsstatistik på EmbedBots eget website",
+      "data": "Sidebesøg og tekniske besøgsoplysninger. URL-parametre og referrer fjernes fra EmbedBots Plausible-måling.",
+      "location": "Websitebesøgsdata behandles i EU. Plausible angiver Hetzner (Tyskland), Bunny (Slovenien) og UpCloud (Finland) som underdatabehandlere for disse data.",
+      "role": "Databehandler for EmbedBots besøgsstatistik; selvstændig dataansvarlig for egen kundekonto, betaling og support. Ikke underdatabehandler for webshopkundens chatbot.",
+      "transfer": "Plausible angiver, at websitebesøgsdata forbliver i EU. Leverandørens behandling af EmbedBots egne kontooplysninger er særskilt og kan omfatte tredjelandsleverandører.",
+      "scope": "EmbedBots eget website efter analysesamtykke",
+      "information": "https://plausible.io/privacy",
+      "sources": [
+        [
+          "Juridisk enhed",
+          "https://plausible.io/imprint"
+        ],
+        [
+          "Roller og behandlingssteder",
+          "https://plausible.io/privacy"
+        ],
+        [
+          "Databehandleraftale",
+          "https://plausible.io/dpa"
+        ]
+      ],
+      "evidence": "Analyseindlæsning og leverandørens offentlige dokumentation gennemgået 3. oktober 2026.",
+      "reviewedAt": "2026-10-03"
+    }
+  ],
+  "sha256": "8bab15cda024e2e4b4400f04aec71242914b93de61b505b4e69a5363e85a253e"
+}

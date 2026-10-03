@@ -13,7 +13,7 @@ export default function PrivacyPolicy() {
             Privatlivspolitik
           </h1>
           <p className="mt-3 text-base text-gray-600">
-            Senest opdateret: <time dateTime="2026-10-02">2. oktober 2026</time>
+            Senest opdateret: <time dateTime="2026-10-03">3. oktober 2026</time>
           </p>
         </div>
 
@@ -31,8 +31,7 @@ export default function PrivacyPolicy() {
             besøgende skriver i chatbotten. EmbedBot behandler i så fald disse
             oplysninger efter virksomhedens instruktioner. Virksomheden skal
             derfor selv sørge for relevant information til sine besøgende og et
-            lovligt behandlingsgrundlag. Databehandleraftalen findes som et
-            udkast på <a href="/dpa">DPA-siden</a> og kræver godkendelse før indgåelse.
+            lovligt behandlingsgrundlag. Databehandleraftalen og status for kundeaccept findes på <a href="/dpa">DPA-siden</a>. En aftale skal indgås, før tjenesten bruges til behandling på virksomhedens vegne.
           </p>
         </div>
 
@@ -51,8 +50,10 @@ export default function PrivacyPolicy() {
         <section id="data">
           <h2>1. Hvem er dataansvarlig?</h2>
           <p>
-            EmbedBot er dataansvarlig for sin egen konto-, betalings-, support- og
-            sikkerhedsbehandling.
+            Axel Bødker Frederiksen, som driver EmbedBot, Smallegade 42, 4. tv.,
+            2000 Frederiksberg, Danmark, er dataansvarlig for EmbedBots egen konto-,
+            betalings-, support- og sikkerhedsbehandling. Kontakt: axel@embedbot.dk,
+            telefon +45 91 55 12 50.
           </p>
         </section>
 
@@ -181,10 +182,10 @@ export default function PrivacyPolicy() {
           <p>
             Vi bruger databehandlere og andre leverandører, når det er nødvendigt
             for at levere tjenesten. De får kun adgang til de oplysninger, der er
-            relevante for deres opgave, Leverandøraftaler og overførselsgrundlag skal verificeres særskilt.
+            relevante for deres opgave. Leverandørernes roller og aftalegrundlag fremgår af oversigten nedenfor.
           </p>
           <ul>{SUPPLIERS.map(s=><li key={s.provider}><strong>{s.provider}:</strong> {s.service} — {s.purpose}. <a href={s.information} target="_blank" rel="noreferrer">Leverandørinformation</a>.</li>)}</ul>
-          <p>Den fælles <Link href="/subprocessors">leverandøroversigt</Link> viser verificerede tjenester samt de juridiske enheder, roller og overførselsforhold, der stadig kræver verificering. DPA’en findes som et tydeligt <Link href="/dpa">udkast</Link> og er endnu ikke en godkendt aftale.</p>
+          <p>Den fælles <Link href="/subprocessors">leverandøroversigt</Link> beskriver juridiske enheder, roller, behandlingssteder og offentliggjorte overførselsmekanismer. <Link href="/dpa">Databehandleraftalen</Link> beskriver behandlingen på webshopkundens vegne. Kundeaccept er lukket, indtil den aktuelle Vercel Hobby-hosting har dækkende kommercielle vilkår og databehandleraftale, og de konkrete overførselsbilag er dokumenteret.</p>
 
           <p>
             Leverandørlisten kan ændre sig, hvis infrastrukturen eller funktionerne
@@ -203,7 +204,7 @@ export default function PrivacyPolicy() {
             virksomhed selv indtaster personfølsomme eller andre følsomme data i
             sit indhold, kan sådanne data dog blive sendt som relevant kontekst.
           </p>
-          <p>OpenAI bruges til AI-svar og embeddings. Den konkrete kontos dataretention, datadeling, region og endpointindstillinger er ikke verificeret her. Vi antager hverken, at leverandørretention er deaktiveret, eller at én generel periode dækker hele behandlingen. Se <Link href="/subprocessors">leverandøroversigten</Link>; de konkrete indstillinger og aftaler kræver verificering.</p>
+          <p>OpenAI bruges til AI-svar og embeddings via det almindelige API. Ved kontokontrollen 3. oktober 2026 var tilvalgt deling af API-input og output til modeltræning slået fra. OpenAI oplyser, at almindelige abuse-monitoring-logs som udgangspunkt kan opbevares i op til 30 dage, med de undtagelser leverandøren beskriver. EmbedBot har ikke dokumenteret Zero Data Retention eller en garanti om EU-behandling. Disse leverandørlogs er særskilt fra EmbedBots egne chatfrister. Se <a href="https://developers.openai.com/api/docs/guides/your-data" target="_blank" rel="noreferrer">OpenAIs datakontroller</a> og <Link href="/subprocessors">leverandøroversigten</Link>.</p>
         </section>
 
         <section id="overforsler">
@@ -227,11 +228,17 @@ export default function PrivacyPolicy() {
         <section id="opbevaring">
           <h2>8. Internationale overførsler</h2>
           <p>
-            Nogle leverandører kan behandle personoplysninger uden for EU/EØS.
-            De konkrete modtagere, lande og overførselsgrundlag er endnu ikke
-            verificeret for alle leverandører. Disse forhold skal afklares i
-            leverandøraftalerne; vi antager ikke SCC- eller DPF-status. Se den
-            aktuelle <a href="/subprocessors">leverandøroversigt</a>.
+            Supabases databaseprojekt og Auth ligger i Frankfurt, Tyskland. OpenAI,
+            Resend, Vercel og Stripe kan behandle oplysninger i USA og andre
+            lande uden for EU/EØS. Deres offentliggjorte aftaler beskriver
+            overførselsmekanismer, herunder EU-standardkontraktbestemmelser (SCC).
+            En mekanisme i en leverandørs standardaftale er ikke i sig selv en
+            afsluttet vurdering af EmbedBots konkrete overførsler. Vercels
+            aktuelle Hobby-plan har ikke dokumenteret dækning under leverandørens
+            offentlige DPA. Plausible beskriver behandling af websitebesøgsdata
+            udelukkende i EU. Se <a href="/subprocessors">leverandøroversigten</a>
+            for rollefordeling, kilder og den konkrete aftalestatus. Du kan
+            kontakte os for oplysninger om relevante garantier og aftalebilag.
           </p>
         </section>
 

@@ -1,4 +1,5 @@
-import versions from "./legal-documents.json" with { type: "json" };
-export const LEGAL_DOCUMENTS = versions;
-export const TERMS = versions.find(document => document.slug === "terms")!;
-export const DPA = versions.find(document => document.slug === "dpa")!;
+import publication from "./dpa-publication.json" with { type: "json" };
+import terms from "./terms-publication.json" with { type: "json" };
+export const TERMS = terms;
+export const DPA = publication;
+export const LEGAL_DOCUMENTS = [TERMS,DPA];

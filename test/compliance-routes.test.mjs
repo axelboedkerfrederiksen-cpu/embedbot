@@ -5,6 +5,7 @@ import { resolve as resolvePath } from 'node:path';
 import { randomUUID,randomBytes,createHash } from 'node:crypto';
 import { test,before,after } from 'node:test';
 import assert from 'node:assert/strict';
+import readingPublication from '../lib/compliance/dpa-publication.json' with { type: 'json' };
 import { state } from './helpers/runtime.mjs';
 const root=fileURLToPath(new URL('../',import.meta.url));
 registerHooks({resolve(specifier,context,nextResolve){
@@ -69,6 +70,13 @@ test('private privacy/legal endpoints require session, owner, same-origin and ex
  const forged=await db.client.rpc('accept_legal_document',{p_business_id:business,p_actor:owner.id,p_slug:'terms',p_version:TERMS.version,p_sha256:'0'.repeat(64)});assert.ok(forged.error);
  await assert.rejects(db.pg.query("update legal_document_versions set status='published' where slug='dpa'"),/create_a_new_document_version/);
  for(const doc of [TERMS,DPA]){const {sha256,...canonical}=doc;assert.equal(createHash('sha256').update(JSON.stringify(canonical)).digest('hex'),sha256);}
+ const archived=await db.pg.query("select document,sha256 from legal_document_versions where slug='terms' and version=$1",[TERMS.version]);
+ assert.deepEqual(archived.rows[0].document,TERMS);assert.equal(archived.rows[0].sha256,TERMS.sha256);
+ const reading=await db.pg.query("select document,status,sha256 from legal_document_versions where slug='dpa' and version='2026-10-03.2'");
+ assert.equal(reading.rows[0].status,'draft');
+ assert.deepEqual(reading.rows[0].document,readingPublication);
+ const {sha256:readingHash,...readingCanonical}=readingPublication;
+ assert.equal(createHash('sha256').update(JSON.stringify(readingCanonical)).digest('hex'),readingHash);
 });
 test('trial is card-free and open-ended by default; only an agreed deadline expires; cannot restart or replace paid access',async()=>{
  const business=await tenant();const payload=request('/api/dashboard/trial',{business_id:business});assert.equal((await trial.POST(payload)).status,409);
