@@ -187,6 +187,7 @@
         <div style="display:flex;flex-direction:column;line-height:1.2;flex:1;min-width:0;">
           <div style="min-width:0"><span id="eb-title" style="display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">Support Chat</span><span id="eb-ai-disclosure" style="display:block;font-size:11px;font-weight:500;line-height:1.5;opacity:1;">AI-assistent</span></div>
         </div>
+        <button type="button" id="eb-new-chat" aria-label="Start en ny chat" title="Start en ny chat">Ny chat</button>
         <button type="button" id="eb-expand" aria-label="Udvid chatten" title="Udvid chatten" aria-controls="eb-box" aria-pressed="false">
           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M8 3H3v5m13-5h5v5M3 16v5h5m13-5v5h-5" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/></svg>
         </button>
@@ -214,6 +215,7 @@
   const bubble = document.getElementById("eb-bubble");
   const box = document.getElementById("eb-box");
   const header = document.getElementById("eb-header");
+  const newChat = document.getElementById("eb-new-chat");
   const expand = document.getElementById("eb-expand");
   const minimize = document.getElementById("eb-minimize");
   const title = document.getElementById("eb-title");
@@ -248,7 +250,7 @@
       }
       #eb-header, #eb-composer { flex-shrink: 0; }
       #eb-messages { min-height: 0; }
-      #eb-expand, #eb-minimize {
+      #eb-new-chat, #eb-expand, #eb-minimize {
         display: inline-flex;
         align-items: center;
         justify-content: center;
@@ -264,8 +266,10 @@
         opacity: 0.75;
         transition: opacity 0.15s ease, background 0.15s ease;
       }
-      #eb-expand:hover, #eb-minimize:hover { opacity: 1; background: rgba(128, 128, 128, 0.12); }
-      #eb-expand:focus-visible, #eb-minimize:focus-visible { outline: 2px solid currentColor; outline-offset: 2px; }
+      #eb-new-chat:hover, #eb-expand:hover, #eb-minimize:hover { opacity: 1; background: rgba(128, 128, 128, 0.12); }
+      #eb-new-chat:focus-visible, #eb-expand:focus-visible, #eb-minimize:focus-visible { outline: 2px solid currentColor; outline-offset: 2px; }
+      #eb-new-chat { flex: 0 0 auto; width: auto; padding: 0 7px; font: inherit; font-size: 12px; white-space: nowrap; }
+      #eb-new-chat:disabled { opacity: 0.4; cursor: wait; }
       @media (max-width: 600px) { #eb-box { right: 16px !important; } }
       @media (prefers-reduced-motion: reduce) { #eb-box { transition: none !important; } }
       #eb-bubble:hover {
@@ -727,7 +731,7 @@
   // The nonce lives only in this widget instance. Order inputs, OTPs and private
   // responses never enter conversationHistory or browser storage.
   const conversationReferences = [];
-  const commerceSession = Array.from(crypto.getRandomValues(new Uint8Array(32)), n => n.toString(16).padStart(2, "0")).join("");
+  let commerceSession = Array.from(crypto.getRandomValues(new Uint8Array(32)), n => n.toString(16).padStart(2, "0")).join("");
   async function commerceCall(path, payload) {
     const response = await fetch(`${apiOrigin}/api/commerce/${path}`, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ business_id: businessId, session: commerceSession, ...payload }) });
     const data = await response.json();
@@ -943,7 +947,7 @@
   async function sendMessage() {
     const text = input.value.trim();
     if (!text || messageSending) return;
-    messageSending = true; send.disabled = true;
+    messageSending = true; send.disabled = true; newChat.disabled = true;
 
     const language = detectLanguage(text);
     const labels = language === "en"
@@ -1077,8 +1081,21 @@
         userMessage.status.textContent = labels.failed;
         userMessage.status.style.color = "#b91c1c";
       }
-    } finally { messageSending = false; send.disabled = false; }
+    } finally { messageSending = false; send.disabled = false; newChat.disabled = false; }
   }
+
+  newChat.onclick = () => {
+    // Wait for the current response so late chunks cannot enter the new chat.
+    if (messageSending) return;
+    conversationHistory.length = 0;
+    conversationReferences.length = 0;
+    commerceSession = Array.from(crypto.getRandomValues(new Uint8Array(32)), n => n.toString(16).padStart(2, "0")).join("");
+    messages.replaceChildren();
+    input.value = "";
+    hasShownWelcomeMessage = false;
+    tryShowWelcomeMessage();
+    input.focus();
+  };
 
   send.onclick = sendMessage;
   input.onkeydown = (e) => { if (e.key === "Enter") { e.preventDefault(); sendMessage(); } };
