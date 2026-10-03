@@ -66,10 +66,9 @@ export default function LoginPage() {
         display: "grid",
         placeItems: "center",
         padding: "16px",
-        background:
-          "radial-gradient(circle at 12% 18%, rgba(246, 243, 237, 0.92) 0%, rgba(246, 243, 237, 0) 24%), radial-gradient(circle at 88% 14%, rgba(246, 243, 237, 0.9) 0%, rgba(246, 243, 237, 0) 22%), linear-gradient(180deg, #ffffff 0%, #fcfaf6 55%, #f8f4ee 100%)",
-        fontFamily: '"Poppins", sans-serif',
-        color: "#111111",
+        background: "var(--bg-page)",
+        fontFamily: "var(--font-inter), sans-serif",
+        color: "var(--text-primary)",
       }}
     >
       <form
@@ -77,25 +76,25 @@ export default function LoginPage() {
         style={{
           width: "100%",
           maxWidth: 400,
-          background: "rgba(255,255,255,0.94)",
-          border: "1px solid rgba(17,17,17,0.08)",
-          borderRadius: 24,
+          background: "var(--bg-primary)",
+          border: "1px solid var(--border)",
+          borderRadius: 7,
           padding: 28,
           display: "grid",
           gap: 12,
-          boxShadow: "0 20px 50px rgba(17,17,17,0.08)",
-          backdropFilter: "blur(10px)",
+          boxShadow: "none",
+
         }}
       >
-        <h1 style={{ margin: 0, fontSize: 28, fontWeight: 700, color: "#111111", letterSpacing: "-0.03em" }}>Log ind</h1>
-        <p style={{ margin: 0, color: "#6b6258", fontSize: 14, fontWeight: 400 }}>Fortsæt til dit dashboard.</p>
+        <h1 style={{ margin: 0, fontSize: 28, fontWeight: 400, color: "var(--text-primary)", letterSpacing: "-0.03em" }}>Log ind</h1>
+        <p style={{ margin: 0, color: "var(--text-muted)", fontSize: 14, fontWeight: 400 }}>Fortsæt til dit dashboard.</p>
 
         <div style={{ display: "grid", gap: 9, marginTop: 4 }}>
           <button
             type="button"
             onClick={() => void handleOAuth("google")}
             disabled={Boolean(oauthLoading) || loading}
-            style={{ border: "1px solid rgba(17,17,17,0.12)", background: "#ffffff", color: "#111111", borderRadius: 14, padding: "12px 14px", fontWeight: 600, fontSize: 14, cursor: oauthLoading ? "not-allowed" : "pointer", opacity: oauthLoading && oauthLoading !== "google" ? 0.55 : 1, fontFamily: '"Poppins", sans-serif', display: "flex", justifyContent: "center", alignItems: "center", gap: 10 }}
+            style={{ border: "1px solid var(--border)", background: "#ffffff", color: "var(--text-primary)", borderRadius: 7, padding: "12px 14px", fontWeight: 500, fontSize: 14, cursor: oauthLoading ? "not-allowed" : "pointer", opacity: oauthLoading && oauthLoading !== "google" ? 0.55 : 1, fontFamily: "var(--font-inter), sans-serif", display: "flex", justifyContent: "center", alignItems: "center", gap: 10 }}
           >
             <span aria-hidden="true" style={{ fontWeight: 800, fontSize: 17, color: "#4285f4" }}>G</span>
             {oauthLoading === "google" ? "Forbinder til Google…" : "Fortsæt med Google"}
@@ -104,14 +103,14 @@ export default function LoginPage() {
             type="button"
             onClick={() => void handleOAuth("azure")}
             disabled={Boolean(oauthLoading) || loading}
-            style={{ border: "1px solid rgba(17,17,17,0.12)", background: "#ffffff", color: "#111111", borderRadius: 14, padding: "12px 14px", fontWeight: 600, fontSize: 14, cursor: oauthLoading ? "not-allowed" : "pointer", opacity: oauthLoading && oauthLoading !== "azure" ? 0.55 : 1, fontFamily: '"Poppins", sans-serif', display: "flex", justifyContent: "center", alignItems: "center", gap: 10 }}
+            style={{ border: "1px solid var(--border)", background: "#ffffff", color: "var(--text-primary)", borderRadius: 7, padding: "12px 14px", fontWeight: 500, fontSize: 14, cursor: oauthLoading ? "not-allowed" : "pointer", opacity: oauthLoading && oauthLoading !== "azure" ? 0.55 : 1, fontFamily: "var(--font-inter), sans-serif", display: "flex", justifyContent: "center", alignItems: "center", gap: 10 }}
           >
             <span aria-hidden="true" style={{ display: "grid", gridTemplateColumns: "repeat(2, 6px)", gap: 1 }}><i style={{ display: "block", width: 6, height: 6, background: "#f25022" }} /><i style={{ display: "block", width: 6, height: 6, background: "#7fba00" }} /><i style={{ display: "block", width: 6, height: 6, background: "#00a4ef" }} /><i style={{ display: "block", width: 6, height: 6, background: "#ffb900" }} /></span>
             {oauthLoading === "azure" ? "Forbinder til Microsoft…" : "Fortsæt med Microsoft"}
           </button>
         </div>
 
-        <div style={{ display: "flex", alignItems: "center", gap: 10, color: "#8a7e70", fontSize: 11, margin: "3px 0" }}><span style={{ height: 1, background: "rgba(17,17,17,0.1)", flex: 1 }} /><span>eller med email</span><span style={{ height: 1, background: "rgba(17,17,17,0.1)", flex: 1 }} /></div>
+        <div style={{ display: "flex", alignItems: "center", gap: 10, color: "var(--text-subtle)", fontSize: 11, margin: "3px 0" }}><span style={{ height: 1, background: "rgba(17,17,17,0.1)", flex: 1 }} /><span>eller med email</span><span style={{ height: 1, background: "rgba(17,17,17,0.1)", flex: 1 }} /></div>
 
         {showResetSuccess ? (
           <p
@@ -121,7 +120,7 @@ export default function LoginPage() {
               fontSize: 13,
               border: "1px solid rgba(27,107,69,0.2)",
               background: "rgba(27,107,69,0.08)",
-              borderRadius: 10,
+              borderRadius: 7,
               padding: "10px 12px",
             }}
           >
@@ -137,7 +136,7 @@ export default function LoginPage() {
               fontSize: 13,
               border: "1px solid rgba(155,61,47,0.2)",
               background: "rgba(155,61,47,0.07)",
-              borderRadius: 10,
+              borderRadius: 7,
               padding: "10px 12px",
             }}
           >
@@ -151,7 +150,7 @@ export default function LoginPage() {
           value={email}
           onChange={(e) => setEmail(e.target.value)}
           required
-          style={{ border: "1px solid rgba(17,17,17,0.1)", background: "#ffffff", borderRadius: 14, padding: "13px 14px", fontSize: 14, fontFamily: '"Poppins", sans-serif', color: "#111111", outline: "none" }}
+          style={{ border: "1px solid var(--border)", background: "#ffffff", borderRadius: 7, padding: "13px 14px", fontSize: 14, fontFamily: "var(--font-inter), sans-serif", color: "var(--text-primary)" }}
         />
         <input
           type="password"
@@ -159,12 +158,12 @@ export default function LoginPage() {
           value={password}
           onChange={(e) => setPassword(e.target.value)}
           required
-          style={{ border: "1px solid rgba(17,17,17,0.1)", background: "#ffffff", borderRadius: 14, padding: "13px 14px", fontSize: 14, fontFamily: '"Poppins", sans-serif', color: "#111111", outline: "none" }}
+          style={{ border: "1px solid var(--border)", background: "#ffffff", borderRadius: 7, padding: "13px 14px", fontSize: 14, fontFamily: "var(--font-inter), sans-serif", color: "var(--text-primary)" }}
         />
 
         <Link
           href="/auth/forgot-password"
-          style={{ color: "#6b6258", fontSize: 13, textDecoration: "underline", justifySelf: "start" }}
+          style={{ color: "var(--text-muted)", fontSize: 13, textDecoration: "underline", justifySelf: "start" }}
         >
           Glemt adgangskode?
         </Link>
@@ -173,17 +172,17 @@ export default function LoginPage() {
           type="submit"
           disabled={loading}
           style={{
-            border: "1px solid rgba(17,17,17,0.08)",
-            background: "#ffffff",
-            color: "#111111",
-            borderRadius: 999,
+            border: "1px solid var(--border)",
+            background: "var(--accent)",
+            color: "#ffffff",
+            borderRadius: 7,
             padding: "12px 16px",
-            fontWeight: 600,
+            fontWeight: 500,
             fontSize: 14,
             cursor: loading ? "not-allowed" : "pointer",
             opacity: loading ? 0.6 : 1,
-            fontFamily: '"Poppins", sans-serif',
-            boxShadow: "0 12px 28px rgba(17,17,17,0.08)",
+            fontFamily: "var(--font-inter), sans-serif",
+            boxShadow: "none",
           }}
         >
           {loading ? "Logger ind..." : "Log ind"}

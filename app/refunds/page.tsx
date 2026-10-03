@@ -3,11 +3,11 @@ import Link from "next/link";
 
 export default function RefundPolicyPage() {
   return (
-    <main id="main-content" className="min-h-screen bg-white px-4 py-12 text-gray-900 sm:px-6 lg:px-8">
+    <main id="main-content" className="min-h-screen bg-[var(--bg-page)] px-4 py-12 text-gray-900 sm:px-6 lg:px-8">
       <article className="privacy-policy mx-auto max-w-4xl">
         <div className="mb-10 not-prose">
           <Link href="/" className="text-sm font-medium text-gray-600 hover:text-gray-900">← Tilbage til EmbedBot</Link>
-          <h1 className="mt-8 text-4xl font-bold tracking-tight text-gray-900">Betaling, opsigelse og refundering</h1>
+          <h1 className="mt-8 text-4xl font-normal tracking-tight text-gray-900">Betaling, opsigelse og refundering</h1>
           <p className="mt-3 text-base text-gray-600">Senest opdateret: <time dateTime="2026-09-17">17. september 2026</time></p>
         </div>
         <section><h2>Erhvervskunder</h2><p>EmbedBot sælges kun til erhvervskunder, som handler som led i deres virksomhed. Den almindelige 14-dages fortrydelsesret for forbrugere gælder derfor normalt ikke. Hvis du mener, at du har købt som forbruger ved en fejl, skal du kontakte os straks; ufravigelige rettigheder påvirkes ikke af denne politik.</p></section>

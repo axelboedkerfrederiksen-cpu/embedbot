@@ -60,65 +60,68 @@ export default function PilotPage() {
     <main id="main-content" className="pilot-page">
       <style jsx global>{`
         *, *::before, *::after { box-sizing: border-box; }
-        html, body { margin: 0; min-height: 100%; background: #f6f3ed; }
+        html, body { margin: 0; min-height: 100%; background: var(--bg-page); }
         .pilot-page {
           min-height: 100dvh; max-width: 1120px; margin: 0 auto; padding: 14px 28px 72px;
-          color: #111111; font-family: var(--font-poppins), "Poppins", sans-serif;
+          color: var(--text-primary); font-family: var(--font-inter), sans-serif;
         }
         .pilot-nav {
           display: flex; align-items: center; justify-content: space-between; padding: 18px 22px;
-          border: 1px solid rgba(17,17,17,.08); border-radius: 20px; background: rgba(255,255,255,.78);
+          border: 1px solid var(--border); border-radius: 7px; background: var(--bg-page);
         }
         .pilot-logo { line-height: 0; }
         .pilot-logo img { display: block; width: auto; height: 26px; }
-        .pilot-nav a { color: #6b6258; font-size: .86rem; font-weight: 600; text-decoration: none; }
+        .pilot-nav a { color: var(--text-muted); font-size: .86rem; font-weight: 500; text-decoration: none; }
         .pilot-layout {
           display: grid; grid-template-columns: minmax(0, 1.08fr) minmax(360px, .92fr);
           gap: clamp(42px, 7vw, 86px); align-items: start; padding: 86px 0 0;
         }
         .pilot-kicker {
-          display: inline-flex; padding: 8px 12px; border: 1px solid rgba(17,17,17,.08);
-          border-radius: 999px; background: #fff; color: #6b6258; font-size: .78rem;
-          font-weight: 700; letter-spacing: .12em; text-transform: uppercase;
+          display: inline-flex; padding: 8px 12px; border: 1px solid var(--border);
+          border-radius: 7px; background: #fff; color: var(--text-muted); font-size: .78rem;
+          font-weight: 500; letter-spacing: .12em; text-transform: uppercase;
         }
         .pilot-title {
           margin: 22px 0 22px; max-width: 11ch; font-size: clamp(2.65rem, 6vw, 5.4rem);
-          font-weight: 700; line-height: 1.08; letter-spacing: -.055em;
+          font-weight: 400; line-height: 1.08; letter-spacing: -.055em;
         }
-        .pilot-lead { margin: 0; max-width: 55ch; color: #5f584f; font-size: 1.08rem; line-height: 1.8; }
+        .pilot-lead { margin: 0; max-width: 55ch; color: var(--text-muted); font-size: 1.08rem; line-height: 1.8; }
         .pilot-steps { display: grid; gap: 16px; margin: 34px 0 0; padding: 0; list-style: none; }
-        .pilot-steps li { display: grid; grid-template-columns: 34px 1fr; gap: 12px; color: #4f4942; line-height: 1.6; }
+        .pilot-steps li { display: grid; grid-template-columns: 34px 1fr; gap: 12px; color: var(--text-muted); line-height: 1.6; }
         .pilot-step-number {
           display: inline-flex; width: 30px; height: 30px; align-items: center; justify-content: center;
-          border-radius: 50%; background: #111; color: #fff; font-size: .78rem; font-weight: 700;
+          border-radius: 50%; background: var(--accent); color: #fff; font-size: .78rem; font-weight: 500;
         }
         .pilot-form {
-          display: grid; gap: 16px; padding: clamp(24px, 4vw, 34px); border: 1px solid rgba(17,17,17,.08);
-          border-radius: 24px; background: rgba(255,255,255,.94); box-shadow: 0 22px 54px rgba(17,17,17,.08);
+          display: grid; gap: 16px; padding: clamp(24px, 4vw, 34px); border: 1px solid var(--border);
+          border-radius: 7px; background: var(--bg-primary); box-shadow: none;
         }
         .pilot-form h2 { margin: 0 0 2px; font-size: 1.45rem; letter-spacing: -.025em; }
-        .pilot-form-intro { margin: 0 0 6px; color: #6b6258; font-size: .9rem; line-height: 1.55; }
+        .pilot-form-intro { margin: 0 0 6px; color: var(--text-muted); font-size: .9rem; line-height: 1.55; }
         .pilot-field { display: grid; gap: 7px; }
-        .pilot-label { color: #6b6258; font-size: .76rem; font-weight: 700; letter-spacing: .1em; text-transform: uppercase; }
+        .pilot-label { color: var(--text-muted); font-size: .76rem; font-weight: 500; letter-spacing: .1em; text-transform: uppercase; }
         .pilot-input {
-          width: 100%; min-height: 49px; padding: 0 14px; border: 1px solid rgba(17,17,17,.11);
-          border-radius: 14px; background: #fff; color: #111; font: inherit; font-size: .94rem; outline: none;
+          width: 100%; min-height: 49px; padding: 0 14px; border: 1px solid var(--border);
+          border-radius: 7px; background: #fff; color: var(--text-primary); font: inherit; font-size: .94rem; outline: none;
         }
-        .pilot-input:focus { border-color: rgba(17,17,17,.32); box-shadow: 0 0 0 4px #f6f3ed; }
+        .pilot-input:focus { border-color: rgba(17,17,17,.32); box-shadow: none; }
         .pilot-button {
-          min-height: 52px; margin-top: 4px; border: 0; border-radius: 999px; background: #111; color: #fff;
-          cursor: pointer; font: inherit; font-size: .94rem; font-weight: 700; box-shadow: 0 16px 34px rgba(17,17,17,.16);
+          min-height: 52px; margin-top: 4px; border: 0; border-radius: 7px; background: var(--accent); color: #fff;
+          cursor: pointer; font: inherit; font-size: .94rem; font-weight: 500; box-shadow: none;
         }
         .pilot-button:disabled { cursor: not-allowed; opacity: .6; }
-        .pilot-fineprint { margin: -2px 0 0; color: #7b7268; font-size: .78rem; line-height: 1.55; text-align: center; }
-        .pilot-feedback { margin: 0; padding: 12px 14px; border-radius: 12px; background: #f6f3ed; color: #4f4942; font-size: .86rem; line-height: 1.5; }
+        .pilot-fineprint { margin: -2px 0 0; color: var(--text-subtle); font-size: .78rem; line-height: 1.55; text-align: center; }
+        .pilot-feedback { margin: 0; padding: 12px 14px; border-radius: 7px; background: var(--bg-secondary); color: var(--text-muted); font-size: .86rem; line-height: 1.5; }
         .pilot-feedback.error { color: #9b3d2f; }
         @media (max-width: 780px) {
           .pilot-page { padding: 10px 20px 48px; }
-          .pilot-nav { padding: 15px 16px; border-radius: 16px; }
+          .pilot-nav { padding: 15px 16px; border-radius: 7px; }
           .pilot-layout { grid-template-columns: 1fr; gap: 34px; padding-top: 58px; }
-          .pilot-title { max-width: 12ch; }
+          .pilot-title { max-width: 12ch;
+        font-weight: 400;
+      }
         }
+        @media (max-width: 620px) { .pilot-nav { padding-left: 44px; } }
       `}</style>
 
       <nav className="pilot-nav" aria-label="Primær navigation">

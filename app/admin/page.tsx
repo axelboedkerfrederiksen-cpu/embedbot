@@ -113,7 +113,7 @@ const VIEW_COPY: Record<AdminView, { eyebrow: string; title: string; description
 };
 
 const statsCardClass =
-  "rounded-2xl border border-[rgba(17,17,17,0.08)] bg-[rgba(255,255,255,0.94)] p-4 shadow-[0_18px_40px_rgba(17,17,17,0.05)] backdrop-blur text-[#111111]";
+  "rounded-lg border border-[var(--border)] bg-white p-4 shadow-none  text-[#20211f]";
 
 function stringifyEditableValue(value: unknown): string {
   if (value === null || value === undefined) {
@@ -796,16 +796,16 @@ export default function AdminPage() {
 
   if (!isAuthenticated) {
     return (
-      <main id="main-content" className="min-h-screen bg-[radial-gradient(circle_at_12%_18%,rgba(246,243,237,0.92)_0%,rgba(246,243,237,0)_24%),radial-gradient(circle_at_88%_14%,rgba(246,243,237,0.9)_0%,rgba(246,243,237,0)_22%),linear-gradient(180deg,#ffffff_0%,#fcfaf6_55%,#f8f4ee_100%)] px-4 py-16 text-[#111111]">
-        <div className="mx-auto w-full max-w-md rounded-3xl border border-[rgba(17,17,17,0.08)] bg-[rgba(255,255,255,0.94)] p-8 shadow-[0_20px_50px_rgba(17,17,17,0.08)] backdrop-blur">
-          <h1 className="text-3xl font-semibold tracking-tight">EmbedBot Admin</h1>
-          <p className="mt-2 text-sm text-[#6b6258]">{signedIn ? `Logget ind som ${sessionEmail}. Bekræft totrinsbekræftelsen for at åbne admin.` : "Log ind med din admin-konto for at fortsætte."}</p>
+      <main id="main-content" className="min-h-screen bg-[var(--bg-page)] px-4 py-16 text-[#20211f]">
+        <div className="mx-auto w-full max-w-md rounded-lg border border-[var(--border)] bg-white p-8 shadow-none ">
+          <h1 className="text-3xl font-normal tracking-tight">EmbedBot Admin</h1>
+          <p className="mt-2 text-sm text-[#6a6865]">{signedIn ? `Logget ind som ${sessionEmail}. Bekræft totrinsbekræftelsen for at åbne admin.` : "Log ind med din admin-konto for at fortsætte."}</p>
 
           {signedIn ? <AdminMfa onVerified={async()=>{setAuthError("");const allowed=await fetchBusinesses();if(allowed){await fetchSupportMessages();setIsAuthenticated(true);}else{throw new Error("Admin-adgangen blev afvist. Se beskeden nedenfor.");}}}/> : null}
           {signedIn ? <button type="button" className="mt-4 underline" onClick={async()=>{const {error:signOutError}=await supabase.auth.signOut();if(signOutError){setAuthError("Kunne ikke logge ud. Prøv igen.");return;}setSignedIn(false);setSessionEmail("");setAuthError("");setPassword("");}}>Log ud og vælg en anden konto</button> : <form onSubmit={handleLogin} className="mt-6 space-y-4">
-            <button type="button" className="w-full rounded-xl border p-3" onClick={async()=>{const {error:oauthError}=await supabase.auth.signInWithOAuth({provider:"azure",options:{scopes:"email",redirectTo:window.location.origin+"/auth/callback?next=/admin"}});if(oauthError)setAuthError("Microsoft-login kunne ikke startes.");}}>Fortsæt med Microsoft</button>
+            <button type="button" className="w-full rounded-lg border p-3" onClick={async()=>{const {error:oauthError}=await supabase.auth.signInWithOAuth({provider:"azure",options:{scopes:"email",redirectTo:window.location.origin+"/auth/callback?next=/admin"}});if(oauthError)setAuthError("Microsoft-login kunne ikke startes.");}}>Fortsæt med Microsoft</button>
             <div>
-              <label className="mb-2 block text-xs font-medium uppercase tracking-[0.16em] text-[#8a7e70]">
+              <label className="mb-2 block text-xs font-medium uppercase tracking-[0.16em] text-[#797773]">
                 Email
               </label>
               <input
@@ -814,12 +814,12 @@ export default function AdminPage() {
                 onChange={(e) => setEmail(e.target.value)}
                 placeholder="admin@eksempel.dk"
                 autoComplete="email"
-                className="w-full rounded-xl border border-[rgba(17,17,17,0.10)] bg-white px-3 py-2.5 text-sm text-[#111111] placeholder:text-[#8a7e70] focus:border-[rgba(17,17,17,0.22)] focus:outline-none"
+                className="w-full rounded-lg border border-[var(--border)] bg-white px-3 py-2.5 text-sm text-[#20211f] placeholder:text-[#797773] focus:border-[rgba(17,17,17,0.22)] focus:outline-none"
               />
             </div>
 
             <div>
-              <label className="mb-2 block text-xs font-medium uppercase tracking-[0.16em] text-[#8a7e70]">
+              <label className="mb-2 block text-xs font-medium uppercase tracking-[0.16em] text-[#797773]">
                 Adgangskode
               </label>
               <input
@@ -828,13 +828,13 @@ export default function AdminPage() {
                 onChange={(e) => setPassword(e.target.value)}
                 placeholder="••••••••"
                 autoComplete="current-password"
-                className="w-full rounded-xl border border-[rgba(17,17,17,0.10)] bg-white px-3 py-2.5 text-sm text-[#111111] placeholder:text-[#8a7e70] focus:border-[rgba(17,17,17,0.22)] focus:outline-none"
+                className="w-full rounded-lg border border-[var(--border)] bg-white px-3 py-2.5 text-sm text-[#20211f] placeholder:text-[#797773] focus:border-[rgba(17,17,17,0.22)] focus:outline-none"
               />
             </div>
 
             <button
               type="submit"
-              className="w-full rounded-xl border border-[rgba(17,17,17,0.08)] bg-[#111111] px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-[#2a2a2a]"
+              className="w-full rounded-lg border border-[var(--border)] bg-[var(--accent)] px-4 py-2.5 text-sm font-medium text-white transition hover:bg-[var(--accent-hover)]"
             >
               Log ind
             </button>
@@ -847,8 +847,8 @@ export default function AdminPage() {
   }
 
   return (
-    <main id="main-content" className="min-h-screen bg-[radial-gradient(circle_at_12%_18%,rgba(246,243,237,0.92)_0%,rgba(246,243,237,0)_24%),radial-gradient(circle_at_88%_14%,rgba(246,243,237,0.9)_0%,rgba(246,243,237,0)_22%),linear-gradient(180deg,#ffffff_0%,#fcfaf6_55%,#f8f4ee_100%)] text-[#111111]">
-      <div className="pointer-events-none fixed inset-0 -z-10 bg-[radial-gradient(circle_at_20%_10%,rgba(246,243,237,0.55),transparent_35%),radial-gradient(circle_at_80%_20%,rgba(17,17,17,0.03),transparent_30%),radial-gradient(circle_at_50%_80%,rgba(246,243,237,0.35),transparent_35%)]" />
+    <main id="main-content" className="min-h-screen bg-[var(--bg-page)] text-[#20211f]">
+      <div className="pointer-events-none fixed inset-0 -z-10 bg-[var(--bg-page)]" />
 
       <div className="flex min-h-screen">
         <AnimatePresence>
@@ -868,22 +868,22 @@ export default function AdminPage() {
           initial={{ x: -40, opacity: 0 }}
           animate={{ x: 0, opacity: 1 }}
           transition={{ duration: 0.35 }}
-          className={`fixed inset-y-0 left-0 z-30 w-72 border-r border-white/10 bg-[#191918] p-5 text-white backdrop-blur lg:static lg:translate-x-0 ${sidebarOpen ? "translate-x-0" : "-translate-x-full lg:translate-x-0"} transition-transform duration-300`}
+          className={`fixed inset-y-0 left-0 z-30 w-72 border-r border-[var(--border)] bg-[var(--bg-page)] p-5 text-[var(--text-primary)]  lg:static lg:translate-x-0 ${sidebarOpen ? "translate-x-0" : "-translate-x-full lg:translate-x-0"} transition-transform duration-300`}
         >
           <div className="flex items-center justify-between gap-2">
             <div className="flex items-center gap-3">
-              <div className="grid h-10 w-10 place-items-center rounded-xl border border-[rgba(17,17,17,0.08)] bg-white text-[#111111] shadow-[0_10px_24px_rgba(17,17,17,0.06)]">
+              <div className="grid h-10 w-10 place-items-center rounded-lg border border-[var(--border)] bg-white text-[#20211f] shadow-none">
                 <Bot size={20} />
               </div>
               <div>
-                <p className="text-sm font-semibold">EmbedBot</p>
-                <p className="text-xs text-white/50">Admin Console</p>
+                <p className="text-sm font-medium">EmbedBot</p>
+                <p className="text-xs text-[var(--text-muted)]">Admin Console</p>
               </div>
             </div>
 
             <button
               onClick={() => setSidebarOpen(false)}
-              className="rounded-lg border border-white/15 p-1.5 text-white/70 lg:hidden"
+              className="rounded-lg border border-[var(--border)] p-1.5 text-[var(--text-muted)] lg:hidden"
               aria-label="Luk sidebar"
             >
               <X size={16} />
@@ -898,25 +898,25 @@ export default function AdminPage() {
                 <button
                   key={item.view}
                   onClick={() => selectView(item.view)}
-                  className={`flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-sm transition ${isCurrent ? "bg-white/15 font-semibold text-white shadow-[0_8px_18px_rgba(0,0,0,0.16)]" : "text-white/65 hover:bg-white/8 hover:text-white"}`}
+                  className={`flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-sm transition ${isCurrent ? "bg-[#eee9e0] font-medium text-[var(--text-primary)] shadow-none" : "text-[var(--text-muted)] hover:bg-[var(--bg-secondary)] hover:text-[var(--text-primary)]"}`}
                 >
                   <Icon size={17} />
                   {item.label}
-                  {item.view === "support" && unreadSupportMessages > 0 ? <span className="ml-auto grid h-5 min-w-5 place-items-center rounded-full bg-[#111111] px-1 text-[10px] font-bold text-white">{unreadSupportMessages}</span> : null}
+                  {item.view === "support" && unreadSupportMessages > 0 ? <span className="ml-auto grid h-5 min-w-5 place-items-center rounded-full bg-[var(--accent)] px-1 text-[10px] font-medium text-white">{unreadSupportMessages}</span> : null}
                 </button>
               );
             })}
           </nav>
 
-          <div className="mt-8 rounded-xl border border-white/10 bg-white/6 p-3">
-            <p className="text-xs uppercase tracking-[0.15em] text-white/45">System</p>
+          <div className="mt-8 rounded-lg border border-[var(--border)] bg-[var(--bg-secondary)] p-3">
+            <p className="text-xs uppercase tracking-[0.15em] text-[var(--text-muted)]">System</p>
             <div className="mt-2 flex items-center justify-between">
-              <span className="text-sm text-white/70">Embed API</span>
+              <span className="text-sm text-[var(--text-muted)]">Embed API</span>
               <span
                 className={`rounded-full px-2.5 py-0.5 text-xs font-medium ${
                   systemOnline
                     ? "bg-[#e8f6f0] text-[#31795d]"
-                    : "border border-white/10 bg-white/8 text-white/60"
+                    : "border border-[var(--border)] bg-[var(--bg-secondary)] text-[var(--text-muted)]"
                 }`}
               >
                 {systemOnline ? "Online" : "Offline"}
@@ -926,20 +926,20 @@ export default function AdminPage() {
         </motion.aside>
 
         <section className="w-full lg:pl-0">
-          <header className="sticky top-0 z-10 border-b border-[rgba(17,17,17,0.08)] bg-[rgba(255,255,255,0.86)] backdrop-blur">
+          <header className="sticky top-0 z-10 border-b border-[var(--border)] bg-white ">
             <div className="mx-auto flex w-full max-w-7xl items-center justify-between gap-3 px-4 py-3 sm:px-6">
               <div className="flex items-center gap-3">
                 <button
                   onClick={() => setSidebarOpen(true)}
-                  className="rounded-xl border border-[rgba(17,17,17,0.10)] p-2 text-[#6b6258] lg:hidden"
+                  className="rounded-lg border border-[var(--border)] p-2 text-[#6a6865] lg:hidden"
                   aria-label="Aabn sidebar"
                 >
                   <Menu size={18} />
                 </button>
 
                 <div>
-                  <p className="text-xs font-semibold uppercase tracking-[0.14em] text-[#8a7e70]">{VIEW_COPY[activeView].eyebrow}</p>
-                  <h1 className="text-base font-semibold sm:text-lg">{VIEW_COPY[activeView].title}</h1>
+                  <p className="text-xs font-medium uppercase tracking-[0.14em] text-[#797773]">{VIEW_COPY[activeView].eyebrow}</p>
+                  <h1 className="text-base font-medium sm:text-lg">{VIEW_COPY[activeView].title}</h1>
                 </div>
               </div>
 
@@ -949,7 +949,7 @@ export default function AdminPage() {
                   void fetchSupportMessages();
                 }}
                 disabled={loading}
-                className="inline-flex items-center gap-2 rounded-xl border border-[rgba(17,17,17,0.08)] bg-white px-3 py-2 text-sm font-medium text-[#111111] shadow-[0_10px_24px_rgba(17,17,17,0.05)] transition hover:bg-[rgba(246,243,237,0.9)] disabled:opacity-60"
+                className="inline-flex items-center gap-2 rounded-lg border border-[var(--border)] bg-white px-3 py-2 text-sm font-medium text-[#20211f] shadow-none transition hover:bg-[rgba(246,243,237,0.9)] disabled:opacity-60"
               >
                 <RefreshCcw size={15} className={loading ? "animate-spin" : ""} />
                 {loading ? "Henter" : "Opdater liste"}
@@ -960,11 +960,11 @@ export default function AdminPage() {
           <div className="mx-auto w-full max-w-7xl space-y-6 px-4 py-6 sm:px-6">
             <section className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
               <div>
-                <p className="text-xs font-bold uppercase tracking-[0.16em] text-[#8a7e70]">{VIEW_COPY[activeView].eyebrow}</p>
-                <h2 className="mt-1 text-3xl font-semibold tracking-[-0.04em] sm:text-4xl">{VIEW_COPY[activeView].title}</h2>
-                <p className="mt-2 text-sm text-[#6b6258] sm:text-base">{VIEW_COPY[activeView].description}</p>
+                <p className="text-xs font-medium uppercase tracking-[0.16em] text-[#797773]">{VIEW_COPY[activeView].eyebrow}</p>
+                <h2 className="mt-1 text-3xl font-normal tracking-[-0.04em] sm:text-4xl">{VIEW_COPY[activeView].title}</h2>
+                <p className="mt-2 text-sm text-[#6a6865] sm:text-base">{VIEW_COPY[activeView].description}</p>
               </div>
-              {lastUpdatedAt ? <p className="text-xs text-[#8a7e70]">Opdateret {formatRelativeDate(lastUpdatedAt.toISOString())}</p> : null}
+              {lastUpdatedAt ? <p className="text-xs text-[#797773]">Opdateret {formatRelativeDate(lastUpdatedAt.toISOString())}</p> : null}
             </section>
 
             {activeView === "overview" ? <motion.section
@@ -974,92 +974,92 @@ export default function AdminPage() {
               className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-6"
             >
               <article className={statsCardClass}>
-                <div className="flex items-center justify-between text-[#8a7e70]">
+                <div className="flex items-center justify-between text-[#797773]">
                   <p className="text-xs uppercase tracking-[0.15em]">Aktive chatbots</p>
                   <Bot size={16} />
                 </div>
-                <p className="mt-2 text-2xl font-semibold">{activeBusinesses}</p>
+                <p className="mt-2 text-2xl font-medium">{activeBusinesses}</p>
               </article>
 
               <article className={statsCardClass}>
-                <div className="flex items-center justify-between text-[#8a7e70]">
+                <div className="flex items-center justify-between text-[#797773]">
                   <p className="text-xs uppercase tracking-[0.15em]">Virksomheder</p>
                   <Building2 size={16} />
                 </div>
-                <p className="mt-2 text-2xl font-semibold">{totalBusinesses}</p>
+                <p className="mt-2 text-2xl font-medium">{totalBusinesses}</p>
               </article>
 
               <article className={statsCardClass}>
-                <div className="flex items-center justify-between text-[#8a7e70]">
+                <div className="flex items-center justify-between text-[#797773]">
                   <p className="text-xs uppercase tracking-[0.15em]">Beskeder besvaret</p>
                   <BarChart3 size={16} />
                 </div>
-                <p className="mt-2 text-2xl font-semibold">{totalMessages.toLocaleString("da-DK")}</p>
+                <p className="mt-2 text-2xl font-medium">{totalMessages.toLocaleString("da-DK")}</p>
               </article>
 
               <article className={statsCardClass}>
-                <div className="flex items-center justify-between text-[#8a7e70]">
+                <div className="flex items-center justify-between text-[#797773]">
                   <p className="text-xs uppercase tracking-[0.15em]">Support</p>
                   <MessageSquare size={16} />
                 </div>
-                <p className="mt-2 text-2xl font-semibold">{unreadSupportMessages}</p>
+                <p className="mt-2 text-2xl font-medium">{unreadSupportMessages}</p>
               </article>
 
               <article className={statsCardClass}>
-                <div className="flex items-center justify-between text-[#8a7e70]">
+                <div className="flex items-center justify-between text-[#797773]">
                   <p className="text-xs uppercase tracking-[0.15em]">Gns. svartid</p>
                   <Gauge size={16} />
                 </div>
-                <p className="mt-2 text-2xl font-semibold">{avgResponse}</p>
+                <p className="mt-2 text-2xl font-medium">{avgResponse}</p>
               </article>
 
               <article className={statsCardClass}>
-                <div className="flex items-center justify-between text-[#8a7e70]">
+                <div className="flex items-center justify-between text-[#797773]">
                   <p className="text-xs uppercase tracking-[0.15em]">System status</p>
                   <Server size={16} />
                 </div>
-                <p className={`mt-2 text-2xl font-semibold ${systemOnline ? "text-[#111111]" : "text-[#6b6258]"}`}>
+                <p className={`mt-2 text-2xl font-medium ${systemOnline ? "text-[#20211f]" : "text-[#6a6865]"}`}>
                   {systemOnline ? "Online" : "Offline"}
                 </p>
               </article>
             </motion.section> : null}
 
             {activeView === "overview" ? <section className="grid gap-4 lg:grid-cols-[1.25fr_.75fr]">
-              <article className="rounded-2xl border border-[rgba(17,17,17,0.08)] bg-[#111111] p-5 text-white shadow-[0_18px_40px_rgba(17,17,17,0.12)] sm:p-6">
-                <p className="text-xs font-bold uppercase tracking-[0.16em] text-white/55">Kundeportefølje</p>
+              <article className="rounded-lg border border-[var(--border)] bg-[var(--accent)] p-5 text-white shadow-none sm:p-6">
+                <p className="text-xs font-medium uppercase tracking-[0.16em] text-white/55">Kundeportefølje</p>
                 <div className="mt-5 flex items-end justify-between gap-4">
-                  <div><p className="text-4xl font-semibold tracking-[-0.05em]">{totalBusinesses ? Math.round((activeBusinesses / totalBusinesses) * 100) : 0}%</p><p className="mt-1 text-sm text-white/65">af kunderne har en aktiv chatbot</p></div>
-                  <button onClick={() => selectView("businesses")} className="rounded-xl bg-white px-3 py-2 text-sm font-semibold text-[#111111] transition hover:bg-[#f6f3ed]">Åbn kunder</button>
+                  <div><p className="text-4xl font-medium tracking-[-0.05em]">{totalBusinesses ? Math.round((activeBusinesses / totalBusinesses) * 100) : 0}%</p><p className="mt-1 text-sm text-white/65">af kunderne har en aktiv chatbot</p></div>
+                  <button onClick={() => selectView("businesses")} className="rounded-lg bg-white px-3 py-2 text-sm font-medium text-[#20211f] transition hover:bg-[#f4f1eb]">Åbn kunder</button>
                 </div>
               </article>
-              <article className="rounded-2xl border border-[rgba(17,17,17,0.08)] bg-[rgba(232,246,240,0.86)] p-5 shadow-[0_18px_40px_rgba(17,17,17,0.04)] sm:p-6">
-                <div className="flex items-center gap-2 text-[#31795d]"><CheckCircle2 size={18} /><p className="text-xs font-bold uppercase tracking-[0.16em]">Handlinger</p></div>
-                <p className="mt-4 text-lg font-semibold">{unreadSupportMessages ? `${unreadSupportMessages} beskeder venter` : "Alt ser godt ud"}</p>
+              <article className="rounded-lg border border-[var(--border)] bg-[rgba(232,246,240,0.86)] p-5 shadow-none sm:p-6">
+                <div className="flex items-center gap-2 text-[#31795d]"><CheckCircle2 size={18} /><p className="text-xs font-medium uppercase tracking-[0.16em]">Handlinger</p></div>
+                <p className="mt-4 text-lg font-medium">{unreadSupportMessages ? `${unreadSupportMessages} beskeder venter` : "Alt ser godt ud"}</p>
                 <p className="mt-1 text-sm text-[#4d7868]">{unreadSupportMessages ? "Gennemgå dem i support-indbakken." : "Der er ingen åbne henvendelser lige nu."}</p>
               </article>
             </section> : null}
 
-            {(activeView === "overview" || activeView === "support") ? <section className="rounded-2xl border border-[rgba(17,17,17,0.08)] bg-[rgba(255,255,255,0.94)] p-4 shadow-[0_18px_40px_rgba(17,17,17,0.05)] backdrop-blur sm:p-5">
+            {(activeView === "overview" || activeView === "support") ? <section className="rounded-lg border border-[var(--border)] bg-white p-4 shadow-none  sm:p-5">
               <div className="mb-4 flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
                 <div>
-                  <p className="text-xs uppercase tracking-[0.16em] text-[#8a7e70]">Indbakke</p>
-                  <h2 className="text-lg font-semibold">Support og klager</h2>
+                  <p className="text-xs uppercase tracking-[0.16em] text-[#797773]">Indbakke</p>
+                  <h2 className="text-lg font-medium">Support og klager</h2>
                 </div>
-                <span className="w-fit rounded-full border border-[rgba(17,17,17,0.08)] bg-white px-3 py-1 text-xs font-semibold text-[#6b6258]">
+                <span className="w-fit rounded-full border border-[var(--border)] bg-white px-3 py-1 text-xs font-medium text-[#6a6865]">
                   {supportMessages.length} beskeder
                 </span>
               </div>
 
               {supportError ? (
-                <p className="mb-4 rounded-xl border border-[rgba(17,17,17,0.08)] bg-[rgba(246,243,237,0.72)] px-3 py-2 text-sm text-[#9b3d2f]">
+                <p className="mb-4 rounded-lg border border-[var(--border)] bg-[rgba(246,243,237,0.72)] px-3 py-2 text-sm text-[#9b3d2f]">
                   {supportError}
                 </p>
               ) : null}
 
               {supportMessages.length === 0 && !supportError ? (
-                <div className="rounded-2xl border border-dashed border-[rgba(17,17,17,0.10)] bg-[rgba(255,255,255,0.76)] px-6 py-10 text-center">
-                  <p className="text-base font-medium text-[#111111]">Ingen supportbeskeder endnu</p>
-                  <p className="mt-1 text-sm text-[#8a7e70]">Nye beskeder fra /support lander her.</p>
+                <div className="rounded-lg border border-dashed border-[var(--border)] bg-white px-6 py-10 text-center">
+                  <p className="text-base font-medium text-[#20211f]">Ingen supportbeskeder endnu</p>
+                  <p className="mt-1 text-sm text-[#797773]">Nye beskeder fra /support lander her.</p>
                 </div>
               ) : null}
 
@@ -1071,25 +1071,25 @@ export default function AdminPage() {
                     return (
                       <article
                         key={supportMessage.id}
-                        className="rounded-xl border border-[rgba(17,17,17,0.08)] bg-[rgba(255,255,255,0.9)] p-4"
+                        className="rounded-lg border border-[var(--border)] bg-white p-4"
                       >
                         <div className="flex flex-col gap-3 md:flex-row md:items-start md:justify-between">
                           <div className="min-w-0">
                             <div className="flex flex-wrap items-center gap-2">
                               <span
-                                className={`rounded-full px-2.5 py-0.5 text-xs font-semibold ${
+                                className={`rounded-full px-2.5 py-0.5 text-xs font-medium ${
                                   isComplaint
-                                    ? "bg-[#111111] text-white"
-                                    : "border border-[rgba(17,17,17,0.08)] bg-white text-[#6b6258]"
+                                    ? "bg-[var(--accent)] text-white"
+                                    : "border border-[var(--border)] bg-white text-[#6a6865]"
                                 }`}
                               >
                                 {isComplaint ? "Klage" : "Besked"}
                               </span>
-                              <h3 className="text-base font-semibold">{supportMessage.name || "Uden navn"}</h3>
+                              <h3 className="text-base font-medium">{supportMessage.name || "Uden navn"}</h3>
                             </div>
 
-                            <div className="mt-2 flex flex-wrap gap-x-4 gap-y-1 text-sm text-[#8a7e70]">
-                              <a className="hover:text-[#111111]" href={`mailto:${supportMessage.email || ""}`}>
+                            <div className="mt-2 flex flex-wrap gap-x-4 gap-y-1 text-sm text-[#797773]">
+                              <a className="hover:text-[#20211f]" href={`mailto:${supportMessage.email || ""}`}>
                                 {supportMessage.email || "-"}
                               </a>
                               <span>{supportMessage.business_name || "Ingen virksomhed angivet"}</span>
@@ -1101,12 +1101,12 @@ export default function AdminPage() {
                             </div>
                           </div>
                           <div className="flex shrink-0 items-center gap-2">
-                            <span className={`rounded-full px-2.5 py-1 text-xs font-semibold ${supportMessage.status === "archived" ? "bg-[#e8f6f0] text-[#31795d]" : "border border-[rgba(17,17,17,0.08)] bg-white text-[#6b6258]"}`}>{supportMessage.status === "archived" ? "Løst" : supportMessage.status === "read" ? "I gang" : "Ny"}</span>
-                            {supportMessage.status !== "archived" ? <button onClick={() => void updateSupportStatus(supportMessage, "archived")} className="rounded-lg border border-[rgba(17,17,17,0.10)] bg-white px-2.5 py-1 text-xs font-semibold text-[#111111] hover:bg-[#f6f3ed]">Markér løst</button> : null}
+                            <span className={`rounded-full px-2.5 py-1 text-xs font-medium ${supportMessage.status === "archived" ? "bg-[#e8f6f0] text-[#31795d]" : "border border-[var(--border)] bg-white text-[#6a6865]"}`}>{supportMessage.status === "archived" ? "Løst" : supportMessage.status === "read" ? "I gang" : "Ny"}</span>
+                            {supportMessage.status !== "archived" ? <button onClick={() => void updateSupportStatus(supportMessage, "archived")} className="rounded-lg border border-[var(--border)] bg-white px-2.5 py-1 text-xs font-medium text-[#20211f] hover:bg-[#f4f1eb]">Markér løst</button> : null}
                           </div>
                         </div>
 
-                        <p className="mt-3 whitespace-pre-wrap break-words rounded-lg border border-[rgba(17,17,17,0.08)] bg-[rgba(246,243,237,0.62)] p-3 text-sm leading-6 text-[#111111]">
+                        <p className="mt-3 whitespace-pre-wrap break-words rounded-lg border border-[var(--border)] bg-[rgba(246,243,237,0.62)] p-3 text-sm leading-6 text-[#20211f]">
                           {supportMessage.message || "-"}
                         </p>
                       </article>
@@ -1116,56 +1116,56 @@ export default function AdminPage() {
               ) : null}
             </section> : null}
 
-            {activeView === "billing" ? <section className="rounded-2xl border border-[rgba(17,17,17,0.08)] bg-[rgba(255,255,255,0.94)] p-4 shadow-[0_18px_40px_rgba(17,17,17,0.05)] backdrop-blur sm:p-5">
-              <div className="mb-5 flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between"><div><p className="text-xs font-bold uppercase tracking-[0.16em] text-[#8a7e70]">Supabase · businesses</p><h3 className="mt-1 text-xl font-semibold">Kundeplaner og AI-forbrug</h3></div><span className="w-fit rounded-full bg-[#f6f3ed] px-3 py-1 text-xs font-semibold text-[#6b6258]">{businesses.length} kunder</span></div>
+            {activeView === "billing" ? <section className="rounded-lg border border-[var(--border)] bg-white p-4 shadow-none  sm:p-5">
+              <div className="mb-5 flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between"><div><p className="text-xs font-medium uppercase tracking-[0.16em] text-[#797773]">Supabase · businesses</p><h3 className="mt-1 text-xl font-medium">Kundeplaner og AI-forbrug</h3></div><span className="w-fit rounded-full bg-[#f4f1eb] px-3 py-1 text-xs font-medium text-[#6a6865]">{businesses.length} kunder</span></div>
               <div className="grid gap-3">
                 {businesses.map((business) => {
                   const plan = typeof business.plan === "string" ? business.plan : "starter";
                   const used = getFirstNumericField(business, ["ai_answers_used"]);
                   const limit = getFirstNumericField(business, ["ai_answer_limit_override"]) || ({ starter: 1000, growth: 5000, scale: 15000, enterprise: 30000 }[plan] || 1000);
                   const usage = Math.min(100, Math.round((used / Math.max(limit, 1)) * 100));
-                  return <article key={business.id} className="rounded-xl border border-[rgba(17,17,17,0.08)] bg-white p-4"><div className="grid gap-4 lg:grid-cols-[minmax(190px,1fr)_190px_minmax(180px,1fr)_auto] lg:items-center"><div><p className="font-semibold">{business.name || "Uden navn"}</p><p className="mt-1 text-xs text-[#8a7e70]">{business.support_email || business.website_url || "Ingen kontaktoplysning"}</p></div><label className="grid gap-1 text-xs font-semibold text-[#6b6258]"><span>Plan</span><select value={plan} onChange={(event) => void updateBusiness(business, { plan: event.target.value }, "Kundeplan opdateret")} disabled={savingId === business.id} className="rounded-lg border border-[rgba(17,17,17,0.1)] bg-white px-2.5 py-2 text-sm font-medium text-[#111111] outline-none"><option value="starter">Starter</option><option value="growth">Growth</option><option value="scale">Scale</option><option value="enterprise">Enterprise</option></select></label><div><div className="flex justify-between gap-3 text-xs text-[#6b6258]"><span>AI-svar</span><span>{used.toLocaleString("da-DK")} / {limit.toLocaleString("da-DK")}</span></div><div className="mt-2 h-2 overflow-hidden rounded-full bg-[#f0ede7]"><div className="h-full rounded-full bg-[#111111]" style={{ width: `${usage}%` }} /></div><div className="mt-2 flex gap-2"><button onClick={() => void updateBusiness(business, { ai_answers_used: 0 }, "AI-forbrug nulstillet")} disabled={savingId === business.id} className="text-xs font-semibold text-[#6b6258] underline underline-offset-4 hover:text-[#111111]">Nulstil forbrug</button>{plan === "enterprise" ? <button onClick={() => { const value = window.prompt("Ny månedlig AI-grænse (mindst 30.000)", String(limit)); if (value) void updateBusiness(business, { ai_answer_limit_override: value }, "Enterprise-grænse opdateret"); }} className="text-xs font-semibold text-[#6b6258] underline underline-offset-4 hover:text-[#111111]">Tilpas grænse</button> : null}</div></div><span className={`w-fit rounded-full px-3 py-1 text-xs font-semibold ${business.subscription_status === "active" || business.subscription_status === "trialing" ? "bg-[#e8f6f0] text-[#31795d]" : "bg-[#f6f3ed] text-[#6b6258]"}`}>{business.subscription_status || "Ingen status"}</span></div></article>;
+                  return <article key={business.id} className="rounded-lg border border-[var(--border)] bg-white p-4"><div className="grid gap-4 lg:grid-cols-[minmax(190px,1fr)_190px_minmax(180px,1fr)_auto] lg:items-center"><div><p className="font-medium">{business.name || "Uden navn"}</p><p className="mt-1 text-xs text-[#797773]">{business.support_email || business.website_url || "Ingen kontaktoplysning"}</p></div><label className="grid gap-1 text-xs font-medium text-[#6a6865]"><span>Plan</span><select value={plan} onChange={(event) => void updateBusiness(business, { plan: event.target.value }, "Kundeplan opdateret")} disabled={savingId === business.id} className="rounded-lg border border-[var(--border)] bg-white px-2.5 py-2 text-sm font-medium text-[#20211f] outline-none"><option value="starter">Starter</option><option value="growth">Growth</option><option value="scale">Scale</option><option value="enterprise">Enterprise</option></select></label><div><div className="flex justify-between gap-3 text-xs text-[#6a6865]"><span>AI-svar</span><span>{used.toLocaleString("da-DK")} / {limit.toLocaleString("da-DK")}</span></div><div className="mt-2 h-2 overflow-hidden rounded-full bg-[#f0ede7]"><div className="h-full rounded-full bg-[var(--accent)]" style={{ width: `${usage}%` }} /></div><div className="mt-2 flex gap-2"><button onClick={() => void updateBusiness(business, { ai_answers_used: 0 }, "AI-forbrug nulstillet")} disabled={savingId === business.id} className="text-xs font-medium text-[#6a6865] underline underline-offset-4 hover:text-[#20211f]">Nulstil forbrug</button>{plan === "enterprise" ? <button onClick={() => { const value = window.prompt("Ny månedlig AI-grænse (mindst 30.000)", String(limit)); if (value) void updateBusiness(business, { ai_answer_limit_override: value }, "Enterprise-grænse opdateret"); }} className="text-xs font-medium text-[#6a6865] underline underline-offset-4 hover:text-[#20211f]">Tilpas grænse</button> : null}</div></div><span className={`w-fit rounded-full px-3 py-1 text-xs font-medium ${business.subscription_status === "active" || business.subscription_status === "trialing" ? "bg-[#e8f6f0] text-[#31795d]" : "bg-[#f4f1eb] text-[#6a6865]"}`}>{business.subscription_status || "Ingen status"}</span></div></article>;
                 })}
               </div>
             </section> : null}
 
-            {activeView === "system" ? <section className="grid gap-4 md:grid-cols-2"><article className={statsCardClass}><div className="flex items-center gap-2"><Server size={17}/><h3 className="font-semibold">Datakilde</h3></div><p className="mt-3 text-sm text-[#6b6258]">Kundedata hentes fra Supabase med service-role på serveren. Skrivehandlinger kræver admin-adgang og CSRF-header.</p><div className="mt-4 flex items-center gap-2 text-sm font-semibold"><span className={`h-2 w-2 rounded-full ${systemOnline ? "bg-[#31795d]" : "bg-[#b86f3b]"}`} />{systemOnline ? "Forbundet" : "Kontrollér forbindelsen"}</div></article><article className={statsCardClass}><div className="flex items-center gap-2"><Settings2 size={17}/><h3 className="font-semibold">Seneste synkronisering</h3></div><p className="mt-3 text-sm text-[#6b6258]">{lastUpdatedAt ? lastUpdatedAt.toLocaleString("da-DK") : "Ikke hentet endnu"}</p><button onClick={() => { void fetchBusinesses(); void fetchSupportMessages(); }} className="mt-4 rounded-xl bg-[#111111] px-3 py-2 text-sm font-semibold text-white">Opdatér data</button></article></section> : null}
+            {activeView === "system" ? <section className="grid gap-4 md:grid-cols-2"><article className={statsCardClass}><div className="flex items-center gap-2"><Server size={17}/><h3 className="font-medium">Datakilde</h3></div><p className="mt-3 text-sm text-[#6a6865]">Kundedata hentes fra Supabase med service-role på serveren. Skrivehandlinger kræver admin-adgang og CSRF-header.</p><div className="mt-4 flex items-center gap-2 text-sm font-medium"><span className={`h-2 w-2 rounded-full ${systemOnline ? "bg-[#31795d]" : "bg-[#b86f3b]"}`} />{systemOnline ? "Forbundet" : "Kontrollér forbindelsen"}</div></article><article className={statsCardClass}><div className="flex items-center gap-2"><Settings2 size={17}/><h3 className="font-medium">Seneste synkronisering</h3></div><p className="mt-3 text-sm text-[#6a6865]">{lastUpdatedAt ? lastUpdatedAt.toLocaleString("da-DK") : "Ikke hentet endnu"}</p><button onClick={() => { void fetchBusinesses(); void fetchSupportMessages(); }} className="mt-4 rounded-lg bg-[var(--accent)] px-3 py-2 text-sm font-medium text-white">Opdatér data</button></article></section> : null}
 
             {activeView === "system" ? <section className={statsCardClass}>
-              <h3 className="font-semibold">Sikkerhed</h3>
-              <p className="mt-3 text-sm text-[#6b6258]">Sletning af en aktiv chatbot kræver en frisk kode fra din authenticator. Koden kontrolleres, før chatbotten slettes eller et abonnement stoppes.</p>
+              <h3 className="font-medium">Sikkerhed</h3>
+              <p className="mt-3 text-sm text-[#6a6865]">Sletning af en aktiv chatbot kræver en frisk kode fra din authenticator. Koden kontrolleres, før chatbotten slettes eller et abonnement stoppes.</p>
               <AdminMfa onVerified={async()=>{const allowed=await fetchBusinesses();if(!allowed)setIsAuthenticated(false);}} />
             </section> : null}
 
-            {activeView === "businesses" ? <section className="rounded-2xl border border-[rgba(17,17,17,0.08)] bg-[rgba(255,255,255,0.94)] p-4 shadow-[0_18px_40px_rgba(17,17,17,0.05)] backdrop-blur sm:p-5">
+            {activeView === "businesses" ? <section className="rounded-lg border border-[var(--border)] bg-white p-4 shadow-none  sm:p-5">
               <div className="mb-4 flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
-                <h2 className="text-lg font-semibold">Virksomheder</h2>
+                <h2 className="text-lg font-medium">Virksomheder</h2>
 
                 <div className="flex flex-col gap-2 sm:flex-row">
                   <label className="relative">
-                    <Search className="pointer-events-none absolute left-3 top-2.5 text-[#8a7e70]" size={16} />
+                    <Search className="pointer-events-none absolute left-3 top-2.5 text-[#797773]" size={16} />
                     <input
                       value={searchTerm}
                       onChange={(e) => setSearchTerm(e.target.value)}
                       placeholder="Soeg navn, email, website"
-                      className="w-full rounded-xl border border-[rgba(17,17,17,0.10)] bg-white py-2 pl-9 pr-3 text-sm text-[#111111] placeholder:text-[#8a7e70] focus:border-[rgba(17,17,17,0.22)] focus:outline-none"
+                      className="w-full rounded-lg border border-[var(--border)] bg-white py-2 pl-9 pr-3 text-sm text-[#20211f] placeholder:text-[#797773] focus:border-[rgba(17,17,17,0.22)] focus:outline-none"
                     />
                   </label>
 
-                  <div className="flex items-center gap-2 rounded-xl border border-[rgba(17,17,17,0.10)] bg-white px-3 py-2 text-sm text-[#6b6258]">
+                  <div className="flex items-center gap-2 rounded-lg border border-[var(--border)] bg-white px-3 py-2 text-sm text-[#6a6865]">
                     <Filter size={15} />
                     <select
                       value={statusFilter}
                       onChange={(e) => setStatusFilter(e.target.value as "all" | "active" | "inactive")}
                       className="bg-transparent text-sm outline-none"
                     >
-                      <option value="all" className="bg-white text-[#111111]">
+                      <option value="all" className="bg-white text-[#20211f]">
                         Alle
                       </option>
-                      <option value="active" className="bg-white text-[#111111]">
+                      <option value="active" className="bg-white text-[#20211f]">
                         Aktiv
                       </option>
-                      <option value="inactive" className="bg-white text-[#111111]">
+                      <option value="inactive" className="bg-white text-[#20211f]">
                         Inaktiv
                       </option>
                     </select>
@@ -1174,7 +1174,7 @@ export default function AdminPage() {
                   <select
                     value={sortBy}
                     onChange={(e) => setSortBy(e.target.value as "date" | "name" | "status")}
-                    className="rounded-xl border border-[rgba(17,17,17,0.10)] bg-white px-3 py-2 text-sm text-[#6b6258] outline-none focus:border-[rgba(17,17,17,0.22)]"
+                    className="rounded-lg border border-[var(--border)] bg-white px-3 py-2 text-sm text-[#6a6865] outline-none focus:border-[rgba(17,17,17,0.22)]"
                   >
                     <option value="date">Sorter: Dato</option>
                     <option value="name">Sorter: Navn</option>
@@ -1184,17 +1184,17 @@ export default function AdminPage() {
               </div>
 
               {error ? (
-                <p className="mb-4 rounded-xl border border-[rgba(17,17,17,0.08)] bg-[rgba(246,243,237,0.72)] px-3 py-2 text-sm text-[#9b3d2f]">
+                <p className="mb-4 rounded-lg border border-[var(--border)] bg-[rgba(246,243,237,0.72)] px-3 py-2 text-sm text-[#9b3d2f]">
                   {error}
                 </p>
               ) : null}
 
-              {lastUpdatedAt ? <p className="mb-3 text-xs text-[#8a7e70]">Sidst opdateret: {lastUpdatedAt.toLocaleString("da-DK")}</p> : null}
+              {lastUpdatedAt ? <p className="mb-3 text-xs text-[#797773]">Sidst opdateret: {lastUpdatedAt.toLocaleString("da-DK")}</p> : null}
 
               {loading ? (
                 <div className="grid gap-3">
                   {Array.from({ length: 4 }).map((_, index) => (
-                    <div key={`skeleton-${index}`} className="animate-pulse rounded-xl border border-[rgba(17,17,17,0.08)] bg-[rgba(255,255,255,0.94)] p-4">
+                    <div key={`skeleton-${index}`} className="animate-pulse rounded-lg border border-[var(--border)] bg-white p-4">
                       <div className="h-4 w-40 rounded bg-[rgba(17,17,17,0.10)]" />
                       <div className="mt-3 h-3 w-56 rounded bg-[rgba(17,17,17,0.08)]" />
                       <div className="mt-2 h-3 w-44 rounded bg-[rgba(17,17,17,0.08)]" />
@@ -1204,9 +1204,9 @@ export default function AdminPage() {
               ) : null}
 
               {!loading && filteredBusinesses.length === 0 ? (
-                <div className="rounded-2xl border border-dashed border-[rgba(17,17,17,0.10)] bg-[rgba(255,255,255,0.76)] px-6 py-14 text-center">
-                  <p className="text-base font-medium text-[#111111]">Ingen virksomheder matcher dit filter</p>
-                  <p className="mt-1 text-sm text-[#8a7e70]">Proev en anden soegning eller opdater listen.</p>
+                <div className="rounded-lg border border-dashed border-[var(--border)] bg-white px-6 py-14 text-center">
+                  <p className="text-base font-medium text-[#20211f]">Ingen virksomheder matcher dit filter</p>
+                  <p className="mt-1 text-sm text-[#797773]">Proev en anden soegning eller opdater listen.</p>
                 </div>
               ) : null}
 
@@ -1218,9 +1218,9 @@ export default function AdminPage() {
                     const isEditing = editingId === business.id;
                     const draft = editDrafts[business.id] || {};
 
-                    const primaryColor = (business.primary_color || "").trim() || "#111111";
+                    const primaryColor = (business.primary_color || "").trim() || "#20211f";
                     const secondaryColor = (business.secondary_color || "").trim() || "#f5f5f5";
-                    const fabColor = (business.fab_color || "").trim() || (business.chat_icon_color || "").trim() || "#111111";
+                    const fabColor = (business.fab_color || "").trim() || (business.chat_icon_color || "").trim() || "#20211f";
                     const fontChoice = (business.font_choice || "").trim() || "Poppins";
 
                     const installScript = `<script\n  src=\"https://www.embedbot.dk/widget.js?id=${business.id}\"\n  data-name=\"${business.name || "Support"}\"\n  data-primary-color=\"${primaryColor}\"\n  data-secondary-color=\"${secondaryColor}\"\n  data-fab-color=\"${fabColor}\"\n  data-font=\"${fontChoice}\">\n<\\/script>`;
@@ -1245,24 +1245,24 @@ export default function AdminPage() {
                         initial={{ opacity: 0, y: 10 }}
                         animate={{ opacity: 1, y: 0 }}
                         transition={{ duration: 0.2 }}
-                        className="rounded-xl border border-[rgba(17,17,17,0.08)] bg-[rgba(255,255,255,0.94)] p-4 shadow-[0_14px_30px_rgba(17,17,17,0.04)]"
+                        className="rounded-lg border border-[var(--border)] bg-white p-4 shadow-none"
                       >
                         <div className="grid gap-3 lg:grid-cols-[minmax(0,1fr)_auto] lg:items-start">
                           <div className="min-w-0 flex-1">
                             <div className="flex flex-wrap items-center gap-2">
-                              <h3 className="truncate text-base font-semibold">{business.name || "Uden navn"}</h3>
+                              <h3 className="truncate text-base font-medium">{business.name || "Uden navn"}</h3>
                               <span
-                                className={`rounded-full px-2.5 py-0.5 text-xs font-semibold ${
+                                className={`rounded-full px-2.5 py-0.5 text-xs font-medium ${
                                   isActive
-                                    ? "bg-[#111111] text-white"
-                                    : "border border-[rgba(17,17,17,0.08)] bg-white text-[#6b6258]"
+                                    ? "bg-[var(--accent)] text-white"
+                                    : "border border-[var(--border)] bg-white text-[#6a6865]"
                                 }`}
                               >
                                 {isActive ? "Aktiv" : "Inaktiv"}
                               </span>
                             </div>
 
-                            <div className="mt-2 flex min-w-0 flex-wrap gap-x-4 gap-y-1 text-sm text-[#8a7e70]">
+                            <div className="mt-2 flex min-w-0 flex-wrap gap-x-4 gap-y-1 text-sm text-[#797773]">
                               <p className="min-w-0">
                                 Website:{" "}
                                 <span className="inline-block max-w-full truncate align-bottom lg:max-w-[42rem]">
@@ -1289,7 +1289,7 @@ export default function AdminPage() {
                           <div className="flex shrink-0 flex-wrap items-center gap-2 lg:justify-end">
                             <button
                               onClick={() => toggleExpand(business.id)}
-                              className="rounded-lg border border-[rgba(17,17,17,0.10)] bg-white px-3 py-1.5 text-sm text-[#111111] transition hover:bg-[rgba(246,243,237,0.9)]"
+                              className="rounded-lg border border-[var(--border)] bg-white px-3 py-1.5 text-sm text-[#20211f] transition hover:bg-[rgba(246,243,237,0.9)]"
                             >
                               {isOpen ? "Skjul" : "Se info"}
                             </button>
@@ -1312,7 +1312,7 @@ export default function AdminPage() {
                                   setPendingDeleteBusiness(business);
                                 }
                               }}
-                              className="rounded-lg border border-[rgba(17,17,17,0.10)] bg-white px-3 py-1.5 text-sm text-[#111111] outline-none"
+                              className="rounded-lg border border-[var(--border)] bg-white px-3 py-1.5 text-sm text-[#20211f] outline-none"
                               disabled={
                                 deletingId === business.id ||
                                 savingId === business.id
@@ -1327,7 +1327,7 @@ export default function AdminPage() {
 
                             <button
                               onClick={() => void openCustomerCenter(business)}
-                              className="inline-flex items-center gap-1 rounded-lg border border-[rgba(17,17,17,0.10)] bg-[#111111] px-3 py-1.5 text-sm font-semibold text-white transition hover:bg-[#2a2a2a]"
+                              className="inline-flex items-center gap-1 rounded-lg border border-[var(--border)] bg-[var(--accent)] px-3 py-1.5 text-sm font-medium text-white transition hover:bg-[var(--accent-hover)]"
                             >
                               <Eye size={14} /> Kundecenter
                             </button>
@@ -1341,20 +1341,20 @@ export default function AdminPage() {
                               animate={{ opacity: 1, height: "auto" }}
                               exit={{ opacity: 0, height: 0 }}
                               transition={{ duration: 0.2 }}
-                              className="mt-4 overflow-hidden border-t border-[rgba(17,17,17,0.08)] pt-4"
+                              className="mt-4 overflow-hidden border-t border-[var(--border)] pt-4"
                             >
                               {isActive ? (
-                                <div className="rounded-xl border border-[rgba(17,17,17,0.08)] bg-[rgba(255,255,255,0.94)] p-3">
+                                <div className="rounded-lg border border-[var(--border)] bg-white p-3">
                                   <div className="mb-2 flex items-center justify-between gap-2">
-                                    <p className="text-xs uppercase tracking-[0.16em] text-[#8a7e70]">Install script</p>
+                                    <p className="text-xs uppercase tracking-[0.16em] text-[#797773]">Install script</p>
                                     <button
                                       onClick={() => copyScript(installScript)}
-                                      className="inline-flex items-center gap-1 rounded-md border border-[rgba(17,17,17,0.10)] bg-white px-2 py-1 text-xs text-[#6b6258] transition hover:bg-[rgba(246,243,237,0.9)] hover:text-[#111111]"
+                                      className="inline-flex items-center gap-1 rounded-md border border-[var(--border)] bg-white px-2 py-1 text-xs text-[#6a6865] transition hover:bg-[rgba(246,243,237,0.9)] hover:text-[#20211f]"
                                     >
                                       <Copy size={12} /> Kopier
                                     </button>
                                   </div>
-                                  <pre className="overflow-x-auto whitespace-pre-wrap break-all rounded-lg border border-[rgba(17,17,17,0.08)] bg-[rgba(246,243,237,0.72)] p-3 text-xs text-[#111111]">
+                                  <pre className="overflow-x-auto whitespace-pre-wrap break-all rounded-lg border border-[var(--border)] bg-[rgba(246,243,237,0.72)] p-3 text-xs text-[#20211f]">
                                     {installScript}
                                   </pre>
                                 </div>
@@ -1366,13 +1366,13 @@ export default function AdminPage() {
                                     <button
                                       onClick={() => saveBusinessEdit(business)}
                                       disabled={savingId === business.id}
-                                      className="inline-flex items-center gap-1 rounded-lg border border-[rgba(17,17,17,0.08)] bg-[#111111] px-3 py-1.5 text-sm font-semibold text-white transition hover:bg-[#2a2a2a] disabled:opacity-60"
+                                      className="inline-flex items-center gap-1 rounded-lg border border-[var(--border)] bg-[var(--accent)] px-3 py-1.5 text-sm font-medium text-white transition hover:bg-[var(--accent-hover)] disabled:opacity-60"
                                     >
                                       <Pencil size={14} /> {savingId === business.id ? "Gemmer" : "Gem"}
                                     </button>
                                     <button
                                       onClick={cancelEditing}
-                                      className="rounded-lg border border-[rgba(17,17,17,0.10)] bg-white px-3 py-1.5 text-sm text-[#111111]"
+                                      className="rounded-lg border border-[var(--border)] bg-white px-3 py-1.5 text-sm text-[#20211f]"
                                     >
                                       Annuller
                                     </button>
@@ -1381,7 +1381,7 @@ export default function AdminPage() {
 
                                 <button
                                   onClick={() => {setDeleteMfaCode("");setDeleteError("");setPendingDeleteBusiness(business);}}
-                                  className="inline-flex items-center gap-1 rounded-lg border border-[rgba(17,17,17,0.10)] bg-white px-3 py-1.5 text-sm text-[#111111] transition hover:bg-[rgba(246,243,237,0.9)]"
+                                  className="inline-flex items-center gap-1 rounded-lg border border-[var(--border)] bg-white px-3 py-1.5 text-sm text-[#20211f] transition hover:bg-[rgba(246,243,237,0.9)]"
                                 >
                                   <Trash2 size={14} /> Slet
                                 </button>
@@ -1402,22 +1402,22 @@ export default function AdminPage() {
                                   return (
                                     <div
                                       key={`${business.id}-${key}`}
-                                      className="grid grid-cols-1 gap-1 rounded-lg border border-[rgba(17,17,17,0.08)] bg-[rgba(255,255,255,0.9)] p-2 text-sm md:grid-cols-[220px_1fr]"
+                                      className="grid grid-cols-1 gap-1 rounded-lg border border-[var(--border)] bg-white p-2 text-sm md:grid-cols-[220px_1fr]"
                                     >
-                                      <span className="font-medium text-[#8a7e70]">{key}</span>
-                                      <span className="min-w-0 break-words text-[#111111]">
+                                      <span className="font-medium text-[#797773]">{key}</span>
+                                      <span className="min-w-0 break-words text-[#20211f]">
                                         {isEditing && !isReadOnlyKey ? (
                                           isTextareaField(key) ? (
                                             <textarea
                                               value={draft[key] ?? ""}
                                               onChange={(e) => updateDraftValue(business.id, key, e.target.value)}
-                                              className="min-h-[84px] w-full rounded-md border border-[rgba(17,17,17,0.10)] bg-white px-2 py-1.5 text-sm text-[#111111] outline-none focus:border-[rgba(17,17,17,0.22)]"
+                                              className="min-h-[84px] w-full rounded-md border border-[var(--border)] bg-white px-2 py-1.5 text-sm text-[#20211f] outline-none focus:border-[rgba(17,17,17,0.22)]"
                                             />
                                           ) : (
                                             <input
                                               value={draft[key] ?? ""}
                                               onChange={(e) => updateDraftValue(business.id, key, e.target.value)}
-                                              className="w-full rounded-md border border-[rgba(17,17,17,0.10)] bg-white px-2 py-1.5 text-sm text-[#111111] outline-none focus:border-[rgba(17,17,17,0.22)]"
+                                              className="w-full rounded-md border border-[var(--border)] bg-white px-2 py-1.5 text-sm text-[#20211f] outline-none focus:border-[rgba(17,17,17,0.22)]"
                                             />
                                           )
                                         ) : (
@@ -1460,19 +1460,19 @@ export default function AdminPage() {
               animate={{ opacity: 1, y: 0, scale: 1 }}
               exit={{ opacity: 0, y: 18, scale: 0.985 }}
               onClick={(event) => event.stopPropagation()}
-              className="mx-auto my-3 w-full max-w-6xl rounded-3xl border border-[rgba(17,17,17,0.09)] bg-[#f6f3ed] p-4 text-[#111111] shadow-[0_28px_80px_rgba(17,17,17,0.2)] sm:my-8 sm:p-6"
+              className="mx-auto my-3 w-full max-w-6xl rounded-lg border border-[rgba(17,17,17,0.09)] bg-[#f4f1eb] p-4 text-[#20211f] shadow-none sm:my-8 sm:p-6"
             >
               <div className="flex items-start justify-between gap-4">
                 <div>
-                  <p className="text-xs font-bold uppercase tracking-[0.16em] text-[#8a7e70]">Kundecenter</p>
-                  <h2 className="mt-1 text-2xl font-semibold tracking-[-0.04em] sm:text-3xl">{customerDetail?.business.name || (customerDetailLoading ? "Henter kundedata…" : "Kundedata")}</h2>
-                  {customerDetail?.business.website_url ? <p className="mt-1 text-sm text-[#6b6258]">{customerDetail.business.website_url}</p> : null}
+                  <p className="text-xs font-medium uppercase tracking-[0.16em] text-[#797773]">Kundecenter</p>
+                  <h2 className="mt-1 text-2xl font-medium tracking-[-0.04em] sm:text-3xl">{customerDetail?.business.name || (customerDetailLoading ? "Henter kundedata…" : "Kundedata")}</h2>
+                  {customerDetail?.business.website_url ? <p className="mt-1 text-sm text-[#6a6865]">{customerDetail.business.website_url}</p> : null}
                 </div>
-                <button onClick={() => { setCustomerDetail(null); setCustomerDetailError(""); }} disabled={customerDetailLoading} className="rounded-xl border border-[rgba(17,17,17,0.1)] bg-white p-2 text-[#6b6258] hover:text-[#111111] disabled:opacity-50" aria-label="Luk kundecenter"><X size={18} /></button>
+                <button onClick={() => { setCustomerDetail(null); setCustomerDetailError(""); }} disabled={customerDetailLoading} className="rounded-lg border border-[var(--border)] bg-white p-2 text-[#6a6865] hover:text-[#20211f] disabled:opacity-50" aria-label="Luk kundecenter"><X size={18} /></button>
               </div>
 
-              {customerDetailLoading ? <div className="mt-6 grid min-h-64 place-items-center rounded-2xl border border-dashed border-[rgba(17,17,17,0.12)] bg-white/70"><span className="text-sm text-[#6b6258]">Henter chatbotdata og samtaler…</span></div> : null}
-              {customerDetailError ? <div className="mt-6 rounded-2xl border border-[rgba(155,61,47,0.16)] bg-[rgba(255,245,242,0.9)] p-4 text-sm text-[#9b3d2f]">{customerDetailError}</div> : null}
+              {customerDetailLoading ? <div className="mt-6 grid min-h-64 place-items-center rounded-lg border border-dashed border-[rgba(17,17,17,0.12)] bg-white/70"><span className="text-sm text-[#6a6865]">Henter chatbotdata og samtaler…</span></div> : null}
+              {customerDetailError ? <div className="mt-6 rounded-lg border border-[rgba(155,61,47,0.16)] bg-[rgba(255,245,242,0.9)] p-4 text-sm text-[#9b3d2f]">{customerDetailError}</div> : null}
 
               {customerDetail ? (() => {
                 const business = customerDetail.business;
@@ -1485,36 +1485,36 @@ export default function AdminPage() {
                 ] as const;
                 return <div className="mt-6 grid gap-5">
                   <section className="grid gap-4 lg:grid-cols-[1.2fr_.8fr]">
-                    <article className="rounded-2xl bg-[#111111] p-5 text-white"><p className="text-xs font-bold uppercase tracking-[0.16em] text-white/55">Plan og forbrug</p><div className="mt-4 grid gap-4 sm:grid-cols-[190px_1fr]"><label className="grid gap-1 text-xs font-semibold text-white/65"><span>Kundens plan</span><select value={plan} onChange={(event) => void updateBusiness(business, { plan: event.target.value }, "Kundeplan opdateret")} disabled={savingId === business.id} className="rounded-xl border border-white/15 bg-white/10 px-3 py-2.5 text-sm font-semibold text-white outline-none"><option className="bg-[#111111]" value="starter">Starter · 1.000 svar</option><option className="bg-[#111111]" value="growth">Growth · 5.000 svar</option><option className="bg-[#111111]" value="scale">Scale · 15.000 svar</option><option className="bg-[#111111]" value="enterprise">Enterprise · individuel</option></select></label><div><div className="flex justify-between gap-3 text-xs text-white/65"><span>AI-forbrug denne måned</span><span>{used.toLocaleString("da-DK")} / {limit.toLocaleString("da-DK")}</span></div><div className="mt-2 h-2 overflow-hidden rounded-full bg-white/15"><div className="h-full rounded-full bg-white" style={{ width: `${Math.min(100, Math.round((used / Math.max(limit, 1)) * 100))}%` }} /></div><button onClick={() => void updateBusiness(business, { ai_answers_used: 0 }, "AI-forbrug nulstillet")} disabled={savingId === business.id} className="mt-3 text-xs font-semibold text-white underline underline-offset-4 disabled:opacity-50">Nulstil forbrug</button></div></div></article>
-                    <article className="rounded-2xl border border-[rgba(17,17,17,0.08)] bg-white p-5"><p className="text-xs font-bold uppercase tracking-[0.16em] text-[#8a7e70]">Chatbotstatus</p><div className="mt-4 grid gap-3 text-sm"><div className="flex justify-between gap-3"><span className="text-[#6b6258]">Abonnement</span><span className="font-semibold">{business.subscription_status || "Ukendt"}</span></div><div className="flex justify-between gap-3"><span className="text-[#6b6258]">Betaling</span><span className="font-semibold">{business.payment_status || "Ukendt"}</span></div><div className="flex justify-between gap-3"><span className="text-[#6b6258]">Aktiv chatbot</span><span className="font-semibold">{business.activated ? "Ja" : "Nej"}</span></div><div className="flex justify-between gap-3"><span className="text-[#6b6258]">Indekseret viden</span><span className="font-semibold">{customerDetail.knowledgeChunkCount} tekststykker</span></div></div></article>
+                    <article className="rounded-lg bg-[var(--accent)] p-5 text-white"><p className="text-xs font-medium uppercase tracking-[0.16em] text-white/55">Plan og forbrug</p><div className="mt-4 grid gap-4 sm:grid-cols-[190px_1fr]"><label className="grid gap-1 text-xs font-medium text-white/65"><span>Kundens plan</span><select value={plan} onChange={(event) => void updateBusiness(business, { plan: event.target.value }, "Kundeplan opdateret")} disabled={savingId === business.id} className="rounded-lg border border-[var(--border)] bg-white/10 px-3 py-2.5 text-sm font-medium text-white outline-none"><option className="bg-[var(--accent)]" value="starter">Starter · 1.000 svar</option><option className="bg-[var(--accent)]" value="growth">Growth · 5.000 svar</option><option className="bg-[var(--accent)]" value="scale">Scale · 15.000 svar</option><option className="bg-[var(--accent)]" value="enterprise">Enterprise · individuel</option></select></label><div><div className="flex justify-between gap-3 text-xs text-white/65"><span>AI-forbrug denne måned</span><span>{used.toLocaleString("da-DK")} / {limit.toLocaleString("da-DK")}</span></div><div className="mt-2 h-2 overflow-hidden rounded-full bg-white/15"><div className="h-full rounded-full bg-white" style={{ width: `${Math.min(100, Math.round((used / Math.max(limit, 1)) * 100))}%` }} /></div><button onClick={() => void updateBusiness(business, { ai_answers_used: 0 }, "AI-forbrug nulstillet")} disabled={savingId === business.id} className="mt-3 text-xs font-medium text-white underline underline-offset-4 disabled:opacity-50">Nulstil forbrug</button></div></div></article>
+                    <article className="rounded-lg border border-[var(--border)] bg-white p-5"><p className="text-xs font-medium uppercase tracking-[0.16em] text-[#797773]">Chatbotstatus</p><div className="mt-4 grid gap-3 text-sm"><div className="flex justify-between gap-3"><span className="text-[#6a6865]">Abonnement</span><span className="font-medium">{business.subscription_status || "Ukendt"}</span></div><div className="flex justify-between gap-3"><span className="text-[#6a6865]">Betaling</span><span className="font-medium">{business.payment_status || "Ukendt"}</span></div><div className="flex justify-between gap-3"><span className="text-[#6a6865]">Aktiv chatbot</span><span className="font-medium">{business.activated ? "Ja" : "Nej"}</span></div><div className="flex justify-between gap-3"><span className="text-[#6a6865]">Indekseret viden</span><span className="font-medium">{customerDetail.knowledgeChunkCount} tekststykker</span></div></div></article>
                   </section>
 
                   <section className="grid gap-4 lg:grid-cols-[1fr_.9fr]">
-                    <form onSubmit={(event) => void sendCustomerMessage(event, business)} className="rounded-2xl border border-[rgba(17,17,17,0.08)] bg-white p-5">
+                    <form onSubmit={(event) => void sendCustomerMessage(event, business)} className="rounded-lg border border-[var(--border)] bg-white p-5">
                       <div className="flex flex-wrap items-start justify-between gap-3">
-                        <div><p className="text-xs font-bold uppercase tracking-[0.16em] text-[#8a7e70]">Besked til kunden</p><h3 className="mt-1 text-xl font-semibold">Send til dashboardet</h3><p className="mt-1 text-sm text-[#6b6258]">Kunden ser beskeden som ulæst under Beskeder.</p></div>
-                        <button type="button" onClick={() => fillDemoMessageTemplate(business)} className="rounded-xl border border-[rgba(17,17,17,0.1)] px-3 py-2 text-xs font-semibold hover:bg-[#f6f3ed]">Brug demo-skabelon</button>
+                        <div><p className="text-xs font-medium uppercase tracking-[0.16em] text-[#797773]">Besked til kunden</p><h3 className="mt-1 text-xl font-medium">Send til dashboardet</h3><p className="mt-1 text-sm text-[#6a6865]">Kunden ser beskeden som ulæst under Beskeder.</p></div>
+                        <button type="button" onClick={() => fillDemoMessageTemplate(business)} className="rounded-lg border border-[var(--border)] px-3 py-2 text-xs font-medium hover:bg-[#f4f1eb]">Brug demo-skabelon</button>
                       </div>
                       <div className="mt-4 grid gap-3">
-                        <label className="grid gap-1 text-xs font-semibold text-[#6b6258]"><span>Overskrift</span><input required maxLength={160} value={customerMessageTitle} onChange={(event) => setCustomerMessageTitle(event.target.value)} className="rounded-xl border border-[rgba(17,17,17,0.12)] px-3 py-2.5 text-sm text-[#111111] outline-none focus:border-[rgba(17,17,17,0.28)]" placeholder="Fx Din nye chatbot er klar" /></label>
-                        <label className="grid gap-1 text-xs font-semibold text-[#6b6258]"><span>Besked</span><textarea required maxLength={5000} rows={5} value={customerMessageBody} onChange={(event) => setCustomerMessageBody(event.target.value)} className="rounded-xl border border-[rgba(17,17,17,0.12)] px-3 py-2.5 text-sm leading-6 text-[#111111] outline-none focus:border-[rgba(17,17,17,0.28)]" placeholder="Skriv beskeden, som kunden skal se" /></label>
+                        <label className="grid gap-1 text-xs font-medium text-[#6a6865]"><span>Overskrift</span><input required maxLength={160} value={customerMessageTitle} onChange={(event) => setCustomerMessageTitle(event.target.value)} className="rounded-lg border border-[rgba(17,17,17,0.12)] px-3 py-2.5 text-sm text-[#20211f] outline-none focus:border-[rgba(17,17,17,0.28)]" placeholder="Fx Din nye chatbot er klar" /></label>
+                        <label className="grid gap-1 text-xs font-medium text-[#6a6865]"><span>Besked</span><textarea required maxLength={5000} rows={5} value={customerMessageBody} onChange={(event) => setCustomerMessageBody(event.target.value)} className="rounded-lg border border-[rgba(17,17,17,0.12)] px-3 py-2.5 text-sm leading-6 text-[#20211f] outline-none focus:border-[rgba(17,17,17,0.28)]" placeholder="Skriv beskeden, som kunden skal se" /></label>
                         <div className="grid gap-3 sm:grid-cols-[1fr_180px]">
-                          <label className="grid gap-1 text-xs font-semibold text-[#6b6258]"><span>Valgfrit link</span><input value={customerMessageActionUrl} onChange={(event) => setCustomerMessageActionUrl(event.target.value)} className="rounded-xl border border-[rgba(17,17,17,0.12)] px-3 py-2.5 text-sm text-[#111111] outline-none focus:border-[rgba(17,17,17,0.28)]" placeholder="https://…" /></label>
-                          <label className="grid gap-1 text-xs font-semibold text-[#6b6258]"><span>Knaptekst</span><input value={customerMessageActionLabel} onChange={(event) => setCustomerMessageActionLabel(event.target.value)} className="rounded-xl border border-[rgba(17,17,17,0.12)] px-3 py-2.5 text-sm text-[#111111] outline-none focus:border-[rgba(17,17,17,0.28)]" placeholder="Åbn demo" /></label>
+                          <label className="grid gap-1 text-xs font-medium text-[#6a6865]"><span>Valgfrit link</span><input value={customerMessageActionUrl} onChange={(event) => setCustomerMessageActionUrl(event.target.value)} className="rounded-lg border border-[rgba(17,17,17,0.12)] px-3 py-2.5 text-sm text-[#20211f] outline-none focus:border-[rgba(17,17,17,0.28)]" placeholder="https://…" /></label>
+                          <label className="grid gap-1 text-xs font-medium text-[#6a6865]"><span>Knaptekst</span><input value={customerMessageActionLabel} onChange={(event) => setCustomerMessageActionLabel(event.target.value)} className="rounded-lg border border-[rgba(17,17,17,0.12)] px-3 py-2.5 text-sm text-[#20211f] outline-none focus:border-[rgba(17,17,17,0.28)]" placeholder="Åbn demo" /></label>
                         </div>
-                        <button type="submit" disabled={sendingCustomerMessage} className="rounded-xl bg-[#111111] px-4 py-3 text-sm font-semibold text-white hover:bg-[#292524] disabled:cursor-wait disabled:opacity-60">{sendingCustomerMessage ? "Sender…" : "Send besked"}</button>
+                        <button type="submit" disabled={sendingCustomerMessage} className="rounded-lg bg-[var(--accent)] px-4 py-3 text-sm font-medium text-white hover:bg-[#292524] disabled:cursor-wait disabled:opacity-60">{sendingCustomerMessage ? "Sender…" : "Send besked"}</button>
                       </div>
                     </form>
 
-                    <article className="rounded-2xl border border-[rgba(17,17,17,0.08)] bg-white p-5">
-                      <div className="flex items-center justify-between gap-3"><div><p className="text-xs font-bold uppercase tracking-[0.16em] text-[#8a7e70]">Sendte beskeder</p><h3 className="mt-1 text-xl font-semibold">Historik</h3></div><span className="rounded-full bg-[#f6f3ed] px-3 py-1 text-xs font-semibold text-[#6b6258]">{customerDetail.customerMessages.length}</span></div>
-                      {customerDetail.customerMessages.length ? <div className="mt-4 grid max-h-[430px] gap-3 overflow-y-auto pr-1">{customerDetail.customerMessages.map((message) => <div key={message.id} className="rounded-xl border border-[rgba(17,17,17,0.08)] bg-[#f6f3ed] p-3"><div className="flex items-start justify-between gap-3"><strong className="text-sm">{message.title}</strong><span className={`shrink-0 rounded-full px-2 py-0.5 text-[10px] font-semibold ${message.read_at ? "bg-[#e8f6f0] text-[#31795d]" : "bg-white text-[#6b6258]"}`}>{message.read_at ? "Læst" : "Ulæst"}</span></div><p className="mt-2 whitespace-pre-wrap text-sm leading-6 text-[#4f4942]">{message.body}</p><p className="mt-2 text-xs text-[#8a7e70]">{new Date(message.created_at).toLocaleString("da-DK")}</p></div>)}</div> : <div className="mt-4 rounded-xl border border-dashed border-[rgba(17,17,17,0.12)] bg-[#f6f3ed] px-4 py-8 text-center text-sm text-[#6b6258]">Ingen beskeder sendt endnu.</div>}
+                    <article className="rounded-lg border border-[var(--border)] bg-white p-5">
+                      <div className="flex items-center justify-between gap-3"><div><p className="text-xs font-medium uppercase tracking-[0.16em] text-[#797773]">Sendte beskeder</p><h3 className="mt-1 text-xl font-medium">Historik</h3></div><span className="rounded-full bg-[#f4f1eb] px-3 py-1 text-xs font-medium text-[#6a6865]">{customerDetail.customerMessages.length}</span></div>
+                      {customerDetail.customerMessages.length ? <div className="mt-4 grid max-h-[430px] gap-3 overflow-y-auto pr-1">{customerDetail.customerMessages.map((message) => <div key={message.id} className="rounded-lg border border-[var(--border)] bg-[#f4f1eb] p-3"><div className="flex items-start justify-between gap-3"><strong className="text-sm">{message.title}</strong><span className={`shrink-0 rounded-full px-2 py-0.5 text-[10px] font-medium ${message.read_at ? "bg-[#e8f6f0] text-[#31795d]" : "bg-white text-[#6a6865]"}`}>{message.read_at ? "Læst" : "Ulæst"}</span></div><p className="mt-2 whitespace-pre-wrap text-sm leading-6 text-[#4f4942]">{message.body}</p><p className="mt-2 text-xs text-[#797773]">{new Date(message.created_at).toLocaleString("da-DK")}</p></div>)}</div> : <div className="mt-4 rounded-lg border border-dashed border-[rgba(17,17,17,0.12)] bg-[#f4f1eb] px-4 py-8 text-center text-sm text-[#6a6865]">Ingen beskeder sendt endnu.</div>}
                     </article>
                   </section>
 
-                  <section className="rounded-2xl border border-[rgba(17,17,17,0.08)] bg-white p-5"><div className="flex items-center justify-between gap-3"><div><p className="text-xs font-bold uppercase tracking-[0.16em] text-[#8a7e70]">Chatbot-data</p><h3 className="mt-1 text-xl font-semibold">Det botten ved og siger</h3></div><button onClick={() => { startEditing(business); setCustomerDetail(null); }} className="rounded-xl border border-[rgba(17,17,17,0.1)] px-3 py-2 text-sm font-semibold hover:bg-[#f6f3ed]">Redigér data</button></div><div className="mt-4 grid gap-3 md:grid-cols-2">{chatbotFields.map(([label, key]) => { const value = business[key]; return <div key={key} className="rounded-xl bg-[#f6f3ed] p-3"><p className="text-xs font-semibold text-[#8a7e70]">{label}</p><p className="mt-1 whitespace-pre-wrap break-words text-sm leading-6">{typeof value === "string" && value.trim() ? value : "Ikke angivet"}</p></div>; })}</div></section>
+                  <section className="rounded-lg border border-[var(--border)] bg-white p-5"><div className="flex items-center justify-between gap-3"><div><p className="text-xs font-medium uppercase tracking-[0.16em] text-[#797773]">Chatbot-data</p><h3 className="mt-1 text-xl font-medium">Det botten ved og siger</h3></div><button onClick={() => { startEditing(business); setCustomerDetail(null); }} className="rounded-lg border border-[var(--border)] px-3 py-2 text-sm font-medium hover:bg-[#f4f1eb]">Redigér data</button></div><div className="mt-4 grid gap-3 md:grid-cols-2">{chatbotFields.map(([label, key]) => { const value = business[key]; return <div key={key} className="rounded-lg bg-[#f4f1eb] p-3"><p className="text-xs font-medium text-[#797773]">{label}</p><p className="mt-1 whitespace-pre-wrap break-words text-sm leading-6">{typeof value === "string" && value.trim() ? value : "Ikke angivet"}</p></div>; })}</div></section>
 
-                  <section className="rounded-2xl border border-[rgba(17,17,17,0.08)] bg-white p-5"><div className="flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between"><div><p className="text-xs font-bold uppercase tracking-[0.16em] text-[#8a7e70]">Samtaler</p><h3 className="mt-1 text-xl font-semibold">Kundens samtalehistorik</h3><p className="mt-1 text-sm text-[#6b6258]">Viser de seneste {customerDetail.conversations.length} samtaler.</p></div><span className="w-fit rounded-full bg-[#f6f3ed] px-3 py-1 text-xs font-semibold text-[#6b6258]">{customerDetail.conversations.length} samtaler</span></div>{customerDetail.conversations.length ? <div className="mt-4 grid gap-2">{customerDetail.conversations.map((conversation) => { const isOpen = Boolean(openCustomerConversations[conversation.id]); const messages = normalizeMessages(conversation.messages); return <article key={conversation.id} className="overflow-hidden rounded-xl border border-[rgba(17,17,17,0.08)]"><button onClick={() => setOpenCustomerConversations((previous) => ({ ...previous, [conversation.id]: !previous[conversation.id] }))} className="flex w-full items-center justify-between gap-3 bg-white px-4 py-3 text-left hover:bg-[#faf9f6]"><span><strong className="block text-sm">{messages.find((message) => message.role.toLowerCase().includes("user"))?.content.slice(0, 90) || "Samtale uden spørgsmål"}</strong><span className="mt-1 block text-xs text-[#8a7e70]">{conversation.created_at ? new Date(conversation.created_at).toLocaleString("da-DK") : "Ukendt tidspunkt"} · {messages.length} beskeder</span></span><ChevronDown size={17} className={`shrink-0 text-[#8a7e70] transition ${isOpen ? "rotate-180" : ""}`} /></button>{isOpen ? <div className="grid gap-2 border-t border-[rgba(17,17,17,0.08)] bg-[#f6f3ed] p-3">{messages.length ? messages.map((message, index) => <div key={`${conversation.id}-${index}`} className={`max-w-[88%] rounded-xl px-3 py-2 text-sm leading-6 ${message.role.toLowerCase().includes("user") ? "justify-self-end bg-[#111111] text-white" : "bg-white text-[#111111]"}`}>{message.content}</div>) : <p className="text-sm text-[#8a7e70]">Ingen beskeder i samtalen.</p>}</div> : null}</article>; })}</div> : <div className="mt-4 rounded-xl border border-dashed border-[rgba(17,17,17,0.12)] bg-[#f6f3ed] px-4 py-8 text-center text-sm text-[#6b6258]">Ingen samtaler endnu.</div>}</section>
+                  <section className="rounded-lg border border-[var(--border)] bg-white p-5"><div className="flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between"><div><p className="text-xs font-medium uppercase tracking-[0.16em] text-[#797773]">Samtaler</p><h3 className="mt-1 text-xl font-medium">Kundens samtalehistorik</h3><p className="mt-1 text-sm text-[#6a6865]">Viser de seneste {customerDetail.conversations.length} samtaler.</p></div><span className="w-fit rounded-full bg-[#f4f1eb] px-3 py-1 text-xs font-medium text-[#6a6865]">{customerDetail.conversations.length} samtaler</span></div>{customerDetail.conversations.length ? <div className="mt-4 grid gap-2">{customerDetail.conversations.map((conversation) => { const isOpen = Boolean(openCustomerConversations[conversation.id]); const messages = normalizeMessages(conversation.messages); return <article key={conversation.id} className="overflow-hidden rounded-lg border border-[var(--border)]"><button onClick={() => setOpenCustomerConversations((previous) => ({ ...previous, [conversation.id]: !previous[conversation.id] }))} className="flex w-full items-center justify-between gap-3 bg-white px-4 py-3 text-left hover:bg-[#faf9f6]"><span><strong className="block text-sm">{messages.find((message) => message.role.toLowerCase().includes("user"))?.content.slice(0, 90) || "Samtale uden spørgsmål"}</strong><span className="mt-1 block text-xs text-[#797773]">{conversation.created_at ? new Date(conversation.created_at).toLocaleString("da-DK") : "Ukendt tidspunkt"} · {messages.length} beskeder</span></span><ChevronDown size={17} className={`shrink-0 text-[#797773] transition ${isOpen ? "rotate-180" : ""}`} /></button>{isOpen ? <div className="grid gap-2 border-t border-[var(--border)] bg-[#f4f1eb] p-3">{messages.length ? messages.map((message, index) => <div key={`${conversation.id}-${index}`} className={`max-w-[88%] rounded-lg px-3 py-2 text-sm leading-6 ${message.role.toLowerCase().includes("user") ? "justify-self-end bg-[var(--accent)] text-white" : "bg-white text-[#20211f]"}`}>{message.content}</div>) : <p className="text-sm text-[#797773]">Ingen beskeder i samtalen.</p>}</div> : null}</article>; })}</div> : <div className="mt-4 rounded-lg border border-dashed border-[rgba(17,17,17,0.12)] bg-[#f4f1eb] px-4 py-8 text-center text-sm text-[#6a6865]">Ingen samtaler endnu.</div>}</section>
                 </div>;
               })() : null}
             </motion.section>
@@ -1532,10 +1532,10 @@ export default function AdminPage() {
               initial={{ scale: 0.95, y: 8 }}
               animate={{ scale: 1, y: 0 }}
               exit={{ scale: 0.95, y: 8 }}
-              className="w-full max-w-md rounded-2xl border border-[rgba(17,17,17,0.08)] bg-[rgba(255,255,255,0.96)] p-5 text-[#111111] shadow-[0_20px_50px_rgba(17,17,17,0.10)]"
+              className="w-full max-w-md rounded-lg border border-[var(--border)] bg-[rgba(255,255,255,0.96)] p-5 text-[#20211f] shadow-none"
             >
-              <h3 className="text-lg font-semibold">Slet virksomhed</h3>
-              <p className="mt-2 text-sm text-[#6b6258]">
+              <h3 className="text-lg font-medium">Slet virksomhed</h3>
+              <p className="mt-2 text-sm text-[#6a6865]">
                 Er du sikker pa at du vil slette <strong>{pendingDeleteBusiness.name || "denne virksomhed"}</strong>? Denne handling kan ikke fortrydes.
               </p>
 
@@ -1549,14 +1549,14 @@ export default function AdminPage() {
                 <button
                   disabled={deletingId !== null}
                   onClick={() => {setPendingDeleteBusiness(null);setDeleteMfaCode("");setDeleteError("");}}
-                  className="rounded-lg border border-[rgba(17,17,17,0.10)] bg-white px-3 py-1.5 text-sm text-[#111111]"
+                  className="rounded-lg border border-[var(--border)] bg-white px-3 py-1.5 text-sm text-[#20211f]"
                 >
                   Annuller
                 </button>
                 <button
                   onClick={() => deleteBusiness(pendingDeleteBusiness.id)}
                   disabled={deletingId === pendingDeleteBusiness.id || Boolean(pendingDeleteBusiness.activated && !/^[0-9]{6}$/.test(deleteMfaCode))}
-                  className="rounded-lg border border-[rgba(17,17,17,0.08)] bg-[#111111] px-3 py-1.5 text-sm font-semibold text-white transition hover:bg-[#2a2a2a] disabled:opacity-60"
+                  className="rounded-lg border border-[var(--border)] bg-[var(--accent)] px-3 py-1.5 text-sm font-medium text-white transition hover:bg-[var(--accent-hover)] disabled:opacity-60"
                 >
                   {deletingId === pendingDeleteBusiness.id ? "Sletter" : "Slet"}
                 </button>
@@ -1574,12 +1574,12 @@ export default function AdminPage() {
               initial={{ opacity: 0, x: 30, scale: 0.98 }}
               animate={{ opacity: 1, x: 0, scale: 1 }}
               exit={{ opacity: 0, x: 20 }}
-              className={`rounded-xl border px-3 py-2 text-sm shadow-xl ${
+              className={`rounded-lg border px-3 py-2 text-sm shadow-xl ${
                 toast.type === "success"
-                  ? "border-[rgba(17,17,17,0.08)] bg-white text-[#111111]"
+                  ? "border-[var(--border)] bg-white text-[#20211f]"
                   : toast.type === "error"
-                    ? "border-[rgba(17,17,17,0.08)] bg-[rgba(246,243,237,0.78)] text-[#9b3d2f]"
-                    : "border-[rgba(17,17,17,0.08)] bg-white text-[#6b6258]"
+                    ? "border-[var(--border)] bg-[rgba(246,243,237,0.78)] text-[#9b3d2f]"
+                    : "border-[var(--border)] bg-white text-[#6a6865]"
               }`}
             >
               {toast.message}

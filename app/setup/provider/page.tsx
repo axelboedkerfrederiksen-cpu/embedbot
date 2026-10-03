@@ -391,12 +391,9 @@ export default function ProviderPage() {
           padding: 28px 16px;
           display: grid;
           place-items: center;
-          background:
-            radial-gradient(circle at 14% 16%, rgba(246, 243, 237, 0.95) 0%, rgba(246, 243, 237, 0) 24%),
-            radial-gradient(circle at 86% 18%, rgba(246, 243, 237, 0.9) 0%, rgba(246, 243, 237, 0) 22%),
-            linear-gradient(180deg, #ffffff 0%, #fcfaf6 58%, #f8f4ee 100%);
-          color: #111111;
-          font-family: "Poppins", sans-serif;
+          background: var(--bg-page);
+          color: var(--text-primary);
+          font-family: var(--font-inter), sans-serif;
         }
 
         .provider-terms {
@@ -405,13 +402,13 @@ export default function ProviderPage() {
           gap: 10px;
           align-items: start;
           margin-top: 20px;
-          color: #5f584f;
+          color: var(--text-muted);
           font-size: 0.82rem;
           line-height: 1.6;
         }
 
         .provider-terms input { margin-top: 4px; }
-        .provider-terms a { color: #111111; text-underline-offset: 2px; }
+        .provider-terms a { color: var(--text-primary); text-underline-offset: 2px; }
 
         .provider-shell {
           width: 100%;
@@ -421,12 +418,12 @@ export default function ProviderPage() {
         }
 
         .provider-card {
-          background: rgba(255, 255, 255, 0.94);
-          border: 1px solid rgba(17, 17, 17, 0.08);
-          border-radius: 24px;
+          background: var(--bg-primary);
+          border: 1px solid var(--border);
+          border-radius: 7px;
           padding: 26px;
-          box-shadow: 0 20px 50px rgba(17, 17, 17, 0.08);
-          backdrop-filter: blur(10px);
+          box-shadow: none;
+
           animation: provider-rise 360ms cubic-bezier(0.22, 1, 0.36, 1) both;
         }
 
@@ -435,16 +432,7 @@ export default function ProviderPage() {
           overflow: hidden;
         }
 
-        .provider-intro::before {
-          content: "";
-          position: absolute;
-          inset: -40% auto auto -10%;
-          width: 220px;
-          height: 220px;
-          border-radius: 999px;
-          background: radial-gradient(circle, rgba(246, 243, 237, 0.9) 0%, rgba(246, 243, 237, 0) 72%);
-          pointer-events: none;
-        }
+        .provider-intro::before { display: none; }
 
         .provider-intro > * {
           position: relative;
@@ -456,25 +444,27 @@ export default function ProviderPage() {
           align-items: center;
           gap: 8px;
           font-size: 11px;
-          font-weight: 700;
+          font-weight: 500;
           letter-spacing: 0.08em;
           text-transform: uppercase;
-          color: #6b6258;
+          color: var(--text-muted);
           margin-bottom: 12px;
         }
 
         .provider-intro h1 {
           margin: 0 0 10px;
-          font-family: "DM Serif Display", serif;
+          font-family: var(--font-inter), sans-serif;
           font-size: clamp(1.8rem, 5vw, 2.4rem);
           line-height: 1.05;
           letter-spacing: -0.03em;
-        }
+
+        font-weight: 400;
+      }
 
         .provider-intro p {
           margin: 0;
           max-width: 60ch;
-          color: #5f584f;
+          color: var(--text-muted);
           line-height: 1.6;
         }
 
@@ -498,10 +488,10 @@ export default function ProviderPage() {
           height: 32px;
           flex: 0 0 auto;
           border-radius: 999px;
-          background: #111111;
+          background: var(--accent);
           color: #ffffff;
           font-size: 13px;
-          font-weight: 700;
+          font-weight: 500;
         }
 
         .provider-section-heading h2 {
@@ -513,7 +503,7 @@ export default function ProviderPage() {
 
         .provider-section-heading p {
           margin: 2px 0 0;
-          color: #756d63;
+          color: var(--text-subtle);
           font-size: 12px;
           line-height: 1.4;
         }
@@ -526,10 +516,10 @@ export default function ProviderPage() {
           gap: 12px;
           width: 100%;
           padding: 15px 16px;
-          border-radius: 18px;
-          border: 1px solid rgba(17, 17, 17, 0.1);
-          background: rgba(255, 255, 255, 0.9);
-          color: #111111;
+          border-radius: 7px;
+          border: 1px solid var(--border);
+          background: var(--bg-primary);
+          color: var(--text-primary);
           cursor: pointer;
           transition: transform 160ms ease, box-shadow 160ms ease, border-color 160ms ease, background 160ms ease;
           font: inherit;
@@ -537,39 +527,28 @@ export default function ProviderPage() {
           overflow: hidden;
         }
 
-        .provider-option::before {
-          content: "";
-          position: absolute;
-          inset: 0;
-          background: linear-gradient(120deg, transparent 0%, rgba(255, 255, 255, 0.8) 48%, transparent 100%);
-          transform: translateX(-120%);
-          opacity: 0;
-          transition: opacity 180ms ease;
-        }
+        .provider-option::before { display: none; }
 
         .provider-option:hover,
         .provider-option:focus-visible {
-          transform: translateY(-2px);
+          transform: none;
           border-color: rgba(17, 17, 17, 0.18);
-          box-shadow: 0 14px 32px rgba(17, 17, 17, 0.08);
+          box-shadow: none;
           outline: none;
         }
 
         .provider-option.is-active {
           border-color: rgba(17, 17, 17, 0.24);
-          box-shadow: 0 16px 36px rgba(17, 17, 17, 0.1);
-          background: linear-gradient(180deg, rgba(255, 255, 255, 0.98), rgba(246, 243, 237, 0.84));
-          transform: translateY(-1px) scale(1.01);
+          box-shadow: none;
+          background: var(--bg-secondary);
+          transform: none;
         }
 
-        .provider-option.is-active::before {
-          opacity: 1;
-          animation: provider-shine 2.8s ease-in-out infinite;
-        }
+        .provider-option.is-active::before { display: none; }
 
         .provider-option-label {
           font-size: 15px;
-          font-weight: 700;
+          font-weight: 500;
           letter-spacing: -0.02em;
         }
 
@@ -579,14 +558,14 @@ export default function ProviderPage() {
           border-radius: 999px;
           border: 1.5px solid rgba(17, 17, 17, 0.2);
           flex: 0 0 auto;
-          box-shadow: inset 0 0 0 4px transparent;
+          box-shadow: none;
           transition: transform 160ms ease, box-shadow 160ms ease, border-color 160ms ease;
         }
 
         .provider-option.is-active .provider-option-dot {
-          border-color: #111111;
-          box-shadow: inset 0 0 0 4px #111111;
-          transform: scale(1.08);
+          border-color: var(--text-primary);
+          background: var(--accent);
+          transform: none;
         }
 
         .provider-guidance {
@@ -595,52 +574,43 @@ export default function ProviderPage() {
           gap: 10px;
           margin-top: 14px;
           padding: 14px 16px;
-          border-radius: 16px;
-          border: 1px solid rgba(17, 17, 17, 0.08);
+          border-radius: 7px;
+          border: 1px solid var(--border);
           font-size: 14px;
-          font-weight: 600;
+          font-weight: 500;
           line-height: 1.45;
           animation: provider-guidance-in 320ms cubic-bezier(0.22, 1, 0.36, 1) both;
         }
 
-        .provider-guidance::after {
-          content: "";
-          margin-left: auto;
-          width: 40px;
-          height: 40px;
-          border-radius: 999px;
-          background: radial-gradient(circle, rgba(255, 255, 255, 0.72) 0%, rgba(255, 255, 255, 0) 72%);
-          opacity: 0.9;
-          animation: provider-guidance-pulse 1.8s ease-in-out infinite;
-        }
+        .provider-guidance::after { display: none; }
 
         .provider-guidance-icon {
           display: none;
         }
 
         .provider-guidance.warning {
-          background: linear-gradient(135deg, rgba(255, 244, 214, 0.98), rgba(255, 255, 255, 0.92));
+          background: var(--bg-secondary);
           color: #8a5b00;
-          box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.8);
+          box-shadow: none;
         }
 
         .provider-guidance.success {
           position: relative;
           overflow: hidden;
-          background: linear-gradient(135deg, rgba(237, 250, 243, 0.98), rgba(255, 255, 255, 0.92));
+          background: var(--bg-secondary);
           color: #1f6a45;
-          box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.82);
+          box-shadow: none;
         }
 
         .provider-guidance.idle {
           background: rgba(246, 243, 237, 0.72);
-          color: #5f584f;
+          color: var(--text-muted);
         }
 
         .provider-divider {
           height: 1px;
           margin: 24px 0;
-          background: rgba(17, 17, 17, 0.08);
+          background: var(--border);
         }
 
         .provider-plan-grid {
@@ -657,10 +627,10 @@ export default function ProviderPage() {
           flex-direction: column;
           align-items: flex-start;
           padding: 17px 15px;
-          border: 1px solid rgba(17, 17, 17, 0.1);
-          border-radius: 18px;
+          border: 1px solid var(--border);
+          border-radius: 7px;
           background: #ffffff;
-          color: #111111;
+          color: var(--text-primary);
           cursor: pointer;
           font: inherit;
           text-align: left;
@@ -669,17 +639,17 @@ export default function ProviderPage() {
 
         .provider-plan:hover,
         .provider-plan:focus-visible {
-          transform: translateY(-2px);
+          transform: none;
           border-color: rgba(17, 17, 17, 0.22);
-          box-shadow: 0 14px 30px rgba(17, 17, 17, 0.08);
+          box-shadow: none;
           outline: none;
         }
 
         .provider-plan.is-active {
-          border-color: #111111;
-          background: linear-gradient(155deg, #ffffff 0%, #f6f3ed 100%);
-          box-shadow: 0 14px 32px rgba(17, 17, 17, 0.11), inset 0 0 0 1px #111111;
-          transform: translateY(-2px);
+          border-color: var(--text-primary);
+          background: var(--bg-secondary);
+          box-shadow: none;
+          transform: none;
         }
 
         .provider-plan-badge {
@@ -687,11 +657,11 @@ export default function ProviderPage() {
           top: -9px;
           left: 14px;
           padding: 4px 8px;
-          border-radius: 999px;
-          background: #111111;
+          border-radius: 7px;
+          background: var(--accent);
           color: #ffffff;
           font-size: 9px;
-          font-weight: 700;
+          font-weight: 500;
           letter-spacing: 0.04em;
           text-transform: uppercase;
         }
@@ -707,7 +677,7 @@ export default function ProviderPage() {
 
         .provider-plan-name {
           font-size: 14px;
-          font-weight: 700;
+          font-weight: 500;
         }
 
         .provider-plan-radio {
@@ -716,18 +686,18 @@ export default function ProviderPage() {
           flex: 0 0 auto;
           border: 1.5px solid rgba(17, 17, 17, 0.25);
           border-radius: 999px;
-          box-shadow: inset 0 0 0 4px transparent;
+          box-shadow: none;
         }
 
         .provider-plan.is-active .provider-plan-radio {
-          border-color: #111111;
-          box-shadow: inset 0 0 0 4px #111111;
+          border-color: var(--text-primary);
+          background: var(--accent);
         }
 
         .provider-plan-price {
           display: block;
           margin-bottom: 8px;
-          font-family: "DM Serif Display", serif;
+          font-family: var(--font-inter), sans-serif;
           font-size: clamp(1.45rem, 4vw, 1.8rem);
           line-height: 1;
           letter-spacing: -0.03em;
@@ -735,18 +705,18 @@ export default function ProviderPage() {
         }
 
         .provider-plan-price small {
-          font-family: "Poppins", sans-serif;
+          font-family: var(--font-inter), sans-serif;
           font-size: 10px;
-          font-weight: 600;
-          color: #756d63;
+          font-weight: 500;
+          color: var(--text-subtle);
           letter-spacing: 0;
         }
 
         .provider-plan-limit {
           margin-top: auto;
-          color: #6b6258;
+          color: var(--text-muted);
           font-size: 10px;
-          font-weight: 600;
+          font-weight: 500;
           line-height: 1.4;
         }
 
@@ -754,7 +724,7 @@ export default function ProviderPage() {
           display: block;
           margin-top: 12px;
           padding: 12px 14px;
-          border-radius: 14px;
+          border-radius: 7px;
           background: rgba(246, 243, 237, 0.72);
           color: #625a50;
           font-size: 12px;
@@ -767,7 +737,7 @@ export default function ProviderPage() {
         .provider-enterprise:hover,
         .provider-enterprise:focus-visible {
           background: rgba(246, 243, 237, 1);
-          color: #111111;
+          color: var(--text-primary);
           outline: none;
         }
 
@@ -787,27 +757,27 @@ export default function ProviderPage() {
 
         .provider-back,
         .provider-continue {
-          border-radius: 999px;
+          border-radius: 7px;
           padding: 12px 18px;
           font-size: 14px;
-          font-weight: 700;
+          font-weight: 500;
           text-decoration: none;
           transition: transform 160ms ease, box-shadow 160ms ease, opacity 160ms ease, border-color 160ms ease;
         }
 
         .provider-back {
-          color: #111111;
-          border: 1px solid rgba(17, 17, 17, 0.12);
+          color: var(--text-primary);
+          border: 1px solid var(--border);
           background: rgba(255, 255, 255, 0.8);
         }
 
         .provider-continue {
-          border: 1px solid #111111;
-          background: #111111;
+          border: 1px solid var(--text-primary);
+          background: var(--accent);
           color: #ffffff;
           cursor: pointer;
           margin-left: auto;
-          box-shadow: 0 14px 30px rgba(17, 17, 17, 0.15);
+          box-shadow: none;
         }
 
         .provider-back:hover,
@@ -883,7 +853,7 @@ export default function ProviderPage() {
         @media (max-width: 640px) {
           .provider-card {
             padding: 18px;
-            border-radius: 16px;
+            border-radius: 7px;
           }
 
           .provider-grid {
@@ -913,6 +883,12 @@ export default function ProviderPage() {
             margin-left: 0;
           }
         }
+        .provider-option:focus-visible, .provider-plan:focus-visible,
+        .provider-back:focus-visible, .provider-continue:focus-visible, .provider-enterprise:focus-visible {
+          outline: 2px solid #746958;
+          outline-offset: 3px;
+        }
+        .provider-section-heading h2 { font-weight: 500; }
       `}</style>
     </main>
   );

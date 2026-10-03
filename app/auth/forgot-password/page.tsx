@@ -68,10 +68,9 @@ export default function ForgotPasswordPage() {
         display: "grid",
         placeItems: "center",
         padding: "16px",
-        background:
-          "radial-gradient(circle at 12% 18%, rgba(246, 243, 237, 0.92) 0%, rgba(246, 243, 237, 0) 24%), radial-gradient(circle at 88% 14%, rgba(246, 243, 237, 0.9) 0%, rgba(246, 243, 237, 0) 22%), linear-gradient(180deg, #ffffff 0%, #fcfaf6 55%, #f8f4ee 100%)",
-        fontFamily: '"Poppins", sans-serif',
-        color: "#111111",
+        background: "var(--bg-page)",
+        fontFamily: "var(--font-inter), sans-serif",
+        color: "var(--text-primary)",
       }}
     >
       <form
@@ -79,20 +78,20 @@ export default function ForgotPasswordPage() {
         style={{
           width: "100%",
           maxWidth: 420,
-          background: "rgba(255,255,255,0.94)",
-          border: "1px solid rgba(17,17,17,0.08)",
-          borderRadius: 24,
+          background: "var(--bg-primary)",
+          border: "1px solid var(--border)",
+          borderRadius: 7,
           padding: 28,
           display: "grid",
           gap: 12,
-          boxShadow: "0 20px 50px rgba(17,17,17,0.08)",
-          backdropFilter: "blur(10px)",
+          boxShadow: "none",
+
         }}
       >
-        <h1 style={{ margin: 0, fontSize: 28, fontWeight: 700, color: "#111111", letterSpacing: "-0.03em" }}>
+        <h1 style={{ margin: 0, fontSize: 28, fontWeight: 400, color: "var(--text-primary)", letterSpacing: "-0.03em" }}>
           Glemt adgangskode
         </h1>
-        <p style={{ margin: 0, color: "#6b6258", fontSize: 14, fontWeight: 400 }}>
+        <p style={{ margin: 0, color: "var(--text-muted)", fontSize: 14, fontWeight: 400 }}>
           Indtast din e-mail, så sender vi et link til nulstilling af adgangskode.
         </p>
 
@@ -103,13 +102,13 @@ export default function ForgotPasswordPage() {
           onChange={(e) => setEmail(e.target.value)}
           required
           style={{
-            border: "1px solid rgba(17,17,17,0.1)",
+            border: "1px solid var(--border)",
             background: "#ffffff",
-            borderRadius: 14,
+            borderRadius: 7,
             padding: "13px 14px",
             fontSize: 14,
-            fontFamily: '"Poppins", sans-serif',
-            color: "#111111",
+            fontFamily: "var(--font-inter), sans-serif",
+            color: "var(--text-primary)",
             outline: "none",
           }}
         />
@@ -118,17 +117,17 @@ export default function ForgotPasswordPage() {
           type="submit"
           disabled={loading}
           style={{
-            border: "1px solid rgba(17,17,17,0.08)",
-            background: "#ffffff",
-            color: "#111111",
-            borderRadius: 999,
+            border: "1px solid var(--border)",
+            background: "var(--accent)",
+            color: "#ffffff",
+            borderRadius: 7,
             padding: "12px 16px",
-            fontWeight: 600,
+            fontWeight: 500,
             fontSize: 14,
             cursor: loading ? "not-allowed" : "pointer",
             opacity: loading ? 0.6 : 1,
-            fontFamily: '"Poppins", sans-serif',
-            boxShadow: "0 12px 28px rgba(17,17,17,0.08)",
+            fontFamily: "var(--font-inter), sans-serif",
+            boxShadow: "none",
           }}
         >
           {loading ? "Sender..." : "Send reset-link"}
@@ -142,7 +141,7 @@ export default function ForgotPasswordPage() {
               fontSize: 13,
               border: "1px solid rgba(27,107,69,0.2)",
               background: "rgba(27,107,69,0.08)",
-              borderRadius: 10,
+              borderRadius: 7,
               padding: "10px 12px",
             }}
           >
@@ -152,7 +151,7 @@ export default function ForgotPasswordPage() {
 
         {error ? <p style={{ margin: 0, color: "#9b3d2f", fontSize: 13 }}>{error}</p> : null}
 
-        <Link href="/login" style={{ color: "#6b6258", fontSize: 13, textDecoration: "underline" }}>
+        <Link href="/login" style={{ color: "var(--text-muted)", fontSize: 13, textDecoration: "underline" }}>
           Tilbage til login
         </Link>
       </form>

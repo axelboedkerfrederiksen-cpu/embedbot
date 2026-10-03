@@ -3,13 +3,13 @@ import Link from "next/link";
 
 export default function PrivacyPolicy() {
   return (
-    <main id="main-content" className="min-h-screen bg-white px-4 py-12 text-gray-900 sm:px-6 lg:px-8">
+    <main id="main-content" className="min-h-screen bg-[var(--bg-page)] px-4 py-12 text-gray-900 sm:px-6 lg:px-8">
       <article className="privacy-policy mx-auto max-w-4xl">
         <div className="mb-10 not-prose">
           <Link href="/" className="text-sm font-medium text-gray-600 hover:text-gray-900">
             ← Tilbage til EmbedBot
           </Link>
-          <h1 className="mt-8 text-4xl font-bold tracking-tight text-gray-900">
+          <h1 className="mt-8 text-4xl font-normal tracking-tight text-gray-900">
             Privatlivspolitik
           </h1>
           <p className="mt-3 text-base text-gray-600">
@@ -24,7 +24,7 @@ export default function PrivacyPolicy() {
           muligt og bruger kun oplysningerne til tydelige formål.
         </p>
 
-        <div className="not-prose my-8 rounded-2xl border border-blue-200 bg-blue-50 p-5 text-blue-950">
+        <div className="not-prose my-8 rounded-lg border border-[var(--border)] bg-[var(--bg-secondary)] p-5 text-[var(--text-primary)]">
           <p className="font-semibold">Hvis du bruger EmbedBot på vegne af en virksomhed</p>
           <p className="mt-2 text-sm leading-6">
             Virksomheden er normalt ansvarlig for de personoplysninger, som dens

@@ -2,13 +2,14 @@
 
 :root {
   --bg-primary: #ffffff;
-  --bg-secondary: #f6f3ed;
-  --accent: #ffffff;
-  --accent-hover: #f6f3ed;
-  --text-primary: #111111;
-  --text-muted: #6b6258;
-  --text-subtle: #8a7e70;
-  --border: rgba(17, 17, 17, 0.08);
+  --bg-page: #fcfcfa;
+  --bg-secondary: #f4f1eb;
+  --accent: #232321;
+  --accent-hover: #3d3a35;
+  --text-primary: #20211f;
+  --text-muted: #6a6865;
+  --text-subtle: #797773;
+  --border: #e9e5dd;
 }
 
 *, *::before, *::after {
@@ -18,17 +19,18 @@
 html, body {
   margin: 0;
   padding: 0;
-  background: var(--bg-secondary);
+  background: var(--bg-page);
   color: var(--text-primary);
-  font-family: var(--font-poppins), sans-serif;
+  font-family: var(--font-inter), sans-serif;
+  -webkit-font-smoothing: antialiased;
   overflow-x: hidden;
   min-height: 100dvh;
   overflow-y: auto;
 }
 
 ::selection {
-  background: var(--accent);
-  color: #111111;
+  background: #e8dfd0;
+  color: var(--text-primary);
 }
 
 .universal-back-button {
@@ -37,7 +39,7 @@ html, body {
   left: 16px;
   width: 40px;
   height: 40px;
-  border-radius: 999px;
+  border-radius: 7px;
   border: 1px solid var(--border);
   background: rgba(246, 243, 237, 0.88);
   color: var(--text-primary);
@@ -45,13 +47,13 @@ html, body {
   align-items: center;
   justify-content: center;
   font-size: 20px;
-  font-weight: 700;
+  font-weight: 500;
   line-height: 1;
   cursor: pointer;
   z-index: 9999;
   backdrop-filter: blur(12px);
   -webkit-backdrop-filter: blur(12px);
-  box-shadow: 0 8px 24px rgba(17, 17, 17, 0.08);
+  box-shadow: none;
 }
 
 .universal-back-button:hover {
@@ -71,9 +73,9 @@ html, body {
   z-index: 100000;
   padding: 0.7rem 1rem;
   border-radius: 0.65rem;
-  background: #111111;
+  background: var(--accent);
   color: #ffffff;
-  font-weight: 700;
+  font-weight: 500;
   text-decoration: none;
   transform: translateY(-180%);
   transition: transform 150ms ease;
@@ -97,37 +99,37 @@ html, body {
   margin: 0 auto;
   padding: 1.25rem;
   border: 1px solid rgba(17, 17, 17, 0.16);
-  border-radius: 1rem;
+  border-radius: 7px;
   background: #ffffff;
-  box-shadow: 0 18px 48px rgba(17, 17, 17, 0.22);
+  box-shadow: 0 8px 24px rgba(32, 33, 31, 0.08);
 }
 
 .cookie-consent-kicker {
   margin: 0 0 0.25rem;
-  color: #6b6258;
+  color: #6a6865;
   font-size: 0.75rem;
-  font-weight: 700;
+  font-weight: 500;
   letter-spacing: 0.1em;
   text-transform: uppercase;
 }
 
 .cookie-consent h2 {
   margin: 0;
-  color: #111111;
+  color: var(--text-primary);
   font-size: 1.1rem;
 }
 
 .cookie-consent p:not(.cookie-consent-kicker) {
   max-width: 54ch;
   margin: 0.4rem 0 0;
-  color: #4f4942;
+  color: #6a6865;
   font-size: 0.9rem;
   line-height: 1.55;
 }
 
 .cookie-consent a,
 .cookie-preferences-button {
-  color: #4c1d95;
+  color: #3d3a35;
   text-decoration: underline;
   text-underline-offset: 3px;
 }
@@ -143,24 +145,24 @@ html, body {
 .cookie-consent-secondary,
 .cookie-preferences-button {
   min-height: 42px;
-  border: 1px solid #111111;
-  border-radius: 999px;
+  border: 1px solid var(--accent);
+  border-radius: 7px;
   padding: 0.65rem 0.9rem;
   cursor: pointer;
   font: inherit;
   font-size: 0.88rem;
-  font-weight: 700;
+  font-weight: 500;
 }
 
 .cookie-consent-primary {
-  background: #111111;
+  background: var(--accent);
   color: #ffffff;
 }
 
 .cookie-consent-secondary,
 .cookie-preferences-button {
   background: #ffffff;
-  color: #111111;
+  color: var(--text-primary);
 }
 
 .cookie-preferences-button {
@@ -182,13 +184,13 @@ html, body {
 }
 
 :focus-visible {
-  outline: 3px solid #6d28d9;
+  outline: 2px solid #746958;
   outline-offset: 3px;
 }
 
 .privacy-policy {
   padding: 2rem 1rem 5rem;
-  color: #292524;
+  color: #20211f;
   font-size: 1rem;
   line-height: 1.8;
 }
@@ -196,28 +198,31 @@ html, body {
 .privacy-policy > p {
   max-width: 48rem;
   margin: 0 auto 1.5rem;
-  color: #57534e;
+  color: #6a6865;
 }
 
 .privacy-policy h1 {
+  font-weight: 400;
   margin: 0;
-  color: #171412;
+  color: #20211f;
   font-size: clamp(2rem, 5vw, 3.25rem);
   line-height: 1.1;
   letter-spacing: -0.04em;
 }
 
 .privacy-policy h2 {
+  font-weight: 500;
   margin: 0 0 1.4rem;
-  color: #171412;
+  color: #20211f;
   font-size: clamp(1.45rem, 3vw, 2rem);
   line-height: 1.25;
   letter-spacing: -0.025em;
 }
 
 .privacy-policy h3 {
+  font-weight: 500;
   margin: 2.75rem 0 1rem;
-  color: #292524;
+  color: #20211f;
   font-size: 1.15rem;
   line-height: 1.35;
 }
@@ -228,24 +233,24 @@ html, body {
 
 .privacy-policy p {
   margin: 0 0 1.4rem;
-  color: #57534e;
+  color: #6a6865;
 }
 
 .privacy-policy a {
-  color: #6d28d9;
+  color: #746958;
   text-decoration: underline;
   text-decoration-thickness: 1px;
   text-underline-offset: 3px;
 }
 
 .privacy-policy a:hover {
-  color: #4c1d95;
+  color: #3d3a35;
 }
 
 .privacy-policy ul {
   margin: 0.5rem 0 1.8rem;
   padding-left: 1.6rem;
-  color: #57534e;
+  color: #6a6865;
   list-style: disc;
 }
 
@@ -255,7 +260,7 @@ html, body {
 }
 
 .privacy-policy li::marker {
-  color: #8b5cf6;
+  color: #8c8883;
 }
 
 .privacy-policy section {
@@ -269,9 +274,9 @@ html, body {
 .privacy-policy address {
   margin: 1.25rem 0 1.5rem;
   padding: 1.25rem 1.4rem;
-  border-left: 3px solid #a78bfa;
+  border-left: 3px solid #dcd7cf;
   border-radius: 0 0.85rem 0.85rem 0;
-  background: #faf8ff;
+  background: #f4f1eb;
   color: #44403c;
   line-height: 1.8;
 }
@@ -281,7 +286,7 @@ html, body {
   margin: 2.5rem auto 0;
   padding: 1.25rem;
   border: 1px solid rgba(41, 37, 36, 0.1);
-  border-radius: 1rem;
+  border-radius: 7px;
   background: #fafaf9;
 }
 
@@ -296,12 +301,30 @@ html, body {
 }
 
 .privacy-policy-toc-link:hover {
-  background: #f5f3ff;
-  color: #5b21b6 !important;
+  background: #f4f1eb;
+  color: #20211f !important;
 }
 
 @media (min-width: 640px) {
   .privacy-policy {
     padding-top: 4rem;
   }
+}
+
+/* Shared control typography; customer widget styles remain scoped to the widget. */
+button, input, select, textarea {
+  font-family: inherit;
+}
+
+@theme inline {
+  --color-gray-50: #f8f7f4;
+  --color-gray-200: #e9e5dd;
+  --color-gray-500: #797773;
+  --color-gray-600: #6a6865;
+  --color-gray-900: #20211f;
+}
+
+#main-content :is(input, textarea, select):focus-visible {
+  outline: 2px solid #746958;
+  outline-offset: 3px;
 }

@@ -75,31 +75,20 @@ export default function SupportPage() {
           margin: 0;
           padding: 0;
           min-height: 100%;
-          background: #f6f3ed;
+          background: var(--bg-page);
         }
 
         .support-page {
           min-height: 100dvh;
-          font-family: var(--font-poppins), "Poppins", sans-serif;
-          color: #111111;
+          font-family: var(--font-inter), sans-serif;
+          color: var(--text-primary);
           max-width: 1080px;
           margin: 0 auto;
           padding: 0 28px 64px;
           position: relative;
         }
 
-        .support-page::before {
-          content: "";
-          position: absolute;
-          inset: 8px -24px auto;
-          height: 540px;
-          background:
-            radial-gradient(circle at 78% 12%, rgba(255, 255, 255, 0.92) 0%, rgba(255, 255, 255, 0) 30%),
-            radial-gradient(circle at 18% 32%, rgba(238, 232, 220, 0.78) 0%, rgba(238, 232, 220, 0) 38%);
-          pointer-events: none;
-          z-index: 0;
-          filter: blur(8px);
-        }
+        .support-page::before { display: none; }
 
         .support-nav {
           position: sticky;
@@ -110,12 +99,12 @@ export default function SupportPage() {
           justify-content: space-between;
           margin-top: 14px;
           padding: 18px 22px;
-          border: 1px solid rgba(17, 17, 17, 0.08);
-          border-radius: 20px;
-          background: rgba(255, 255, 255, 0.78);
-          backdrop-filter: blur(18px);
-          -webkit-backdrop-filter: blur(24px);
-          box-shadow: 0 14px 40px rgba(17, 17, 17, 0.045);
+          border: 1px solid var(--border);
+          border-radius: 7px;
+          background: var(--bg-page);
+
+
+          box-shadow: none;
         }
 
         .support-logo {
@@ -137,7 +126,7 @@ export default function SupportPage() {
         }
 
         .support-nav-link {
-          color: #6b6258;
+          color: var(--text-muted);
           font-size: 0.85rem;
           font-weight: 500;
           text-decoration: none;
@@ -148,7 +137,7 @@ export default function SupportPage() {
         .support-nav-link:hover,
         .support-nav-link.active {
           opacity: 1;
-          color: #111111;
+          color: var(--text-primary);
         }
 
         .support-layout {
@@ -166,12 +155,12 @@ export default function SupportPage() {
           width: fit-content;
           align-items: center;
           padding: 8px 12px;
-          border-radius: 999px;
-          border: 1px solid rgba(17, 17, 17, 0.08);
+          border-radius: 7px;
+          border: 1px solid var(--border);
           background: #ffffff;
-          color: #6b6258;
+          color: var(--text-muted);
           font-size: 0.82rem;
-          font-weight: 700;
+          font-weight: 500;
           letter-spacing: 0.14em;
           text-transform: uppercase;
           margin-bottom: 20px;
@@ -179,9 +168,9 @@ export default function SupportPage() {
 
         .support-title {
           margin: 0 0 20px;
-          color: #111111;
+          color: var(--text-primary);
           font-size: clamp(2.45rem, 5.8vw, 4.8rem);
-          font-weight: 700;
+          font-weight: 400;
           line-height: 0.98;
           letter-spacing: -0.05em;
         }
@@ -189,7 +178,7 @@ export default function SupportPage() {
         .support-lead {
           margin: 0;
           max-width: 48ch;
-          color: #5f584f;
+          color: var(--text-muted);
           font-size: clamp(1rem, 2.1vw, 1.12rem);
           line-height: 1.8;
         }
@@ -198,11 +187,11 @@ export default function SupportPage() {
           display: grid;
           gap: 16px;
           padding: clamp(24px, 4vw, 34px);
-          border: 1px solid rgba(17, 17, 17, 0.07);
-          border-radius: 24px;
-          background: rgba(255, 255, 255, 0.94);
-          box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.72), 0 18px 42px rgba(17, 17, 17, 0.055);
-          backdrop-filter: blur(10px);
+          border: 1px solid var(--border);
+          border-radius: 7px;
+          background: var(--bg-primary);
+          box-shadow: none;
+
         }
 
         .support-field {
@@ -211,9 +200,9 @@ export default function SupportPage() {
         }
 
         .support-label {
-          color: #6b6258;
+          color: var(--text-muted);
           font-size: 0.78rem;
-          font-weight: 700;
+          font-weight: 500;
           letter-spacing: 0.12em;
           text-transform: uppercase;
         }
@@ -222,10 +211,10 @@ export default function SupportPage() {
         .support-select,
         .support-textarea {
           width: 100%;
-          border: 1px solid rgba(17, 17, 17, 0.1);
-          border-radius: 14px;
+          border: 1px solid var(--border);
+          border-radius: 7px;
           background: #ffffff;
-          color: #111111;
+          color: var(--text-primary);
           font: inherit;
           font-size: 0.95rem;
           outline: none;
@@ -249,7 +238,7 @@ export default function SupportPage() {
         .support-select:focus,
         .support-textarea:focus {
           border-color: rgba(17, 17, 17, 0.24);
-          box-shadow: 0 0 0 4px rgba(246, 243, 237, 0.9);
+          box-shadow: none;
         }
 
         .support-button {
@@ -257,15 +246,15 @@ export default function SupportPage() {
           align-items: center;
           justify-content: center;
           min-height: 52px;
-          border: 1px solid rgba(17, 17, 17, 0.1);
-          border-radius: 999px;
-          background: #111111;
+          border: 1px solid var(--border);
+          border-radius: 7px;
+          background: var(--accent);
           color: #ffffff;
           cursor: pointer;
           font: inherit;
           font-size: 0.95rem;
-          font-weight: 700;
-          box-shadow: 0 16px 34px rgba(17, 17, 17, 0.16);
+          font-weight: 500;
+          box-shadow: none;
           transition: background 180ms ease, opacity 180ms ease, transform 180ms ease;
         }
 
@@ -282,10 +271,10 @@ export default function SupportPage() {
 
         .support-feedback {
           margin: 0;
-          border-radius: 14px;
+          border-radius: 7px;
           padding: 12px 14px;
-          color: #5f584f;
-          background: #f6f3ed;
+          color: var(--text-muted);
+          background: var(--bg-secondary);
           font-size: 0.9rem;
           line-height: 1.5;
         }
@@ -300,7 +289,7 @@ export default function SupportPage() {
             top: 10px;
             margin-top: 10px;
             padding: 15px 16px;
-            border-radius: 16px;
+            border-radius: 7px;
           }
           .support-nav-links { gap: 14px; }
           .support-layout {
@@ -309,6 +298,7 @@ export default function SupportPage() {
             padding-top: 56px;
           }
         }
+        @media (max-width: 620px) { .support-nav { padding-left: 44px; } }
       `}</style>
 
       <motion.nav

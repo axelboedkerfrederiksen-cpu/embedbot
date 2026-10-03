@@ -157,7 +157,7 @@ export default function SamtalerPage() {
           minHeight: "100dvh",
           display: "grid",
           placeItems: "center",
-          background: "#030712",
+          background: "var(--bg-page)",
         }}
       >
         Indlæser samtaler...
@@ -170,7 +170,7 @@ export default function SamtalerPage() {
       id="main-content"
       style={{
         minHeight: "100dvh",
-        background: "#030712",
+        background: "var(--bg-page)",
         padding: "40px 16px",
       }}
     >
@@ -178,7 +178,7 @@ export default function SamtalerPage() {
         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: 10 }}>
           <div>
             <h1 style={{ margin: 0, fontSize: 30 }}>Samtaler</h1>
-            <p style={{ margin: "6px 0 0", color: "#9ca3af", fontSize: 14 }}>
+            <p style={{ margin: "6px 0 0", color: "var(--text-muted)", fontSize: 14 }}>
               {business?.name || "Ukendt chatbot"}
               {business?.website_url ? ` · ${business.website_url}` : ""}
             </p>
@@ -187,11 +187,11 @@ export default function SamtalerPage() {
             href="/dashboard"
             style={{
               textDecoration: "none",
-              border: "1px solid rgba(255,255,255,0.1)",
-              borderRadius: 999,
-              background: "#111827",
-              color: "#ffffff",
-              fontWeight: 700,
+              border: "1px solid var(--border)",
+              borderRadius: 7,
+              background: "var(--bg-primary)",
+              color: "var(--text-primary)",
+              fontWeight: 500,
               padding: "8px 14px",
               fontSize: 13,
             }}
@@ -204,10 +204,10 @@ export default function SamtalerPage() {
           <p
             style={{
               margin: 0,
-              border: "1px solid rgba(96,165,250,0.35)",
-              background: "rgba(59,130,246,0.12)",
-              color: "#60a5fa",
-              borderRadius: 12,
+              border: "1px solid #f0cbc7",
+              background: "var(--dash-danger-soft, #fff0ee)",
+              color: "#a13e35",
+              borderRadius: 7,
               padding: "10px 12px",
               fontSize: 14,
             }}
@@ -219,15 +219,15 @@ export default function SamtalerPage() {
         {conversations.length === 0 ? (
           <section
             style={{
-              background: "#111827",
-              border: "1px solid rgba(255,255,255,0.05)",
-              borderRadius: 12,
-              boxShadow: "0 8px 24px rgba(0,0,0,0.04)",
+              background: "var(--bg-primary)",
+              border: "1px solid var(--border)",
+              borderRadius: 7,
+              boxShadow: "none",
               padding: "28px 16px",
               textAlign: "center",
             }}
           >
-            <p style={{ margin: 0, color: "#9ca3af" }}>Ingen samtaler fundet endnu.</p>
+            <p style={{ margin: 0, color: "var(--text-muted)" }}>Ingen samtaler fundet endnu.</p>
           </section>
         ) : (
           <section style={{ display: "grid", gap: 10 }}>
@@ -242,10 +242,10 @@ export default function SamtalerPage() {
                 <article
                   key={conversation.id}
                   style={{
-                    background: "#111827",
-                    border: "1px solid rgba(255,255,255,0.05)",
-                    borderRadius: 12,
-                    boxShadow: "0 8px 24px rgba(0,0,0,0.04)",
+                    background: "var(--bg-primary)",
+                    border: "1px solid var(--border)",
+                    borderRadius: 7,
+                    boxShadow: "none",
                     overflow: "hidden",
                   }}
                 >
@@ -263,14 +263,14 @@ export default function SamtalerPage() {
                       padding: "12px 14px",
                     }}
                   >
-                    <span style={{ fontWeight: 700, fontSize: 14 }}>Samtale {conversation.id.slice(0, 8)}</span>
-                    <span style={{ color: "#9ca3af", fontSize: 13 }}>{createdAtLabel}</span>
+                    <span style={{ fontWeight: 500, fontSize: 14 }}>Samtale {conversation.id.slice(0, 8)}</span>
+                    <span style={{ color: "var(--text-muted)", fontSize: 13 }}>{createdAtLabel}</span>
                   </button>
 
                   {isOpen ? (
-                    <div style={{ borderTop: "1px solid rgba(255,255,255,0.05)", padding: 12, display: "grid", gap: 8 }}>
+                    <div style={{ borderTop: "1px solid var(--border)", padding: 12, display: "grid", gap: 8 }}>
                       {messages.length === 0 ? (
-                        <p style={{ margin: 0, color: "#9ca3af", fontSize: 13 }}>Ingen beskeder i denne samtale.</p>
+                        <p style={{ margin: 0, color: "var(--text-muted)", fontSize: 13 }}>Ingen beskeder i denne samtale.</p>
                       ) : (
                         messages.map((message, index) => {
                           const isUser = message.role.toLowerCase().includes("user");
@@ -286,12 +286,12 @@ export default function SamtalerPage() {
                               <div
                                 style={{
                                   maxWidth: "78%",
-                                  borderRadius: 12,
+                                  borderRadius: 7,
                                   padding: "9px 11px",
                                   fontSize: 13,
                                   lineHeight: 1.4,
-                                  background: isUser ? "#3b82f6" : "rgba(255,255,255,0.05)",
-                                  color: "#ffffff",
+                                  background: isUser ? "var(--accent)" : "var(--bg-secondary)",
+                                  color: isUser ? "#ffffff" : "var(--text-primary)",
                                   whiteSpace: "pre-wrap",
                                   wordBreak: "break-word",
                                 }}

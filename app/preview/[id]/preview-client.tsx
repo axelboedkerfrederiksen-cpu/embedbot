@@ -26,26 +26,28 @@ export default function PreviewClient({ businessId, previewToken }: { businessId
     <main id="main-content" className="preview-page">
       <style jsx global>{`
         *, *::before, *::after { box-sizing: border-box; }
-        html, body { margin: 0; min-height: 100%; background: #f6f3ed; }
+        html, body { margin: 0; min-height: 100%; background: var(--bg-page); }
         .preview-page {
           min-height: 100dvh; display: grid; place-items: center; padding: 28px;
-          color: #111; font-family: var(--font-poppins), "Poppins", sans-serif;
+          color: var(--text-primary); font-family: var(--font-inter), sans-serif;
         }
         .preview-card {
-          width: min(620px, 100%); padding: clamp(30px, 6vw, 54px); border: 1px solid rgba(17,17,17,.08);
-          border-radius: 28px; background: rgba(255,255,255,.92); box-shadow: 0 24px 70px rgba(17,17,17,.08);
+          width: min(620px, 100%); padding: clamp(30px, 6vw, 54px); border: 1px solid var(--border);
+          border-radius: 7px; background: var(--bg-primary); box-shadow: none;
           text-align: center;
         }
-        .preview-kicker { color: #746b61; font-size: .78rem; font-weight: 700; letter-spacing: .13em; text-transform: uppercase; }
-        .preview-title { margin: 18px auto 16px; max-width: 12ch; font-size: clamp(2.25rem, 7vw, 4.2rem); line-height: 1; letter-spacing: -.05em; }
-        .preview-text { margin: 0 auto; max-width: 48ch; color: #5f584f; line-height: 1.75; }
+        .preview-kicker { color: var(--text-subtle); font-size: .78rem; font-weight: 500; letter-spacing: .13em; text-transform: uppercase; }
+        .preview-title { margin: 18px auto 16px; max-width: 12ch; font-size: clamp(2.25rem, 7vw, 4.2rem); line-height: 1; letter-spacing: -.05em;
+        font-weight: 400;
+      }
+        .preview-text { margin: 0 auto; max-width: 48ch; color: var(--text-muted); line-height: 1.75; }
         .preview-button {
           display: inline-flex; align-items: center; justify-content: center; min-height: 50px; margin-top: 28px;
-          padding: 0 24px; border: 0; border-radius: 999px; background: #111; color: #fff;
-          cursor: pointer; font: inherit; font-weight: 700;
+          padding: 0 24px; border: 0; border-radius: 7px; background: var(--accent); color: #fff;
+          cursor: pointer; font: inherit; font-weight: 500;
         }
         .preview-button:disabled { cursor: wait; opacity: .55; }
-        .preview-note { margin: 22px 0 0; color: #8a7e70; font-size: .78rem; line-height: 1.6; }
+        .preview-note { margin: 22px 0 0; color: var(--text-subtle); font-size: .78rem; line-height: 1.6; }
         .preview-note a { color: inherit; }
       `}</style>
 
