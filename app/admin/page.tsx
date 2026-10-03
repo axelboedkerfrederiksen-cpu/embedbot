@@ -235,6 +235,8 @@ export default function AdminPage() {
   const [sortBy, setSortBy] = useState<"date" | "name" | "status">("date");
   const [toasts, setToasts] = useState<Toast[]>([]);
   const [pendingDeleteBusiness, setPendingDeleteBusiness] = useState<Business | null>(null);
+  const [deleteMfaCode, setDeleteMfaCode] = useState("");
+  const [deleteError, setDeleteError] = useState("");
   const [lastUpdatedAt, setLastUpdatedAt] = useState<Date | null>(null);
   const [customerDetail, setCustomerDetail] = useState<CustomerDetail | null>(null);
   const [customerDetailLoading, setCustomerDetailLoading] = useState(false);
@@ -687,12 +689,13 @@ export default function AdminPage() {
   async function deleteBusiness(id: string) {
     setDeletingId(id);
     setError("");
+    setDeleteError("");
 
     try {
       const res = await fetch("/api/admin/businesses", {
         method: "DELETE",
         headers: buildAdminHeaders(),
-        body: JSON.stringify({ business_id: id }),
+        body: JSON.stringify({ business_id: id, mfa_code: deleteMfaCode }),
       });
 
       const data = await res.json();
@@ -702,9 +705,11 @@ export default function AdminPage() {
 
       await fetchBusinesses();
       pushToast("Virksomhed slettet", "success");
+      setPendingDeleteBusiness(null);
     } catch (deleteError) {
       if (deleteError instanceof Error) {
         setError(deleteError.message);
+        setDeleteError(deleteError.message);
         pushToast(deleteError.message, "error");
       } else {
         setError("Kunne ikke slette virksomhed.");
@@ -712,7 +717,7 @@ export default function AdminPage() {
       }
     } finally {
       setDeletingId(null);
-      setPendingDeleteBusiness(null);
+      setDeleteMfaCode("");
     }
   }
 
@@ -1126,6 +1131,12 @@ export default function AdminPage() {
 
             {activeView === "system" ? <section className="grid gap-4 md:grid-cols-2"><article className={statsCardClass}><div className="flex items-center gap-2"><Server size={17}/><h3 className="font-semibold">Datakilde</h3></div><p className="mt-3 text-sm text-[#6b6258]">Kundedata hentes fra Supabase med service-role på serveren. Skrivehandlinger kræver admin-adgang og CSRF-header.</p><div className="mt-4 flex items-center gap-2 text-sm font-semibold"><span className={`h-2 w-2 rounded-full ${systemOnline ? "bg-[#31795d]" : "bg-[#b86f3b]"}`} />{systemOnline ? "Forbundet" : "Kontrollér forbindelsen"}</div></article><article className={statsCardClass}><div className="flex items-center gap-2"><Settings2 size={17}/><h3 className="font-semibold">Seneste synkronisering</h3></div><p className="mt-3 text-sm text-[#6b6258]">{lastUpdatedAt ? lastUpdatedAt.toLocaleString("da-DK") : "Ikke hentet endnu"}</p><button onClick={() => { void fetchBusinesses(); void fetchSupportMessages(); }} className="mt-4 rounded-xl bg-[#111111] px-3 py-2 text-sm font-semibold text-white">Opdatér data</button></article></section> : null}
 
+            {activeView === "system" ? <section className={statsCardClass}>
+              <h3 className="font-semibold">Sikkerhed</h3>
+              <p className="mt-3 text-sm text-[#6b6258]">Sletning af en aktiv chatbot kræver en frisk kode fra din authenticator. Koden kontrolleres, før chatbotten slettes eller et abonnement stoppes.</p>
+              <AdminMfa onVerified={async()=>{const allowed=await fetchBusinesses();if(!allowed)setIsAuthenticated(false);}} />
+            </section> : null}
+
             {activeView === "businesses" ? <section className="rounded-2xl border border-[rgba(17,17,17,0.08)] bg-[rgba(255,255,255,0.94)] p-4 shadow-[0_18px_40px_rgba(17,17,17,0.05)] backdrop-blur sm:p-5">
               <div className="mb-4 flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
                 <h2 className="text-lg font-semibold">Virksomheder</h2>
@@ -1296,6 +1307,8 @@ export default function AdminPage() {
                                 } else if (value === "pilot") {
                                   void startManualPilot(business);
                                 } else if (value === "delete") {
+                                  setDeleteMfaCode("");
+                                  setDeleteError("");
                                   setPendingDeleteBusiness(business);
                                 }
                               }}
@@ -1367,7 +1380,7 @@ export default function AdminPage() {
                                 ) : null}
 
                                 <button
-                                  onClick={() => setPendingDeleteBusiness(business)}
+                                  onClick={() => {setDeleteMfaCode("");setDeleteError("");setPendingDeleteBusiness(business);}}
                                   className="inline-flex items-center gap-1 rounded-lg border border-[rgba(17,17,17,0.10)] bg-white px-3 py-1.5 text-sm text-[#111111] transition hover:bg-[rgba(246,243,237,0.9)]"
                                 >
                                   <Trash2 size={14} /> Slet
@@ -1526,16 +1539,23 @@ export default function AdminPage() {
                 Er du sikker pa at du vil slette <strong>{pendingDeleteBusiness.name || "denne virksomhed"}</strong>? Denne handling kan ikke fortrydes.
               </p>
 
+              {pendingDeleteBusiness.activated ? <label className="mt-4 block text-sm">
+                Bekræft sletning med en frisk kode fra din authenticator
+                <input aria-label="Authenticator-kode til sletning" className="mt-2 block w-full rounded-lg border p-2" autoComplete="one-time-code" inputMode="numeric" maxLength={6} value={deleteMfaCode} onChange={(event) => setDeleteMfaCode(event.target.value.replace(/[^0-9]/g, ""))} disabled={deletingId !== null} />
+              </label> : null}
+              {deleteError ? <p role="alert" className="mt-3 text-sm text-[#9b3d2f]">{deleteError}</p> : null}
+
               <div className="mt-5 flex justify-end gap-2">
                 <button
-                  onClick={() => setPendingDeleteBusiness(null)}
+                  disabled={deletingId !== null}
+                  onClick={() => {setPendingDeleteBusiness(null);setDeleteMfaCode("");setDeleteError("");}}
                   className="rounded-lg border border-[rgba(17,17,17,0.10)] bg-white px-3 py-1.5 text-sm text-[#111111]"
                 >
                   Annuller
                 </button>
                 <button
                   onClick={() => deleteBusiness(pendingDeleteBusiness.id)}
-                  disabled={deletingId === pendingDeleteBusiness.id}
+                  disabled={deletingId === pendingDeleteBusiness.id || Boolean(pendingDeleteBusiness.activated && !/^[0-9]{6}$/.test(deleteMfaCode))}
                   className="rounded-lg border border-[rgba(17,17,17,0.08)] bg-[#111111] px-3 py-1.5 text-sm font-semibold text-white transition hover:bg-[#2a2a2a] disabled:opacity-60"
                 >
                   {deletingId === pendingDeleteBusiness.id ? "Sletter" : "Slet"}

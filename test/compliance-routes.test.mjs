@@ -29,13 +29,14 @@ const trial=await import('../app/api/dashboard/trial/route.ts');
 const activation=await import('../app/api/activate/route.ts');
 const deletion=await import('../app/api/conversations/delete/route.ts');
 const {verifyAdminSession}=await import('../lib/admin-auth.ts');
+let adminBusinesses;
 const {privacyUrl,visitorSelector}=await import('../lib/compliance/validation.ts');
 const {businessInput}=await import('../lib/compliance/business-input.ts');
 const {chatReference,readChatReference}=await import('../lib/compliance/chat-reference.ts');
 const {TERMS,DPA}=await import('../lib/compliance/legal.ts');
 const {NextRequest}=await import('next/server.js');
 let db;
-before(async()=>{db=await testDatabase();state.db=db.client;});
+before(async()=>{db=await testDatabase();state.db=db.client;adminBusinesses=await import("../app/api/admin/businesses/route.ts");});
 after(async()=>db?.pg.close());
 const origin='https://embedbot.example';
 const request=(path,input,suppliedOrigin=origin,method='POST')=>new NextRequest(origin+path,{method,headers:{Origin:suppliedOrigin,'Content-Type':'application/json'},body:JSON.stringify(input)});
@@ -255,4 +256,32 @@ test('support retry scheduler rejects missing auth and records query failures wi
  const old=state.db;state.db={...old,from(table){const query=old.from(table);if(table==='commerce_tickets')query.run=async()=>({data:null,error:new Error('PRIVATE_SERVER_DETAILS')});return query;}};
  try{assert.equal((await supportCron.GET(req())).status,503);}finally{state.db=old;}
  const rows=(await db.pg.query("select status,failure_code from maintenance_runs where job='support' order by started_at desc")).rows;assert.equal(rows.length,2);assert.ok(rows.some(row=>row.status==='completed'));assert.equal(rows.find(row=>row.status==='failed')?.failure_code,'job_failed');
+});
+
+test('active chatbot deletion requires a new server-verified MFA code even with an aal2 session',async()=>{
+ const id=await tenant();process.env.ADMIN_USER_IDS=state.user.id;
+ state.aal={currentLevel:'aal2',nextLevel:'aal2'};
+ state.mfaFactors=[{id:'test-factor',status:'verified',factor_type:'totp'}];state.mfaChecks=0;
+ await db.pg.query('update businesses set activated=true where id=$1',[id]);
+ await db.pg.query('insert into documents(business_id,content) values($1,$2)',[id,'Synthetic knowledge']);
+ const del=(input)=>adminBusinesses.DELETE(request('/api/admin/businesses',input,origin,'DELETE'));
+ const remains=async()=>{assert.equal((await db.pg.query('select count(*)::int as n from businesses where id=$1',[id])).rows[0].n,1);assert.equal((await db.pg.query('select count(*)::int as n from documents where business_id=$1',[id])).rows[0].n,1);};
+ try{
+  assert.equal((await del({business_id:id,activated:false})).status,403);await remains();assert.equal(state.mfaChecks,0);
+  assert.equal((await del({business_id:id,mfa_code:'000000'})).status,403);await remains();assert.equal(state.mfaChecks,1);
+  state.mfaFactors=[];assert.equal((await del({business_id:id,mfa_code:'123456'})).status,403);await remains();
+  state.mfaFactors=[{id:'test-factor',status:'verified'}];
+  assert.equal((await adminBusinesses.DELETE(request('/api/admin/businesses',{business_id:id,mfa_code:'123456'},'https://evil.example','DELETE'))).status,403);await remains();
+  const res=await del({business_id:id,mfa_code:'123456'});assert.equal(res.status,200);assert.equal((await res.json()).success,true);
+  assert.equal((await db.pg.query('select count(*)::int as n from businesses where id=$1',[id])).rows[0].n,0);
+  assert.equal(state.mfaChecks,2);
+ }finally{state.aal=null;state.mfaFactors=[];delete process.env.ADMIN_USER_IDS;}
+});
+
+test('inactive chatbot deletion preserves the ordinary admin confirmation flow',async()=>{
+ const id=await tenant();process.env.ADMIN_USER_IDS=state.user.id;state.mfaChecks=0;
+ try{
+  const res=await adminBusinesses.DELETE(request('/api/admin/businesses',{business_id:id},origin,'DELETE'));
+  assert.equal(res.status,200);assert.equal(state.mfaChecks,0);
+ }finally{delete process.env.ADMIN_USER_IDS;}
 });

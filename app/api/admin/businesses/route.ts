@@ -90,7 +90,7 @@ export async function DELETE(req: NextRequest) {
       );
     }
 
-    const { business_id } = await req.json();
+    const { business_id, mfa_code } = await req.json();
     const stableBusinessId = typeof business_id === "string" ? business_id.trim() : "";
 
     if (!stableBusinessId) {
@@ -99,12 +99,29 @@ export async function DELETE(req: NextRequest) {
 
     const { data: business, error: businessLookupError } = await supabase
       .from("businesses")
-      .select("stripe_subscription_id")
+      .select("stripe_subscription_id,activated")
       .eq("id", stableBusinessId)
       .maybeSingle();
 
     if (businessLookupError || !business) {
       return NextResponse.json({ error: "Virksomheden blev ikke fundet." }, { status: 404 });
+    }
+
+    if (business.activated) {
+      if (typeof mfa_code !== "string" || !/^[0-9]{6}$/.test(mfa_code)) {
+        return NextResponse.json({ error: "Indtast en frisk authenticator-kode for at slette en aktiv chatbot." }, { status: 403 });
+      }
+      const { data: factors, error: factorError } = await authResult.supabase.auth.mfa.listFactors();
+      const factor = factors?.totp.find((item) => item.status === "verified");
+      if (factorError || !factor) {
+        return NextResponse.json({ error: "Opsæt totrinsbekræftelse på din admin-konto før sletning af en aktiv chatbot." }, { status: 403 });
+      }
+      // Verify this operation on the server before cancelling billing or deleting data.
+      // An existing aal2 session alone is deliberately insufficient.
+      const { error: verificationError } = await authResult.supabase.auth.mfa.challengeAndVerify({ factorId: factor.id, code: mfa_code });
+      if (verificationError) {
+        return NextResponse.json({ error: "Koden kunne ikke bekræftes. Brug en ny kode fra din authenticator." }, { status: 403 });
+      }
     }
 
     const subscriptionId = typeof business.stripe_subscription_id === "string"
