@@ -5,23 +5,8 @@ import { SpeedInsights } from "@vercel/speed-insights/next";
 import Script from "next/script";
 import { useEffect, useState } from "react";
 
-const CONSENT_KEY = "embedbot_cookie_consent";
-const CONSENT_VERSION = "2026-09-17";
-
-type ConsentChoice = "accepted" | "rejected" | null;
-
-function readConsent(): ConsentChoice {
-  try {
-    const raw = window.localStorage.getItem(CONSENT_KEY);
-    if (!raw) return null;
-    const saved = JSON.parse(raw) as { choice?: ConsentChoice; version?: string };
-    return saved.version === CONSENT_VERSION && (saved.choice === "accepted" || saved.choice === "rejected")
-      ? saved.choice
-      : null;
-  } catch {
-    return null;
-  }
-}
+import { CONSENT_KEY, CONSENT_VERSION, parseConsent, analyticsAllowed, markWithdrawn, installAnalyticsGuard, type ConsentChoice } from "@/lib/compliance/consent";
+function readConsent():ConsentChoice { try { return parseConsent(window.localStorage.getItem(CONSENT_KEY)); } catch { return null; } }
 
 export function CookiePreferencesButton() {
   return (
@@ -41,6 +26,7 @@ export default function CookieConsent() {
   const [showSettings, setShowSettings] = useState(false);
 
   useEffect(() => {
+    installAnalyticsGuard();
     const frame = window.requestAnimationFrame(() => {
       setConsent(readConsent());
       setReady(true);
@@ -55,12 +41,11 @@ export default function CookieConsent() {
   }, []);
 
   function saveConsent(choice: Exclude<ConsentChoice, null>) {
-    window.localStorage.setItem(
-      CONSENT_KEY,
-      JSON.stringify({ choice, version: CONSENT_VERSION, savedAt: new Date().toISOString() }),
-    );
+    if (choice === "rejected") markWithdrawn();
+    try { window.localStorage.setItem(CONSENT_KEY, JSON.stringify({ choice, version: CONSENT_VERSION, savedAt: new Date().toISOString() })); } catch { /* No analytics if consent cannot be persisted. */ }
     setConsent(choice);
     setShowSettings(false);
+    if (consent === "accepted" || choice === "accepted") window.location.reload();
   }
 
   const showBanner = ready && (consent === null || showSettings);
@@ -72,10 +57,10 @@ export default function CookieConsent() {
         <>
           <Script id="plausible-script" src="https://plausible.io/js/pa-S_z8kpW-DSXLjSuxMoAre.js" strategy="afterInteractive" />
           <Script id="plausible-init" strategy="afterInteractive">
-            {"window.plausible=window.plausible||function(){(plausible.q=plausible.q||[]).push(arguments)};window.plausible.init=window.plausible.init||function(i){plausible.o=i||{}};window.plausible.init();"}
+            {"window.plausible=window.plausible||function(){(plausible.q=plausible.q||[]).push(arguments)};window.plausible.init=window.plausible.init||function(i){plausible.o=i||{}};window.plausible.init({transformRequest:function(payload){try{var c=JSON.parse(localStorage.getItem(\"embedbot_cookie_consent\")||\"null\");if(!c||c.choice!==\"accepted\"||c.version!==\"2026-10-02\")return null;payload.u=location.origin+location.pathname;payload.r=null;return payload;}catch(e){return null;}}});"}
           </Script>
-          <Analytics />
-          <SpeedInsights />
+          <Analytics beforeSend={event => analyticsAllowed() ? event : null} />
+          <SpeedInsights beforeSend={event => analyticsAllowed() ? event : null} />
         </>
       ) : null}
 

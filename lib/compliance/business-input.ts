@@ -1,0 +1,4 @@
+// Only public bot content and branding can be edited through the generic form.
+// Ownership, billing, activation and privacy are written by dedicated server flows.
+const editable=new Set("name website_url industry description support_email phone address city hours_weekday hours_saturday hours_sunday response_time fallback_action complaint_action products_services delivery_time return_policy payment_methods welcome_message tone language faq cvr social_media current_offers warranty size_guide primary_color secondary_color fab_color font_choice logo_url logo_file_name logo_data_url custom_instructions chat_icon_color chat_outline_enabled chat_outline_color chat_outline_width chat_outline_opacity widget_opacity platform".split(" "));
+export function businessInput(form:Record<string,unknown>){return Object.fromEntries(Object.entries(form).filter(([key,value])=>editable.has(key)&&typeof value==="string"));}

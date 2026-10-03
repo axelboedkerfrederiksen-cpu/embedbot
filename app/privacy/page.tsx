@@ -1,3 +1,4 @@
+import { SUPPLIERS } from "@/lib/compliance/suppliers";
 import Link from "next/link";
 
 export default function PrivacyPolicy() {
@@ -12,7 +13,7 @@ export default function PrivacyPolicy() {
             Privatlivspolitik
           </h1>
           <p className="mt-3 text-base text-gray-600">
-            Senest opdateret: <time dateTime="2026-09-17">17. september 2026</time>
+            Senest opdateret: <time dateTime="2026-10-02">2. oktober 2026</time>
           </p>
         </div>
 
@@ -30,8 +31,8 @@ export default function PrivacyPolicy() {
             besøgende skriver i chatbotten. EmbedBot behandler i så fald disse
             oplysninger efter virksomhedens instruktioner. Virksomheden skal
             derfor selv sørge for relevant information til sine besøgende og et
-            lovligt behandlingsgrundlag. Kontakt os, hvis der er behov for en
-            databehandleraftale.
+            lovligt behandlingsgrundlag. Databehandleraftalen findes som et
+            udkast på <a href="/dpa">DPA-siden</a> og kræver godkendelse før indgåelse.
           </p>
         </div>
 
@@ -180,50 +181,11 @@ export default function PrivacyPolicy() {
           <p>
             Vi bruger databehandlere og andre leverandører, når det er nødvendigt
             for at levere tjenesten. De får kun adgang til de oplysninger, der er
-            relevante for deres opgave, og vi indgår relevante aftaler, hvor det
-            kræves.
+            relevante for deres opgave, Leverandøraftaler og overførselsgrundlag skal verificeres særskilt.
           </p>
-          <ul>
-            <li>
-              <strong>Supabase:</strong> database, login, sessioner og opbevaring. Se{" "}
-              <a href="https://supabase.com/privacy" target="_blank" rel="noreferrer">
-                Supabase&apos;s privatlivspolitik
-              </a>.
-            </li>
-            <li>
-              <strong>OpenAI:</strong> generering af chatbot-svar og embeddings. Se{" "}
-              <a href="https://openai.com/policies/privacy-policy/" target="_blank" rel="noreferrer">
-                OpenAI&apos;s privatlivspolitik
-              </a>.
-            </li>
-            <li>
-              <strong>Stripe:</strong> betaling, abonnement, fakturering, risikokontrol
-              og relateret betalingsadministration. Se{" "}
-              <a href="https://stripe.com/privacy" target="_blank" rel="noreferrer">
-                Stripe&apos;s privatlivspolitik
-              </a>.
-            </li>
-            <li>
-              <strong>Resend:</strong> udsendelse af drifts-, support- og
-              transaktionsrelaterede e-mails. Se{" "}
-              <a href="https://resend.com/legal/privacy-policy" target="_blank" rel="noreferrer">
-                Resend&apos;s privatlivspolitik
-              </a>.
-            </li>
-            <li>
-              <strong>Vercel:</strong> hosting, deployment, tekniske logs, Web
-              Analytics og Speed Insights. Se{" "}
-              <a href="https://vercel.com/legal/privacy-notice" target="_blank" rel="noreferrer">
-                Vercel&apos;s privatlivsmeddelelse
-              </a>.
-            </li>
-            <li>
-              <strong>Plausible:</strong> analyse af brugen af embedbot.dk. Se{" "}
-              <a href="https://plausible.io/data-policy" target="_blank" rel="noreferrer">
-                Plausible&apos;s databeskrivelse
-              </a>.
-            </li>
-          </ul>
+          <ul>{SUPPLIERS.map(s=><li key={s.provider}><strong>{s.provider}:</strong> {s.service} — {s.purpose}. <a href={s.information} target="_blank" rel="noreferrer">Leverandørinformation</a>.</li>)}</ul>
+          <p>Den fælles <Link href="/subprocessors">leverandøroversigt</Link> viser verificerede tjenester samt de juridiske enheder, roller og overførselsforhold, der stadig kræver verificering. DPA’en findes som et tydeligt <Link href="/dpa">udkast</Link> og er endnu ikke en godkendt aftale.</p>
+
           <p>
             Leverandørlisten kan ændre sig, hvis infrastrukturen eller funktionerne
             ændres. Den aktuelle version af denne politik viser de væsentlige
@@ -241,20 +203,7 @@ export default function PrivacyPolicy() {
             virksomhed selv indtaster personfølsomme eller andre følsomme data i
             sit indhold, kan sådanne data dog blive sendt som relevant kontekst.
           </p>
-          <p>
-            OpenAI oplyser, at data fra API-tjenester som udgangspunkt ikke bruges
-            til træning af modeller, medmindre kunden aktivt vælger at dele data.
-            OpenAI oplyser samtidig, at abuse-monitoring logs som udgangspunkt kan
-            opbevares i op til 30 dage, med forbehold for særlige indstillinger,
-            endpoint-typer, lovkrav og sikkerhedshensyn. Se den aktuelle{" "}
-            <a
-              href="https://platform.openai.com/docs/models/default-usage-policies-by-endpoint"
-              target="_blank"
-              rel="noreferrer"
-            >
-              OpenAI API-dokumentation om dataopbevaring
-            </a>.
-          </p>
+          <p>OpenAI bruges til AI-svar og embeddings. Den konkrete kontos dataretention, datadeling, region og endpointindstillinger er ikke verificeret her. Vi antager hverken, at leverandørretention er deaktiveret, eller at én generel periode dækker hele behandlingen. Se <Link href="/subprocessors">leverandøroversigten</Link>; de konkrete indstillinger og aftaler kræver verificering.</p>
         </section>
 
         <section id="overforsler">
@@ -279,11 +228,10 @@ export default function PrivacyPolicy() {
           <h2>8. Internationale overførsler</h2>
           <p>
             Nogle leverandører kan behandle personoplysninger uden for EU/EØS.
-            Hvis det sker, anvender vi de overførselsmekanismer, der er relevante
-            for den konkrete leverandør og behandling, f.eks. en
-            tilstrækkelighedsafgørelse, EU&apos;s standardkontraktbestemmelser eller
-            en anden lovlig mekanisme. Oplysninger om leverandørernes egne
-            overførsler findes i deres privatlivspolitikker og databehandleraftaler.
+            De konkrete modtagere, lande og overførselsgrundlag er endnu ikke
+            verificeret for alle leverandører. Disse forhold skal afklares i
+            leverandøraftalerne; vi antager ikke SCC- eller DPF-status. Se den
+            aktuelle <a href="/subprocessors">leverandøroversigt</a>.
           </p>
         </section>
 
@@ -296,16 +244,10 @@ export default function PrivacyPolicy() {
               eventuelle lovkrav.
             </li>
             <li>
-              <strong>Chatbeskeder:</strong> som standard i højst 90 dage, hvorefter
-              de slettes automatisk og permanent. Hvis en anden, kortere eller
-              længere periode er særskilt aftalt og konfigureret for virksomheden,
-              gælder den periode. Beskeder slettes tidligere ved en gyldig manuel
-              anmodning eller kontosletning, med forbehold for lovkrav og midlertidige
-              sikkerhedskopier.
+              <strong>Chatbeskeder:</strong> den tekniske standard er 90 dage. Virksomheden kan vælge en anden positiv periode efter sin instruks. Central oprydning sletter udløbne samtaler permanent; driftens jobkørsel skal kontrolleres. Gyldige manuelle anmodninger og kontosletning kan slette tidligere. Leverandørkopier og backups vurderes særskilt.
             </li>
             <li>
-              <strong>Support:</strong> så længe det er nødvendigt for at behandle
-              henvendelsen, dokumentere den og håndtere eventuelle tvister.
+              <strong>Besøgendes supportsager:</strong> teknisk standard 90 dage med særskilt virksomhedsindstilling. Kopieret chatkontekst følger også den relevante samtaleretention. <strong>EmbedBots egne supporthenvendelser:</strong> periode skal fastlægges efter formål og nødvendighed; særskilt cleanup-indstilling er klar.
             </li>
             <li>
               <strong>Betaling og bogføring:</strong> så længe det kræves efter

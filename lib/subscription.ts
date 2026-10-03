@@ -34,13 +34,14 @@ export function isBusinessSubscriptionActive(
   const hasStripeSubscription = typeof stripeSubscriptionId === "string" && Boolean(stripeSubscriptionId.trim());
 
   if (subscriptionStatus === "trialing") {
-    // Stripe keeps its own trial status authoritative. Card-free admin pilots
-    // have no Stripe subscription and must carry a future expiry timestamp.
+    // Stripe keeps its own trial status authoritative. A card-free trial only
+    // expires when an administrator records a customer-agreed deadline.
     if (hasStripeSubscription) {
       return true;
     }
 
     const trialEnd = business["current_period_end"];
+    if (trialEnd === null || trialEnd === undefined) return business["activated"] === true;
     const trialEndTime = typeof trialEnd === "string" ? new Date(trialEnd).getTime() : Number.NaN;
     return Number.isFinite(trialEndTime) && trialEndTime > Date.now();
   }

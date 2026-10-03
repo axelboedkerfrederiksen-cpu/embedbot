@@ -1,3 +1,5 @@
+> HISTORISK DOKUMENT — ikke aktuel produktionsstatus eller installationsvejledning. Se [nuværende compliance-dokumentation](docs/compliance/README.md). Krav og observationer nedenfor beskriver en tidligere gennemgang.
+
 # EmbedBot Deployment & Implementation Guide
 
 ## Quick Start
@@ -25,7 +27,7 @@ WHERE table_name='businesses' AND column_name='user_id';
 ### 1.2 Add GDPR Support Tables
 
 1. Create another new query
-2. Copy and paste contents of `/sql/add_gdpr_support.sql`
+2. Copy and paste contents of `supabase/migrations (historisk filhenvisning fjernet)`
 3. Run query
 4. **Verify:** Test functions exist
 
@@ -49,7 +51,7 @@ CRON_SECRET=your-super-secret-random-string-here-32-chars-min
 RATE_LIMIT_SALT=your-optional-custom-salt
 
 # Optional: Configure OpenAI data retention
-# Note: Data retention is disabled by default - no action needed
+# Note: Provider retention and project-specific settings must be verified; no default exemption is assumed
 ```
 
 Generate secure CRON_SECRET:

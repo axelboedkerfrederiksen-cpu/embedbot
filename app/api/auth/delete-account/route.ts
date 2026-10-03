@@ -21,7 +21,7 @@ function isMissingStripeResource(error: unknown) {
 
 export async function POST(req: NextRequest) {
   try {
-    const csrfCheck = await checkCsrfSafety(req, true);
+    const csrfCheck = await checkCsrfSafety(req);
     if (!csrfCheck.safe) {
       return NextResponse.json({ error: csrfCheck.error }, { status: 403 });
     }
@@ -78,7 +78,7 @@ export async function POST(req: NextRequest) {
       .returns<AccountBusiness[]>();
 
     if (businessError) {
-      console.error("Account deletion business lookup failed:", businessError);
+      console.error("Account deletion business lookup failed");
       return NextResponse.json({ error: "Kunne ikke slette kontoen." }, { status: 500 });
     }
 
@@ -105,7 +105,7 @@ export async function POST(req: NextRequest) {
           await stripe.subscriptions.cancel(subscriptionId);
         } catch (error) {
           if (!isMissingStripeResource(error)) {
-            console.error("Account deletion Stripe cancellation failed:", error);
+            console.error("Account deletion Stripe cancellation failed");
             return NextResponse.json(
               { error: "Abonnementet kunne ikke stoppes sikkert. Kontakt support." },
               { status: 502 }
@@ -124,13 +124,13 @@ export async function POST(req: NextRequest) {
     );
 
     if (deletionError) {
-      console.error("Account data deletion failed:", deletionError);
+      console.error("Account data deletion failed");
       return NextResponse.json({ error: "Kunne ikke slette kontoen." }, { status: 500 });
     }
 
     const { error: authDeletionError } = await adminSupabase.auth.admin.deleteUser(user.id);
     if (authDeletionError) {
-      console.error("Account auth deletion failed:", authDeletionError);
+      console.error("Account auth deletion failed");
       return NextResponse.json(
         { error: "Kontodata blev slettet, men login kunne ikke fjernes. Kontakt support." },
         { status: 500 }
@@ -144,8 +144,8 @@ export async function POST(req: NextRequest) {
       deleted: Array.isArray(deletionResult) ? deletionResult[0] || null : deletionResult,
       message: "Kontoen og de tilknyttede EmbedBot-data er permanent slettet.",
     });
-  } catch (error) {
-    console.error("Account deletion failed:", error);
+  } catch {
+    console.error("Account deletion failed");
     return NextResponse.json({ error: "Kunne ikke slette kontoen." }, { status: 500 });
   }
 }

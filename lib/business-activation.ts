@@ -28,7 +28,7 @@ type ActivationBillingUpdate = {
   paymentStatus?: string;
   stripeCustomerId?: string;
   stripeSubscriptionId?: string;
-  currentPeriodEnd?: string;
+  currentPeriodEnd?: string | null;
   customerEmail?: string;
   plan?: PlanSlug;
 };
@@ -61,7 +61,7 @@ function buildBillingUpdatePayload(
     updatePayload.stripe_subscription_id = billingUpdate.stripeSubscriptionId;
   }
 
-  if (billingUpdate.currentPeriodEnd) {
+  if (billingUpdate.currentPeriodEnd !== undefined) {
     updatePayload.current_period_end = billingUpdate.currentPeriodEnd;
   }
 
@@ -79,7 +79,8 @@ function buildBillingUpdatePayload(
 function buildCustomerEmailHtml(
   businessId: string,
   businessName: string | null,
-  manualPilotEndsAt?: string,
+  manualPilotEndsAt?: string | null,
+  manualPilot = false,
 ) {
   const embedScript = `<script src="https://www.embedbot.dk/widget.js?id=${businessId}"></script>`;
   const previewUrl = `https://www.embedbot.dk/preview/${businessId}`;
@@ -91,8 +92,8 @@ function buildCustomerEmailHtml(
     .replace(/>/g, "&gt;");
 
   const pilotParagraph = manualPilotEndsAt
-    ? `<p style="margin:0 0 20px;font-size:15px;line-height:1.7;color:#111;">Jeres gratis pilot løber til og med ${new Intl.DateTimeFormat("da-DK", { dateStyle: "long", timeZone: "Europe/Copenhagen" }).format(new Date(manualPilotEndsAt))}. Der er intet betalingskort og ingen binding.</p>`
-    : "";
+    ? `<p style="margin:0 0 20px;font-size:15px;line-height:1.7;color:#111;">Som aftalt afsluttes jeres gratis pilot automatisk den ${new Intl.DateTimeFormat("da-DK", { dateStyle: "long", timeZone: "Europe/Copenhagen" }).format(new Date(manualPilotEndsAt))}. Der er intet betalingskort og ingen automatisk betaling. Kontakt os, hvis I ønsker at fortsætte.</p>`
+    : manualPilot ? `<p style="margin:0 0 20px;font-size:15px;line-height:1.7;color:#111;">Jeres gratis prøve kræver intet betalingskort og bliver ikke automatisk betalt. Der er ingen aftalt automatisk slutdato. Vi aftaler det videre forløb med jer.</p>` : "";
 
   return `
     <div style="margin:0;padding:32px 16px;background:#f9f9f9;font-family:Arial,sans-serif;color:#111;">
@@ -140,8 +141,7 @@ export async function activateBusinessAndSendEmail(
     billingUpdate?.accessSource === "manual_pilot"
     && hasConfirmedTrialAccess
     && normalizedPaymentStatus === "unpaid"
-    && Number.isFinite(manualPilotEnd)
-    && manualPilotEnd > Date.now()
+    && (billingUpdate.currentPeriodEnd === null || (Number.isFinite(manualPilotEnd) && manualPilotEnd > Date.now()))
     && !billingUpdate.stripeCustomerId
     && !billingUpdate.stripeSubscriptionId;
   const hasConfirmedStripeAccess =
@@ -149,7 +149,7 @@ export async function activateBusinessAndSendEmail(
     && billingUpdate?.paymentConfirmed
     && (hasConfirmedPaidAccess || hasConfirmedTrialAccess);
 
-  // Hard guard: access must come from Stripe or an authenticated, expiring admin pilot.
+  // Hard guard: access must come from Stripe or an authenticated admin pilot.
   if (!hasConfirmedStripeAccess && !hasConfirmedManualPilotAccess) {
     return {
       success: false,
@@ -266,6 +266,7 @@ export async function activateBusinessAndSendEmail(
       stableBusinessId,
       business.name,
       hasConfirmedManualPilotAccess ? billingUpdate?.currentPeriodEnd : undefined,
+      hasConfirmedManualPilotAccess,
     ),
   });
 

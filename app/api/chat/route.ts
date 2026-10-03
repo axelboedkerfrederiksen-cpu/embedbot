@@ -1,3 +1,4 @@
+import { chatReference } from "@/lib/compliance/chat-reference";
 import { chatProgressResponse, type ChatStage } from "@/lib/chat-progress";
 import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@supabase/supabase-js";
@@ -136,7 +137,7 @@ async function consumeAnswerAllowance(
     .gte("created_at", getCurrentUtcMonthStart());
 
   if (countError) {
-    console.error("Could not verify monthly answer allowance:", error || countError);
+    console.error("answer_allowance_verification_failed");
     return { allowed: false, used: answerLimit, limit: answerLimit };
   }
 
@@ -146,14 +147,14 @@ async function consumeAnswerAllowance(
 
 export async function POST(req: NextRequest) {
   const wantsProgress = await req.clone().json().then(body => body.stream_events === true).catch(() => false);
-  if (wantsProgress) return chatProgressResponse(status => handleChat(req, status));
+  if (wantsProgress) return chatProgressResponse((status,reference) => handleChat(req, status,reference));
   return handleChat(req);
 }
 
-async function handleChat(req: NextRequest, status: (stage: ChatStage) => void = () => {}) {
+async function handleChat(req: NextRequest, status: (stage: ChatStage) => void = () => {}, reference: (id:string,token:string)=>void = ()=>{}) {
   try {
     const clientIp = getClientIp(req);
-    const { message, business_id, page_url, preview_token, history, order_lookup, commerce_language } = await req.json();
+    const { message, business_id, page_url, preview_token, history, order_lookup, commerce_language, session } = await req.json();
     const stableBusinessId = typeof business_id === "string" ? business_id.trim() : "";
     const stablePageUrl = typeof page_url === "string" && page_url.trim() ? page_url.trim() : "";
     const stablePreviewToken = typeof preview_token === "string" ? preview_token.trim() : "";
@@ -207,7 +208,7 @@ async function handleChat(req: NextRequest, status: (stage: ChatStage) => void =
 
     if (businessError || !business) {
       // Log security event but don't expose details to user
-      console.warn(`Chat attempt for non-existent business: ${stableBusinessId}`);
+      console.warn("chat_business_not_found");
       return NextResponse.json(
         { error: "Virksomheden blev ikke fundet." },
         { status: 404 }
@@ -328,8 +329,8 @@ async function handleChat(req: NextRequest, status: (stage: ChatStage) => void =
       if (!error && data) {
         docs = data;
       }
-    } catch (matchError) {
-      console.error("Document matching failed:", matchError);
+    } catch {
+      console.error("document_matching_failed");
       // Continue without context
     }
   }
@@ -428,7 +429,7 @@ ${sanitizeOutput(business?.custom_instructions || "Ingen")}
         // Save conversation if we got some response
         if (answer || streamError) {
           try {
-            await supabase
+            const {data:saved,error:saveError} = await supabase
               .from("conversations")
               .insert({
                 business_id: stableBusinessId,
@@ -440,10 +441,13 @@ ${sanitizeOutput(business?.custom_instructions || "Ingen")}
                   },
                   ...(stablePageUrl ? [{ role: "meta", page_url: stablePageUrl }] : []),
                 ],
-              });
-          } catch (saveError) {
+              }).select("id").single();
+            if (!saveError && saved?.id) {
+              try { const token=chatReference(saved.id,stableBusinessId,session);if(token)reference(saved.id,token); } catch { /* Optional reference cannot interrupt an answer. */ }
+            }
+          } catch {
             // Do not block chat replies if persistence fails
-            console.error("Failed to save conversation:", saveError);
+            console.error("conversation_save_failed");
           }
         }
 

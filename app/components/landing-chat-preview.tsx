@@ -62,7 +62,7 @@ export default function ChatPreview() {
       <div className={styles.previewTop}><span className={styles.storeName}>Preview<span>WEBSHOP</span></span><div className={styles.sceneTabs} role="group" aria-label="Vælg samtaleeksempel">{scenes.map((item, i) => <button key={item.label} aria-pressed={scene === i} onClick={() => selectScene(i)}>{item.label}</button>)}</div></div>
       <div className={styles.storeBackdrop} aria-hidden="true"><div className={styles.storeLine}/><div className={styles.storeProducts}><div /><div /><div /></div><div className={styles.storeLineShort}/></div>
       <div className={styles.chatWindow}>
-        <div className={styles.chatHeader}><strong>Preview ChatBot</strong><Maximize size={15} aria-hidden="true" /></div>
+        <div className={styles.chatHeader}><div><strong>Preview ChatBot</strong><div style={{fontSize:11,fontWeight:500}}>AI-assistent</div></div><Maximize size={15} aria-hidden="true" /></div>
         <div className={styles.chatBody}>
           {!showingSupport && <><p className={styles.chatGreeting}>Hejsa! Jeg er Previews chatbot 😊</p><span className={styles.messageTime}>12.30</span></>}
           <AnimatePresence mode="wait"><motion.div key={`${scene}-${cycle}`} initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0, y: -5 }} transition={transition}>
@@ -86,7 +86,7 @@ export default function ChatPreview() {
         </div>
         <div className={styles.chatComposer}>
           <div className={styles.chatInput} aria-hidden="true"><span>Skriv dit spørgsmål…</span><ArrowRight size={15} /></div>
-          <div className={styles.powered}>Lavet af EmbedBot · <span>Privatliv</span></div>
+          <div className={styles.powered}>Drevet af EmbedBot · <span>Privatliv</span></div>
           <span className={styles.supportShortcut}>Opret en supportsag</span>
         </div>
       </div>

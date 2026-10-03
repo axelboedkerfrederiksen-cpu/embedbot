@@ -1,5 +1,7 @@
 "use client";
 
+import AdminMfa from "@/app/components/admin-mfa";
+import { createClient } from "@/lib/supabase";
 import { FormEvent, useEffect, useMemo, useState } from "react";
 import { AnimatePresence, motion } from "framer-motion";
 import {
@@ -187,6 +189,7 @@ function canStartManualPilot(business: Business): boolean {
   }
 
   const trialEnd = business.current_period_end ? new Date(business.current_period_end).getTime() : Number.NaN;
+  if (!business.current_period_end && business.activated) return false;
   return !Number.isFinite(trialEnd) || trialEnd <= Date.now();
 }
 
@@ -209,7 +212,8 @@ function normalizeMessages(raw: unknown): Array<{ role: string; content: string 
 export default function AdminPage() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const [adminCode, setAdminCode] = useState("");
+  const supabase = useMemo(() => createClient(), []);
+  const [signedIn, setSignedIn] = useState(false);
   const [authError, setAuthError] = useState("");
   const [isAuthenticated, setIsAuthenticated] = useState(false);
 
@@ -249,29 +253,21 @@ export default function AdminPage() {
   useEffect(() => {
     let mounted = true;
 
-    const savedAdminCode = typeof window !== "undefined" ? window.sessionStorage.getItem("embedbot_admin_code") || "" : "";
-    const savedAdminEmail = typeof window !== "undefined" ? window.sessionStorage.getItem("embedbot_admin_email") || "" : "";
-    if (savedAdminCode) {
-      setAdminCode(savedAdminCode);
-    }
-    if (savedAdminEmail) {
-      setEmail(savedAdminEmail);
-    }
-
-    if (!savedAdminCode || !savedAdminEmail) {
-      return () => {
-        mounted = false;
-      };
-    }
+    // Remove legacy plaintext credentials left by older versions.
+    window.sessionStorage.removeItem("embedbot_admin_code");
+    window.sessionStorage.removeItem("embedbot_admin_email");
 
     (async () => {
       if (!mounted) {
         return;
       }
 
-      const isAuthorized = await fetchBusinesses(savedAdminCode, savedAdminEmail);
+      const {data:{user}} = await supabase.auth.getUser();
+      if (!user || !mounted) return;
+      setSignedIn(true);
+      const isAuthorized = await fetchBusinesses();
       if (isAuthorized) {
-        await fetchSupportMessages(savedAdminCode, savedAdminEmail);
+        await fetchSupportMessages();
       }
       if (mounted) {
         setIsAuthenticated(isAuthorized);
@@ -281,7 +277,7 @@ export default function AdminPage() {
     return () => {
       mounted = false;
     };
-    // Restore the existing admin session once on mount; credentials are passed explicitly.
+    // Restore the verified Supabase session once on mount.
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
@@ -293,32 +289,18 @@ export default function AdminPage() {
     }, 2800);
   }
 
-  function buildAdminHeaders(adminCodeOverride?: string, adminEmailOverride?: string) {
-    const headers: Record<string, string> = {
-      "Content-Type": "application/json",
-      "x-csrf-token": "admin-ui",
-    };
-
-    const stableAdminCode = (adminCodeOverride ?? adminCode).trim();
-    const stableAdminEmail = (adminEmailOverride ?? email).trim().toLowerCase();
-    if (stableAdminCode) {
-      headers["x-admin-password"] = stableAdminCode;
-    }
-    if (stableAdminEmail) {
-      headers["x-admin-email"] = stableAdminEmail;
-    }
-
-    return headers;
+  function buildAdminHeaders() {
+    return {"Content-Type":"application/json"};
   }
 
-  async function fetchBusinesses(adminCodeOverride?: string, adminEmailOverride?: string) {
+  async function fetchBusinesses() {
     setLoading(true);
     setError("");
 
     try {
       const res = await fetch("/api/admin/businesses", {
         method: "GET",
-        headers: buildAdminHeaders(adminCodeOverride, adminEmailOverride),
+        headers: buildAdminHeaders(),
       });
 
       const data = await res.json();
@@ -343,13 +325,13 @@ export default function AdminPage() {
     }
   }
 
-  async function fetchSupportMessages(adminCodeOverride?: string, adminEmailOverride?: string) {
+  async function fetchSupportMessages() {
     setSupportError("");
 
     try {
       const res = await fetch("/api/support", {
         method: "GET",
-        headers: buildAdminHeaders(adminCodeOverride, adminEmailOverride),
+        headers: buildAdminHeaders(),
       });
 
       const data = await res.json();
@@ -372,26 +354,25 @@ export default function AdminPage() {
     setAuthError("");
 
     const stableEmail = email.trim().toLowerCase();
-    const stablePassword = password.trim();
+    const stablePassword = password;
     if (!stableEmail || !stablePassword) {
       setAuthError("Indtast email og adgangskode.");
       return;
     }
 
-    setAdminCode(stablePassword);
-    if (typeof window !== "undefined") {
-      window.sessionStorage.setItem("embedbot_admin_code", stablePassword);
-      window.sessionStorage.setItem("embedbot_admin_email", stableEmail);
-    }
+    const {error:loginError} = await supabase.auth.signInWithPassword({email:stableEmail,password:stablePassword});
+    setPassword("");
+    if (loginError) { setAuthError("Login kunne ikke bekræftes."); return; }
+    setSignedIn(true);
 
-    const isAuthorized = await fetchBusinesses(stablePassword, stableEmail);
+    const isAuthorized = await fetchBusinesses();
     if (!isAuthorized) {
       setIsAuthenticated(false);
-      setAuthError("Forkert admin-email eller admin-kode.");
+      setAuthError("Din konto mangler admin-tilladelse eller totrinsbekræftelse.");
       return;
     }
 
-    await fetchSupportMessages(stablePassword, stableEmail);
+    await fetchSupportMessages();
     setIsAuthenticated(true);
   }
 
@@ -517,7 +498,18 @@ export default function AdminPage() {
   }
 
   async function startManualPilot(business: Business) {
-    if (!window.confirm("Start kun den offentlige 14-dages pilot, når webshoppen har godkendt demoen. Send installationskoden nu?")) {
+    const agreedDate = window.prompt("Kun hvis I har aftalt automatisk afslutning med kunden: angiv slutdato (ÅÅÅÅ-MM-DD, kl. 23:59 i din lokale tidszone). Lad feltet stå tomt for en prøve uden automatisk afslutning.", "");
+    if (agreedDate === null) return;
+    let agreedEnd:string|null = null;
+    if (agreedDate.trim()) {
+      const date=agreedDate.trim();
+      const parsed=new Date(`${date}T23:59:59`);
+      if (!/^\d{4}-\d{2}-\d{2}$/.test(date) || !Number.isFinite(parsed.getTime()) || parsed.toLocaleDateString("sv-SE")!==date || parsed.getTime()<=Date.now()) {
+        pushToast("Angiv en gyldig fremtidig slutdato, eller lad feltet stå tomt.", "error");return;
+      }
+      agreedEnd=parsed.toISOString();
+    }
+    if (!window.confirm(agreedEnd ? `Bekræft, at kunden har aftalt automatisk afslutning senest ${agreedDate}. Start piloten og send installationsmailen?` : "Start prøven uden automatisk afslutning og send installationsmailen?")) {
       return;
     }
 
@@ -528,7 +520,7 @@ export default function AdminPage() {
       const res = await fetch("/api/activate", {
         method: "POST",
         headers: buildAdminHeaders(),
-        body: JSON.stringify({ business_id: business.id }),
+        body: JSON.stringify({ business_id: business.id, agreed_trial_ends_at:agreedEnd,end_date_agreed:Boolean(agreedEnd) }),
       });
       const data = await res.json();
       if (!res.ok || !data.success) {
@@ -539,10 +531,7 @@ export default function AdminPage() {
       if (customerDetail?.business.id === business.id) {
         await openCustomerCenter(business);
       }
-      const endDate = data.pilotEndsAt
-        ? new Date(data.pilotEndsAt).toLocaleDateString("da-DK")
-        : "om 14 dage";
-      pushToast(`Pilot startet. Udløber ${endDate}`, "success");
+      pushToast(data.pilotEndsAt ? `Pilot startet. Aftalt afslutning ${new Date(data.pilotEndsAt).toLocaleDateString("da-DK")}.` : "Prøve startet uden automatisk afslutning.", "success");
     } catch (pilotError) {
       const message = pilotError instanceof Error ? pilotError.message : "Kunne ikke starte pilotforløbet.";
       setError(message);
@@ -803,6 +792,7 @@ export default function AdminPage() {
           <h1 className="text-3xl font-semibold tracking-tight">EmbedBot Admin</h1>
           <p className="mt-2 text-sm text-[#6b6258]">Indtast admin-email og adgangskode for at fortsatte.</p>
 
+          {signedIn ? <AdminMfa onVerified={async()=>{const allowed=await fetchBusinesses();if(allowed){await fetchSupportMessages();setIsAuthenticated(true);}}}/> : null}
           <form onSubmit={handleLogin} className="mt-6 space-y-4">
             <div>
               <label className="mb-2 block text-xs font-medium uppercase tracking-[0.16em] text-[#8a7e70]">
@@ -1313,7 +1303,7 @@ export default function AdminPage() {
                               <option value="">Quick actions</option>
                               <option value="edit">Rediger</option>
                               {canPreparePrivateDemo(business) ? <option value="demo">Byg og send privat demo</option> : null}
-                              {canStartManualPilot(business) ? <option value="pilot">Start offentlig 14-dages pilot</option> : null}
+                              {canStartManualPilot(business) ? <option value="pilot">Start prøve — slutdato efter aftale</option> : null}
                               <option value="delete">Slet</option>
                             </select>
 

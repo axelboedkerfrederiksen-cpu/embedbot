@@ -17,13 +17,16 @@ test("active and Stripe-managed trialing subscriptions have access", () => {
   assert.equal(isBusinessSubscriptionActive({ subscription_status: "trialing", payment_status: "unpaid", stripe_subscription_id: "sub_trial" }), true);
 });
 
-test("card-free manual trials require a future expiry", () => {
+test("card-free trials remain open unless a customer-agreed deadline is recorded", () => {
   const future = new Date(Date.now() + 60_000).toISOString();
   const past = new Date(Date.now() - 60_000).toISOString();
 
   assert.equal(isBusinessSubscriptionActive({ subscription_status: "trialing", payment_status: "unpaid", current_period_end: future }), true);
   assert.equal(isBusinessSubscriptionActive({ subscription_status: "trialing", payment_status: "unpaid", current_period_end: past }), false);
   assert.equal(isBusinessSubscriptionActive({ subscription_status: "trialing", payment_status: "unpaid" }), false);
+  assert.equal(isBusinessSubscriptionActive({ subscription_status: "trialing", payment_status: "unpaid", activated:true,current_period_end:null }), true);
+  assert.equal(isBusinessSubscriptionActive({ subscription_status: "trialing", payment_status: "unpaid", activated:true,current_period_end:past }), false);
+  assert.equal(isBusinessSubscriptionActive({ subscription_status: "trialing", payment_status: "unpaid", activated:true,current_period_end:"invalid" }), false);
 });
 
 test("ended or failed billing overrides the historical activated flag", () => {

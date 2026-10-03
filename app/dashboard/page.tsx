@@ -14,11 +14,12 @@ import {
 import { createClient } from "@/lib/supabase";
 import { isBusinessSubscriptionActive } from "@/lib/subscription";
 import styles from "./dashboard.module.css";
+import PrivacyPanel from "./privacy-panel";
 import CommercePanel from "./commerce-panel";
 import TicketsPanel from "./tickets-panel";
 import { commerceRequest } from "@/lib/commerce-request";
 
-type DashboardView = "integrations" | "tickets" | "overview" | "messages" | "conversations" | "leads" | "knowledge" | "behavior" | "appearance" | "installation" | "analytics" | "billing" | "settings";
+type DashboardView = "privacy" | "integrations" | "tickets" | "overview" | "messages" | "conversations" | "leads" | "knowledge" | "behavior" | "appearance" | "installation" | "analytics" | "billing" | "settings";
 
 type Business = {
   id: string;
@@ -117,6 +118,7 @@ const NAV_IMPROVE: NavItem[] = [
   { view: "installation", label: "Installation", icon: Code2 },
 ];
 const NAV_MANAGE: NavItem[] = [
+  { view: "privacy", label: "Privatliv & sikkerhed", icon: ShieldCheck },
   { view: "analytics", label: "Analyse", icon: BarChart3 },
   { view: "billing", label: "Abonnement", icon: CreditCard },
   { view: "settings", label: "Indstillinger", icon: Settings },
@@ -173,6 +175,7 @@ const APPEARANCE_FIELDS: FieldDefinition[] = [
 const ALL_FIELDS = [...IDENTITY_FIELDS, ...CONTACT_FIELDS, ...KNOWLEDGE_FIELDS, ...BEHAVIOR_FIELDS, ...APPEARANCE_FIELDS];
 
 const VIEW_COPY: Record<DashboardView, { eyebrow: string; title: string; description: string }> = {
+  privacy: { eyebrow: "Konto", title: "Privatliv & sikkerhed", description: "Politik, opbevaring, aftaler og besøgendes dataanmodninger." },
   integrations: { eyebrow: "Din webshop", title: "Integrationer", description: "Forbind butikkens data med chatbotten, og vælg hvor supportnotifikationer skal sendes." },
   tickets: { eyebrow: "Kundeservice", title: "Supportsager", description: "Følg op på spørgsmål, klager og henvendelser, der kræver din hjælp." },
   overview: { eyebrow: "Dit arbejdsområde", title: "Overblik", description: "Det vigtigste om din chatbot — og hvad der kræver din opmærksomhed." },
@@ -692,6 +695,14 @@ export default function DashboardPage() {
 
   function renderBilling() {
     const subscription = selectedSubscription;
+    if (subscription?.isTrialing && !subscription.subscriptionId) {
+      return <>{renderPageHeader()}<section className={cx(styles.card, styles.sectionCard)}>
+        <h2 className={styles.cardTitle}>{subscription.isActive ? "Gratis prøveperiode" : "Prøveperioden er udløbet"}</h2>
+        <p className={styles.cardDescription}>{subscription.currentPeriodEnd ? `Aftalt slutdato: ${formatDate(subscription.currentPeriodEnd)}.` : "Der er ingen aftalt automatisk slutdato. Vi aftaler det videre forløb med jer."} Der er intet betalingskort og ingen automatisk betaling.</p>
+        <p className={styles.cardDescription}>{subscription.answersUsed.toLocaleString("da-DK")} / {subscription.answerLimit.toLocaleString("da-DK")} AI-svar brugt.</p>
+        <div className={styles.buttonRow}><Link className={styles.buttonSecondary} href="/prices">Se planer</Link><Link className={styles.button} href={supportUrl}>Kontakt os for at købe en plan</Link></div>
+      </section></>;
+    }
     const subscriptionHasEnded = subscription?.status === "canceled" || Boolean(subscription?.canceledAt);
     const subscriptionEndingAtPeriodEnd = Boolean(subscription?.cancelAtPeriodEnd);
     const canManageSubscription = Boolean(subscription?.isActive && subscription.subscriptionId && subscription.customerId && !subscriptionEndingAtPeriodEnd);
@@ -782,7 +793,7 @@ export default function DashboardPage() {
   }
 
   function renderSettings() { return <>{renderPageHeader()}<div style={{ display: "grid", gap: 16 }}><EditorSection title="Virksomhed" description="De grundlæggende oplysninger, kunden ser og botten bruger." fields={IDENTITY_FIELDS} draft={draft} onChange={updateDraftValue} onSave={() => void saveFields("identity", IDENTITY_FIELDS)} saving={savingSection === "identity"} /><EditorSection title="Kontakt og åbningstider" description="Bruges når botten skal sende en kunde videre til jer." fields={CONTACT_FIELDS} draft={draft} onChange={updateDraftValue} onSave={() => void saveFields("contact", CONTACT_FIELDS)} saving={savingSection === "contact"} /><section className={cx(styles.card, styles.sectionCard)}><div className={styles.cardHeader}><div><h2 className={styles.cardTitle}>Dine data og din konto</h2><p className={styles.cardDescription}>Hent en kopi, eller bed om rettelse og sletning.</p></div></div><div className={styles.buttonRow}><a className={styles.buttonSecondary} href="/api/auth/export-data"><ExternalLink size={14} />Download kontodata</a><Link className={styles.buttonSecondary} href="/data-requests">Anmod om rettelse eller sletning</Link></div></section></div></>; }
-  function renderActiveView() { switch (activeView) { case "integrations": return <>{renderPageHeader()}{selectedBusiness ? <CommercePanel key={selectedBusiness.id} businessId={selectedBusiness.id} websiteUrl={selectedBusiness.website_url || ""} demo={dashboardPreview} /> : null}</>; case "tickets": return <>{renderPageHeader()}{selectedBusiness ? <TicketsPanel key={selectedBusiness.id} businessId={selectedBusiness.id} demo={dashboardPreview} onUpdated={handleTicketsUpdated} /> : null}</>; case "messages": return renderCustomerMessages(); case "conversations": return renderConversations(); case "leads": return renderLeads(); case "knowledge": return renderKnowledge(); case "behavior": return renderBehavior(); case "appearance": return renderAppearance(); case "installation": return renderInstallation(); case "analytics": return renderAnalytics(); case "billing": return renderBilling(); case "settings": return renderSettings(); default: return renderOverview(); } }
+  function renderActiveView() { switch (activeView) { case "privacy": return <>{renderPageHeader()}{selectedBusiness ? <PrivacyPanel key={selectedBusiness.id} businessId={selectedBusiness.id} demo={dashboardPreview}/> : null}</>; case "integrations": return <>{renderPageHeader()}{selectedBusiness ? <CommercePanel key={selectedBusiness.id} businessId={selectedBusiness.id} websiteUrl={selectedBusiness.website_url || ""} demo={dashboardPreview} /> : null}</>; case "tickets": return <>{renderPageHeader()}{selectedBusiness ? <TicketsPanel key={selectedBusiness.id} businessId={selectedBusiness.id} demo={dashboardPreview} onUpdated={handleTicketsUpdated} /> : null}</>; case "messages": return renderCustomerMessages(); case "conversations": return renderConversations(); case "leads": return renderLeads(); case "knowledge": return renderKnowledge(); case "behavior": return renderBehavior(); case "appearance": return renderAppearance(); case "installation": return renderInstallation(); case "analytics": return renderAnalytics(); case "billing": return renderBilling(); case "settings": return renderSettings(); default: return renderOverview(); } }
   function renderNavItems(items: NavItem[]) { return items.map((item) => { const Icon = item.icon; const badgeCount = item.badge === "attention" ? analytics.missed.length : item.badge === "messages" ? unreadCustomerMessageCount : item.badge === "tickets" ? newTicketCount : 0; return <button className={cx(styles.navButton, activeView === item.view && styles.navActive)} type="button" key={item.view} onClick={() => changeView(item.view)}><Icon size={17} aria-hidden="true" /><span>{item.label}</span>{badgeCount ? <span className={styles.navBadge} aria-label={item.badge === "tickets" ? `${badgeCount} nye supportsager` : undefined}>{badgeCount}</span> : null}</button>; }); }
 
   if (loading) return <main id="main-content" className={styles.loadingRoot}><div className={styles.loadingCard}><span className={styles.spinner} />Gør dit dashboard klar…</div></main>;

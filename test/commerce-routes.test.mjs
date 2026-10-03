@@ -230,7 +230,7 @@ test('Shopify binds the onboarding return destination and bot to encrypted serve
   assert.ok(stateToken.expires>Date.now());
 });
 test('a local HTML source activates without a website fetch and still requires confirmed billing',async()=>{
-  await database.pg.exec(`alter table businesses add column subscription_status text, add column payment_status text, add column stripe_subscription_id text, add column subscription_updated_at timestamptz, add column activated_at timestamptz`);
+  await database.pg.exec(`alter table businesses add column if not exists subscription_status text, add column if not exists payment_status text, add column if not exists stripe_subscription_id text, add column if not exists subscription_updated_at timestamptz, add column if not exists activated_at timestamptz`);
   const business_id=await tenant();
   await database.pg.query('update businesses set activated=false,support_email=$2,name=$3 where id=$1',[business_id,'owner@example.com','HTML shop']);
   await database.pg.query("insert into website_sources(business_id,source_kind,source_name,content_text,character_count) values($1,'html','index.html','Indhold om vores butik og dens services.',40)",[business_id]);

@@ -1,0 +1,16 @@
+# AI literacy for EmbedBot
+
+Praktisk guide til udvikling, support og kundedrift. Gennemgå ved onboarding og ændringer af model, datakilder og private flows. Axel skal udpege ansvarlig, dokumentere deltagelse og sikre at medarbejdere/kunder kender relevante begrænsninger.
+
+EmbedBot er en website-assistent. Chat-routen henter virksomhedens information, udvalgt websiteviden, valgfri importeret HTML og offentlige produktsvar, og sender et begrænset prompt/historikudsnit til OpenAI. Den aktuelle chatmodel i kode er **gpt-5.6-luna**; embeddingmodel er **text-embedding-3-small**. Leverandørkontoens konkrete modeladgang, dataretention og region skal verificeres; kodevalg dokumenterer ikke leverandørkontrakt eller faktisk residency.
+
+- **Hallucinationer:** Modellen kan give et overbevisende forkert svar. Virksomheden kontrollerer produkt-, retur-, leverings-, garanti- og prisoplysninger. Frisk offentlig produkt-/ordredatakilde er vigtigere end et gættet modelsvar. Ved tvivl skal brugeren tilbydes menneskelig hjælp.
+- **Prompt injection:** Websiteindhold, uploads, produkttekster og besøgsbeskeder er input, ikke betroede instrukser. Importeret HTML udføres ikke. Modellen må ikke få servercredentials, kodeverifikation eller autoritet til at ændre ejerskab, aftale, pris eller ordre. Test også instrukser skjult i kildetekst og links.
+- **Persondata:** Samtaler kan indeholde frivillige kontaktoplysninger. Del kun nødvendigt input. Historik har email/ordrereference-redaktion, men første besked og kundens kilder kan stadig indeholde persondata. Antag ikke at al tekst er anonymiseret. Bed ikke om CPR, helbred, betalingskort eller følsomme oplysninger.
+- **Private ordredata:** Ordrestatus vises via et separat struktureret flow med canonical webshopemail og engangskode, bundet til widget-session/origin. Private resultater, koder og formularinputs indgår ikke i almindelig chat-historik. En indtastet email, et ordrenummer eller modellens påstand er ikke bevis på identitet.
+- **Support:** Besøgende bekræfter en opsummering før en sag oprettes. Valgfrit chatudsnit er begrænset og subject to retention; supportsager er mærket ikke-verificerede. Mennesket kontrollerer kunde og sag før ændring af ordre/refusion.
+- **Menneskelig kontrol:** Brug ikke AI-svar som eneste grundlag for juridiske, sundhedsmæssige, økonomiske eller sikkerhedskritiske beslutninger. Review reklamationer, private dataanmodninger, ukendte ordreoplysninger og mistanke om injection. Systemet er ikke en garanti om korrekte svar.
+- **Sikker udvikling:** Servicecredentials kun server-side; test tenant/adgang/expiry og hold nye data uden for prompts og logs, når de ikke er nødvendige. Brug dokumenteret eksport/retention i stedet for ekstra persondataarkiver. En nyt feature/leverandør/land skal gennem risikoscreening.
+- **Ikke-understøttede eller højrisikoformål:** Selvstændige afgørelser om kredit, ansættelse, børn, helbred, biometrisk identifikation, myndighedsrettigheder eller følsom profilering kræver særskilt menneskelig/juridisk vurdering og må ikke aktiveres som en almindelig chatbotindstilling.
+
+Øvelse: Find et opdigtet produktsvar, en injektionsinstruks i HTML og en anmodning om ordredata uden kode. Vis korrekt kilde-/menneskeeskalation. Dokumentér hvad medarbejderen har lært, ikke persondata fra virkelige kundechats.

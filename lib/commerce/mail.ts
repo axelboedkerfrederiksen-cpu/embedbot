@@ -26,9 +26,7 @@ export async function notifyTicket(db: SupabaseClient, id: string, businessId: s
 }
 export async function retryNotifications(db: SupabaseClient) {
   const { data, error } = await db.from("commerce_tickets").select("id,business_id").in("notification_status", ["pending","failed","sending","not_configured"]).lt("notification_updated_at", new Date(Date.now() - 120000).toISOString()).lt("notification_attempts", 5).order("notification_updated_at").limit(50);
-  if (error) return 0;
+  if (error) throw new Error("support_retry_query_failed");
   for (const ticket of data || []) await notifyTicket(db, ticket.id, ticket.business_id);
-  await db.from("commerce_order_challenges").delete().lt("expires_at", new Date().toISOString());
-  await db.from("commerce_connection_attempts").delete().lt("expires_at", new Date().toISOString());
   return data?.length || 0;
 }

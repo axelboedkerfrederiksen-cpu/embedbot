@@ -73,7 +73,7 @@ export async function GET(req: NextRequest) {
 export async function DELETE(req: NextRequest) {
   try {
     // Check CSRF protection
-    const csrfCheck = await checkCsrfSafety(req, true);
+    const csrfCheck = await checkCsrfSafety(req);
     if (!csrfCheck.safe) {
       return NextResponse.json({ error: csrfCheck.error }, { status: 403 });
     }
@@ -128,7 +128,7 @@ export async function DELETE(req: NextRequest) {
         }
       } catch (error) {
         if (!isMissingStripeResource(error)) {
-          console.error("Admin deletion Stripe cancellation failed:", error);
+          console.error("admin_stripe_cancellation_failed");
           return NextResponse.json(
             { error: "Abonnementet kunne ikke stoppes sikkert før sletning." },
             { status: 502 }
@@ -168,7 +168,7 @@ export async function DELETE(req: NextRequest) {
 export async function PUT(req: NextRequest) {
   try {
     // Check CSRF protection
-    const csrfCheck = await checkCsrfSafety(req, true);
+    const csrfCheck = await checkCsrfSafety(req);
     if (!csrfCheck.safe) {
       return NextResponse.json({ error: csrfCheck.error }, { status: 403 });
     }

@@ -1,7 +1,7 @@
 export type ChatStage = "thinking" | "searching" | "details";
 
 // Opt-in envelope keeps existing plain-text and JSON clients compatible.
-export function chatProgressResponse(run: (status: (stage: ChatStage) => void) => Promise<Response>) {
+export function chatProgressResponse(run: (status: (stage: ChatStage) => void, reference: (id:string,token:string) => void) => Promise<Response>) {
   const encoder = new TextEncoder();
   let cancelled = false;
   const stream = new ReadableStream({
@@ -11,7 +11,7 @@ export function chatProgressResponse(run: (status: (stage: ChatStage) => void) =
       };
       try {
         emit({ type: "status", stage: "thinking" });
-        const response = await run(stage => emit({ type: "status", stage }));
+        const response = await run(stage => emit({ type: "status", stage }), (id,token)=>emit({type:"reference",id,token}));
         if ((response.headers.get("content-type") || "").includes("application/json")) {
           const data = await response.json();
           emit(response.ok ? { type: "result", data } : { type: "error", message: data.error });

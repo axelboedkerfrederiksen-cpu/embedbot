@@ -1,3 +1,5 @@
+> HISTORISK DOKUMENT — ikke aktuel produktionsstatus eller installationsvejledning. Se [nuværende compliance-dokumentation](docs/compliance/README.md). Krav og observationer nedenfor beskriver en tidligere gennemgang.
+
 # EmbedBot Security Audit - Changes Summary
 
 ## Overview
@@ -65,7 +67,7 @@
      - Users can only read/insert documents for own businesses
      - Users can only read/delete conversations for own businesses
 
-10. **`/sql/add_gdpr_support.sql`**
+10. **`supabase/migrations (historisk filhenvisning fjernet)`**
     - Adds `deleted_at`, `is_deleted` columns
     - Adds `retention_days` configuration to businesses
     - Creates RPC functions:
@@ -199,7 +201,7 @@ SENTRY_DSN=https://...  # From Sentry.io
 
 ### Phase 1: Database (Day 1)
 1. Run SQL migration: `/sql/add_user_id_and_rls.sql`
-2. Run SQL migration: `/sql/add_gdpr_support.sql`
+2. Run SQL migration: `supabase/migrations (historisk filhenvisning fjernet)`
 3. Verify migrations in Supabase console
 
 ### Phase 2: Code (Day 1-2)

@@ -1,3 +1,4 @@
+import { TRIAL } from "@/lib/compliance/trial";
 import Link from "next/link";
 
 export default function RefundPolicyPage() {
@@ -16,6 +17,6 @@ export default function RefundPolicyPage() {
         <section><h2>Refundering</h2><p>Betalte perioder refunderes som udgangspunkt ikke forholdsmæssigt, når perioden er begyndt. Kontakt os ved dobbeltbetaling, forkert beløb, dokumenteret betalingsfejl eller en længerevarende fejl, som væsentligt har forhindret brug af tjenesten. Vi vurderer anmodningen konkret og retter dokumenterede faktureringsfejl.</p></section>
         <section><h2>Sådan anmoder du</h2><p>Send virksomhedens navn, konto-e-mail, fakturadato og en kort forklaring til <a href="mailto:axel@embedbot.dk?subject=Anmodning%20om%20refundering">axel@embedbot.dk</a> eller brug <Link href="/support?type=complaint">klageformularen</Link>. Send ikke kortnummer eller andre fulde betalingsoplysninger.</p></section>
       </article>
-    </main>
+    <p className="mx-auto my-6 max-w-3xl px-4 text-center text-sm">{TRIAL.summary}</p></main>
   );
 }

@@ -1,9 +1,10 @@
+import { businessInput } from "@/lib/compliance/business-input";
 import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@supabase/supabase-js";
 import { createServerClient } from "@supabase/ssr";
 import { cookies } from "next/headers";
 import { resend } from "@/lib/resend";
-import { getAdminEmailOrThrow, isAdminEmailEnvErrorMessage } from "@/lib/admin-email";
+import { getAdminEmailOrThrow } from "@/lib/admin-email";
 
 const supabase = createClient(
   process.env.SUPABASE_URL!,
@@ -33,25 +34,11 @@ function isTransientDatabaseError(error: { message?: string | null; code?: strin
   );
 }
 
-function isOnConflictConstraintError(errorMessage: string) {
-  return errorMessage.toLowerCase().includes("no unique or exclusion constraint matching the on conflict specification");
-}
-
-function isMissingColumnError(errorMessage: string, columnName: string) {
-  const normalized = errorMessage.toLowerCase();
-  const lowerColumn = columnName.toLowerCase();
-  return (
-    normalized.includes(`could not find the '${lowerColumn}' column`) ||
-    normalized.includes(`column \"${lowerColumn}\"`) ||
-    normalized.includes(`column ${lowerColumn}`) ||
-    normalized.includes(`column businesses.${lowerColumn}`)
-  );
-}
-
 function extractMissingColumnName(errorMessage: string): string | null {
   const normalized = errorMessage.toLowerCase();
   const patterns = [
     /could not find the '([a-z0-9_]+)' column/,
+    /column\s+"?([a-z0-9_]+)"?\s+of relation\s+"?businesses"?\s+does not exist/,
     /column\s+businesses\.([a-z0-9_]+)\s+does not exist/,
     /column\s+"?([a-z0-9_]+)"?\s+does not exist/,
   ];
@@ -83,54 +70,20 @@ function getFormForPersistence(form: Record<string, unknown>) {
 }
 
 async function persistBusinessPayload(payload: Record<string, unknown> & { id: string }) {
-  let error: { message: string; code?: string | null } | null = null;
-
-  for (let attempt = 0; attempt <= TRANSIENT_DATABASE_RETRY_DELAYS.length; attempt += 1) {
-    const result = await supabase
-      .from("businesses")
-      .upsert(payload, { onConflict: "id" });
-
-    error = result.error;
-    if (!isTransientDatabaseError(error) || attempt === TRANSIENT_DATABASE_RETRY_DELAYS.length) {
-      break;
-    }
-
-    console.warn("Transient Supabase error while saving business; retrying.", {
-      businessId: payload.id,
-      attempt: attempt + 1,
-      code: error?.code,
-    });
+  for (let attempt = 0; attempt <= TRANSIENT_DATABASE_RETRY_DELAYS.length; attempt++) {
+    // INSERT for a new id; owner-filtered UPDATE for an existing id. An upsert
+    // must never claim a row created by another tenant between lookup/write.
+    const {data: existing, error: lookupError} = await supabase.from("businesses").select("id,user_id").eq("id",payload.id).maybeSingle();
+    if (lookupError) return {error:lookupError};
+    if (existing && existing.user_id !== payload.user_id) return {error:{message:"not_authorized",code:"42501"}};
+    const result = existing
+      ? await supabase.from("businesses").update(payload).eq("id",payload.id).eq("user_id",payload.user_id)
+      : await supabase.from("businesses").insert(payload);
+    if (!result.error || !isTransientDatabaseError(result.error) || attempt === TRANSIENT_DATABASE_RETRY_DELAYS.length) return {error:result.error};
+    console.warn("business_save_retry", {attempt:attempt+1,code:result.error.code});
     await wait(TRANSIENT_DATABASE_RETRY_DELAYS[attempt]);
   }
-
-  if (!error || !isOnConflictConstraintError(error.message)) {
-    return { error };
-  }
-
-  const { data: existingRows, error: findError } = await supabase
-    .from("businesses")
-    .select("id")
-    .eq("id", payload.id)
-    .limit(1);
-
-  if (findError) {
-    return { error: findError };
-  }
-
-  if (existingRows && existingRows.length > 0) {
-    const updateResult = await supabase
-      .from("businesses")
-      .update(payload)
-      .eq("id", payload.id);
-
-    return { error: updateResult.error };
-  }
-
-  const insertResult = await supabase
-    .from("businesses")
-    .insert(payload);
-
-  return { error: insertResult.error };
+  return {error:{message:"business_save_failed"}};
 }
 
 async function persistWithMissingColumnFallback(payload: Record<string, unknown> & { id: string }) {
@@ -145,7 +98,7 @@ async function persistWithMissingColumnFallback(payload: Record<string, unknown>
     }
 
     const missingColumn = extractMissingColumnName(result.error.message);
-    if (!missingColumn || !(missingColumn in activePayload) || missingColumn === "id") {
+    if (!missingColumn || !(missingColumn in activePayload) || ["id","user_id"].includes(missingColumn)) {
       return result;
     }
 
@@ -160,6 +113,7 @@ async function persistWithMissingColumnFallback(payload: Record<string, unknown>
 
 export async function POST(req: NextRequest) {
   try {
+    if (req.headers.get("origin") !== req.nextUrl.origin) return NextResponse.json({error:"Ugyldig anmodning."},{status:403});
     const { form, business_id } = await req.json();
     const stableBusinessId = typeof business_id === "string" ? business_id.trim() : "";
 
@@ -215,7 +169,7 @@ export async function POST(req: NextRequest) {
 
     if (businessLookupError) {
       return NextResponse.json(
-        { success: false, error: `Kunne ikke verificere virksomhedsejerskab: ${businessLookupError.message}` },
+        { success: false, error: "Kunne ikke verificere virksomhedsejerskab." },
         { status: 500 }
       );
     }
@@ -228,7 +182,7 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    const formForPersistence = getFormForPersistence(form as Record<string, unknown>);
+    const formForPersistence = getFormForPersistence(businessInput(form as Record<string, unknown>));
     const normalizedForm: Record<string, unknown> = {
       ...formForPersistence,
       fab_color:
@@ -239,14 +193,9 @@ export async function POST(req: NextRequest) {
           : undefined,
     };
 
-    const fullPayload = { id: stableBusinessId, user_id: user.id, ...normalizedForm };
-    let { error: upsertError } = await persistWithMissingColumnFallback(fullPayload);
+    const fullPayload = { ...normalizedForm, id: stableBusinessId, user_id: user.id };
+    const { error: upsertError } = await persistWithMissingColumnFallback(fullPayload);
 
-    // Backward compatibility: if user_id column is not deployed yet, retry without it.
-    if (upsertError && isMissingColumnError(upsertError.message, "user_id")) {
-      const retryWithoutUserId = await persistWithMissingColumnFallback({ id: stableBusinessId, ...normalizedForm });
-      upsertError = retryWithoutUserId.error;
-    }
 
     if (upsertError && isLegacyBusinessIdForeignKeyError(upsertError.message)) {
       return NextResponse.json(
@@ -260,12 +209,10 @@ export async function POST(req: NextRequest) {
 
     if (upsertError) {
       console.error("Unable to save business.", {
-        businessId: stableBusinessId,
         code: "code" in upsertError ? upsertError.code : undefined,
-        message: upsertError.message,
       });
       return NextResponse.json(
-        { success: false, error: `Kunne ikke gemme virksomhedsdata: ${upsertError.message}` },
+        { success: false, error: "Kunne ikke gemme virksomhedsdata. Kontakt support." },
         { status: 500 }
       );
     }
@@ -338,22 +285,14 @@ export async function POST(req: NextRequest) {
       return NextResponse.json(
         {
           success: false,
-          error: `Virksomheden blev gemt, men email kunne ikke sendes: ${(mailResult as { error?: { message?: string } }).error?.message || "Ukendt mailfejl."}`,
+          error: "Virksomheden blev gemt, men email kunne ikke sendes. Kontakt support.",
         },
         { status: 502 }
       );
     }
 
     return NextResponse.json({ success: true });
-  } catch (error) {
-    if (error instanceof Error) {
-      if (isAdminEmailEnvErrorMessage(error.message)) {
-        return NextResponse.json({ success: false, error: error.message }, { status: 500 });
-      }
-
-      return NextResponse.json({ success: false, error: error.message }, { status: 500 });
-    }
-
-    return NextResponse.json({ success: false, error: "Ukendt serverfejl." }, { status: 500 });
+  } catch {
+    return NextResponse.json({ success: false, error: "Kunne ikke afslutte opsætningen. Kontakt support." }, { status: 500 });
   }
 }

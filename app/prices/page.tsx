@@ -1,4 +1,5 @@
 "use client";
+import { TRIAL } from "@/lib/compliance/trial";
 
 import Link from "next/link";
 import Image from "next/image";
@@ -164,6 +165,6 @@ export default function PricesPage() {
         indtil det opsiges, og der er ingen binding ud over den betalte periode. Se{" "}
         <Link href="/refunds">betaling og refundering</Link>.
       </p>
-    </main>
+    <p className="mx-auto my-6 max-w-3xl px-4 text-center text-sm">{TRIAL.summary}</p></main>
   );
 }

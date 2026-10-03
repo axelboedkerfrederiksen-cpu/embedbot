@@ -1,3 +1,5 @@
+> HISTORISK DOKUMENT — ikke aktuel produktionsstatus eller installationsvejledning. Se [nuværende compliance-dokumentation](docs/compliance/README.md). Krav og observationer nedenfor beskriver en tidligere gennemgang.
+
 # EmbedBot Security, Privacy & Production Readiness Audit
 ## Complete Audit Report
 
@@ -279,7 +281,7 @@ async headers() {
 - No privacy control
 
 **Fix Applied:**
-- Created `/sql/add_gdpr_support.sql`
+- Created `supabase/migrations (historisk filhenvisning fjernet)`
 - Added `retention_days` to businesses table (configurable)
 - Added `deleted_at` + `is_deleted` for soft deletes
 - Created `cleanup_expired_conversations()` RPC function
@@ -582,7 +584,7 @@ Sentry.init({
 
 1. **Deploy SQL Migrations**
    - Run `sql/add_user_id_and_rls.sql` first
-   - Run `sql/add_gdpr_support.sql` second
+   - Run `supabase/migrations (historisk filhenvisning fjernet)` second
    - Verify no data loss (test in staging first)
 
 2. **Configure Cron Job**
@@ -665,7 +667,7 @@ Sentry.init({
 | Category | Score | Status |
 |---|---|---|
 | Security | 8/10 | 🟢 Most issues fixed |
-| GDPR Compliance | 8/10 | 🟢 Full compliance ready |
+| GDPR Compliance | 8/10 | 🟢 Requires legal and operational review |
 | Privacy Protection | 9/10 | 🟢 User controls implemented |
 | Error Handling | 8/10 | 🟢 Graceful degradation |
 | Monitoring | 3/10 | 🟡 Basic logging (awaits Sentry) |
@@ -798,7 +800,7 @@ Sentry.init({
 
 ### New Files Created
 - `/sql/add_user_id_and_rls.sql` - RLS policies and user_id column
-- `/sql/add_gdpr_support.sql` - Retention, deletion, export functions
+- `supabase/migrations (historisk filhenvisning fjernet)` - Retention, deletion, export functions
 - `/app/api/auth/delete-account/route.ts` - Account deletion endpoint
 - `/app/api/auth/export-data/route.ts` - Data export endpoint
 - `/app/api/conversations/delete/route.ts` - Conversation deletion endpoint
@@ -815,7 +817,7 @@ Sentry.init({
 
 ### SQL Migrations (Not Yet Applied)
 - `/sql/add_user_id_and_rls.sql`
-- `/sql/add_gdpr_support.sql`
+- `supabase/migrations (historisk filhenvisning fjernet)`
 
 ---
 

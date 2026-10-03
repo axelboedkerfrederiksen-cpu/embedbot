@@ -1,3 +1,5 @@
+> HISTORISK DOKUMENT — ikke aktuel produktionsstatus eller installationsvejledning. Se [nuværende compliance-dokumentation](compliance/README.md). Krav og observationer nedenfor beskriver en tidligere gennemgang.
+
 # EmbedBot legal and accessibility checklist
 
 Reviewed against the 20-point screenshot on 17 September 2026. This is an engineering/compliance review, not a guarantee against claims or a substitute for advice from a Danish lawyer.
@@ -33,7 +35,7 @@ Reviewed against the 20-point screenshot on 17 September 2026. This is an engine
 2. Add the registered legal business name and CVR number before the first paid customer. Do not invent or publish a number.
 3. The site now collects active consent before analytics. The widget's local-storage cache and Google Fonts request occur on customers' own websites; customers need to cover those technologies in their own setup and policies.
 4. Verify signed DPAs and international-transfer settings for Supabase, OpenAI, Stripe, Resend and Vercel.
-5. Verify `add_gdpr_support.sql` is applied in production and schedule/test `cleanup_expired_conversations()` daily.
+5. Verify migrations fra `supabase/migrations` is applied in production and schedule/test `cleanup_expired_conversations()` daily.
 6. Maintain an opt-out/suppression list for marketing/demo outreach. A mailto link is only effective if requests are recorded and honoured.
 7. Have Danish counsel review the B2B terms, liability cap, data-processing roles and refund policy before launch.
 

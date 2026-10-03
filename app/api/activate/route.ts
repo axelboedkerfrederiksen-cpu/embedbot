@@ -1,3 +1,4 @@
+import { agreedTrialEnd } from "@/lib/compliance/trial";
 import { NextRequest, NextResponse } from "next/server";
 import { checkCsrfSafety } from "@/lib/csrf";
 import { verifyAdminSession } from "@/lib/admin-auth";
@@ -5,7 +6,7 @@ import { activateBusinessAndSendEmail } from "@/lib/business-activation";
 
 export async function POST(req: NextRequest) {
   try {
-    const csrfCheck = await checkCsrfSafety(req, true);
+    const csrfCheck = await checkCsrfSafety(req);
     if (!csrfCheck.safe) {
       return NextResponse.json({ success: false, error: csrfCheck.error }, { status: 403 });
     }
@@ -21,7 +22,9 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ success: false, error: "Mangler business_id." }, { status: 400 });
     }
 
-    const pilotEndsAt = new Date(Date.now() + 14 * 24 * 60 * 60 * 1000).toISOString();
+    let pilotEndsAt:string|null;
+    try { pilotEndsAt=agreedTrialEnd(body.agreed_trial_ends_at,body.end_date_agreed); }
+    catch(error) { return NextResponse.json({success:false,error:error instanceof Error?error.message:"Ugyldig slutdato."},{status:400}); }
     const result = await activateBusinessAndSendEmail(businessId, {
       accessSource: "manual_pilot",
       subscriptionStatus: "trialing",

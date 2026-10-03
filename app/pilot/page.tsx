@@ -1,4 +1,5 @@
 "use client";
+import { TRIAL } from "@/lib/compliance/trial";
 
 import Image from "next/image";
 import Link from "next/link";
@@ -130,18 +131,18 @@ export default function PilotPage() {
           <span className="pilot-kicker">Gratis 14-dages pilot</span>
           <h1 className="pilot-title">I godkender. Vi gør resten.</h1>
           <p className="pilot-lead">
-            Vi bygger chatbotten ud fra jeres webshop, tilpasser den til jeres brand og hjælper med at få den live. Den gratis 14-dages prøveperiode kræver betalingskort ved aktivering.
+            Vi bygger chatbotten ud fra jeres webshop, tilpasser den til jeres brand og hjælper med at få den live. Den gratis 14-dages prøveperiode kræver ikke betalingskort og bliver ikke automatisk betalt.
           </p>
           <ol className="pilot-steps">
             <li><span className="pilot-step-number">1</span><span>Vi sender en privat demo med svar baseret på jeres eget indhold.</span></li>
             <li><span className="pilot-step-number">2</span><span>I godkender svar og udseende, før noget bliver vist til kunderne.</span></li>
-            <li><span className="pilot-step-number">3</span><span>Efter 14 dage vælger I selv, om den skal fortsætte fra 299 kr. om måneden.</span></li>
+            <li><span className="pilot-step-number">3</span><span>Vi aftaler det videre forløb med jer. Automatisk afslutning sker kun, hvis en slutdato er aftalt.</span></li>
           </ol>
         </div>
 
         <form className="pilot-form" onSubmit={handleSubmit}>
           <h2>Få jeres private demo</h2>
-          <p className="pilot-form-intro">Fire korte felter til en privat demo. Betalingskort kræves, når den gratis 14-dages prøveperiode aktiveres.</p>
+          <p className="pilot-form-intro">Fire korte felter til en privat demo. Intet betalingskort kræves til den gratis 14-dages prøveperiode.</p>
           <label className="pilot-field">
             <span className="pilot-label">Navn</span>
             <input className="pilot-input" value={name} onChange={(event) => setName(event.target.value)} autoComplete="name" required />
@@ -168,6 +169,6 @@ export default function PilotPage() {
           {feedback ? <p className={`pilot-feedback ${status === "error" ? "error" : ""}`}>{feedback}</p> : null}
         </form>
       </section>
-    </main>
+    <p className="mx-auto my-6 max-w-3xl px-4 text-center text-sm">{TRIAL.summary}</p></main>
   );
 }

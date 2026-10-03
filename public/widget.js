@@ -5,7 +5,6 @@
   const apiOrigin = new URL(scriptTag.src).origin;
   const API_URL = `${apiOrigin}/api/chat`;
   const CONFIG_URL = `${apiOrigin}/api/widget-config?id=${encodeURIComponent(businessId || "")}`;
-  const CONFIG_CACHE_KEY = `embedbot-config-${businessId}`;
   const OPEN_ICON = `
     <svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 24 24" fill="none" aria-hidden="true">
       <path d="M5 4.75h14a2.75 2.75 0 0 1 2.75 2.75v7A2.75 2.75 0 0 1 19 17.25h-6.23l-2.9 2.6a.75.75 0 0 1-1.24-.65l.33-1.95H5A2.75 2.75 0 0 1 2.25 14.5v-7A2.75 2.75 0 0 1 5 4.75Z" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
@@ -52,7 +51,7 @@
 
   function getFontStack(fontChoice) {
     const cleanFont = (fontChoice || "").trim();
-    if (!cleanFont) return defaultConfig.font_choice;
+    if (!cleanFont) return "system-ui, -apple-system, BlinkMacSystemFont, Segoe UI, sans-serif";
 
     const primaryFamily = cleanFont.split(",")[0].trim().replace(/^['\"]|['\"]$/g, "");
     const normalized = primaryFamily.toLowerCase();
@@ -61,29 +60,7 @@
     }
 
     const escapedFont = primaryFamily.replace(/"/g, '\\"');
-    return `"${escapedFont}", sans-serif`;
-  }
-
-  function ensureFontLoaded(fontChoice) {
-    const cleanFont = (fontChoice || "").trim();
-    if (!cleanFont) return;
-
-    const primaryFamily = cleanFont.split(",")[0].trim().replace(/^['\"]|['\"]$/g, "");
-    const normalized = primaryFamily.toLowerCase();
-    if (GENERIC_FONTS.has(normalized)) {
-      return;
-    }
-
-    const fontId = `eb-font-${normalized.replace(/[^a-z0-9-]/g, "-")}`;
-    if (document.getElementById(fontId)) {
-      return;
-    }
-
-    const link = document.createElement("link");
-    link.id = fontId;
-    link.rel = "stylesheet";
-    link.href = `https://fonts.googleapis.com/css2?family=${encodeURIComponent(primaryFamily).replace(/%20/g, "+")}:wght@400;500;600;700&display=swap`;
-    document.head.appendChild(link);
+    return `"${escapedFont}", system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif`;
   }
 
   function setFontImportant(element, fontStack) {
@@ -208,7 +185,7 @@
       <div id="eb-header" style="background:#f9f9f9;color:#1a1a1a;padding:8px 14px;font-weight:600;display:flex;align-items:center;gap:10px;">
         <img id="eb-logo" alt="Virksomhedslogo" style="display:none;height:24px;width:auto;max-width:120px;object-fit:contain;filter:brightness(0) invert(1);" />
         <div style="display:flex;flex-direction:column;line-height:1.2;flex:1;min-width:0;">
-          <span id="eb-title" style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">Support Chat</span>
+          <div style="min-width:0"><span id="eb-title" style="display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">Support Chat</span><span id="eb-ai-disclosure" style="display:block;font-size:11px;font-weight:500;line-height:1.5;opacity:1;">AI-assistent</span></div>
         </div>
         <button type="button" id="eb-expand" aria-label="Udvid chatten" title="Udvid chatten" aria-controls="eb-box" aria-pressed="false">
           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M8 3H3v5m13-5h5v5M3 16v5h5m13-5v5h-5" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/></svg>
@@ -228,7 +205,7 @@
             </svg>
           </button>
         </div>
-        <div id="eb-watermark" aria-label="Lavet af EmbedBot" style="color:#6b6258;font-size:10px;line-height:1.2;text-align:center;letter-spacing:0.01em;">Lavet af EmbedBot · <a href="https://www.embedbot.dk/privacy" target="_blank" rel="noopener noreferrer" style="color:inherit;text-decoration:underline;text-underline-offset:2px;">Privatliv</a></div>
+        <div id="eb-watermark" aria-label="Drevet af EmbedBot · Privatliv" style="color:#6b6258;font-size:10px;line-height:1.2;text-align:center;letter-spacing:0.01em;"><a href="https://www.embedbot.dk/privacy" target="_blank" rel="noopener noreferrer" style="color:inherit;text-decoration:underline;">Drevet af EmbedBot</a> · <a id="eb-privacy-link" href="https://www.embedbot.dk/privacy" target="_blank" rel="noopener noreferrer" style="color:inherit;text-decoration:underline;text-underline-offset:2px;">Privatliv</a></div>
       </div>
     </div>
   `;
@@ -415,7 +392,6 @@
 
   function applyWidgetStyles() {
     const fontStack = getFontStack(widgetConfig.font_choice || defaultConfig.font_choice);
-    ensureFontLoaded(widgetConfig.font_choice || defaultConfig.font_choice);
     const fabBackground = widgetConfig.fab_color || defaultConfig.fab_color;
     const primaryBackground = widgetConfig.primary_color || defaultConfig.primary_color;
     const headerBackground = primaryBackground;
@@ -450,6 +426,12 @@
     header.style.color = headerTextColor;
     header.style.borderBottom = "1px solid rgba(17,17,17,0.06)";
     title.textContent = widgetConfig.header_title || defaultConfig.header_title;
+    const privacyLink = document.getElementById("eb-privacy-link");
+    if (privacyLink) {
+      let privacyHref = "https://www.embedbot.dk/privacy";
+      try { const url = new URL(widgetConfig.customer_privacy_url); if (url.protocol === "https:" && !url.username && !url.password) privacyHref = url.href; } catch { /* Default is always available. */ }
+      privacyLink.href = privacyHref;
+    }
 
     setFontImportant(box, fontStack);
     setFontImportant(header, fontStack);
@@ -471,53 +453,19 @@
     bubble.style.opacity = "1";
   }
 
-  function getConfigFromCache() {
-    try {
-      if (typeof localStorage === "undefined") {
-        return null;
-      }
-      const cached = localStorage.getItem(CONFIG_CACHE_KEY);
-      return cached ? JSON.parse(cached) : null;
-    } catch {
-      return null;
-    }
-  }
-
-  function saveConfigToCache(config) {
-    try {
-      if (typeof localStorage === "undefined") {
-        return;
-      }
-      localStorage.setItem(CONFIG_CACHE_KEY, JSON.stringify(config));
-    } catch {
-      // Ignore cache write failures
-    }
-  }
-
   async function loadWidgetConfig() {
     if (!businessId) {
       applyWidgetStyles();
       return;
     }
 
-    // Try loading from cache first for instant display
-    const cachedConfig = getConfigFromCache();
-    if (cachedConfig) {
-      widgetConfig = cachedConfig;
-      applyWidgetStyles();
-      if (chatOpen) {
-        tryShowWelcomeMessage();
-      }
-    }
-
+    applyWidgetStyles();
     // Fetch fresh config in the background
     try {
       const res = await fetch(CONFIG_URL);
       if (!res.ok) {
         // If cache wasn't available, at least apply default styles
-        if (!cachedConfig) {
-          applyWidgetStyles();
-        }
+        applyWidgetStyles();
         return;
       }
 
@@ -536,19 +484,19 @@
         chat_outline_width: data.chat_outline_width || defaultConfig.chat_outline_width,
         chat_outline_opacity: data.chat_outline_opacity || defaultConfig.chat_outline_opacity,
         widget_opacity: data.widget_opacity || defaultConfig.widget_opacity,
+        customer_privacy_url: data.customer_privacy_url || "",
         name: resolvedName,
         header_title: formatHeaderTitle(resolvedName),
       };
       widgetConfig = freshConfig;
-      saveConfigToCache(freshConfig);
       applyWidgetStyles();
       if (chatOpen) {
         // If chat was opened before config finished loading, try again now.
         tryShowWelcomeMessage();
       }
     } catch {
-      // If fetch failed and we have cache, keep using it
-      if (!cachedConfig) {
+      // Keep only the configuration already held in memory.
+      {
         widgetConfig = {
           ...widgetConfig,
           welcome_message: defaultConfig.welcome_message,
@@ -778,6 +726,7 @@
 
   // The nonce lives only in this widget instance. Order inputs, OTPs and private
   // responses never enter conversationHistory or browser storage.
+  const conversationReferences = [];
   const commerceSession = Array.from(crypto.getRandomValues(new Uint8Array(32)), n => n.toString(16).padStart(2, "0")).join("");
   async function commerceCall(path, payload) {
     const response = await fetch(`${apiOrigin}/api/commerce/${path}`, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ business_id: businessId, session: commerceSession, ...payload }) });
@@ -849,7 +798,7 @@
       event.preventDefault(); if (review.disabled) return;
       review.disabled = true; error.textContent = "";
       try {
-        const data = await commerceCall("support", { action: "prepare", contactEmail: email.value, description: description.value, orderNumber: number.value, context: context.checked ? conversationHistory.slice(-10) : [], website: honeypot.value });
+        const data = await commerceCall("support", { action: "prepare", contactEmail: email.value, description: description.value, orderNumber: number.value, context: context.checked ? conversationHistory.slice(-10) : [], references: context.checked ? conversationReferences.slice(-10).map(ref => ref.token) : [], website: honeypot.value });
         form.hidden = true;
         const summary = element("div", undefined, card);
         element("strong", "Kontrollér din henvendelse", summary);
@@ -1012,7 +961,7 @@
       const res = await fetch(API_URL, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ stream_events: true, message: text, business_id: businessId, page_url: window.location.href, preview_token: previewToken || undefined, history: conversationHistory.slice(-10) }),
+        body: JSON.stringify({ stream_events: true, session: commerceSession, message: text, business_id: businessId, page_url: window.location.origin + window.location.pathname, preview_token: previewToken || undefined, history: conversationHistory.slice(-10) }),
       });
 
       if (!res.ok) {
@@ -1048,6 +997,7 @@
       let eventBuffer = "";
       let structuredResponse = false;
       const consumeEvent = (event) => {
+        if (event.type === "reference") { conversationReferences.push({id:event.id,token:event.token}); return; }
         if (event.type === "error") throw new Error(event.message || labels.errorReply);
         if (event.type === "status" && !hasStartedResponse) {
           renderThinkingState(botMessage.msg, language, event.stage);

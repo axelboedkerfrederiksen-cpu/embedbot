@@ -1,74 +1,22 @@
-import { createServerClient } from "@supabase/ssr";
-import { cookies } from "next/headers";
-import { getAdminEmailOrThrow } from "@/lib/admin-email";
-
-function getAdminPasswordOrThrow() {
-  const adminPassword = process.env.ADMIN_PASSWORD?.trim();
-  if (!adminPassword) {
-    throw new Error("Serveren mangler ADMIN_PASSWORD.");
-  }
-
-  return adminPassword;
+import { session } from "./compliance/session.ts";
+import { database } from "./commerce/server.ts";
+import { audit } from "./compliance/audit.ts";
+export function authorizedAdmin(user:{id:string;email?:string;email_confirmed_at?:string},ids:string|undefined,email:string|undefined){
+ const allowIds=(ids||"").split(",").map(s=>s.trim()).filter(Boolean);
+ if(allowIds.length)return allowIds.includes(user.id);
+ return Boolean(user.email_confirmed_at && email?.trim() && user.email?.trim().toLowerCase()===email.trim().toLowerCase());
 }
-
-export async function verifyAdminSession(req: Request) {
-  let adminEmail: string;
-  let adminPassword: string;
-  try {
-    adminEmail = getAdminEmailOrThrow();
-    adminPassword = getAdminPasswordOrThrow();
-  } catch (error) {
-    return {
-      error: error instanceof Error ? error.message : "Serveren mangler ADMIN_EMAIL.",
-      status: 500 as const,
-    };
-  }
-
-  const providedPassword = req.headers.get("x-admin-password")?.trim();
-  if (!providedPassword) {
-    return { error: "Mangler admin-kode.", status: 401 as const };
-  }
-
-  if (providedPassword !== adminPassword) {
-    return { error: "Forkert admin-kode.", status: 403 as const };
-  }
-
-  const providedEmail = req.headers.get("x-admin-email")?.trim().toLowerCase();
-  if (providedEmail && providedEmail === adminEmail) {
-    return { user: { email: adminEmail } };
-  }
-
-  const cookieStore = await cookies();
-  const supabase = createServerClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
-    {
-      cookies: {
-        getAll() {
-          return cookieStore.getAll();
-        },
-        setAll(cookiesToSet) {
-          cookiesToSet.forEach(({ name, value, options }) => {
-            cookieStore.set(name, value, options);
-          });
-        },
-      },
-    }
-  );
-
-  const {
-    data: { user },
-    error,
-  } = await supabase.auth.getUser();
-
-  if (error || !user) {
-    return { error: "Ikke autoriseret.", status: 401 as const };
-  }
-
-  const signedInEmail = user.email?.trim().toLowerCase();
-  if (!signedInEmail || signedInEmail !== adminEmail) {
-    return { error: "Ikke autoriseret.", status: 403 as const };
-  }
-
-  return { supabase, user };
+export async function verifyAdminSession(req:Request){
+ try{
+  const {auth,user}=await session();
+  if(!process.env.ADMIN_USER_IDS?.trim()&&!process.env.ADMIN_EMAIL?.trim())return {error:"Admin-adgang er ikke konfigureret.",status:503 as const};
+  if(!authorizedAdmin(user,process.env.ADMIN_USER_IDS,process.env.ADMIN_EMAIL))return {error:"Ikke autoriseret.",status:403 as const};
+  if(!["GET","HEAD","OPTIONS"].includes(req.method) && req.headers.get("origin")!==new URL(req.url).origin)return {error:"Ugyldig anmodning.",status:403 as const};
+  const {data:aal,error}=await auth.auth.mfa.getAuthenticatorAssuranceLevel();
+  if(error||!aal)return {error:"Sikkerhedskontrollen kunne ikke gennemføres.",status:503 as const};
+  // Enrolled admins must always complete MFA. The environment can additionally require enrollment.
+  if((process.env.ADMIN_REQUIRE_MFA==="true"||aal.nextLevel==="aal2")&&aal.currentLevel!=="aal2")return {error:"Bekræft admin-login med totrinsbekræftelse.",status:403 as const};
+  await audit(database(),user.id,null,["GET","HEAD","OPTIONS"].includes(req.method)?"admin.read":"admin.mutate");
+  return {supabase:auth,user};
+ }catch{return {error:"Log ind med en autoriseret admin-konto.",status:401 as const};}
 }

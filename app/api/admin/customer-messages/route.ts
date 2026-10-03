@@ -22,7 +22,7 @@ function normalizeActionUrl(value: unknown): string | null {
 
 export async function POST(req: NextRequest) {
   try {
-    const csrfCheck = await checkCsrfSafety(req, true);
+    const csrfCheck = await checkCsrfSafety(req);
     if (!csrfCheck.safe) {
       return NextResponse.json({ success: false, error: csrfCheck.error }, { status: 403 });
     }

@@ -1,3 +1,4 @@
+import { privacyUrl } from "@/lib/compliance/validation";
 import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@supabase/supabase-js";
 
@@ -100,7 +101,7 @@ export async function GET(req: NextRequest) {
     const { data: businessRaw, error } = await fetchBusinessWidgetConfig(businessId);
 
     if (error) {
-      return NextResponse.json({ error: error.message }, { status: 500 });
+      return NextResponse.json({ error: "Indstillingerne kunne ikke hentes." }, { status: 503 });
     }
 
     const business = asRecord(businessRaw);
@@ -120,7 +121,11 @@ export async function GET(req: NextRequest) {
     const chatOutlineOpacity = asString(business?.chat_outline_opacity);
     const widgetOpacity = asString(business?.widget_opacity);
 
+    const { data: privacy } = await supabase.from("business_privacy_settings").select("customer_privacy_url").eq("business_id", businessId).maybeSingle();
+    let customerPrivacyUrl: string | null = null;
+    try { customerPrivacyUrl = privacyUrl(privacy?.customer_privacy_url ?? null); } catch { /* Fail safely if an old invalid value exists. */ }
     return NextResponse.json({
+      customer_privacy_url: customerPrivacyUrl,
       name: name || DEFAULT_WIDGET_CONFIG.name,
       primary_color: primaryColor || DEFAULT_WIDGET_CONFIG.primary_color,
       secondary_color: secondaryColor || DEFAULT_WIDGET_CONFIG.secondary_color,
@@ -136,7 +141,7 @@ export async function GET(req: NextRequest) {
     });
   } catch (error) {
     if (error instanceof Error) {
-      return NextResponse.json({ error: error.message }, { status: 500 });
+      return NextResponse.json({ error: "Indstillingerne kunne ikke hentes." }, { status: 503 });
     }
 
     return NextResponse.json({ error: "Ukendt serverfejl." }, { status: 500 });

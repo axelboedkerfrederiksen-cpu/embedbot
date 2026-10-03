@@ -4,6 +4,8 @@ import { useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase";
 import { isBusinessSubscriptionActive } from "@/lib/subscription";
+import { TERMS } from "@/lib/compliance/legal";
+import { TRIAL } from "@/lib/compliance/trial";
 import { getPlan, normalizePlan, PLANS, type PlanSlug } from "@/lib/plans";
 
 const ONBOARDING_FORM_SNAPSHOT_KEY = "onboarding_form_snapshot";
@@ -140,7 +142,7 @@ export default function ProviderPage() {
 
         const { data: business, error: businessError } = await supabase
           .from("businesses")
-          .select("id, user_id, subscription_status, payment_status, stripe_subscription_id, activated")
+          .select("id, user_id, subscription_status, payment_status, stripe_subscription_id, current_period_end, activated")
           .eq("id", parsed.business_id)
           .eq("user_id", user.id)
           .maybeSingle();
@@ -205,7 +207,7 @@ export default function ProviderPage() {
     }
   }
 
-  async function handleContinue() {
+  async function handleContinue(startTrial = true) {
     if (!snapshot) {
       setMessage("Mangler onboarding-data. Gå tilbage og prøv igen.");
       return;
@@ -217,7 +219,7 @@ export default function ProviderPage() {
     }
 
     if (!acceptedTerms) {
-      setMessage("Bekræft abonnementsvilkårene for at fortsætte til betaling.");
+      setMessage("Bekræft vilkårene for at fortsætte.");
       return;
     }
 
@@ -228,7 +230,7 @@ export default function ProviderPage() {
     }
 
     const checkoutUrl = buildCheckoutUrl(plan, snapshot.business_id, String(snapshot.form.support_email || ""));
-    if (!checkoutUrl) {
+    if (!startTrial && !checkoutUrl) {
       setMessage(`Betalingslinket til ${getPlan(plan).name} er ikke konfigureret endnu. Kontakt os, så hjælper vi dig videre.`);
       return;
     }
@@ -253,8 +255,15 @@ export default function ProviderPage() {
         throw new Error(data.error || "Noget gik galt.");
       }
 
-      localStorage.removeItem(ONBOARDING_FORM_SNAPSHOT_KEY);
-      window.location.href = checkoutUrl;
+      const acceptance = await fetch("/api/dashboard/legal", {method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({business_id:snapshot.business_id,slug:"terms",version:TERMS.version,confirmed:true})});
+      if (!acceptance.ok) throw new Error((await acceptance.json()).error || "Vilkårene kunne ikke registreres.");
+      if (startTrial) {
+        const trial = await fetch("/api/dashboard/trial", {method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({business_id:snapshot.business_id})});
+        const result = await trial.json();
+        if (!trial.ok) throw new Error(result.error || "Prøven kunne ikke startes.");
+        localStorage.removeItem(ONBOARDING_FORM_SNAPSHOT_KEY);
+        router.push("/dashboard");
+      } else if (checkoutUrl) { window.location.href = checkoutUrl; }
     } catch (error) {
       setMessage(error instanceof Error ? error.message : "Noget gik galt.");
       setLoading(false);
@@ -269,7 +278,7 @@ export default function ProviderPage() {
           <h1>Vælg platform og plan</h1>
           <p>
             Fortæl os, hvor chatbotten skal installeres, og vælg den plan der passer til jeres trafik.
-            Du sendes direkte videre til den rigtige betaling bagefter.
+            Start en gratis 14-dages Starter-prøve uden betalingskort, eller køb den valgte plan nu.
           </p>
         </section>
 
@@ -358,19 +367,19 @@ export default function ProviderPage() {
             />
             <span>
               Jeg handler på vegne af en virksomhed og accepterer, at planen er et månedligt
-              abonnement, som fornyes automatisk, indtil det opsiges. Prisen er ekskl. moms.
+              abonnement, som ved et aktivt køb fornyes automatisk, indtil det opsiges. Den gratis prøve kræver intet køb. Prisen for betalte planer er ekskl. moms.
               Jeg har læst <a href="/terms" target="_blank" rel="noreferrer">vilkårene</a>,{" "}
               <a href="/refunds" target="_blank" rel="noreferrer">betalings- og refusionspolitikken</a> og{" "}
               <a href="/privacy" target="_blank" rel="noreferrer">privatlivspolitikken</a>.
             </span>
           </label>
 
-          <div className="provider-actions">
+          <p>{TRIAL.summary}</p><p>DPA’en er fortsat et <a href="/dpa" target="_blank" rel="noreferrer">udkast</a> og kræver særskilt godkendelse før behandling af besøgendes persondata.</p><button type="button" className="provider-back" disabled={loading || !acceptedTerms} onClick={() => void handleContinue(false)}>Køb {selectedPlan.name} nu ({formatMonthlyPrice(selectedPlan.monthlyPriceDkk)} / måned)</button><div className="provider-actions">
             <a className="provider-back" href="/setup">
               Tilbage
             </a>
-            <button type="button" className="provider-continue" onClick={handleContinue} disabled={loading || !ready || !acceptedTerms}>
-              {loading ? "Sender videre..." : `Fortsæt med ${selectedPlan.name} · til betaling`}
+            <button type="button" className="provider-continue" onClick={() => void handleContinue()} disabled={loading || !ready || !acceptedTerms}>
+              {loading ? "Sender videre..." : "Start gratis 14-dages Starter-prøve"}
             </button>
           </div>
         </section>
