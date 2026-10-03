@@ -7,7 +7,7 @@ Oplysninger bekræftet direkte af Axel i chatten den 3. oktober 2026. Dette er e
 | Juridisk navn på aftaleparten | Axel Bødker Frederiksen |
 | Produktnavn | EmbedBot |
 | CVR | Ingen, oplyst af Axel |
-| Adresse | Smallegade 42, 4. tv., 2000 Frederiksberg, Danmark |
+| Adresse | Adresse fjernet |
 | Kontaktperson | Axel Bødker Frederiksen |
 | E-mail | axel@embedbot.dk |
 | Telefon | +45 91 55 12 50 |

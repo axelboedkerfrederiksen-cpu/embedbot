@@ -7,7 +7,6 @@ Version: 2026-10-03.1 · Dato: 3. oktober 2026
 Denne databehandleraftale indgås mellem den virksomhed eller person, der er identificeret som kunde i den tilhørende tjenesteaftale og aftaleregistrering (herefter **Kunden**), og:
 
 **Axel Bødker Frederiksen, som driver EmbedBot**  
-Smallegade 42, 4. tv., 2000 Frederiksberg, Danmark  
 E-mail: axel@embedbot.dk · Telefon: +45 91 55 12 50  
 (herefter **Databehandleren**).
 

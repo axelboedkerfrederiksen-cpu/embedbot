@@ -1648,7 +1648,7 @@ export default function Home() {
         {input("Email til kundeservice", "support_email", "support@...", true)}
         {input("Telefonnummer", "phone", "fx +45 12 34 56 78", true)}
         {input("Adresse", "address", "fx Vestergade 12")}
-        {input("By / postnummer", "city", "fx 2000 Frederiksberg")}
+        {input("By / postnummer", "city", "fx by og postnummer")}
         <h3 className="subsection-title">Åbningstider</h3>
         {input("Mandag–fredag", "hours_weekday", "fx 9:00–17:00", true)}
         {input("Lørdag", "hours_saturday", "fx 10:00–14:00 eller Lukket")}

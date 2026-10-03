@@ -72,7 +72,7 @@ test('private privacy/legal endpoints require session, owner, same-origin and ex
  for(const doc of [TERMS,DPA]){const {sha256,...canonical}=doc;assert.equal(createHash('sha256').update(JSON.stringify(canonical)).digest('hex'),sha256);}
  const archived=await db.pg.query("select document,sha256 from legal_document_versions where slug='terms' and version=$1",[TERMS.version]);
  assert.deepEqual(archived.rows[0].document,TERMS);assert.equal(archived.rows[0].sha256,TERMS.sha256);
- const reading=await db.pg.query("select document,status,sha256 from legal_document_versions where slug='dpa' and version='2026-10-03.2'");
+ const reading=await db.pg.query("select document,status,sha256 from legal_document_versions where slug='dpa' and version=$1",[readingPublication.version]);
  assert.equal(reading.rows[0].status,'draft');
  assert.deepEqual(reading.rows[0].document,readingPublication);
  const {sha256:readingHash,...readingCanonical}=readingPublication;

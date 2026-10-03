@@ -1,13 +1,13 @@
 {
   "slug": "terms",
-  "version": "2026-10-03.3",
+  "version": "2026-10-03.4",
   "status": "published",
   "title": "Vilkår for EmbedBot",
   "notice": "Disse vilkår gælder ved virksomhedens dokumenterede accept af denne version. Tidligere aftaleversioner og acceptregistreringer bevares.",
   "sections": [
     {
       "title": "1. Aftalen",
-      "text": "Disse vilkår gælder for virksomhedens brug af EmbedBot, herunder dashboard, chatbot-widget, support, gratis prøveadgang og betalte abonnementer. Aftaleparten er Axel Bødker Frederiksen, som driver EmbedBot, Smallegade 42, 4. tv., 2000 Frederiksberg, Danmark. Kontakt: axel@embedbot.dk, telefon +45 91 55 12 50."
+      "text": "Disse vilkår gælder for virksomhedens brug af EmbedBot, herunder dashboard, chatbot-widget, support, gratis prøveadgang og betalte abonnementer. Aftaleparten er Axel Bødker Frederiksen, som driver EmbedBot. Kontakt: axel@embedbot.dk, telefon +45 91 55 12 50."
     },
     {
       "title": "2. Tjenesten",
@@ -240,5 +240,5 @@
       "reviewedAt": "2026-10-03"
     }
   ],
-  "sha256": "8bab15cda024e2e4b4400f04aec71242914b93de61b505b4e69a5363e85a253e"
+  "sha256": "a296f62785438d665fcad23a6afc1a41a1811438fcc62525cc88eb4e5f0738b5"
 }

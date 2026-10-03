@@ -1,1 +1,1 @@
-export const DPA_PUBLICATION_VERSION = "2026-10-03.2";
+export const DPA_PUBLICATION_VERSION = "2026-10-03.3";

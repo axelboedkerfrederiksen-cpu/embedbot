@@ -10,7 +10,7 @@ Udestående felter og bilag skal færdiggøres før endeligt review og godkendel
 
 Dataansvarlig: [kundens officielle juridiske navn], [CVR/registrering], [registreret adresse], [autoriseret kontaktperson og kontaktdata].
 
-Databehandler: Axel Bødker Frederiksen, som leverer tjenesten EmbedBot. Ingen CVR, oplyst af Axel. Adresse: Smallegade 42, 4. tv., 2000 Frederiksberg, Danmark. Kontakt: axel@embedbot.dk, +45 91 55 12 50. Oplysningerne er bekræftet af Axel den 3. oktober 2026. Ingen udpeget DPO er oplyst; foreløbig screening er dokumenteret i contracting-party.md.
+Databehandler: Axel Bødker Frederiksen, som leverer tjenesten EmbedBot. Ingen CVR, oplyst af Axel. Adresse: Adresse fjernet. Kontakt: axel@embedbot.dk, +45 91 55 12 50. Oplysningerne er bekræftet af Axel den 3. oktober 2026. Ingen udpeget DPO er oplyst; foreløbig screening er dokumenteret i contracting-party.md.
 
 ## 2. Genstand og varighed
 
