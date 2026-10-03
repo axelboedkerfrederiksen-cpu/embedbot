@@ -2,13 +2,15 @@
 
 import { useCallback, useEffect, useMemo, useState } from "react";
 import Link from "next/link";
+import Image from "next/image";
+import logoImage from "@/media/86a91d6a-f484-4e7d-a05c-55ab0979c3b1.png";
 import { useRouter } from "next/navigation";
 import type { LucideIcon } from "lucide-react";
 import {
   AlertCircle, ArrowRight, BarChart3, BookOpenText, Bot, CalendarClock, Check, CheckCircle2,
   ChevronDown, Code2, Copy, CreditCard, ExternalLink, Eye, HelpCircle, Inbox,
   LayoutDashboard, LoaderCircle, LogOut, Menu, MessagesSquare, Palette, Plus, ReceiptText,
-  Search, Settings, ShieldCheck, SlidersHorizontal, Sparkles, TrendingUp, UserRoundPlus,
+  Search, Settings, ShieldCheck, SlidersHorizontal, TrendingUp, UserRoundPlus,
   UsersRound, WalletCards, X, Zap,
 } from "lucide-react";
 import { createClient } from "@/lib/supabase";
@@ -648,7 +650,7 @@ export default function DashboardPage() {
     return <>
       {renderPageHeader(<>{websiteUrl ? <a className={styles.buttonSecondary} href={websiteUrl} target="_blank" rel="noreferrer"><ExternalLink size={14} />Åbn hjemmeside</a> : null}<button className={styles.button} type="button" onClick={() => changeView("appearance")}><Eye size={14} />Forhåndsvis bot</button></>)}
       <section className={cx(styles.card, styles.heroCard)}><div className={styles.heroIdentity}><div className={styles.botIcon}><Bot size={23} /></div><div><h2 className={styles.heroName}>{selectedBusiness?.name || "Unavngiven chatbot"}</h2><div className={styles.heroMeta}><span className={cx(styles.statusDot, !activeBusiness && styles.statusDotInactive)} /><span>{activeBusiness ? "Aktiv" : "Kræver opmærksomhed"}</span><span>·</span><span>{selectedBusiness?.industry || "Branche ikke valgt"}</span></div></div></div><div className={styles.buttonRow}><button className={styles.buttonSecondary} type="button" onClick={() => changeView("installation")}><Code2 size={14} />Installér</button><button className={styles.buttonSecondary} type="button" onClick={() => changeView("behavior")}><SlidersHorizontal size={14} />Tilpas</button></div></section>
-      {attentionItems.length ? <section className={cx(styles.card, styles.attentionCard)}><div className={styles.attentionHeader}><Sparkles size={16} className={styles.warningIcon} />Kræver din opmærksomhed</div><div className={styles.attentionList}>{attentionItems.map((item) => <div className={styles.attentionItem} key={item.title}><AlertCircle size={16} className={styles.attentionIcon} /><div className={styles.attentionText}><strong>{item.title}</strong><span>{item.detail}</span></div><button className={styles.inlineAction} type="button" onClick={() => { if (item.action === "conversations") setConversationFilter("unanswered"); changeView(item.action); }}>Åbn <ArrowRight size={11} /></button></div>)}</div></section> : <div className={styles.successBanner}><CheckCircle2 size={16} />Alt ser godt ud. Der er ingen presserende handlinger lige nu.</div>}
+      {attentionItems.length ? <section className={cx(styles.card, styles.attentionCard)}><div className={styles.attentionHeader}><AlertCircle size={16} className={styles.warningIcon} />Kræver din opmærksomhed</div><div className={styles.attentionList}>{attentionItems.map((item) => <div className={styles.attentionItem} key={item.title}><AlertCircle size={16} className={styles.attentionIcon} /><div className={styles.attentionText}><strong>{item.title}</strong><span>{item.detail}</span></div><button className={styles.inlineAction} type="button" onClick={() => { if (item.action === "conversations") setConversationFilter("unanswered"); changeView(item.action); }}>Åbn <ArrowRight size={11} /></button></div>)}</div></section> : <div className={styles.successBanner}><CheckCircle2 size={16} />Alt ser godt ud. Der er ingen presserende handlinger lige nu.</div>}
       <section className={styles.metricGrid}><MetricCard icon={MessagesSquare} label="Samtaler" value={String(analytics.conversationCount)} hint={`Seneste ${rangeDays} dage`} /><MetricCard icon={CheckCircle2} label="Løsningsgrad" value={`${analytics.resolutionRate}%`} hint="Svar uden tydelig fallback" /><MetricCard icon={UsersRound} label="Leads" value={String(analytics.leads.length)} hint="Unikke e-mailadresser" /><MetricCard icon={Zap} label="AI-forbrug" value={selectedSubscription ? `${usagePercent}%` : "–"} hint={selectedSubscription ? `${selectedSubscription.answersUsed.toLocaleString("da-DK")} af ${selectedSubscription.answerLimit.toLocaleString("da-DK")}` : "Henter fra Stripe"} /></section>
       <section className={styles.gridTwo}>
         <article className={cx(styles.card, styles.sectionCard)}><div className={styles.cardHeader}><div><h2 className={styles.cardTitle}>Aktivitet</h2><p className={styles.cardDescription}>Samtaler og leads over tid.</p></div>{renderDatePills()}</div><TrendChart daily={analytics.daily} /></article>
@@ -801,7 +803,7 @@ export default function DashboardPage() {
   return <main id="main-content" className={styles.dashboardRoot}>
     {mobileNavOpen ? <button className={styles.mobileOverlay} type="button" aria-label="Luk menu" onClick={() => setMobileNavOpen(false)} /> : null}
     <aside className={cx(styles.sidebar, mobileNavOpen && styles.sidebarOpen)}>
-      <Link className={styles.brand} href="/"><span className={styles.brandMark}><Bot size={18} /></span>EmbedBot</Link>
+      <Link className={styles.brand} href="/"><span className={styles.brandMark}><Image src={logoImage} alt="" priority /></span>EmbedBot</Link>
       <div className={styles.botPickerHeader}><label className={styles.botPickerLabel} htmlFor="dashboard-bot-picker">Din chatbot</label><Link className={styles.newBotLink} href="/setup"><Plus size={12} />Ny</Link></div>
       <div className={styles.botPickerWrap}><select id="dashboard-bot-picker" className={styles.botPicker} value={selectedBusiness?.id || ""} onChange={(event) => { setSelectedBusinessId(event.target.value); setSelectedConversationId(""); }}>{businesses.map((business) => <option key={business.id} value={business.id}>{business.name || "Unavngiven chatbot"}</option>)}</select><ChevronDown className={styles.pickerChevron} size={14} /></div>
       <nav className={styles.nav} aria-label="Dashboard navigation">{renderNavItems(NAV_PRIMARY)}<div className={styles.navGroup}><span className={styles.navGroupLabel}>Forbedr botten</span>{renderNavItems(NAV_IMPROVE)}</div><div className={styles.navGroup}><span className={styles.navGroupLabel}>Konto</span>{renderNavItems(NAV_MANAGE)}</div><Link className={styles.navLink} href={supportUrl}><HelpCircle size={17} />Skriv til os</Link></nav>
