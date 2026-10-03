@@ -37,3 +37,7 @@ Min Kreative Verden er fortsat kun en preview-demo oprettet af Axel. Der er inge
 - [Supplerende leverandørkontrol](additional-supplier-review.md) afgrænser Stripe/analyse og registrerer aktuelle kilder/modtagere; kontospecifik transferafklaring udestår.
 
 Ingen produktionsmigration, deployment eller sletning af virkelige backup-/kundedata er udført i dette trin. Drift og publiceret aftale kan derfor endnu ikke markeres afsluttet.
+
+## Renskrivning efter Axels tekstgodkendelse
+
+Axel har godkendt arbejdsgrundlaget og bedt om at se den renskrevne version før publicering. [Kundevendt tekst med bilag A–D](dpa-final-review.md) er klargjort; [intern releasekontrol](dpa-release-review.md) fastholder de åbne leverandør-/driftspunkter. Ingen publicering, arkivændring eller ny kundeaccept er udført. Tekstgodkendelse lukker ikke bilag C eller beviser produktionsdrift.

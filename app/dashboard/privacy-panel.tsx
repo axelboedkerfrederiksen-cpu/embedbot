@@ -3,7 +3,8 @@ import { useEffect,useState } from "react";
 import Link from "next/link";
 import { ShieldCheck,FileCheck2,Search } from "lucide-react";
 import { commerceRequest } from "@/lib/commerce-request";
-import { TERMS,DPA } from "@/lib/compliance/legal";
+import { TERMS } from "@/lib/compliance/legal";
+import { DPA_PUBLICATION_VERSION } from "@/lib/compliance/dpa-publication-version";
 import { DEFAULT_CHAT_RETENTION_DAYS,DEFAULT_TICKET_RETENTION_DAYS } from "@/lib/compliance/retention";
 import styles from "./dashboard.module.css";
 import ui from "./commerce.module.css";
@@ -43,10 +44,10 @@ export default function PrivacyPanel({businessId,demo=false}:{businessId:string;
    </form><p className={ui.hint}>Seneste registrerede succesfulde oprydning: {settings.lastCleanup?new Date(settings.lastCleanup).toLocaleString("da-DK"):"Ingen registrering endnu — drift skal kontrolleres."}</p>
   </section>
   <section className={`${styles.card} ${ui.section}`}><div className={ui.heading}><div className={ui.icon}><FileCheck2 size={21}/></div><div><h2>Aftaler og versioner</h2><p>Ingen tidligere kunder er automatisk registreret som accepterende.</p></div></div>
-   <p className={ui.hint}><Link href="/terms" target="_blank">Vilkår {TERMS.version}</Link> · <Link href="/dpa" target="_blank">DPA {DPA.version} — udkast</Link> · <Link href="/subprocessors" target="_blank">Leverandører</Link></p>
+   <p className={ui.hint}><Link href="/terms" target="_blank">Vilkår {TERMS.version}</Link> · <Link href="/dpa" target="_blank">DPA {DPA_PUBLICATION_VERSION}</Link> · <Link href="/subprocessors" target="_blank">Leverandører</Link></p>
    <label className={ui.checkbox}><input type="checkbox" checked={accept} onChange={e=>setAccept(e.target.checked)}/>Jeg har læst vilkårene og har ret til at acceptere dem på virksomhedens vegne.</label>
    <button className={styles.buttonSecondary} disabled={disabled||!accept||acceptances.some(a=>a.slug==="terms"&&a.version===TERMS.version)} onClick={()=>void action("terms",async()=>{await commerceRequest("/api/dashboard/legal",{business_id:businessId,slug:"terms",version:TERMS.version,confirmed:true});const fresh=await commerceRequest(`/api/dashboard/legal?business_id=${businessId}`);setAcceptances(fresh.acceptances);setNotice("Vilkårsaccepten er registreret med bruger, version og tidspunkt.");})}>Accepter vilkår</button>
-   <p className={ui.hint}>DPA’en kan først accepteres, når en endelig version er godkendt og publiceret. Udkastet er ikke en indgået aftale.</p>
+   <p className={ui.hint}>DPA-teksten kan læses på hjemmesiden. Kundeaccept åbnes, når kundeidentifikation og det konkrete leverandør- og overførselsbilag er færdiggjort. Offentliggørelse er ikke en indgået aftale.</p>
    {acceptances.length?<ul className={ui.hint}>{acceptances.map(a=><li key={`${a.slug}:${a.version}`}>{a.slug} {a.version} · {new Date(a.accepted_at).toLocaleString("da-DK")}</li>)}</ul>:<p className={ui.hint}>Ingen registrerede aftaleaccepts.</p>}
   </section>
   <section className={`${styles.card} ${ui.section}`}><div className={ui.heading}><div className={ui.icon}><Search size={21}/></div><div><h2>Besøgendes dataanmodninger</h2><p>Kun din virksomheds data. Kontroller identitet via jeres eksisterende kundekanal før opslag, udlevering eller sletning.</p></div></div>
