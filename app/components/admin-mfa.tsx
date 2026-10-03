@@ -13,7 +13,7 @@ export default function AdminMfa({onVerified}:{onVerified:()=>Promise<void>}){
   setFactor(enrolled.id);setQr(enrolled.totp.qr_code);
  }catch{setNotice("Totrinsbekræftelsen kunne ikke startes.");}finally{setBusy(false);}}
  async function verify(){setBusy(true);setNotice("");try{
-  const {error}=await auth.auth.mfa.challengeAndVerify({factorId:factor,code});if(error)throw error;setCode("");setQr("");await onVerified();
- }catch{setNotice("Koden eller admin-tilladelsen kunne ikke bekræftes.");}finally{setBusy(false);}}
+  const {error}=await auth.auth.mfa.challengeAndVerify({factorId:factor,code});if(error)throw error;setCode("");setQr("");setNotice("Totrinsbekræftelsen er godkendt. Kontrollerer admin-adgangen …");await onVerified();
+ }catch(error){setNotice(error instanceof Error && error.message === "Admin-adgangen blev afvist. Se beskeden nedenfor." ? error.message : "Koden kunne ikke bekræftes. Brug en ny kode fra din authenticator.");}finally{setBusy(false);}}
  return <div className="my-4 space-y-3 rounded-xl border p-4"><p>Totrinsbekræftelse til din konto</p>{!factor?<button type="button" disabled={busy} onClick={()=>void prepare()}>Brug eller opsæt authenticator</button>:<>{qr?<div><Image unoptimized src={qr} width={180} height={180} alt="Scan QR-koden med din authenticator-app"/></div>:null}<label className="block">Authenticator-kode<input className="block rounded border p-2" autoComplete="one-time-code" inputMode="numeric" maxLength={6} value={code} onChange={e=>setCode(e.target.value)}/></label><button type="button" disabled={busy||!/^[0-9]{6}$/.test(code)} onClick={()=>void verify()}>Bekræft kode</button></>}{notice?<p role="alert">{notice}</p>:null}</div>;
 }

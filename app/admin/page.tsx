@@ -214,6 +214,7 @@ export default function AdminPage() {
   const [password, setPassword] = useState("");
   const supabase = useMemo(() => createClient(), []);
   const [signedIn, setSignedIn] = useState(false);
+  const [sessionEmail, setSessionEmail] = useState("");
   const [authError, setAuthError] = useState("");
   const [isAuthenticated, setIsAuthenticated] = useState(false);
 
@@ -265,6 +266,7 @@ export default function AdminPage() {
       const {data:{user}} = await supabase.auth.getUser();
       if (!user || !mounted) return;
       setSignedIn(true);
+      setSessionEmail(user.email || "Ukendt konto");
       const isAuthorized = await fetchBusinesses();
       if (isAuthorized) {
         await fetchSupportMessages();
@@ -314,6 +316,7 @@ export default function AdminPage() {
     } catch (fetchError) {
       if (fetchError instanceof Error) {
         setError(fetchError.message || "Kunne ikke hente virksomheder.");
+        setAuthError(fetchError.message || "Kunne ikke hente virksomheder.");
         pushToast(fetchError.message || "Kunne ikke hente virksomheder.", "error");
       } else {
         setError("Kunne ikke hente virksomheder.");
@@ -364,11 +367,12 @@ export default function AdminPage() {
     setPassword("");
     if (loginError) { setAuthError("Login kunne ikke bekræftes."); return; }
     setSignedIn(true);
+    const { data: { user } } = await supabase.auth.getUser();
+    setSessionEmail(user?.email || stableEmail);
 
     const isAuthorized = await fetchBusinesses();
     if (!isAuthorized) {
       setIsAuthenticated(false);
-      setAuthError("Din konto mangler admin-tilladelse eller totrinsbekræftelse.");
       return;
     }
 
@@ -790,10 +794,11 @@ export default function AdminPage() {
       <main id="main-content" className="min-h-screen bg-[radial-gradient(circle_at_12%_18%,rgba(246,243,237,0.92)_0%,rgba(246,243,237,0)_24%),radial-gradient(circle_at_88%_14%,rgba(246,243,237,0.9)_0%,rgba(246,243,237,0)_22%),linear-gradient(180deg,#ffffff_0%,#fcfaf6_55%,#f8f4ee_100%)] px-4 py-16 text-[#111111]">
         <div className="mx-auto w-full max-w-md rounded-3xl border border-[rgba(17,17,17,0.08)] bg-[rgba(255,255,255,0.94)] p-8 shadow-[0_20px_50px_rgba(17,17,17,0.08)] backdrop-blur">
           <h1 className="text-3xl font-semibold tracking-tight">EmbedBot Admin</h1>
-          <p className="mt-2 text-sm text-[#6b6258]">Indtast admin-email og adgangskode for at fortsatte.</p>
+          <p className="mt-2 text-sm text-[#6b6258]">{signedIn ? `Logget ind som ${sessionEmail}. Bekræft totrinsbekræftelsen for at åbne admin.` : "Log ind med din admin-konto for at fortsætte."}</p>
 
-          {signedIn ? <AdminMfa onVerified={async()=>{const allowed=await fetchBusinesses();if(allowed){await fetchSupportMessages();setIsAuthenticated(true);}}}/> : null}
-          <form onSubmit={handleLogin} className="mt-6 space-y-4">
+          {signedIn ? <AdminMfa onVerified={async()=>{setAuthError("");const allowed=await fetchBusinesses();if(allowed){await fetchSupportMessages();setIsAuthenticated(true);}else{throw new Error("Admin-adgangen blev afvist. Se beskeden nedenfor.");}}}/> : null}
+          {signedIn ? <button type="button" className="mt-4 underline" onClick={async()=>{const {error:signOutError}=await supabase.auth.signOut();if(signOutError){setAuthError("Kunne ikke logge ud. Prøv igen.");return;}setSignedIn(false);setSessionEmail("");setAuthError("");setPassword("");}}>Log ud og vælg en anden konto</button> : <form onSubmit={handleLogin} className="mt-6 space-y-4">
+            <button type="button" className="w-full rounded-xl border p-3" onClick={async()=>{const {error:oauthError}=await supabase.auth.signInWithOAuth({provider:"azure",options:{scopes:"email",redirectTo:window.location.origin+"/auth/callback?next=/admin"}});if(oauthError)setAuthError("Microsoft-login kunne ikke startes.");}}>Fortsæt med Microsoft</button>
             <div>
               <label className="mb-2 block text-xs font-medium uppercase tracking-[0.16em] text-[#8a7e70]">
                 Email
@@ -829,8 +834,8 @@ export default function AdminPage() {
               Log ind
             </button>
 
-            {authError ? <p className="text-sm text-[#9b3d2f]">{authError}</p> : null}
-          </form>
+          </form>}
+          {authError ? <p role="alert" className="mt-4 text-sm text-[#9b3d2f]">{authError}</p> : null}
         </div>
       </main>
     );
