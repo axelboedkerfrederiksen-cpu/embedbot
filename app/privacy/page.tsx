@@ -95,7 +95,7 @@ export default function PrivacyPolicy() {
 
           <h3>2.5 Betaling og abonnement</h3>
           <p>
-            Betaling sker via Stripe&apos;s hostede betalingsside. Stripe håndterer
+            Ved oprettelse af en 14-dages prøve registreres betalingskort hos Stripe. Første betaling sker automatisk efter 14 dage, medmindre du opsiger inden, uanset om du modtager en mail. Betaling sker via Stripe&apos;s hostede betalingsside. Stripe håndterer
             betalings- og kortoplysninger på betalingssiden. EmbedBot modtager
             normalt kun de oplysninger, der er nødvendige for at administrere
             abonnementet, f.eks. betalingsstatus, valgt plan, Stripe-kunde- og

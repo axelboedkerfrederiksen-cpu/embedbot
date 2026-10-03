@@ -134,18 +134,18 @@ export default function PilotPage() {
           <span className="pilot-kicker">Gratis 14-dages pilot</span>
           <h1 className="pilot-title">I godkender. Vi gør resten.</h1>
           <p className="pilot-lead">
-            Vi bygger chatbotten ud fra jeres webshop, tilpasser den til jeres brand og hjælper med at få den live. Den gratis 14-dages prøveperiode kræver ikke betalingskort og bliver ikke automatisk betalt.
+            Vi bygger chatbotten ud fra jeres webshop, tilpasser den til jeres brand og hjælper med at få den live. I kan først anmode om en uforpligtende privat demo. Den 14-dages prøve oprettes separat hos Stripe med betalingskort.
           </p>
           <ol className="pilot-steps">
             <li><span className="pilot-step-number">1</span><span>Vi sender en privat demo med svar baseret på jeres eget indhold.</span></li>
             <li><span className="pilot-step-number">2</span><span>I godkender svar og udseende, før noget bliver vist til kunderne.</span></li>
-            <li><span className="pilot-step-number">3</span><span>Vi aftaler det videre forløb med jer. Automatisk afslutning sker kun, hvis en slutdato er aftalt.</span></li>
+            <li><span className="pilot-step-number">3</span><span>Ved oprettelse af den 14-dages prøve registrerer I kort hos Stripe. Opsig inden udløbet for at undgå første betaling.</span></li>
           </ol>
         </div>
 
         <form className="pilot-form" onSubmit={handleSubmit}>
           <h2>Få jeres private demo</h2>
-          <p className="pilot-form-intro">Fire korte felter til en privat demo. Intet betalingskort kræves til den gratis 14-dages prøveperiode.</p>
+          <p className="pilot-form-intro">Fire korte felter til en uforpligtende privat demo. Formularen opretter ikke et abonnement og kræver ikke betalingskort.</p>
           <label className="pilot-field">
             <span className="pilot-label">Navn</span>
             <input className="pilot-input" value={name} onChange={(event) => setName(event.target.value)} autoComplete="name" required />

@@ -73,7 +73,7 @@ const faqGroups = [
     items: [
       {
         question: "Er der en prøveperiode?",
-        answer: "Ja. Du kan prøve EmbedBot gratis i 14 dage. Se den aktuelle pris og planernes indhold på prissiden.",
+        answer: "14 dage gratis med kortregistrering hos Stripe. Første betaling trækkes automatisk efter 14 dage, medmindre du opsiger inden. Herefter fornyes abonnementet månedligt. Betalingen sker uanset, om du modtager en mail. Den valgte pris og første betalingsdato vises i Stripe, før du bekræfter.",
       },
       {
         question: "Kan jeg få hjælp til installationen?",

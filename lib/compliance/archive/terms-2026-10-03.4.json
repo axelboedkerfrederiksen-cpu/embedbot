@@ -1,6 +1,6 @@
 {
   "slug": "terms",
-  "version": "2026-10-03.5",
+  "version": "2026-10-03.4",
   "status": "published",
   "title": "Vilkår for EmbedBot",
   "notice": "Disse vilkår gælder ved virksomhedens dokumenterede accept af denne version. Tidligere aftaleversioner og acceptregistreringer bevares.",
@@ -15,11 +15,11 @@
     },
     {
       "title": "3. Gratis prøveadgang",
-      "text": "Ved oprettelse af den gratis 14-dages prøve registrerer virksomheden et betalingskort hos Stripe og bekræfter abonnementet. Der opkræves 0 kr. ved oprettelsen. Når de 14 gratis dage udløber, trækkes den valgte abonnementspris automatisk fra det registrerede kort, medmindre virksomheden har opsagt inden udløbet. Herefter fornyes abonnementet automatisk månedligt, indtil det opsiges. Pris og første betalingsdato fremgår af Stripe før bekræftelse. Virksomheden kan opsige i dashboardets abonnementssektion før første betalingsdato. Betalingen er ikke betinget af en bekræftelsesmail eller påmindelse; en manglende mail udsætter ikke betalingen eller forlænger prøven. Særskilt aftalte manuelle piloter følger deres egen aftale og bliver ikke automatisk ændret til betalte abonnementer ved offentliggørelsen af disse vilkår."
+      "text": "Prøveperioden tilbydes som 14 dage uden betalingskort og bliver ikke automatisk til et betalt abonnement. Adgangen afsluttes kun automatisk, hvis EmbedBot og virksomheden har aftalt en slutdato, eksempelvis i en mail. Uden aftalt slutdato fortsætter prøveadgangen, og det videre forløb aftales med virksomheden. Betaling kræver et aktivt køb. Betalte abonnementer fornyes månedligt, indtil de opsiges."
     },
     {
       "title": "4. Pris, betaling og fornyelse",
-      "text": "Aktuelle priser og plangrænser fremgår af prissiden . Priser er i danske kroner pr. måned og eksklusive moms, medmindre andet er angivet. Betaling håndteres af Stripe. Et betalt abonnement fornyes automatisk månedligt, indtil det opsiges. Den valgte pris, betalingsperiode og fornyelse vises før betaling. Virksomheden kan opsige i dashboardet; opsigelse inden prøveperiodens udløb stopper første abonnementsbetaling, og efter første betaling gælder opsigelsen ved udgangen af den allerede betalte periode. Se betalings- og refusionspolitikken ."
+      "text": "Aktuelle priser og plangrænser fremgår af prissiden . Priser er i danske kroner pr. måned og eksklusive moms, medmindre andet er angivet. Betaling håndteres af Stripe. Et betalt abonnement fornyes automatisk månedligt, indtil det opsiges. Den valgte pris, betalingsperiode og fornyelse vises før betaling. Virksomheden kan opsige i dashboardet; opsigelsen gælder ved udgangen af den allerede betalte periode. Se betalings- og refusionspolitikken ."
     },
     {
       "title": "5. Konto og adgang",
@@ -240,5 +240,5 @@
       "reviewedAt": "2026-10-03"
     }
   ],
-  "sha256": "5c74ca89131924198d99d30b48090022442d84f3c97421dde75d28036b3e834c"
+  "sha256": "a296f62785438d665fcad23a6afc1a41a1811438fcc62525cc88eb4e5f0738b5"
 }

@@ -223,14 +223,14 @@ export default function ProviderPage() {
       return;
     }
 
-    const plan = selectedPlanSlug;
+    const plan = startTrial ? "starter" : selectedPlanSlug;
     if (plan === "enterprise") {
       router.push("/support?plan=enterprise");
       return;
     }
 
     const checkoutUrl = buildCheckoutUrl(plan, snapshot.business_id, String(snapshot.form.support_email || ""));
-    if (!startTrial && !checkoutUrl) {
+    if (!checkoutUrl) {
       setMessage(`Betalingslinket til ${getPlan(plan).name} er ikke konfigureret endnu. Kontakt os, så hjælper vi dig videre.`);
       return;
     }
@@ -257,13 +257,8 @@ export default function ProviderPage() {
 
       const acceptance = await fetch("/api/dashboard/legal", {method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({business_id:snapshot.business_id,slug:"terms",version:TERMS.version,confirmed:true})});
       if (!acceptance.ok) throw new Error((await acceptance.json()).error || "Vilkårene kunne ikke registreres.");
-      if (startTrial) {
-        const trial = await fetch("/api/dashboard/trial", {method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({business_id:snapshot.business_id})});
-        const result = await trial.json();
-        if (!trial.ok) throw new Error(result.error || "Prøven kunne ikke startes.");
-        localStorage.removeItem(ONBOARDING_FORM_SNAPSHOT_KEY);
-        router.push("/dashboard");
-      } else if (checkoutUrl) { window.location.href = checkoutUrl; }
+      localStorage.removeItem(ONBOARDING_FORM_SNAPSHOT_KEY);
+      window.location.href = checkoutUrl;
     } catch (error) {
       setMessage(error instanceof Error ? error.message : "Noget gik galt.");
       setLoading(false);
@@ -278,7 +273,7 @@ export default function ProviderPage() {
           <h1>Vælg platform og plan</h1>
           <p>
             Fortæl os, hvor chatbotten skal installeres, og vælg den plan der passer til jeres trafik.
-            Start en gratis 14-dages Starter-prøve uden betalingskort, eller køb den valgte plan nu.
+            Start en gratis 14-dages Starter-prøve med kortregistrering hos Stripe, eller vælg en betalt plan. Første betaling for prøven sker efter 14 dage, medmindre du opsiger inden.
           </p>
         </section>
 
@@ -367,7 +362,7 @@ export default function ProviderPage() {
             />
             <span>
               Jeg handler på vegne af en virksomhed og accepterer, at planen er et månedligt
-              abonnement, som ved et aktivt køb fornyes automatisk, indtil det opsiges. Den gratis prøve kræver intet køb. Prisen for betalte planer er ekskl. moms.
+              abonnement, som fornyes automatisk månedligt, indtil det opsiges. Starter-prøven kræver kortregistrering, koster 0 kr. i dag og bliver automatisk betalt efter 14 dage, medmindre jeg opsiger inden. Betalingen afhænger ikke af, om jeg modtager en mail. Prisen for betalte planer er ekskl. moms.
               Jeg har læst <a href="/terms" target="_blank" rel="noreferrer">vilkårene</a>,{" "}
               <a href="/refunds" target="_blank" rel="noreferrer">betalings- og refusionspolitikken</a> og{" "}
               <a href="/privacy" target="_blank" rel="noreferrer">privatlivspolitikken</a>.

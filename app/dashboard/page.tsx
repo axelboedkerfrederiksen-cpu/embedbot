@@ -699,8 +699,8 @@ export default function DashboardPage() {
     const subscription = selectedSubscription;
     if (subscription?.isTrialing && !subscription.subscriptionId) {
       return <>{renderPageHeader()}<section className={cx(styles.card, styles.sectionCard)}>
-        <h2 className={styles.cardTitle}>{subscription.isActive ? "Gratis prøveperiode" : "Prøveperioden er udløbet"}</h2>
-        <p className={styles.cardDescription}>{subscription.currentPeriodEnd ? `Aftalt slutdato: ${formatDate(subscription.currentPeriodEnd)}.` : "Der er ingen aftalt automatisk slutdato. Vi aftaler det videre forløb med jer."} Der er intet betalingskort og ingen automatisk betaling.</p>
+        <h2 className={styles.cardTitle}>{subscription.isActive ? "Særskilt aftalt gratis pilot" : "Piloten er udløbet"}</h2>
+        <p className={styles.cardDescription}>{subscription.currentPeriodEnd ? `Aftalt slutdato: ${formatDate(subscription.currentPeriodEnd)}.` : "Der er ingen aftalt automatisk slutdato. Vi aftaler det videre forløb med jer."} Denne særskilt aftalte pilot har ikke et Stripe-abonnement og medfører ingen automatisk betaling.</p>
         <p className={styles.cardDescription}>{subscription.answersUsed.toLocaleString("da-DK")} / {subscription.answerLimit.toLocaleString("da-DK")} AI-svar brugt.</p>
         <div className={styles.buttonRow}><Link className={styles.buttonSecondary} href="/prices">Se planer</Link><Link className={styles.button} href={supportUrl}>Kontakt os for at købe en plan</Link></div>
       </section></>;
@@ -728,6 +728,8 @@ export default function DashboardPage() {
           <span className={styles.billingRenewal}>{subscriptionHasEnded || subscriptionEndingAtPeriodEnd ? `Adgang til ${formatDate(nextChargeDate)}` : `Fornyes ${formatDate(subscription?.currentPeriodEnd)}`}</span>
         </div>
       </section>
+
+      {subscription?.isTrialing ? <section className={cx(styles.card, styles.sectionCard)}><h2 className={styles.cardTitle}>14 dage gratis</h2><p className={styles.cardDescription}>Første betaling trækkes automatisk efter prøveperioden, medmindre du opsiger inden. Herefter fornyes abonnementet månedligt. Betalingen sker uanset, om du modtager en mail. {subscriptionEndingAtPeriodEnd ? "Din opsigelse er registreret; der trækkes ingen første abonnementsbetaling." : `Opsig inden ${formatDate(subscription?.currentPeriodEnd)} for at undgå første betaling.`}</p></section> : null}
 
       {scheduledChange ? <section className={styles.scheduledPlanBanner}>
         <CalendarClock size={19} />

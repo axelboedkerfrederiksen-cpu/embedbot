@@ -1,6 +1,7 @@
 import { createClient } from "@supabase/supabase-js";
 import { Resend } from "resend";
 import type { PlanSlug } from "@/lib/plans";
+import { TRIAL } from "./compliance/trial.ts";
 import { websiteIngestToken } from "./website-ingest-token.ts";
 
 type BusinessRecord = {
@@ -81,6 +82,7 @@ function buildCustomerEmailHtml(
   businessName: string | null,
   manualPilotEndsAt?: string | null,
   manualPilot = false,
+  stripeTrial = false,
 ) {
   const embedScript = `<script src="https://www.embedbot.dk/widget.js?id=${businessId}"></script>`;
   const previewUrl = `https://www.embedbot.dk/preview/${businessId}`;
@@ -101,6 +103,7 @@ function buildCustomerEmailHtml(
         <p style="margin:0 0 20px;font-size:15px;line-height:1.7;color:#111;">Hej ${escapedFirstName},</p>
         <p style="margin:0 0 20px;font-size:15px;line-height:1.7;color:#111;">Din AI-chatbot er nu klar til at gå live på din webshop.</p>
         ${pilotParagraph}
+        ${stripeTrial ? `<p style="margin:0 0 20px;font-size:15px;line-height:1.7;color:#111;">${TRIAL.summary} Se første betalingsdato og opsig under Abonnement i dashboardet.</p>` : ""}
         <p style="margin:0 0 20px;font-size:15px;line-height:1.7;color:#111;">Test først svar og udseende på jeres demoside: <a href="${previewUrl}" style="color:#111;font-weight:700;">Åbn privat demo</a>.</p>
         <p style="margin:0 0 10px;font-size:15px;line-height:1.7;color:#111;">Indsæt denne kode lige før <code style="font-family:Consolas,Monaco,monospace;font-size:13px;">&lt;/body&gt;</code> på din hjemmeside:</p>
         <div style="background:#111111;color:#f9f9f9;border-radius:6px;padding:16px;font-family:Consolas,Monaco,monospace;font-size:13px;line-height:1.5;word-break:break-all;margin:0 0 24px;">
@@ -267,6 +270,7 @@ export async function activateBusinessAndSendEmail(
       business.name,
       hasConfirmedManualPilotAccess ? billingUpdate?.currentPeriodEnd : undefined,
       hasConfirmedManualPilotAccess,
+      billingUpdate?.accessSource === "stripe" && normalizedSubscriptionStatus === "trialing",
     ),
   });
 
