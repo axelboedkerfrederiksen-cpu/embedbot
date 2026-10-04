@@ -16,6 +16,15 @@ The public site displays icons for WooCommerce/WordPress, Shopify, Squarespace, 
 
 Review each brand's current guidelines before using its logo in advertising, paid campaigns, or in a way that could imply a partnership.
 
+## Landing page platform logos
+
+The landing page uses official monochrome platform logos stored in `public/platforms/`, linked to the respective platform homepages to identify compatibility. They do not indicate sponsorship or endorsement.
+
+- Shopify: https://www.shopify.com/brand-assets (monotone black logo)
+- WooCommerce: https://woocommerce.com/brand-and-logo-guidelines/ (black Woo wordmark)
+- WordPress: https://wordpress.org/about/logos/ (standard logotype)
+- Webflow: https://brand.webflow.com/brand-assets (black full logo)
+
 ## EmbedBot logo and customer uploads
 
 `media/86a91d6a-f484-4e7d-a05c-55ab0979c3b1.png` is treated as the EmbedBot brand asset. Its ownership/source should be retained in the company's internal records.

@@ -186,7 +186,7 @@
   color:#6b6258;
 }
 
-.reassurance span {
+.reassurance span,.reassurance a {
   display:flex;
   gap:6px;
   align-items:center;
@@ -502,15 +502,56 @@
   letter-spacing:-.5px;
 }
 
-.platformNames .woo {
-  font-weight:700;
-  font-size:16px;
+.platformNames a {
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  min-height:48px;
 }
 
-.webflow {
-  font-style:italic;
-  font-weight:700;
+.platformNames img {
+  height:auto;
+  max-height:31px;
+  object-fit:contain;
+  filter:grayscale(1);
+  opacity:.65;
+  transition:opacity .2s;
 }
+
+.platformNames a:hover img { opacity:.9; }
+
+.howItWorks {
+  border-top:1px solid var(--line);
+  padding-top:45px;
+  padding-bottom:45px;
+}
+
+.howItWorks .eyebrow { margin-bottom:14px; }
+.howItWorks h2 { font-size:32px; }
+
+.flowSteps {
+  list-style:none;
+  padding:0;
+  margin:30px 0 0;
+  display:grid;
+  grid-template-columns:repeat(3,1fr);
+  gap:48px;
+}
+
+.flowSteps li { position:relative; }
+.flowNumber {
+  display:grid;
+  place-items:center;
+  width:28px;
+  height:28px;
+  border:1px solid #e4e0da;
+  border-radius:50%;
+  font-size:11px;
+  color:var(--muted);
+}
+.flowSteps h3 { margin:16px 0 10px; font-size:16px; }
+.flowSteps p { margin:0; font-size:12px; line-height:1.8; color:var(--muted); }
+.flowArrow { position:absolute; top:5px; right:-32px; color:#aaa195; }
 
 .section {
   border-top:1px solid var(--line);
@@ -1047,9 +1088,7 @@
     font-size:12px;
     gap:18px 23px;
   }
-  .platformNames .woo {
-    font-size:14px;
-  }
+
   .page h2 {
     font-size:33px;
   }
@@ -1160,8 +1199,8 @@
   right:24px;
   bottom:24px;
   z-index:60;
-  width:min(310px, calc(100vw - 32px));
-  padding:24px;
+  width:min(250px, calc(100vw - 32px));
+  padding:20px;
   border:1px solid #e8e3db;
   border-radius:12px;
   background:#fffdfa;
@@ -1183,7 +1222,7 @@
 }
 .demoPromptClose:hover { background:#f6f3ed; }
 .demoPromptKicker { font-size:9px; letter-spacing:.12em; color:#6b6258; }
-.demoPrompt h3 { margin:15px 0 10px; font-size:17px; }
+.demoPrompt h3 { margin:12px 0 16px; font-size:17px; }
 .demoPrompt p { font-size:12px; line-height:1.75; color:#6b6258; margin:0 0 19px; }
 .demoPrompt .button { width:100%; justify-content:space-between; }
 @media(max-width:500px) { .demoPrompt { right:16px; bottom:16px; padding:21px; } }
@@ -1193,3 +1232,27 @@
 .footerLinks button { background: none; border: 0; padding: 0; margin: 0; color: inherit; text-align: left; font-size: inherit; min-height: 24px; }
 @media (max-width: 800px) { .page { padding-top: 88px; } .header { position: fixed; top: 0; left: 0; right: 0; z-index: 50; background: #fcfcfa; } .page section[id] { scroll-margin-top: 100px; } }
 @media (max-width: 360px) { .nav { gap: 8px; padding-inline: 12px; } .navActions { gap: 8px; } .nav .button { gap: 5px; padding-inline: 8px; } }
+
+@media(max-width:800px) {
+  .flowSteps { gap:28px; }
+  .flowArrow { right:-23px; }
+  .reassurance { gap:10px 16px; line-height:1.7; }
+}
+@media(max-width:500px) {
+  .nav .button svg { display:none; }
+  .nav .button { gap:0; }
+  .howItWorks h2 { font-size:28px; }
+  .flowSteps { grid-template-columns:1fr; gap:24px; }
+  .flowSteps li { padding-left:42px; }
+  .flowNumber { position:absolute; left:0; top:0; }
+  .flowSteps h3 { margin-top:3px; }
+  .flowArrow { display:none; }
+  .platformNames { width:100%; display:grid; grid-template-columns:repeat(2,1fr); gap:12px 22px; }
+ .platformNames a { justify-content:flex-start; }
+  .reassurance { font-size:10px; }
+}
+
+@media(min-width:501px) and (max-width:1050px) {
+  .platforms { flex-direction:column; align-items:flex-start; gap:15px; }
+  .platformNames { width:100%; }
+}
