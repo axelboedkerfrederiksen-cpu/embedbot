@@ -50,6 +50,6 @@ export default function WebsiteSourcePanel({ businessId, websiteUrl = "", demo =
       {mode === "url" ? <label className={ui.field}>Hjemmesidens HTTPS-adresse<input type="url" required value={url} onChange={e => setUrl(e.target.value)} placeholder="https://din-hjemmeside.dk" /></label> : <label className={ui.field}>HTML-fil<input type="file" accept=".html,.htm,text/html" required onChange={e => setFile(e.target.files?.[0] || null)} /><small className={ui.hint}>Højst 1 MB. Kun tekst læses; scripts og formularer køres ikke.</small></label>}
       <div><button className={styles.button} disabled={busy || demo || !configured}>{busy ? "Importerer…" : source ? "Opdatér indhold" : "Importér indhold"}</button></div>
     </form>
-    <p className={ui.hint}>Vi læser op til 30 offentlige sider og gemmer et udvalg af indhold og links. Ved produktspørgsmål forsøger chatten at genlæse relevante produktsider for pris og lagerstatus. Sider, der blokerer adgang eller kræver JavaScript, kan mangle. Private ordrer kræver stadig en webshopintegration. HTML-filer genlæses ikke automatisk.</p>
+    <p className={ui.hint}>Vi læser op til 30 offentlige sider og gemmer et udvalg af indhold og links. Ved produktspørgsmål forsøger chatten at genlæse relevante produktsider for pris og lagerstatus. Sider, der blokerer adgang eller kræver JavaScript, kan mangle. Private ordreoplysninger læses ikke fra hjemmesiden. HTML-filer genlæses ikke automatisk.</p>
   </div>;
 }

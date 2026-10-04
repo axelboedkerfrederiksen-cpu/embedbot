@@ -178,7 +178,7 @@ const ALL_FIELDS = [...IDENTITY_FIELDS, ...CONTACT_FIELDS, ...KNOWLEDGE_FIELDS, 
 
 const VIEW_COPY: Record<DashboardView, { eyebrow: string; title: string; description: string }> = {
   privacy: { eyebrow: "Konto", title: "Privatliv & sikkerhed", description: "Politik, opbevaring, aftaler og besøgendes dataanmodninger." },
-  integrations: { eyebrow: "Din webshop", title: "Integrationer", description: "Forbind butikkens data med chatbotten, og vælg hvor supportnotifikationer skal sendes." },
+  integrations: { eyebrow: "Din webshop", title: "Integrationer", description: "Importér hjemmesidens indhold, og vælg hvor supportnotifikationer skal sendes." },
   tickets: { eyebrow: "Kundeservice", title: "Supportsager", description: "Følg op på spørgsmål, klager og henvendelser, der kræver din hjælp." },
   overview: { eyebrow: "Dit arbejdsområde", title: "Overblik", description: "Det vigtigste om din chatbot — og hvad der kræver din opmærksomhed." },
   messages: { eyebrow: "Fra EmbedBot", title: "Beskeder", description: "Chatbot-demoer, opdateringer og praktiske beskeder fra EmbedBot." },

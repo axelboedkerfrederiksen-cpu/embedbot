@@ -4,13 +4,14 @@ import { CheckCircle2, Link2, Mail, ShieldCheck, Store, Unplug } from "lucide-re
 import styles from "./dashboard.module.css";
 import ui from "./commerce.module.css";
 import WebsiteSourcePanel from "./website-source-panel";
+import { SHOP_CONNECTIONS_VISIBLE } from "@/lib/integration-features";
 import { commerceRequest } from "@/lib/commerce-request";
 
 type Setup = { configured: boolean; secureStorage: boolean; mailConfigured: boolean; shopifyConfigured: boolean; wooCommerceConfigured: boolean; notificationEmail: string; integration: { platform: string; shop_url: string; status: string; tested_at: string | null } | null };
 const emptySetup: Setup = { configured: false, secureStorage: false, mailConfigured: false, shopifyConfigured: false, wooCommerceConfigured: false, notificationEmail: "", integration: null };
 export default function CommercePanel({ businessId, demo = false, websiteUrl = "", onboarding = false, beforeConnect, onPlatformChange, initialPlatform = "" }: { businessId: string; demo?: boolean; websiteUrl?: string; onboarding?: boolean; beforeConnect?: () => Promise<void>; onPlatformChange?: (platform: string) => void; initialPlatform?: string }) {
   const [setup, setSetup] = useState<Setup | null>(null);
-  const [platform, setPlatform] = useState(initialPlatform === "HTML" ? "html" : initialPlatform === "WooCommerce" ? "woocommerce" : "shopify");
+  const [platform, setPlatform] = useState(!SHOP_CONNECTIONS_VISIBLE ? "html" : initialPlatform === "HTML" ? "html" : initialPlatform === "WooCommerce" ? "woocommerce" : "shopify");
   const [email, setEmail] = useState("");
   const [busy, setBusy] = useState("");
   const [error, setError] = useState("");
@@ -23,7 +24,7 @@ export default function CommercePanel({ businessId, demo = false, websiteUrl = "
     return () => controller.abort();
   }, [businessId, demo]);
   useEffect(() => {
-    if (setup?.integration?.status !== "pending" || demo) return;
+    if (!SHOP_CONNECTIONS_VISIBLE || setup?.integration?.status !== "pending" || demo) return;
     const controller = new AbortController();
     let rounds = 0;
     const timer = window.setInterval(() => {
@@ -47,11 +48,11 @@ export default function CommercePanel({ businessId, demo = false, websiteUrl = "
   return <div className={ui.stack}>
     {error ? <div className={styles.errorBanner} role="alert">{error}</div> : null}
     {notice ? <div className={styles.infoBanner} role="status"><CheckCircle2 size={16} />{notice}</div> : null}
-    {demo ? <div className={styles.infoBanner}>Dette er en forhåndsvisning. Ingen webshop er forbundet.</div> : setup && !setup.configured ? <div className={styles.infoBanner}>Integrationer er ikke konfigureret på serveren endnu. Databaseopsætningen mangler.</div> : null}
+    {demo ? <div className={styles.infoBanner}>Dette er en forhåndsvisning. Der importeres ikke indhold.</div> : setup && !setup.configured ? <div className={styles.infoBanner}>Integrationer er ikke konfigureret på serveren endnu. Databaseopsætningen mangler.</div> : null}
     {!setup && !error ? <div className={styles.infoBanner}><span className={styles.spinner} />Henter dine integrationer…</div> : null}
     <section className={`${styles.card} ${ui.section}`}>
-      <div className={ui.heading}><div className={ui.icon}><Store size={21} /></div><div><h2>{onboarding ? "Vælg din forbindelse" : "Forbind din hjemmeside"}</h2><p>Vælg live webshopdata eller indhold fra en hjemmeside / HTML-fil.</p></div><span className={`${ui.tag} ${connected?.status === "connected" ? ui.green : ""}`}>{platform === "html" ? "Tekst og viden" : connected?.status === "connected" ? "Forbundet" : connected?.status === "pending" ? "Afventer godkendelse / test" : connected?.status === "error" ? "Kræver opmærksomhed" : "Ikke forbundet"}</span></div>
-        <div className={ui.platforms} role="group" aria-label="Webshopplatform">{["shopify","woocommerce","html"].map(p => <button type="button" key={p} className={`${ui.platform} ${platform === p ? ui.selected : ""}`} aria-pressed={platform === p} onClick={() => { setPlatform(p); onPlatformChange?.(p === "html" ? "HTML" : p === "shopify" ? "Shopify" : "WooCommerce"); }}><Store size={22} /><strong>{p === "shopify" ? "Shopify" : p === "html" ? "Hjemmeside / HTML" : "WooCommerce"}</strong><small>{p === "shopify" ? "Forbind med din Shopify-konto" : p === "html" ? "Importér en side eller en HTML-fil" : "Godkend læseadgang i din webshop"}</small></button>)}</div>
+      <div className={ui.heading}><div className={ui.icon}><Store size={21} /></div><div><h2>{onboarding ? "Tilknyt din hjemmeside" : "Forbind din hjemmeside"}</h2><p>Importér indhold via hjemmesidens adresse eller en HTML-fil.</p></div><span className={`${ui.tag} ${connected?.status === "connected" ? ui.green : ""}`}>{platform === "html" ? "Tekst og viden" : connected?.status === "connected" ? "Forbundet" : connected?.status === "pending" ? "Afventer godkendelse / test" : connected?.status === "error" ? "Kræver opmærksomhed" : "Ikke forbundet"}</span></div>
+        <div className={ui.platforms} role="group" aria-label="Webshopplatform">{(SHOP_CONNECTIONS_VISIBLE ? ["shopify","woocommerce","html"] : ["html"]).map(p => <button type="button" key={p} className={`${ui.platform} ${platform === p ? ui.selected : ""}`} aria-pressed={platform === p} onClick={() => { setPlatform(p); onPlatformChange?.(p === "html" ? "HTML" : p === "shopify" ? "Shopify" : "WooCommerce"); }}><Store size={22} /><strong>{p === "shopify" ? "Shopify" : p === "html" ? "Hjemmeside / HTML" : "WooCommerce"}</strong><small>{p === "shopify" ? "Forbind med din Shopify-konto" : p === "html" ? "Importér en side eller en HTML-fil" : "Godkend læseadgang i din webshop"}</small></button>)}</div>
       {platform === "html" ? <WebsiteSourcePanel businessId={businessId} websiteUrl={websiteUrl} demo={demo} beforeConnect={beforeConnect} /> : connected && connected.status !== "pending" ? <div className={ui.connected}><div><strong>{connected.platform === "shopify" ? "Shopify" : "WooCommerce"}</strong><p>{connected.shop_url}</p><small>Senest testet: {connected.tested_at ? new Date(connected.tested_at).toLocaleString("da-DK") : "Ikke testet"}</small></div><div className={styles.buttonRow}><button className={styles.buttonSecondary} disabled={!!busy} onClick={() => void action("test")}><Link2 size={15} />{busy === "test" ? "Tester…" : "Test forbindelsen"}</button><button className={styles.buttonGhost} disabled={!!busy} onClick={() => setDisconnect(true)}><Unplug size={15} />Afbryd</button></div>{disconnect ? <div className={ui.confirm}><p>Afbryd forbindelsen til {connected.shop_url}? Chatbotten mister adgang til live webshopdata.</p><button className={styles.buttonDanger} disabled={!!busy} onClick={() => void action("disconnect")}>Afbryd forbindelsen</button><button className={styles.buttonSecondary} disabled={!!busy} onClick={() => setDisconnect(false)}>Behold forbindelsen</button></div> : null}</div> : <>
 
         {connected?.status === "pending" ? <p className={ui.hint}>Godkendelsen er ikke gennemført endnu. Du kan starte forbindelsen igen her.</p> : null}
@@ -60,7 +61,7 @@ export default function CommercePanel({ businessId, demo = false, websiteUrl = "
           <div><button className={styles.button} disabled={!!busy || demo || !setup?.configured || !setup.secureStorage || (platform === "shopify" ? !setup.shopifyConfigured : !setup.wooCommerceConfigured)}><Link2 size={15} />{busy ? "Forbinder…" : platform === "shopify" ? "Forbind med Shopify" : "Forbind WooCommerce"}</button></div>
         </form>
       </>}
-      <div className={ui.safety}><ShieldCheck size={17} /><span>Kun læseadgang. Chatbotten ændrer ikke ordrer, betalinger eller produkter.</span></div>
+      <div className={ui.safety}><ShieldCheck size={17} /><span>Vi læser hjemmesidens indhold. Chatbotten ændrer ikke noget på din hjemmeside.</span></div>
     </section>
     <section className={`${styles.card} ${ui.section}`}><div className={ui.heading}><div className={ui.icon}><Mail size={21} /></div><div><h2>Notifikationer om supportsager</h2><p>Alle sager gemmes i dashboardet. Vælg også, hvem der skal have besked på mail.</p></div></div><form className={ui.form} onSubmit={e => { e.preventDefault(); void action("settings", { notificationEmail: email }); }}><label className={ui.field}>Modtagermail<input type="email" value={email} onChange={e => setEmail(e.target.value)} placeholder="support@din-webshop.dk" /></label>{setup && !setup.mailConfigured ? <p className={ui.hint}>Mailafsendelse er ikke konfigureret på serveren. Sagerne bliver stadig gemt.</p> : null}<div><button className={styles.buttonSecondary} disabled={!!busy || demo || !setup?.configured}>{busy === "settings" ? "Gemmer…" : "Gem modtagermail"}</button></div></form></section>
   </div>;

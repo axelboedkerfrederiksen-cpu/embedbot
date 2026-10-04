@@ -4,6 +4,7 @@ import { useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase";
 import { isBusinessSubscriptionActive } from "@/lib/subscription";
+import { SHOP_CONNECTIONS_VISIBLE } from "@/lib/integration-features";
 import { TERMS } from "@/lib/compliance/legal";
 import { TRIAL } from "@/lib/compliance/trial";
 import { getPlan, normalizePlan, PLANS, type PlanSlug } from "@/lib/plans";
@@ -27,7 +28,7 @@ type OnboardingSnapshot = {
   form: Record<string, string>;
 };
 
-const PLATFORM_OPTIONS = [
+const PLATFORM_OPTIONS = SHOP_CONNECTIONS_VISIBLE ? [
   "Shopify",
   "WordPress.org",
   "WordPress.com",
@@ -37,7 +38,7 @@ const PLATFORM_OPTIONS = [
   "WooCommerce",
   "HTML",
   "Other",
-];
+] : ["HTML"];
 
 const CHECKOUT_PLAN_OPTIONS: PlanSlug[] = ["starter", "growth", "scale"];
 
@@ -92,7 +93,7 @@ export default function ProviderPage() {
   const router = useRouter();
   const supabase = useMemo(() => createClient(), []);
   const [snapshot, setSnapshot] = useState<OnboardingSnapshot | null>(null);
-  const [selectedPlatform, setSelectedPlatform] = useState("");
+  const [selectedPlatform, setSelectedPlatform] = useState(SHOP_CONNECTIONS_VISIBLE ? "" : "HTML");
   const [selectedPlanSlug, setSelectedPlanSlug] = useState<PlanSlug>("starter");
   const [loading, setLoading] = useState(false);
   const [acceptedTerms, setAcceptedTerms] = useState(false);
@@ -163,7 +164,7 @@ export default function ProviderPage() {
         }
 
         setSnapshot(parsed as OnboardingSnapshot);
-        setSelectedPlatform(typeof parsed.form.platform === "string" ? parsed.form.platform : "");
+        setSelectedPlatform(SHOP_CONNECTIONS_VISIBLE && typeof parsed.form.platform === "string" ? parsed.form.platform : "HTML");
         setSelectedPlanSlug(normalizePlan(parsed.form.plan));
         setReady(true);
       } catch {
