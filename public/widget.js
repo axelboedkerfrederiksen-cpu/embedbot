@@ -884,11 +884,17 @@
     if (data.kind === "products") {
       (data.products || []).forEach(product => {
         const card = commerceCard(target);
+        const imageUrl = safeCommerceUrl(product.image);
+        if (imageUrl) {
+          const image = element("img", undefined, card); image.className = "eb-commerce-product-image";
+          image.alt = product.name || "Produktbillede"; image.loading = "lazy"; image.referrerPolicy = "no-referrer";
+          image.onerror = () => image.remove(); image.src = imageUrl;
+        }
         element("strong", product.name, card);
         element("p", product.description, card);
         const details = element("p", "", card);
         const display = item => {
-          details.textContent = `${productPrice(item.price, item.currency)} · ${item.available === true ? "Lager registreret som tilgængeligt" : item.available === false ? "Ikke tilgængelig" : "Lagerstatus ikke bekræftet"}${typeof item.stock === "number" ? ` · Lager: ${item.stock}` : ""}`;
+          details.textContent = `${productPrice(item.price, item.currency)} · ${item.available === true ? typeof item.stock === "number" && item.stock <= 0 ? "Kan bestilles" : "På lager" : item.available === false ? "Udsolgt" : "Lagerstatus ikke bekræftet"}${typeof item.stock === "number" ? ` · ${item.stock} stk.` : ""}`;
         };
         display(product);
         if (product.variants?.length) {
@@ -907,7 +913,7 @@
         const url = safeCommerceUrl(product.url);
         if (url) { const link = element("a", "Se produkt i webshoppen", card); link.href = url; link.target = "_blank"; link.rel = "noopener noreferrer"; }
       });
-      if (data.fetchedAt) element("p", `Hentet ${new Date(data.fetchedAt).toLocaleTimeString("da-DK")} · Data kan være op til ${data.cacheSeconds || 30} sekunder gamle. Pris og lager kan ændre sig.`, target);
+      if (data.products?.length) { const note = element("p", "Pris og lager er tjekket i webshoppen.", target); note.className = "eb-commerce-note"; }
       if (data.more) element("p", data.moreText || "Der er flere produkter. Prøv et mere præcist produktnavn.", target);
     }
     if (data.needsOrderInput) orderForm(target, data);
@@ -915,11 +921,6 @@
     else if (data.offerSupport) supportAction(target);
     messages.scrollTop = messages.scrollHeight;
   }
-  const supportShortcut = actionButton(composer, "Opret en supportsag", () => {
-    const message = addMessage("Jeg hjælper dig med at sende din henvendelse videre til webshoppen.", false);
-    supportForm(message.msg); messages.scrollTop = messages.scrollHeight;
-  }, true);
-  supportShortcut.classList.add("eb-support-shortcut");
   const commerceStyles = element("style", undefined, document.head);
   commerceStyles.textContent = `
     #eb-box .eb-answer-link { color:#237a57; text-decoration:underline; text-underline-offset:3px; overflow-wrap:anywhere; }
@@ -940,7 +941,9 @@
     #eb-box .eb-commerce-button:disabled { opacity:.5; cursor:wait; }
     #eb-box .eb-commerce-consent { display:flex; gap:8px; align-items:flex-start; font-size:11px; margin:10px 0; line-height:1.5; }
     #eb-box .eb-commerce-consent input { width:auto; }
-    #eb-box .eb-support-shortcut { border:0; font-size:10px; padding:0; margin:0; align-self:center; text-decoration:underline; }
+    #eb-box .eb-commerce-product-image { display:block; width:100%; height:180px; object-fit:contain; background:#fff; border-radius:8px; margin-bottom:12px; }
+    #eb-box .eb-commerce-note { font-size:11px; line-height:1.5; color:#827b72; margin:10px 0 0; }
+    #eb-box .eb-commerce-field select { appearance:none; padding-right:36px; background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%23575149' stroke-width='1.7' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E"); background-repeat:no-repeat; background-position:right 12px center; background-size:16px; }
   `;
 
   let messageSending = false;

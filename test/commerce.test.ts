@@ -6,6 +6,7 @@ import { encryptionKey, seal, unseal, digest, shopifyHmac } from "../lib/commerc
 import { requestOrderCode, verifiedOrder, type VerificationContext } from "../lib/commerce/orders.ts";
 import { persistTicket, supportDraft, submissionKey, validConfirmation } from "../lib/commerce/support.ts";
 import { notifyTicket } from "../lib/commerce/mail.ts";
+import { supportIntent } from "../lib/commerce/chat.ts";
 import { shopifyAdapter } from "../lib/commerce/shopify.ts";
 import { wooCommerceAdapter } from "../lib/commerce/woocommerce.ts";
 import { cachedProducts } from "../lib/commerce/index.ts";
@@ -166,7 +167,7 @@ test("Shopify maps variants, stock and tracking without exposing credentials in 
 });
 test("Shopify keeps published products without URLs but excludes hidden, future and invalid links", async () => {
   const variant = { id: "v1", title: "Ice", price: "699.95", inventoryQuantity: 10, inventoryPolicy: "DENY", inventoryItem: { tracked: true }, selectedOptions: [{ name: "Color", value: "Ice" }] };
-  const published = { id: "p1", title: "The Complete Snowboard", description: "Snowboard", onlineStoreUrl: null, handle: "the-complete-snowboard", publishedAt: "2026-01-01T00:00:00Z", status: "ACTIVE", totalInventory: 50, variants: { pageInfo: { hasNextPage: false }, nodes: [variant] } };
+  const published = { id: "p1", title: "The Complete Snowboard", description: "Snowboard", onlineStoreUrl: null, handle: "the-complete-snowboard", publishedAt: "2026-01-01T00:00:00Z", status: "ACTIVE", totalInventory: 50, featuredImage: { url: "https://cdn.shopify.com/snowboard.jpg" }, variants: { pageInfo: { hasNextPage: false }, nodes: [variant] } };
   const transport = async <T>(_url: URL, _headers: Record<string, string>, body?: unknown): Promise<T> => {
     assert.match((body as { query: string }).query, /handle publishedAt/);
     return { data: { shop: { currencyCode: "USD" }, products: { pageInfo: { hasNextPage: false }, nodes: [
@@ -183,6 +184,7 @@ test("Shopify keeps published products without URLs but excludes hidden, future 
   const result = await shop.searchProducts({ query: "The Complete Snowboard" });
   assert.equal(result.products.length, 1);
   assert.equal(result.products[0].url, "https://shop.myshopify.com/products/the-complete-snowboard");
+  assert.equal(result.products[0].image, "https://cdn.shopify.com/snowboard.jpg");
   assert.equal(result.products[0].stock, 50);
   assert.equal(result.products[0].variants[0].stock, 10);
 });
@@ -214,4 +216,9 @@ test("expiring Shopify tokens refresh under a lease and reject write scopes", as
   const encrypted = (await database.pg.query<{credentials:string}>("select credentials from public.commerce_integrations where business_id=$1",[businessId])).rows[0].credentials;
   assert.equal(unseal<{refreshToken:string}>(encrypted,`credentials:${businessId}`).refreshToken,"rotated");
   delete process.env.SHOPIFY_CLIENT_ID; delete process.env.SHOPIFY_CLIENT_SECRET;
+});
+
+test("product complaints trigger support but normal product questions do not", () => {
+  for (const text of ["Det er det forkerte produkt", "Produktet er forkert", "That is the wrong product"]) assert.equal(supportIntent(text, []), true);
+  for (const text of ["Har I snowboard på lager?", "Hvilke varianter har I?"]) assert.equal(supportIntent(text, []), false);
 });

@@ -2,7 +2,7 @@ import { shopJson } from "./http.ts";
 import { equalEmail } from "./shopify.ts";
 import { money, safeUrl, type CommerceAdapter, type Variant } from "./types.ts";
 export type WooCommerceConfig = { platform: "woocommerce"; origin: string; consumerKey: string; consumerSecret: string; currency: string };
-type WooProduct = { id: number; name: string; short_description: string; permalink: string; price: string; stock_status: string; stock_quantity: number | null; status: string; type: string };
+type WooProduct = { id: number; name: string; short_description: string; permalink: string; price: string; stock_status: string; stock_quantity: number | null; status: string; type: string; images?: { src: string }[] };
 type WooVariant = { id: number; price: string; stock_status: string; stock_quantity: number | null; attributes: { name: string; option: string }[] };
 type WooOrder = { number: string; status: string; billing: { email: string }; meta_data?: { key: string; value: unknown }[] };
 const available = (s: string) => s === "instock" ? true : s === "outofstock" ? false : null;
@@ -37,7 +37,7 @@ export function wooCommerceAdapter(config: WooCommerceConfig, transport: typeof 
           variantsComplete = rows.length < 100;
           variants = rows.map(v => ({ id: String(v.id), name: v.attributes.map(a => a.option).join(" / "), options: v.attributes.map(a => ({ name: a.name, value: a.option })), price: money(v.price), currency: config.currency, available: available(v.stock_status), stock: typeof v.stock_quantity === "number" ? v.stock_quantity : null }));
         }
-        return { id: String(p.id), name: p.name.slice(0, 200), description: p.short_description.replace(/<[^>]*>/g, " ").slice(0, 500), url: safeUrl(p.permalink)!, price: money(p.price), currency: config.currency, available: available(p.stock_status), stock: typeof p.stock_quantity === "number" ? p.stock_quantity : null, variants, variantsComplete };
+        return { id: String(p.id), name: p.name.slice(0, 200), description: p.short_description.replace(/<[^>]*>/g, " ").slice(0, 500), image: safeUrl(p.images?.[0]?.src), url: safeUrl(p.permalink)!, price: money(p.price), currency: config.currency, available: available(p.stock_status), stock: typeof p.stock_quantity === "number" ? p.stock_quantity : null, variants, variantsComplete };
       }));
       return { products, more: result.length >= 6 };
     },

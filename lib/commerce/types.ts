@@ -1,6 +1,6 @@
 export type ProductQuery = { query: string; vendor?: string; minPrice?: number; maxPrice?: number; currency?: string; variant?: string };
 export type Variant = { id: string; name: string; options: { name: string; value: string }[]; price: string | null; currency: string | null; available: boolean | null; stock: number | null };
-export type Product = { id: string; name: string; description: string; url: string; price: string | null; currency: string | null; available: boolean | null; stock: number | null; variants: Variant[]; variantsComplete: boolean; requestedVariant?: { value: string; id: string | null; complete: boolean } };
+export type Product = { id: string; name: string; description: string; image?: string | null; url: string; price: string | null; currency: string | null; available: boolean | null; stock: number | null; variants: Variant[]; variantsComplete: boolean; requestedVariant?: { value: string; id: string | null; complete: boolean } };
 export type ProductResult = { products: Product[]; more: boolean; fetchedAt?: string; cacheSeconds?: number };
 export type OrderInput = { number: string; email: string };
 export type OrderStatus = { status: string; shipments: { shippedAt: string | null; trackingUrl: string | null; trackingNumber?: string | null; carrier?: string | null }[] };

@@ -11,7 +11,7 @@ import { cachedProducts } from "@/lib/commerce";
 import { integration } from "@/lib/commerce/server";
 import { safeUrl } from "@/lib/commerce/types";
 import { refreshProductPages } from "@/lib/website-crawl";
-import { classifyCommerce, commerceCopy, orderIntent, supportIntent, heuristicLanguage, safeHistory, redact } from "@/lib/commerce/chat";
+import { classifyCommerce, commerceCopy, orderIntent, supportIntent, productComplaint, heuristicLanguage, safeHistory, redact } from "@/lib/commerce/chat";
 import { isBusinessSubscriptionActive } from "@/lib/subscription";
 import { getAnswerLimit, getPlan } from "@/lib/plans";
 import { getPreviewTokenSecret, verifyPreviewToken } from "@/lib/preview-access";
@@ -259,6 +259,9 @@ async function handleChat(req: NextRequest, status: (stage: ChatStage) => void =
     supportEmail: secureStorage && !supportSettings.error && Boolean(supportSettings.data?.notification_email) && mailConfigured(),
   };
   const adapter = connected?.adapter;
+  if (productComplaint(trimmedMessage)) {
+    return NextResponse.json({ kind: "support", text: "Det beklager jeg. Fortæl gerne, hvilket produkt du leder efter, så prøver jeg igen. Du kan også oprette en supportsag, hvis du har brug for hjælp fra webshoppen.", offerSupport: capabilities.supportCases }, { headers: { "Cache-Control": "no-store" } });
+  }
   if (supportIntent(trimmedMessage, history)) {
     return NextResponse.json({ kind: "support", text: capabilities.supportCases ? "Jeg kan hjælpe dig med at oprette en henvendelse. Udfyld formularen, gennemse opsummeringen og bekræft, at den skal sendes." : `Supportsager er ikke aktiveret her endnu. Kontakt virksomheden direkte${business.support_email ? ` på ${sanitizeOutput(business.support_email)}` : " via dens hjemmeside"}.`, needsSupportInput: capabilities.supportCases }, { headers: { "Cache-Control": "no-store" } });
   }
@@ -281,21 +284,21 @@ async function handleChat(req: NextRequest, status: (stage: ChatStage) => void =
     const contact = { email: typeof business.support_email === "string" && /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(business.support_email) ? business.support_email : null, url: safeUrl(business.website_url) };
     if (routing.intent === "order") {
       // This branch never embeds, sends to the LLM, logs or persists order data.
-      if (!capabilities.orders) return commerceResponse({ kind: "order", text: copy.orderUnavailable, copy, contact, offerSupport: true });
-      if (!structuredOrder) return commerceResponse({ kind: "order", text: copy.orderPrompt, needsOrderInput: true, language: routing.language, copy, contact, offerSupport: true });
+      if (!capabilities.orders) return commerceResponse({ kind: "order", text: copy.orderUnavailable, copy, contact, offerSupport: false });
+      if (!structuredOrder) return commerceResponse({ kind: "order", text: copy.orderPrompt, needsOrderInput: true, language: routing.language, copy, contact, offerSupport: false });
       // No order identifiers or model tool can bypass the OTP route. Legacy
       // order_lookup requests receive the same verification form, never data.
-      return commerceResponse({ kind: "order", text: copy.orderPrompt, needsOrderInput: true, language: routing.language, copy, contact, offerSupport: true });
+      return commerceResponse({ kind: "order", text: copy.orderPrompt, needsOrderInput: true, language: routing.language, copy, contact, offerSupport: false });
     }
     if (adapter?.productsEnabled && routing.search) {
-      if (!routing.search.query && routing.search.variant) return commerceResponse({ kind: "products", text: "Hvilket produkt vil du tjekke varianten for? Angiv gerne produktnavnet.", products: [], copy, contact, offerSupport: true });
+      if (!routing.search.query && routing.search.variant) return commerceResponse({ kind: "products", text: "Hvilket produkt vil du tjekke varianten for? Angiv gerne produktnavnet.", products: [], copy, contact, offerSupport: false });
       try {
         status("searching");
         const result = await cachedProducts(stableBusinessId, connected!.revision, adapter, routing.search);
-        return commerceResponse({ kind: "products", text: result.products.length ? copy.productsFound : copy.noProducts, ...result, moreText: copy.moreProducts, copy, contact, offerSupport: true });
+        return commerceResponse({ kind: "products", text: result.products.length ? copy.productsFound : copy.noProducts, ...result, moreText: copy.moreProducts, copy, contact, offerSupport: false });
       } catch { /* Return an explicit unavailable response without stale claims. */ }
     }
-    return commerceResponse({ kind: "products", text: copy.productUnavailable, products: [], copy, contact, offerSupport: true });
+    return commerceResponse({ kind: "products", text: copy.productUnavailable, products: [], copy, contact, offerSupport: false });
   }
 
   if (routing.intent === "product" && websiteSource.data?.source_kind === "url") status("searching");

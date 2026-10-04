@@ -7,7 +7,7 @@ export const validShopDomain = (domain: string) => /^[a-z0-9][a-z0-9-]*\.myshopi
 const PRODUCTS = `query Products($query: String!) {
   shop { currencyCode }
   products(first: 6, query: $query) { pageInfo { hasNextPage } nodes {
-    id title description onlineStoreUrl handle publishedAt status totalInventory
+    id title description onlineStoreUrl handle publishedAt status totalInventory featuredImage { url }
     variants(first: 100) { pageInfo { hasNextPage } nodes { id title price inventoryQuantity inventoryPolicy inventoryItem { tracked } selectedOptions { name value } } }
   } }
 }`;
@@ -15,7 +15,7 @@ const ORDERS = `query OrderStatus($query: String!) {
   orders(first: 10, query: $query) { nodes { name email cancelledAt displayFulfillmentStatus
     fulfillments(first: 10) { status inTransitAt trackingInfo { url number company } } } }
 }`;
-type ShopifyProduct = { id: string; title: string; description: string; onlineStoreUrl: string | null; handle: string; publishedAt: string | null; status: string; totalInventory: number | null; variants: { pageInfo: { hasNextPage: boolean }; nodes: { id: string; title: string; price: string; inventoryQuantity: number | null; inventoryPolicy: string; inventoryItem: { tracked: boolean }; selectedOptions: { name: string; value: string }[] }[] } };
+type ShopifyProduct = { id: string; title: string; description: string; onlineStoreUrl: string | null; handle: string; publishedAt: string | null; status: string; totalInventory: number | null; featuredImage?: { url: string } | null; variants: { pageInfo: { hasNextPage: boolean }; nodes: { id: string; title: string; price: string; inventoryQuantity: number | null; inventoryPolicy: string; inventoryItem: { tracked: boolean }; selectedOptions: { name: string; value: string }[] }[] } };
 type ShopifyOrder = { name: string; email: string | null; cancelledAt: string | null; displayFulfillmentStatus: string; fulfillments: { status: string; inTransitAt: string | null; trackingInfo: { url: string | null; number: string | null; company: string | null }[] }[] };
 export function equalEmail(a: string | null, b: string) {
   const first = Buffer.from((a || "").trim().toLowerCase()), second = Buffer.from(b.trim().toLowerCase());
@@ -60,7 +60,7 @@ export function shopifyAdapter(config: ShopifyConfig, transport: typeof shopJson
         if ((input.minPrice !== undefined || input.maxPrice !== undefined) && !matching.length) return [];
         const prices = variants.flatMap(v => v.price !== null ? [Number(v.price)] : []);
         const complete = !p.variants.pageInfo.hasNextPage;
-        return [{ id: p.id, name: p.title.slice(0, 200), description: p.description.slice(0, 500), url, price: complete && prices.length ? String(Math.min(...prices)) : null, currency, available: variants.some(v => v.available === true) ? true : complete && variants.length && variants.every(v => v.available === false) ? false : null, stock: complete && p.variants.nodes.every(v => v.inventoryItem.tracked) && typeof p.totalInventory === "number" ? p.totalInventory : null, variants, variantsComplete: complete }];
+        return [{ id: p.id, name: p.title.slice(0, 200), description: p.description.slice(0, 500), image: safeUrl(p.featuredImage?.url), url, price: complete && prices.length ? String(Math.min(...prices)) : null, currency, available: variants.some(v => v.available === true) ? true : complete && variants.length && variants.every(v => v.available === false) ? false : null, stock: complete && p.variants.nodes.every(v => v.inventoryItem.tracked) && typeof p.totalInventory === "number" ? p.totalInventory : null, variants, variantsComplete: complete }];
       });
       return { products: products.slice(0, 5), more: result.products.pageInfo.hasNextPage || products.length > 5 };
     },
