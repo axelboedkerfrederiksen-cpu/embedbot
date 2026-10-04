@@ -17,8 +17,11 @@ const dmSerifDisplay = DM_Serif_Display({ variable: "--font-dm-serif-display", s
 const lora = Lora({ variable: "--font-lora", subsets: ["latin"], weight: ["400", "600", "700"] });
 
 export const metadata: Metadata = {
-  title: "EmbedBot",
-  description: "EmbedBot - intelligent chatbot til websites",
+  metadataBase: new URL("https://www.embedbot.dk"),
+  title: "EmbedBot | AI-kundeservice til din webshop",
+  description: "Hjælp dine kunder med svar om produkter, levering og retur med EmbedBot. Se demo, priser og prøvevilkår.",
+  openGraph: { type: "website", locale: "da_DK", siteName: "EmbedBot" },
+  twitter: { card: "summary_large_image" },
   icons: {
     icon: logoImage.src,
     shortcut: logoImage.src,

@@ -3,9 +3,10 @@
 import { Analytics } from "@vercel/analytics/next";
 import { SpeedInsights } from "@vercel/speed-insights/next";
 import Script from "next/script";
+import { usePathname } from "next/navigation";
 import { useEffect, useState } from "react";
 
-import { CONSENT_KEY, CONSENT_VERSION, parseConsent, analyticsAllowed, markWithdrawn, installAnalyticsGuard, type ConsentChoice } from "@/lib/compliance/consent";
+import { CONSENT_KEY, CONSENT_VERSION, parseConsent, analyticsPage, analyticsAllowed, markWithdrawn, installAnalyticsGuard, type ConsentChoice } from "@/lib/compliance/consent";
 function readConsent():ConsentChoice { try { return parseConsent(window.localStorage.getItem(CONSENT_KEY)); } catch { return null; } }
 
 export function CookiePreferencesButton() {
@@ -21,6 +22,7 @@ export function CookiePreferencesButton() {
 }
 
 export default function CookieConsent() {
+  const pathname = usePathname();
   const [consent, setConsent] = useState<ConsentChoice>(null);
   const [ready, setReady] = useState(false);
   const [showSettings, setShowSettings] = useState(false);
@@ -49,7 +51,7 @@ export default function CookieConsent() {
   }
 
   const showBanner = ready && (consent === null || showSettings);
-  const canUseAnalytics = ready && consent === "accepted";
+  const canUseAnalytics = ready && consent === "accepted" && analyticsPage(pathname);
 
   return (
     <>
@@ -70,7 +72,7 @@ export default function CookieConsent() {
             <p className="cookie-consent-kicker">Dit privatliv</p>
             <h2 id="cookie-consent-title">Må vi bruge analyseværktøjer?</h2>
             <p id="cookie-consent-description">
-              Vi bruger kun analyse og hastighedsmålinger, hvis du accepterer. Nødvendig lagring til login og sikkerhed er altid aktiv. Læs vores{" "}
+              Vi bruger Plausible Analytics, Vercel Web Analytics og Speed Insights til besøgsstatistik og hastighedsmålinger, hvis du accepterer. Nødvendig lagring til login og sikkerhed er altid aktiv. Læs vores{" "}
               <a href="/cookies">cookiepolitik</a>.
             </p>
           </div>

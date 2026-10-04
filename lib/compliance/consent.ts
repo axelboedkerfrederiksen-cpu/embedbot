@@ -7,7 +7,7 @@ export function parseConsent(raw:string|null):ConsentChoice{
 export function analyticsEndpoint(input:string,origin:string){
  try{const url=new URL(input,origin);return (url.origin==="https://plausible.io"&&url.pathname==="/api/event")||(url.origin===origin&&(/^\/_vercel\/(insights|speed-insights)\//.test(url.pathname)));}catch{return false;}
 }
-export function analyticsPage(path:string){return !/^\/(admin|dashboard|setup|preview|login|signup|reset-password|update-password|data-requests)(\/|$)/.test(path);}
+export function analyticsPage(path:string){return !/^\/(admin|auth|dashboard|setup|preview|login|signup|reset-password|update-password|data-requests)(\/|$)/.test(path);}
 let withdrawn=false;
 export function analyticsAllowed(){
  if(typeof window==="undefined"||withdrawn||!analyticsPage(window.location.pathname))return false;

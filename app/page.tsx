@@ -1,10 +1,12 @@
 "use client";
+import { PLANS } from "@/lib/plans";
 import { TRIAL } from "@/lib/compliance/trial";
 import Link from "next/link";
 import Image from "next/image";
 import { useEffect, useRef, useState } from "react";
 import { ArrowRight, Check, MessageCircle, Plus, X } from "lucide-react";
 import logoImage from "@/media/86a91d6a-f484-4e7d-a05c-55ab0979c3b1.png";
+import { CookiePreferencesButton } from "./components/cookie-consent";
 import ChatPreview from "./components/landing-chat-preview";
 import styles from "./landing.module.css";
 const questions = [
@@ -105,6 +107,7 @@ export default function Home() {
           <h1 id="hero-title">Giv kunderne svar.<br /><span>Giv jer selv mere tid.</span></h1>
           <p className={styles.lead}>EmbedBot hjælper dine kunder direkte i webshoppen. Med svar om jeres produkter, levering og retur — også når I er gået hjem.</p>
           <div className={styles.heroActions}><Link href="/setup" className={styles.button}>Start 14 dage gratis <ArrowRight size={17}/></Link><button className={styles.textButton} onClick={openDemo} disabled={demoStatus === "loading"}>{demoStatus === "loading" ? "Åbner demo…" : "Prøv demoen"}<ArrowRight size={16}/></button></div>
+          <p className={styles.trialDisclosure}>{TRIAL.summary} Starter koster herefter {PLANS.starter.monthlyPriceDkk} kr./md. ekskl. moms. Kun for erhverv. <Link href="/prices">Se alle priser</Link>.</p>
           <div className={styles.reassurance}><span><Check size={14}/> Ingen betaling de første 14 dage</span><span><Check size={14}/> Vi hjælper med opsætningen</span></div>
           {demoStatus === "error" && <p className={styles.demoError} role="status">Demoen kunne ikke åbnes lige nu. Prøv igen, eller <Link href="/support">kontakt os</Link>.</p>}
         </div>
@@ -129,8 +132,8 @@ export default function Home() {
 
       <section className={`${styles.faq} ${styles.container}`}><div><p className={styles.eyebrow}>GODT AT VIDE</p><h2>Lidt færre<br /><span>spørgsmål.</span></h2><Link href="/faq" className={styles.textButton}>Se alle spørgsmål <ArrowRight size={16}/></Link></div><div className={styles.questions}>{questions.map(q => <details key={q.title}><summary>{q.title}<Plus size={18}/></summary><p>{q.answer}</p></details>)}</div></section>
 
-      <section className={`${styles.finalCta} ${styles.container}`}><p className={styles.eyebrow}>SE HVAD EMBEDBOT KAN GØRE FOR JER</p><h2>Mere hjælp til kunderne.<br /><span>Mere tid til webshoppen.</span></h2><Link href="/setup" className={styles.button}>Start 14 dage gratis <ArrowRight size={17}/></Link><p>14 dage gratis med kortregistrering. Opsig inden første betaling.</p></section>
-      <footer className={`${styles.footer} ${styles.container}`}><div><Link href="/" className={styles.logo}><Image src={logoImage} alt=""/><span>EmbedBot</span></Link><p>AI-kundeservice. Med plads til mennesker.</p><small>EmbedBot / Axel Bødker Frederiksen</small></div><div className={styles.footerLinks}><Link href="/support">Kontakt</Link><Link href="/prices">Priser</Link><Link href="/privacy">Privatliv</Link><Link href="/cookies">Cookies</Link><Link href="/terms">Vilkår</Link><Link href="/dpa">Databehandleraftale</Link><Link href="/subprocessors">Leverandører</Link><Link href="/refunds">Betaling og refundering</Link></div></footer>
+      <section className={`${styles.finalCta} ${styles.container}`}><p className={styles.eyebrow}>SE HVAD EMBEDBOT KAN GØRE FOR JER</p><h2>Mere hjælp til kunderne.<br /><span>Mere tid til webshoppen.</span></h2><Link href="/setup" className={styles.button}>Start 14 dage gratis <ArrowRight size={17}/></Link><p>14 dage gratis med kortregistrering. Derefter Starter til {PLANS.starter.monthlyPriceDkk} kr./md. ekskl. moms med automatisk månedlig betaling. Opsig inden første betaling. Kun for erhverv.</p></section>
+      <footer className={`${styles.footer} ${styles.container}`}><div><Link href="/" className={styles.logo}><Image src={logoImage} alt=""/><span>EmbedBot</span></Link><p>AI-kundeservice. Med plads til mennesker.</p><small>EmbedBot / Axel Bødker Frederiksen<br /><a href="mailto:axel@embedbot.dk">axel@embedbot.dk</a> · <a href="tel:+4591551250">+45 91 55 12 50</a></small></div><div className={styles.footerLinks}><Link href="/support">Kontakt</Link><Link href="/prices">Priser</Link><Link href="/privacy">Privatliv</Link><Link href="/cookies">Cookies</Link><CookiePreferencesButton /><Link href="/terms">Vilkår</Link><Link href="/dpa">Databehandleraftale</Link><Link href="/subprocessors">Leverandører</Link><Link href="/refunds">Betaling og refundering</Link></div></footer>
       {showDemoPrompt && <aside className={styles.demoPrompt} aria-labelledby="demo-prompt-title">
         <button type="button" className={styles.demoPromptClose} onClick={dismissDemoPrompt} aria-label="Luk demo-invitation"><X size={17} /></button>
         <span className={styles.demoPromptKicker}>PRØV EMBEDBOT</span>
@@ -138,5 +141,5 @@ export default function Home() {
         <p>Prøv chatbotten her på siden, og se hvordan den hjælper dine kunder.</p>
         <button type="button" className={styles.button} onClick={openDemo} disabled={demoStatus === "loading"}>Prøv demoen <ArrowRight size={16} /></button>
       </aside>}
-    <p className="mx-auto my-6 max-w-3xl px-4 text-center text-sm">{TRIAL.summary}</p></main>);
+    </main>);
 }

@@ -39,8 +39,8 @@ export default function PrivacyPolicy() {
           <p className="text-sm font-semibold uppercase tracking-wider text-gray-500">Indhold</p>
           <div className="mt-3 grid gap-2 sm:grid-cols-2">
             <a href="#data" className="privacy-policy-toc-link">Oplysninger og formål</a>
-            <a href="#leverandorer" className="privacy-policy-toc-link">Leverandører og OpenAI</a>
-            <a href="#opbevaring" className="privacy-policy-toc-link">Opbevaring og sletning</a>
+            <a href="#openai" className="privacy-policy-toc-link">Leverandører og OpenAI</a>
+            <a href="#sletning" className="privacy-policy-toc-link">Opbevaring og sletning</a>
             <a href="#rettigheder" className="privacy-policy-toc-link">Dine rettigheder</a>
             <a href="#cookies" className="privacy-policy-toc-link">Cookies og sikkerhed</a>
             <a href="#kontakt" className="privacy-policy-toc-link">Kontakt</a>

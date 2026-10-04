@@ -20,3 +20,11 @@ test("consent rejects stale/malformed values and loaded analytics stop immediate
   assert.equal(analyticsEndpoint("https://example.com/_vercel/insights/event",fakeWindow.location.origin),false);
  }finally{if(prior)Object.defineProperty(globalThis,"window",prior);else Reflect.deleteProperty(globalThis,"window");}
 });
+
+test("auth and customer routes never allow analytics, even with saved consent", async () => {
+ const { analyticsPage } = await import("../lib/compliance/consent.ts");
+ for (const path of ["/auth/callback", "/auth/reset-password", "/auth/forgot-password", "/auth/account-created", "/dashboard/abc/samtaler", "/setup/provider", "/preview/abc", "/data-requests"]) {
+  assert.equal(analyticsPage(path), false, path);
+ }
+ for (const path of ["/", "/prices", "/support", "/privacy", "/faq"]) assert.equal(analyticsPage(path), true, path);
+});

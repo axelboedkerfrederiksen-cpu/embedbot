@@ -29,6 +29,7 @@ export default function SupportPage() {
 
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
+    if (status === "sending") return;
     setStatus("sending");
     setFeedback("");
 
@@ -328,13 +329,14 @@ export default function SupportPage() {
           <span className="support-kicker">Support</span>
           <h1 className="support-title">Send en besked eller klage</h1>
           <p className="support-lead">
-            Skriv hvad der driller, eller hvad du vil have fulgt op på. Beskeden lander direkte i admin-panelet.
+            Skriv hvad der driller, eller hvad du vil have fulgt op på. Vi bruger din besked til at hjælpe dig og følge op på din henvendelse.
           </p>
         </motion.div>
 
         <motion.form
           className="support-form"
           onSubmit={handleSubmit}
+          aria-busy={status === "sending"}
           initial={{ opacity: 0, y: 24 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.65, delay: 0.08, ease }}
@@ -404,7 +406,7 @@ export default function SupportPage() {
           </p>
 
           {feedback ? (
-            <p className={`support-feedback ${status === "error" ? "error" : ""}`}>
+            <p role={status === "error" ? "alert" : "status"} className={`support-feedback ${status === "error" ? "error" : ""}`}>
               {feedback}
             </p>
           ) : null}

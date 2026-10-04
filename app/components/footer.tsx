@@ -17,7 +17,7 @@ export default function Footer() {
           <div>
             <h4 className="font-medium mb-4">Produkt</h4>
             <ul className="space-y-2 text-sm">
-              <li><Link href="#features" className="text-[var(--text-muted)] hover:text-[var(--text-primary)]">Features</Link></li>
+              <li><Link href="/#saadan-virker-det" className="text-[var(--text-muted)] hover:text-[var(--text-primary)]">Features</Link></li>
               <li><Link href="/support" className="text-[var(--text-muted)] hover:text-[var(--text-primary)]">Support</Link></li>
               <li><Link href="/prices" className="text-[var(--text-muted)] hover:text-[var(--text-primary)]">Priser</Link></li>
               <li><Link href="/setup" className="text-[var(--text-muted)] hover:text-[var(--text-primary)]">Kom i gang</Link></li>
