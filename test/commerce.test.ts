@@ -164,6 +164,28 @@ test("Shopify maps variants, stock and tracking without exposing credentials in 
   const order = await shop.lookupOrder({number:"123",email:"customer@example.com"}); assert.equal(order?.shipments[0].trackingNumber,"track123");
   await assert.rejects(shop.searchProducts({query:"Shirt",currency:"USD"}));
 });
+test("Shopify keeps published products without URLs but excludes hidden, future and invalid links", async () => {
+  const variant = { id: "v1", title: "Ice", price: "699.95", inventoryQuantity: 10, inventoryPolicy: "DENY", inventoryItem: { tracked: true }, selectedOptions: [{ name: "Color", value: "Ice" }] };
+  const published = { id: "p1", title: "The Complete Snowboard", description: "Snowboard", onlineStoreUrl: null, handle: "the-complete-snowboard", publishedAt: "2026-01-01T00:00:00Z", status: "ACTIVE", totalInventory: 50, variants: { pageInfo: { hasNextPage: false }, nodes: [variant] } };
+  const transport = async <T>(_url: URL, _headers: Record<string, string>, body?: unknown): Promise<T> => {
+    assert.match((body as { query: string }).query, /handle publishedAt/);
+    return { data: { shop: { currencyCode: "USD" }, products: { pageInfo: { hasNextPage: false }, nodes: [
+      published,
+      { ...published, id: "hidden", publishedAt: null },
+      { ...published, id: "future", publishedAt: "2999-01-01T00:00:00Z" },
+      { ...published, id: "draft", status: "DRAFT" },
+      { ...published, id: "invalid-date", publishedAt: "invalid" },
+      { ...published, id: "invalid-handle", handle: "../admin" },
+      { ...published, id: "invalid-url", onlineStoreUrl: "javascript:alert(1)" },
+    ] } } } as T;
+  };
+  const shop = shopifyAdapter({ platform: "shopify", domain: "shop.myshopify.com", adminToken: "secret" }, transport);
+  const result = await shop.searchProducts({ query: "The Complete Snowboard" });
+  assert.equal(result.products.length, 1);
+  assert.equal(result.products[0].url, "https://shop.myshopify.com/products/the-complete-snowboard");
+  assert.equal(result.products[0].stock, 50);
+  assert.equal(result.products[0].variants[0].stock, 10);
+});
 test("WooCommerce maps variants/stock and never invents tracking in core orders", async () => {
   const transport = async <T>(url:URL, headers:Record<string,string>): Promise<T> => {
     assert.ok(headers.Authorization.startsWith("Basic ")); assert.equal(url.searchParams.has("consumer_secret"),false);

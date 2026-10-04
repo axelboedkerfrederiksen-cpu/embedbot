@@ -7,7 +7,7 @@ export const validShopDomain = (domain: string) => /^[a-z0-9][a-z0-9-]*\.myshopi
 const PRODUCTS = `query Products($query: String!) {
   shop { currencyCode }
   products(first: 6, query: $query) { pageInfo { hasNextPage } nodes {
-    id title description onlineStoreUrl status totalInventory
+    id title description onlineStoreUrl handle publishedAt status totalInventory
     variants(first: 100) { pageInfo { hasNextPage } nodes { id title price inventoryQuantity inventoryPolicy inventoryItem { tracked } selectedOptions { name value } } }
   } }
 }`;
@@ -15,7 +15,7 @@ const ORDERS = `query OrderStatus($query: String!) {
   orders(first: 10, query: $query) { nodes { name email cancelledAt displayFulfillmentStatus
     fulfillments(first: 10) { status inTransitAt trackingInfo { url number company } } } }
 }`;
-type ShopifyProduct = { id: string; title: string; description: string; onlineStoreUrl: string | null; status: string; totalInventory: number | null; variants: { pageInfo: { hasNextPage: boolean }; nodes: { id: string; title: string; price: string; inventoryQuantity: number | null; inventoryPolicy: string; inventoryItem: { tracked: boolean }; selectedOptions: { name: string; value: string }[] }[] } };
+type ShopifyProduct = { id: string; title: string; description: string; onlineStoreUrl: string | null; handle: string; publishedAt: string | null; status: string; totalInventory: number | null; variants: { pageInfo: { hasNextPage: boolean }; nodes: { id: string; title: string; price: string; inventoryQuantity: number | null; inventoryPolicy: string; inventoryItem: { tracked: boolean }; selectedOptions: { name: string; value: string }[] }[] } };
 type ShopifyOrder = { name: string; email: string | null; cancelledAt: string | null; displayFulfillmentStatus: string; fulfillments: { status: string; inTransitAt: string | null; trackingInfo: { url: string | null; number: string | null; company: string | null }[] }[] };
 export function equalEmail(a: string | null, b: string) {
   const first = Buffer.from((a || "").trim().toLowerCase()), second = Buffer.from(b.trim().toLowerCase());
@@ -47,7 +47,13 @@ export function shopifyAdapter(config: ShopifyConfig, transport: typeof shopJson
       const currency = result.shop.currencyCode;
       if (input.currency && input.currency !== currency) throw new Error("Currency unavailable");
       const products: Product[] = result.products.nodes.flatMap(p => {
-        const url = safeUrl(p.onlineStoreUrl);
+        // Development stores can return no URL for an already published product.
+        // Only derive a storefront link when Shopify confirms publication; never
+        // expose active-but-hidden products or an admin/preview URL.
+        const publishedAt = p.publishedAt ? Date.parse(p.publishedAt) : Number.NaN;
+        const published = Number.isFinite(publishedAt) && publishedAt <= Date.now();
+        const url = safeUrl(p.onlineStoreUrl) || (p.onlineStoreUrl === null && published && /^[a-z0-9][a-z0-9-]*$/.test(p.handle)
+          ? `https://${config.domain}/products/${p.handle}` : null);
         if (!url || p.status !== "ACTIVE") return [];
         const variants: Variant[] = p.variants.nodes.map(v => ({ id: v.id, name: v.title.slice(0, 200), options: v.selectedOptions, price: money(v.price), currency, stock: v.inventoryItem.tracked && typeof v.inventoryQuantity === "number" ? v.inventoryQuantity : null, available: v.inventoryItem.tracked && typeof v.inventoryQuantity === "number" ? v.inventoryQuantity > 0 || v.inventoryPolicy === "CONTINUE" : null }));
         const matching = variants.filter(v => v.price !== null && (input.minPrice === undefined || Number(v.price) >= input.minPrice) && (input.maxPrice === undefined || Number(v.price) <= input.maxPrice));
