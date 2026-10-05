@@ -3,8 +3,9 @@ import { NextRequest } from "next/server";
 import { wooOrigin } from "@/lib/commerce/woocommerce";
 import { body, CommerceError, failure, integration, json, limit, owner } from "@/lib/commerce/server";
 import { digest, encryptionKey, seal, validEmail } from "@/lib/commerce/security";
-import { validShopDomain, SHOPIFY_SCOPES } from "@/lib/commerce/shopify";
+import { validShopDomain, SHOPIFY_SCOPES, ShopifyCustomerDataError } from "@/lib/commerce/shopify";
 import { mailConfigured } from "@/lib/commerce/mail";
+import { localShopifyTestSettings } from "@/lib/commerce/local-test";
 export const runtime = "nodejs";
 export async function GET(req: NextRequest) {
   try {
@@ -15,7 +16,7 @@ export async function GET(req: NextRequest) {
     ]);
     let secureStorage = false;
     try { encryptionKey(); secureStorage = true; } catch { /* Safe capability flag only. */ }
-    return json({ configured: !error && !settingsError, secureStorage, integration: connected, notificationEmail: settings?.notification_email || "", mailConfigured: mailConfigured(), wooCommerceConfigured: Boolean(process.env.NEXT_PUBLIC_APP_URL?.startsWith("https://") && secureStorage), shopifyConfigured: Boolean(process.env.SHOPIFY_CLIENT_ID && process.env.SHOPIFY_CLIENT_SECRET && process.env.NEXT_PUBLIC_APP_URL && secureStorage) });
+    return json({ configured: !error && !settingsError, secureStorage, localTest: Boolean(localShopifyTestSettings(business.id)), integration: connected, notificationEmail: settings?.notification_email || "", mailConfigured: mailConfigured(), wooCommerceConfigured: Boolean(process.env.NEXT_PUBLIC_APP_URL?.startsWith("https://") && secureStorage), shopifyConfigured: Boolean(process.env.SHOPIFY_CLIENT_ID && process.env.SHOPIFY_CLIENT_SECRET && process.env.NEXT_PUBLIC_APP_URL && secureStorage) });
   } catch (error) { return failure(error); }
 }
 export async function POST(req: NextRequest) {
@@ -35,6 +36,8 @@ export async function POST(req: NextRequest) {
       return json({ success: true });
     }
     await limit(db, req, business.id, "integration", 15, 900);
+    const localTest = Boolean(localShopifyTestSettings(business.id));
+    if (localTest && input.action !== "test") throw new CommerceError("Den lokale test bruger den eksisterende Shopify-forbindelse. Forbindelsen kan ikke ændres i denne testtilstand.", 400);
     if (input.action === "disconnect") {
       const { error } = await db.from("commerce_integrations").update({ credentials: null, status: "disconnected", revision: randomUUID(), updated_at: new Date().toISOString() }).eq("business_id", business.id);
       if (error) throw new CommerceError("Forbindelsen kunne ikke afbrydes.");
@@ -43,11 +46,11 @@ export async function POST(req: NextRequest) {
     if (input.action === "test") {
       const connected = await integration(db, business.id);
       if (!connected) throw new CommerceError("Ingen konfigureret integration.", 400);
-      try { await connected.adapter.testConnection(); } catch {
-        await db.from("commerce_integrations").update({ status: "error", tested_at: new Date().toISOString() }).eq("business_id", business.id).eq("revision", connected.revision);
-        throw new CommerceError("Forbindelsen kunne ikke bekræftes. Kontrollér webshop, læseadgang, valuta og API-konfiguration.");
+      try { await connected.adapter.testConnection(); } catch (error) {
+        if (!localTest) await db.from("commerce_integrations").update({ status: "error", tested_at: new Date().toISOString() }).eq("business_id", business.id).eq("revision", connected.revision);
+        throw new CommerceError(error instanceof ShopifyCustomerDataError ? error.message : "Forbindelsen kunne ikke bekræftes. Kontrollér webshop, læseadgang, valuta og API-konfiguration.");
       }
-      await db.from("commerce_integrations").update({ status: "connected", tested_at: new Date().toISOString() }).eq("business_id", business.id).eq("revision", connected.revision);
+      if (!localTest) await db.from("commerce_integrations").update({ status: "connected", tested_at: new Date().toISOString() }).eq("business_id", business.id).eq("revision", connected.revision);
       return json({ success: true });
     }
     if (input.action === "shopify") {

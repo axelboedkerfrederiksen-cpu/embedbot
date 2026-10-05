@@ -4,6 +4,9 @@ import { money, safeUrl, type CommerceAdapter, type Product, type Variant } from
 export type ShopifyConfig = { platform: "shopify"; domain: string; adminToken: string; apiVersion?: string; refreshToken?: string; expiresAt?: number; refreshExpiresAt?: number };
 export const SHOPIFY_SCOPES = ["read_products", "read_inventory", "read_orders"];
 export const validShopDomain = (domain: string) => /^[a-z0-9][a-z0-9-]*\.myshopify\.com$/.test(domain);
+export class ShopifyCustomerDataError extends Error {
+  constructor() { super("Shopify blokerer adgang til ordredata eller mailfeltet. Aktivér beskyttede kundedata og mail under appens API-adgang i Shopify, og test igen."); }
+}
 const PRODUCTS = `query Products($query: String!) {
   shop { currencyCode }
   products(first: 6, query: $query) { pageInfo { hasNextPage } nodes {
@@ -26,7 +29,8 @@ export function shopifyAdapter(config: ShopifyConfig, transport: typeof shopJson
   const version = config.apiVersion || "2026-10";
   if (!/^20\d{2}-(01|04|07|10)$/.test(version)) throw new Error("Invalid commerce configuration");
   async function graphql<T>(query: string, variables: unknown): Promise<T> {
-    const result = await transport<{ data?: T; errors?: unknown[] }>(new URL(`https://${config.domain}/admin/api/${version}/graphql.json`), { "X-Shopify-Access-Token": config.adminToken }, { query, variables });
+    const result = await transport<{ data?: T; errors?: { message?: string; extensions?: { code?: string } }[] }>(new URL(`https://${config.domain}/admin/api/${version}/graphql.json`), { "X-Shopify-Access-Token": config.adminToken }, { query, variables });
+    if (result.errors?.some(error => error.extensions?.code === "ACCESS_DENIED" && /\b(Order|Fulfillment|email)\b/i.test(error.message || ""))) throw new ShopifyCustomerDataError();
     if (!result.data || result.errors?.length) throw new Error("Commerce unavailable");
     return result.data;
   }

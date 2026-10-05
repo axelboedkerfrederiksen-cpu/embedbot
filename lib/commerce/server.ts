@@ -7,6 +7,7 @@ import { adapterFor, type CommerceConfig } from "./index.ts";
 import { freshShopifyConfig } from "./shopify-tokens.ts";
 import { digest, supportKey, unseal, validId, validSession } from "./security.ts";
 import { isBusinessSubscriptionActive } from "../subscription.ts";
+import { localShopifyTestConfig, localShopifyTestSettings } from "./local-test.ts";
 export class CommerceError extends Error {
   status: number;
   constructor(message: string, status = 503) { super(message); this.status = status; }
@@ -58,9 +59,15 @@ export async function limit(db: SupabaseClient, req: NextRequest, businessId: st
   if (data === true) throw new CommerceError("For mange forsøg. Vent lidt og prøv igen.", 429);
 }
 export async function integration(db: SupabaseClient, businessId: string) {
-  const { data, error } = await db.from("commerce_integrations").select("platform,credentials,revision,status").eq("business_id", businessId).maybeSingle();
+  const { data, error } = await db.from("commerce_integrations").select("platform,shop_url,credentials,revision,status").eq("business_id", businessId).maybeSingle();
   if (error || !data || ["disconnected","pending"].includes(data.status) || !data.credentials) return null;
   try {
+    const localTest = localShopifyTestSettings(businessId);
+    if (localTest) {
+      if (data.platform !== "shopify" || data.shop_url !== `https://${localTest.domain}`) return null;
+      const config = await localShopifyTestConfig(businessId);
+      return config ? { adapter: adapterFor(config), revision: data.revision as string } : null;
+    }
     let config = unseal<CommerceConfig>(data.credentials, `credentials:${businessId}`);
     if (config.platform === "shopify") {
       const fresh = await freshShopifyConfig(db, businessId, data.revision, config);

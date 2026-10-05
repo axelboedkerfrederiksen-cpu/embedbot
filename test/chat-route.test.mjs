@@ -144,3 +144,22 @@ test('obvious order and support intents avoid classification and embeddings', as
     assert.equal(chatState.saved.length, 0);
   }
 });
+
+test('explicit stock questions query the requested variant even when AI is unavailable', async () => {
+  let suppliedQuery;
+  chatState.classify = async () => { throw new Error('AI unavailable'); };
+  chatState.embed = async () => { throw new Error('AI unavailable'); };
+  chatState.connected = { revision: 'stock-test', adapter: { productsEnabled: true, ordersEnabled: false, searchProducts: async query => {
+    suppliedQuery = query;
+    return { products: [{ id: 'p1', name: 'The Complete Snowboard', url: 'https://shop.example/products/complete', variants: [{ id: 'ice', name: 'Ice', options: [{ name: 'Color', value: 'Ice' }], stock: 10, available: true }], variantsComplete: true }], more: false };
+  } } };
+  const response = await POST(request({ message: 'Er The Complete Snowboard på lager i farven Ice?' }));
+  const result = await response.json();
+  assert.equal(result.kind, 'products');
+  assert.equal(suppliedQuery.query, 'The Complete Snowboard');
+  assert.equal(suppliedQuery.variant, 'Ice');
+  assert.equal(result.products[0].requestedVariant.id, 'ice');
+  assert.equal(result.products[0].variants[0].stock, 10);
+  assert.ok(!chatState.calls.includes('classification'));
+  assert.ok(!chatState.calls.includes('embedding'));
+});

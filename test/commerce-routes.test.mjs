@@ -229,6 +229,34 @@ test('Shopify binds the onboarding return destination and bot to encrypted serve
   assert.equal(stateToken.returnTo,'setup');assert.equal(stateToken.businessId,business_id);assert.equal(stateToken.userId,userId);
   assert.ok(stateToken.expires>Date.now());
 });
+test('local Shopify tests preserve saved credentials, reject connection changes and stay disabled in production',async()=>{
+  const userId=randomUUID(),business_id=await tenant(userId);state.user={id:userId};
+  const names=['NODE_ENV','SHOPIFY_LOCAL_TEST_DOMAIN','SHOPIFY_LOCAL_TEST_BUSINESS_ID','SHOPIFY_CLIENT_ID','SHOPIFY_CLIENT_SECRET'];
+  const saved=Object.fromEntries(names.map(name=>[name,process.env[name]]));
+  Object.assign(process.env,{NODE_ENV:'development',SHOPIFY_LOCAL_TEST_DOMAIN:'local-test.myshopify.com',SHOPIFY_LOCAL_TEST_BUSINESS_ID:business_id,SHOPIFY_CLIENT_ID:'local-client',SHOPIFY_CLIENT_SECRET:randomUUID()});
+  await database.pg.query("insert into commerce_integrations(business_id,platform,shop_url,credentials,revision,status) values($1,'shopify','https://local-test.myshopify.com','production-key-encrypted-credentials',$2,'connected')",[business_id,randomUUID()]);
+  const row=async()=>(await database.pg.query('select * from commerce_integrations where business_id=$1',[business_id])).rows[0];
+  const original=await row();let tokenRequests=0,denyOrders=false;
+  state.transport=async(url,_headers,input)=>{
+    if(url.pathname.endsWith('/access_token')){tokenRequests++;assert.equal(input.get('grant_type'),'client_credentials');return{access_token:'memory-only',expires_in:86400,scope:'read_products,read_inventory,read_orders'};}
+    if(denyOrders)return{errors:[{message:'This app is not approved to access the Order object.',extensions:{code:'ACCESS_DENIED'}}]};
+    return{data:input.query.includes('accessScopes')?{currentAppInstallation:{accessScopes:['read_products','read_inventory','read_orders'].map(handle=>({handle}))}}:{shop:{name:'Test'},products:{nodes:[]},orders:{nodes:[]}}};
+  };
+  try{
+    const setup=await(await commerce.GET(new NextRequest(`${origin}/api/dashboard/commerce?business_id=${business_id}`))).json();
+    assert.equal(setup.localTest,true);assert.equal(JSON.stringify(setup).includes('production-key-encrypted-credentials'),false);
+    for(const action of ['disconnect','shopify','woocommerce'])assert.equal((await commerce.POST(request('/api/dashboard/commerce',{business_id,action,domain:'other.myshopify.com'}))).status,400);
+    assert.equal((await commerce.POST(request('/api/dashboard/commerce',{business_id,action:'test'}))).status,200);
+    assert.deepEqual(await row(),original);assert.equal(tokenRequests,1);
+    denyOrders=true;
+    const denied=await commerce.POST(request('/api/dashboard/commerce',{business_id,action:'test'}));
+    assert.equal(denied.status,503);assert.match((await denied.json()).error,/beskyttede kundedata og mail/);
+    assert.deepEqual(await row(),original);
+    process.env.NODE_ENV='production';
+    assert.equal((await commerce.POST(request('/api/dashboard/commerce',{business_id,action:'test'}))).status,400);
+    assert.equal(tokenRequests,1);assert.deepEqual(await row(),original);
+  }finally{for(const name of names){if(saved[name]===undefined)delete process.env[name];else process.env[name]=saved[name];}}
+});
 test('a local HTML source activates without a website fetch and still requires confirmed billing',async()=>{
   await database.pg.exec(`alter table businesses add column if not exists subscription_status text, add column if not exists payment_status text, add column if not exists stripe_subscription_id text, add column if not exists subscription_updated_at timestamptz, add column if not exists activated_at timestamptz`);
   const business_id=await tenant();

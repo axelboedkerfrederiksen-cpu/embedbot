@@ -12,7 +12,7 @@ import { cachedProducts } from "@/lib/commerce";
 import { integration } from "@/lib/commerce/server";
 import { safeUrl } from "@/lib/commerce/types";
 import { refreshProductPages } from "@/lib/website-crawl";
-import { classifyCommerce, commerceCopy, orderIntent, supportIntent, productComplaint, heuristicLanguage, safeHistory, redact } from "@/lib/commerce/chat";
+import { classifyCommerce, commerceCopy, directStockQuery, orderIntent, supportIntent, productComplaint, heuristicLanguage, safeHistory, redact } from "@/lib/commerce/chat";
 import { isBusinessSubscriptionActive } from "@/lib/subscription";
 import { getAnswerLimit, getPlan } from "@/lib/plans";
 import { getPreviewTokenSecret, verifyPreviewToken } from "@/lib/preview-access";
@@ -260,10 +260,11 @@ async function handleChat(req: NextRequest, input: Record<string, unknown>, stat
   const directSupport = supportIntent(trimmedMessage, history);
   const structuredOrder = order_lookup !== undefined;
   const obviousOrder = structuredOrder || orderIntent(trimmedMessage);
+  const stockQuery = obviousOrder || complaint || directSupport ? null : directStockQuery(trimmedMessage);
   const fallbackRouting: Awaited<ReturnType<typeof classifyCommerce>> = {
-    intent: obviousOrder ? "order" : "general",
+    intent: obviousOrder ? "order" : stockQuery ? "product" : "general",
     language: typeof commerce_language === "string" && /^[a-z]{2}$/.test(commerce_language) ? commerce_language : heuristicLanguage(trimmedMessage),
-    search: null,
+    search: stockQuery,
   };
   // Classification does not depend on shop configuration. Overlap it with
   // the reads, but only after subscription and answer allowance are verified.
@@ -271,7 +272,7 @@ async function handleChat(req: NextRequest, input: Record<string, unknown>, stat
     integration(supabase, stableBusinessId),
     supabase.from("commerce_settings").select("notification_email").eq("business_id", stableBusinessId).maybeSingle(),
     supabase.from("website_sources").select("content_text,imported_at,source_kind,source_name").eq("business_id", stableBusinessId).maybeSingle(),
-    obviousOrder || complaint || directSupport
+    obviousOrder || complaint || directSupport || stockQuery
       ? Promise.resolve(fallbackRouting)
       : classifyCommerce(openai, trimmedMessage, history).catch(() => fallbackRouting),
   ]);

@@ -1,7 +1,7 @@
 export const chatState = {};
 export function resetChatState() {
   Object.assign(chatState, {
-    calls: [], saved: [],
+    calls: [], saved: [], connected: null,
     business: { id: 'tenant-a', name: 'Test shop', activated: true, plan: 'starter' },
     rate: { data: false, error: null },
     allowance: { data: { allowed: true, used: 1, limit_value: 1000 }, error: null },
@@ -76,7 +76,7 @@ export class OpenAI {
 export async function integration() {
   chatState.calls.push('integration');
   await chatState.read('integration');
-  return null;
+  return chatState.connected;
 }
 export async function refreshProductPages(...args) {
   chatState.calls.push('refresh');

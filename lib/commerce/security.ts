@@ -1,6 +1,7 @@
 import { createCipheriv, createDecipheriv, createHmac, randomBytes, timingSafeEqual } from "node:crypto";
+import { localTestEncryptionKey } from "./local-test.ts";
 
-export function encryptionKey(value = process.env.COMMERCE_ENCRYPTION_KEY): Buffer {
+export function encryptionKey(value = process.env.COMMERCE_ENCRYPTION_KEY || localTestEncryptionKey()): Buffer {
   if (!value || !/^[A-Za-z0-9+/]{43}=$/.test(value)) throw new Error("Commerce not configured");
   const key = Buffer.from(value, "base64");
   if (key.length !== 32) throw new Error("Commerce not configured");
@@ -9,7 +10,7 @@ export function encryptionKey(value = process.env.COMMERCE_ENCRYPTION_KEY): Buff
 // Support-only confirmations can use the existing server secret when no shop
 // integration is configured. Never use this fallback to encrypt shop credentials.
 export function supportKey(): Buffer {
-  if (process.env.COMMERCE_ENCRYPTION_KEY) return encryptionKey();
+  if (process.env.COMMERCE_ENCRYPTION_KEY || localTestEncryptionKey()) return encryptionKey();
   const secret = process.env.SUPABASE_SERVICE_KEY;
   if (!secret || secret.length < 32) throw new Error("Support not configured");
   return createHmac("sha256", secret).update("embedbot:support-only:v1").digest();

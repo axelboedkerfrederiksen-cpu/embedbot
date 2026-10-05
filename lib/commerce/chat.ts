@@ -2,6 +2,22 @@ import type OpenAI from "openai";
 import { cleanQuery, type ProductQuery } from "./types.ts";
 
 export const orderIntent = (text: string) => /\b(ordrestatus|ordrenummer|ordre|order|bestilling|pakke|forsendelse|tracking|shipment|bestellung|commande|pedido)\b/i.test(text) && !/\b(hvordan|how|kan jeg|can i)\b.*\b(bestill|order|køb)/i.test(text);
+// Exact stock questions need no AI classification. Only accept the narrow
+// question form; ambiguous requests and conversational follow-ups still use AI.
+export function directStockQuery(text: string): ProductQuery | null {
+  const clean = text.trim().replace(/[?.!]+$/, "");
+  const match = /^(?:er|har (?:i|du))\s+(.+?)\s+(?:på lager|tilgængelig(?:t)?)\b(.*)$/i.exec(clean)
+    || /^(?:is|do you have)\s+(.+?)\s+(?:in stock|available)\b(.*)$/i.exec(clean);
+  if (!match) return null;
+  const suffix = match[2].trim();
+  const option = /^(?:i\s+)?(?:farven?|størrelse|varianten?|colou?r|size)\s+(.+)$/i.exec(suffix);
+  if (suffix && !option) return null;
+  const query = redact(match[1]).replace(/["“”]/g, "").trim();
+  const variant = option ? redact(option[1]) : undefined;
+  if (!query || /\[email\]|\[order number\]/.test(`${query} ${variant || ""}`)) return null;
+  if (/^(?:den|det|de|denne|dette|disse|den her|det her|den der|det der|produktet|varen|it|this|that|these|those|they|this one|that one|the product|the item)$/i.test(query)) return null;
+  return cleanQuery({ query, variant });
+}
 export const redact = (text: string) => text.replace(/[^\s@]+@[^\s@]+\.[^\s@]+/g, "[email]").replace(/#\w+/g, "[order number]");
 export const productComplaint = (text: string) => /(?:forkert|forkerte)\s+(?:produkt|vare)|(?:wrong|incorrect)\s+(?:product|item)|(?:produktet|varen)\s+(?:er|var)\s+forkert/i.test(text);
 export function supportIntent(message: string, history: unknown): boolean {
@@ -76,4 +92,4 @@ async function translateCopy(openai: OpenAI, language: string): Promise<Commerce
   } catch { /* Safe English fallback; no personal data is involved. */ }
   return en;
 }
-export function heuristicLanguage(text: string) { return /\b(order|where|my|track|email|shipment)\b/i.test(text) ? "en" : "da"; }
+export function heuristicLanguage(text: string) { return /\b(order|where|my|track|email|shipment|in stock|available|do you have)\b|^is\s/i.test(text) ? "en" : "da"; }
