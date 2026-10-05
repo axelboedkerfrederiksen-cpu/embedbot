@@ -13,7 +13,7 @@ export default function PrivacyPolicy() {
             Privatlivspolitik
           </h1>
           <p className="mt-3 text-base text-gray-600">
-            Senest opdateret: <time dateTime="2026-10-03">3. oktober 2026</time>
+            Senest opdateret: <time dateTime="2026-10-05">5. oktober 2026</time>
           </p>
         </div>
 
@@ -41,9 +41,9 @@ export default function PrivacyPolicy() {
             <a href="#data" className="privacy-policy-toc-link">Oplysninger og formål</a>
             <a href="#openai" className="privacy-policy-toc-link">Leverandører og OpenAI</a>
             <a href="#sletning" className="privacy-policy-toc-link">Opbevaring og sletning</a>
-            <a href="#rettigheder" className="privacy-policy-toc-link">Dine rettigheder</a>
+            <a href="#gdpr-rettigheder" className="privacy-policy-toc-link">Dine rettigheder</a>
             <a href="#cookies" className="privacy-policy-toc-link">Cookies og sikkerhed</a>
-            <a href="#kontakt" className="privacy-policy-toc-link">Kontakt</a>
+            <a href="#kontakt" className="privacy-policy-toc-link">Kontakt om databeskyttelse</a>
           </div>
         </nav>
 
@@ -149,14 +149,14 @@ export default function PrivacyPolicy() {
         </section>
 
         <section id="leverandorer">
-          <h2>4. Behandlingsgrundlag</h2>
+          <h2>4. Retsgrundlag for behandling af personoplysninger</h2>
           <p>
             Vi behandler normalt personoplysninger på disse grundlag efter GDPR:
           </p>
           <ul>
             <li>
               <strong>Opfyldelse af aftale (artikel 6, stk. 1, litra b):</strong>{" "}
-              konto, chatbot, support og abonnement.
+              konto, support og abonnement, når du selv er part i aftalen. For kontaktpersoner hos erhvervskunder bruger vi legitim interesse i at administrere kundeforholdet.
             </li>
             <li>
               <strong>Retlig forpligtelse (artikel 6, stk. 1, litra c):</strong>{" "}
@@ -170,8 +170,7 @@ export default function PrivacyPolicy() {
             </li>
             <li>
               <strong>Samtykke (artikel 6, stk. 1, litra a):</strong> kun hvor
-              samtykke er nødvendigt, eksempelvis for bestemte ikke-nødvendige
-              cookies eller fremtidig markedsføring.
+              samtykke er nødvendigt, herunder analyse og ydeevnemåling efter accept i cookiebanneret.
             </li>
           </ul>
         </section>
@@ -293,13 +292,13 @@ export default function PrivacyPolicy() {
           <h2>11. Dine rettigheder efter GDPR</h2>
           <p>Afhængigt af situationen har du ret til at:</p>
           <ul>
-            <li>få indsigt i de personoplysninger, vi behandler om dig</li>
-            <li>få urigtige oplysninger rettet</li>
-            <li>få oplysninger slettet</li>
-            <li>få behandlingen begrænset</li>
-            <li>modtage oplysninger i et struktureret format (dataportabilitet)</li>
-            <li>gøre indsigelse mod behandling, der er baseret på legitim interesse</li>
-            <li>trække et samtykke tilbage, hvis behandlingen er baseret på samtykke.</li>
+            <li><strong>Ret til indsigt (artikel 15):</strong> Du kan få bekræftet, om vi behandler oplysninger om dig, og få en kopi samt oplysninger om behandlingen.</li>
+            <li><strong>Ret til berigtigelse (artikel 16):</strong> Du kan få urigtige personoplysninger rettet og ufuldstændige oplysninger suppleret.</li>
+            <li><strong>Ret til sletning (artikel 17):</strong> Du kan få oplysninger slettet, når betingelserne er opfyldt, f.eks. hvis de ikke længere er nødvendige. Lovpligtig opbevaring kan begrænse retten.</li>
+            <li><strong>Ret til begrænsning (artikel 18):</strong> Du kan i visse tilfælde få behandlingen begrænset, f.eks. mens oplysningernes rigtighed undersøges.</li>
+            <li><strong>Ret til dataportabilitet (artikel 20):</strong> Ved automatiseret behandling på grundlag af samtykke eller aftale kan du modtage de oplysninger, du selv har givet os, i et struktureret, almindeligt anvendt og maskinlæsbart format og få dem overført direkte til en anden dataansvarlig, hvis det er teknisk muligt.</li>
+            <li><strong>Ret til indsigelse (artikel 21):</strong> Du kan af grunde vedrørende din særlige situation gøre indsigelse mod behandling baseret på legitim interesse.</li>
+            <li><strong>Tilbagekaldelse af samtykke:</strong> Du kan til enhver tid trække samtykke tilbage. Det ændrer ikke lovligheden af behandlingen før tilbagekaldelsen. Analysevalget ændres på cookiesiden.</li>
           </ul>
           <p>
             Kontakt os på <a href="mailto:axel@embedbot.dk">axel@embedbot.dk</a>,
@@ -308,6 +307,14 @@ export default function PrivacyPolicy() {
               Datatilsynet
             </a>.
           </p>
+        </section>
+
+        <section id="anmodninger">
+          <h2>Sådan bruger du dine rettigheder</h2>
+          <p>Send en <Link href="/data-requests">dataanmodning</Link> eller skriv til <a href="mailto:axel@embedbot.dk">axel@embedbot.dk</a>. Vi svarer uden unødig forsinkelse og som udgangspunkt inden en måned. Ved komplekse eller mange anmodninger kan fristen forlænges med op til to måneder; vi oplyser dig om forlængelsen og grunden inden den første måned. Anmodninger er som udgangspunkt gratis. Vi kan bede om nødvendig dokumentation for din identitet.</p>
+          <p>Hvis oplysningerne vedrører en chatbot på en anden virksomheds webshop, er virksomheden normalt dataansvarlig. Du kan kontakte webshoppen direkte; EmbedBot bistår virksomheden efter dens instrukser.</p>
+          <p>Vi bruger ikke dine oplysninger til udelukkende automatiske afgørelser eller profilering, der har retsvirkning eller tilsvarende væsentlig betydning for dig. AI-genererede chatsvar er en del af tjenesten.</p>
+          <p>Oplysninger til konto og abonnement er nødvendige for at levere tjenesten. Uden dem kan vi ikke oprette eller administrere din konto. Valgfri analyse kan afvises uden at miste adgang til tjenesten.</p>
         </section>
 
         <section id="cookies">
@@ -367,9 +374,9 @@ export default function PrivacyPolicy() {
         </section>
 
         <section id="kontakt">
-          <h2>16. Kontakt</h2>
+          <h2>16. Kontakt om databeskyttelse og databeskyttelsesrådgiver (DPO)</h2>
           <p>
-            Spørgsmål om privatliv, sletning eller dine rettigheder kan sendes til:
+            EmbedBot er din kontakt om databeskyttelse. Spørgsmål om privatliv, sletning, berigtigelse eller andre rettigheder kan sendes til:
           </p>
           <address className="not-italic">
             <strong>EmbedBot</strong>
