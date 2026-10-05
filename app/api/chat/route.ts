@@ -5,6 +5,7 @@ import { createClient } from "@supabase/supabase-js";
 import OpenAI from "openai";
 import { createHash } from "node:crypto";
 import { buildChatSystemPrompt } from "@/lib/chat-system-prompt";
+import { selectWebsiteContext } from "@/lib/chat-context";
 import { supportKey } from "@/lib/commerce/security";
 import { mailConfigured } from "@/lib/commerce/mail";
 import { cachedProducts } from "@/lib/commerce";
@@ -146,15 +147,22 @@ async function consumeAnswerAllowance(
 }
 
 export async function POST(req: NextRequest) {
-  const wantsProgress = await req.clone().json().then(body => body.stream_events === true).catch(() => false);
-  if (wantsProgress) return chatProgressResponse((status,reference) => handleChat(req, status,reference));
-  return handleChat(req);
+  let input: Record<string, unknown>;
+  try {
+    const body = await req.json();
+    if (!body || typeof body !== "object" || Array.isArray(body)) throw new Error("Invalid body");
+    input = body;
+  } catch {
+    return NextResponse.json({ error: "Ugyldig anmodning." }, { status: 400 });
+  }
+  if (input.stream_events === true) return chatProgressResponse((status,reference) => handleChat(req, input, status,reference));
+  return handleChat(req, input);
 }
 
-async function handleChat(req: NextRequest, status: (stage: ChatStage) => void = () => {}, reference: (id:string,token:string)=>void = ()=>{}) {
+async function handleChat(req: NextRequest, input: Record<string, unknown>, status: (stage: ChatStage) => void = () => {}, reference: (id:string,token:string)=>void = ()=>{}) {
   try {
     const clientIp = getClientIp(req);
-    const { message, business_id, page_url, preview_token, history, order_lookup, commerce_language, session } = await req.json();
+    const { message, business_id, page_url, preview_token, history, order_lookup, commerce_language, session } = input;
     const stableBusinessId = typeof business_id === "string" ? business_id.trim() : "";
     const stablePageUrl = typeof page_url === "string" && page_url.trim() ? page_url.trim() : "";
     const stablePreviewToken = typeof preview_token === "string" ? preview_token.trim() : "";
@@ -163,13 +171,6 @@ async function handleChat(req: NextRequest, status: (stage: ChatStage) => void =
       return NextResponse.json(
         { error: "Mangler business_id." },
         { status: 400 }
-      );
-    }
-
-    if (await isRateLimited(clientIp, stableBusinessId)) {
-      return NextResponse.json(
-        { error: "Rate limit ramt: maks 50 beskeder pr. dag." },
-        { status: 429 }
       );
     }
 
@@ -197,14 +198,24 @@ async function handleChat(req: NextRequest, status: (stage: ChatStage) => void =
     }
 
     // Verify business exists and is not deleted
-    const { data: business, error: businessError } = await supabase
-      .from("businesses")
-      .select("*")
-      .eq("id", stableBusinessId)
-      .or("is_deleted.eq.false,is_deleted.is.null")
-      .order("created_at", { ascending: false })
-      .limit(1)
-      .single();
+    const [rateLimited, { data: business, error: businessError }] = await Promise.all([
+      isRateLimited(clientIp, stableBusinessId),
+      supabase
+        .from("businesses")
+        .select("*")
+        .eq("id", stableBusinessId)
+        .or("is_deleted.eq.false,is_deleted.is.null")
+        .order("created_at", { ascending: false })
+        .limit(1)
+        .single(),
+    ]);
+
+    if (rateLimited) {
+      return NextResponse.json(
+        { error: "Rate limit ramt: maks 50 beskeder pr. dag." },
+        { status: 429 }
+      );
+    }
 
     if (businessError || !business) {
       // Log security event but don't expose details to user
@@ -245,10 +256,24 @@ async function handleChat(req: NextRequest, status: (stage: ChatStage) => void =
     ? business.name.trim()
     : "denne virksomhed";
 
-  const [connected, supportSettings, websiteSource] = await Promise.all([
+  const complaint = productComplaint(trimmedMessage);
+  const directSupport = supportIntent(trimmedMessage, history);
+  const structuredOrder = order_lookup !== undefined;
+  const obviousOrder = structuredOrder || orderIntent(trimmedMessage);
+  const fallbackRouting: Awaited<ReturnType<typeof classifyCommerce>> = {
+    intent: obviousOrder ? "order" : "general",
+    language: typeof commerce_language === "string" && /^[a-z]{2}$/.test(commerce_language) ? commerce_language : heuristicLanguage(trimmedMessage),
+    search: null,
+  };
+  // Classification does not depend on shop configuration. Overlap it with
+  // the reads, but only after subscription and answer allowance are verified.
+  const [connected, supportSettings, websiteSource, routing] = await Promise.all([
     integration(supabase, stableBusinessId),
     supabase.from("commerce_settings").select("notification_email").eq("business_id", stableBusinessId).maybeSingle(),
     supabase.from("website_sources").select("content_text,imported_at,source_kind,source_name").eq("business_id", stableBusinessId).maybeSingle(),
+    obviousOrder || complaint || directSupport
+      ? Promise.resolve(fallbackRouting)
+      : classifyCommerce(openai, trimmedMessage, history).catch(() => fallbackRouting),
   ]);
   let secureStorage = false;
   try { supportKey(); secureStorage = true; } catch { /* Report capability only; never expose configuration. */ }
@@ -259,18 +284,11 @@ async function handleChat(req: NextRequest, status: (stage: ChatStage) => void =
     supportEmail: secureStorage && !supportSettings.error && Boolean(supportSettings.data?.notification_email) && mailConfigured(),
   };
   const adapter = connected?.adapter;
-  if (productComplaint(trimmedMessage)) {
+  if (complaint) {
     return NextResponse.json({ kind: "support", text: "Det beklager jeg. Fortæl gerne, hvilket produkt du leder efter, så prøver jeg igen. Du kan også oprette en supportsag, hvis du har brug for hjælp fra webshoppen.", offerSupport: capabilities.supportCases }, { headers: { "Cache-Control": "no-store" } });
   }
-  if (supportIntent(trimmedMessage, history)) {
+  if (directSupport) {
     return NextResponse.json({ kind: "support", text: capabilities.supportCases ? "Jeg kan hjælpe dig med at oprette en henvendelse. Udfyld formularen, gennemse opsummeringen og bekræft, at den skal sendes." : `Supportsager er ikke aktiveret her endnu. Kontakt virksomheden direkte${business.support_email ? ` på ${sanitizeOutput(business.support_email)}` : " via dens hjemmeside"}.`, needsSupportInput: capabilities.supportCases }, { headers: { "Cache-Control": "no-store" } });
-  }
-  const structuredOrder = order_lookup !== undefined;
-  const obviousOrder = structuredOrder || orderIntent(trimmedMessage);
-  let routing: Awaited<ReturnType<typeof classifyCommerce>> = { intent: obviousOrder ? "order" : "general", language: typeof commerce_language === "string" && /^[a-z]{2}$/.test(commerce_language) ? commerce_language : heuristicLanguage(trimmedMessage), search: null };
-  if (!obviousOrder) {
-    try { routing = await classifyCommerce(openai, trimmedMessage, history); }
-    catch { /* Continue using the existing chat when classification is unavailable. */ }
   }
   if (routing.intent === "support") {
     return NextResponse.json({ kind: "support", text: capabilities.supportCases ? "Jeg kan hjælpe dig med at sende en henvendelse til virksomheden. Udfyld kontaktmail og besked, gennemse opsummeringen og vælg ‘Send henvendelse’." : `Henvendelser via chatten er ikke aktiveret her endnu. Kontakt virksomheden direkte${business.support_email ? ` på ${sanitizeOutput(business.support_email)}` : " via dens hjemmeside"}.`, needsSupportInput: capabilities.supportCases }, { headers: { "Cache-Control": "no-store" } });
@@ -302,9 +320,9 @@ async function handleChat(req: NextRequest, status: (stage: ChatStage) => void =
   }
 
   if (routing.intent === "product" && websiteSource.data?.source_kind === "url") status("searching");
-  const freshProductContext = routing.intent === "product" && websiteSource.data?.source_kind === "url"
-    ? await refreshProductPages(websiteSource.data.content_text, routing.search?.query || trimmedMessage, undefined, websiteSource.data.source_name).catch(() => "")
-    : "";
+  const freshProductContextPromise = routing.intent === "product" && websiteSource.data?.source_kind === "url"
+    ? refreshProductPages(websiteSource.data.content_text, routing.search?.query || trimmedMessage, undefined, websiteSource.data.source_name).catch(() => "")
+    : Promise.resolve("");
 
   // Generate embeddings with error handling
   let queryEmbedding: number[] = [];
@@ -342,6 +360,14 @@ async function handleChat(req: NextRequest, status: (stage: ChatStage) => void =
     ?.map((doc) => (typeof doc.content === "string" ? doc.content : ""))
     .filter(Boolean)
     .join("\n\n");
+  // Public page refresh and vector retrieval are independent. Keep the full
+  // imported source for finding URLs, then select excerpts for generation.
+  const freshProductContext = await freshProductContextPromise;
+  const importedContext = selectWebsiteContext(
+    websiteSource.data?.content_text || "",
+    [trimmedMessage, routing.search?.query].filter(Boolean).join(" "),
+    safeHistory(history),
+  );
 
   const businessInfo = `
 VIRKSOMHED: ${sanitizeOutput(business?.name || "")}
@@ -394,7 +420,7 @@ ${sanitizeOutput(business?.custom_instructions || "Ingen")}
         content: buildChatSystemPrompt({
           companyName,
           businessInfo,
-          websiteContext: [context, websiteSource.data?.content_text ? `Importeret hjemmeside/HTML (${websiteSource.data.imported_at}, ikke live data):\n${websiteSource.data.content_text}` : ""].filter(Boolean).join("\n\n") || "Ingen relevant hjemmesidekontekst fundet.",
+          websiteContext: [context, importedContext ? `Importeret hjemmeside/HTML (${websiteSource.data?.imported_at}, ikke live data; udvalgte uddrag):\n${importedContext}` : ""].filter(Boolean).join("\n\n") || "Ingen relevant hjemmesidekontekst fundet.",
           publicProductContext: freshProductContext,
           language: sanitizeOutput(business?.language || "dansk"),
           formal: business?.tone === "formel",

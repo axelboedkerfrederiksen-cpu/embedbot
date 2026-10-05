@@ -45,14 +45,34 @@ const en: typeof da = {
   number: "Order number", email: "Checkout email", submit: "Send verification code", lookup: "Checking your order…", status: "Current order status", shipped: "Shipped", tracking: "Track shipment", available: "Stock recorded as available", unavailable: "Not available to buy now", unknownAvailability: "Availability not confirmed", unknownPrice: "Price not confirmed", from: "From", view: "View product", contact: "Contact customer service",
 };
 export type CommerceCopy = typeof da;
+// Only fixed public interface labels are cached, never customer or shop data.
+const translatedCopy = new Map<string, CommerceCopy>();
+const translatingCopy = new Map<string, Promise<CommerceCopy>>();
 export async function commerceCopy(openai: OpenAI, language: string): Promise<CommerceCopy> {
   if (language === "da") return da;
   if (language === "en") return en;
+  if (!/^[a-z]{2}$/.test(language)) return en;
+  const cached = translatedCopy.get(language);
+  if (cached) return { ...cached };
+  const pending = translatingCopy.get(language);
+  if (pending) return { ...await pending };
+  const loading = translateCopy(openai, language);
+  translatingCopy.set(language, loading);
+  try { return { ...await loading }; }
+  finally { translatingCopy.delete(language); }
+}
+
+async function translateCopy(openai: OpenAI, language: string): Promise<CommerceCopy> {
   try {
     // Translate fixed interface text only. No order identifiers, results or shop content.
     const response = await openai.chat.completions.create({ model: "gpt-5.6-luna", reasoning_effort: "none", max_completion_tokens: 1600, response_format: { type: "json_object" }, messages: [{ role: "system", content: `Translate the values of this JSON to language ${language}. Preserve all keys and meaning. Return JSON only.` }, { role: "user", content: JSON.stringify(en) }] }, { timeout: 8000, maxRetries: 0 });
     const translated = JSON.parse(response.choices[0]?.message.content || "{}");
-    if (Object.keys(en).every(k => typeof translated[k] === "string" && translated[k].length > 0 && translated[k].length < 700)) return translated;
+    if (Object.keys(en).every(k => typeof translated[k] === "string" && translated[k].length > 0 && translated[k].length < 700)) {
+      const copy = Object.fromEntries(Object.keys(en).map(key => [key, translated[key]])) as CommerceCopy;
+      if (translatedCopy.size >= 32) translatedCopy.delete(translatedCopy.keys().next().value!);
+      translatedCopy.set(language, copy);
+      return copy;
+    }
   } catch { /* Safe English fallback; no personal data is involved. */ }
   return en;
 }

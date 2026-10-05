@@ -582,6 +582,34 @@
     });
   }
 
+  // Network chunks can arrive several times in one frame. Rebuild the safe
+  // Markdown DOM once per frame, and always flush the final answer explicitly.
+  function createStreamRenderer(target, onRender) {
+    let frame = null;
+    let latestText = "";
+    const paint = () => {
+      frame = null;
+      renderAssistantText(target, latestText);
+      onRender();
+    };
+    const cancel = () => {
+      if (frame !== null) cancelAnimationFrame(frame);
+      frame = null;
+    };
+    return {
+      update(text) {
+        latestText = text;
+        if (frame === null) frame = requestAnimationFrame(paint);
+      },
+      flush(text) {
+        cancel();
+        latestText = text;
+        paint();
+      },
+      cancel,
+    };
+  }
+
   // Build a small Markdown subset with DOM nodes. Model output is never HTML.
   function appendFormattedText(parent, text) {
     const pattern = /\[([^\]\n]+)\]\(\s*(https?:\/\/[^\s<>]+?)\s*\)|\*\*([^*\n]+)\*\*|https?:\/\/[^\s<>]+/g;
@@ -963,6 +991,9 @@
     renderThinkingState(botMessage.msg, language);
     let botStreamText = "";
     let hasStartedResponse = false;
+    const streamRenderer = createStreamRenderer(botMessage.msg, () => {
+      messages.scrollTop = messages.scrollHeight;
+    });
 
     try {
       const res = await fetch(API_URL, {
@@ -1010,6 +1041,7 @@
           renderThinkingState(botMessage.msg, language, event.stage);
           messages.scrollTop = messages.scrollHeight;
         } else if (event.type === "result") {
+          streamRenderer.cancel();
           structuredResponse = true;
           hasStartedResponse = true;
           renderCommerce(botMessage.msg, event.data);
@@ -1020,8 +1052,7 @@
           botStreamText += event.text;
           hasStartedResponse = true;
           botMessage.msg.classList.remove("eb-thinking-host");
-          renderAssistantText(botMessage.msg, botStreamText);
-          messages.scrollTop = messages.scrollHeight;
+          streamRenderer.update(botStreamText);
         }
       };
       while (true) {
@@ -1051,8 +1082,7 @@
           botMessage.msg.classList.remove("eb-thinking-host");
           botMessage.msg.classList.add("eb-answer-reveal");
         }
-        renderAssistantText(botMessage.msg, botStreamText);
-        messages.scrollTop = messages.scrollHeight;
+        streamRenderer.update(botStreamText);
       }
 
       if (eventStream && eventBuffer.trim()) consumeEvent(JSON.parse(eventBuffer));
@@ -1064,7 +1094,7 @@
         botStreamText = labels.errorReply;
       }
 
-      renderAssistantText(botMessage.msg, botStreamText);
+      streamRenderer.flush(botStreamText);
 
       void addProductPreviews(botMessage.msg);
 
@@ -1075,6 +1105,7 @@
       conversationHistory.push({ role: "user", content: text });
       conversationHistory.push({ role: "assistant", content: botStreamText });
     } catch (error) {
+      streamRenderer.cancel();
       const errorMessage = error instanceof Error && error.message
         ? error.message
         : labels.errorReply;
@@ -1084,7 +1115,7 @@
         userMessage.status.textContent = labels.failed;
         userMessage.status.style.color = "#b91c1c";
       }
-    } finally { messageSending = false; send.disabled = false; newChat.disabled = false; }
+    } finally { streamRenderer.cancel(); messageSending = false; send.disabled = false; newChat.disabled = false; }
   }
 
   newChat.onclick = () => {
