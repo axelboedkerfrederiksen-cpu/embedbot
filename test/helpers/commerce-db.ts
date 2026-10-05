@@ -31,6 +31,7 @@ export async function testDatabase() {
   await pg.exec(await readFile(new URL("../../supabase/migrations/20261003172509_supplier_review_and_contract_identity.sql", import.meta.url), "utf8"));
   await pg.exec(await readFile(new URL("../../supabase/migrations/20261003200520_remove_public_contact_address.sql", import.meta.url), "utf8"));
   await pg.exec(await readFile(new URL("../../supabase/migrations/20261003203253_card_registered_trial_terms.sql", import.meta.url), "utf8"));
+  await pg.exec(await readFile(new URL("../../supabase/migrations/20261005190951_public_embedbot_brand_identity.sql", import.meta.url), "utf8"));
   const column = (name: string) => { if (!/^[a-z_][a-z0-9_]*$/.test(name)) throw new Error("Invalid test column"); return name; };
   class Query {
     table: string; operation = "select"; values: Record<string, unknown> = {}; filters: [string,string,unknown][] = []; selected = "*"; countOnly = false; returning = false; conflict = ""; ignore = false; sort = ""; max: number | null = null; countMutation = false;

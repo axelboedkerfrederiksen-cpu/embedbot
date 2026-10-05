@@ -14,7 +14,7 @@ function InlineText({text}:{text:string}){
 export default function Page(){
  return <main id="main-content" className="min-h-screen bg-[var(--bg-page)] px-4 py-12 text-gray-900 sm:px-6 lg:px-8"><article className="privacy-policy mx-auto max-w-4xl">
   <Link href="/">← Tilbage til EmbedBot</Link>
-  <h1>{publication.title}</h1><p>Version {publication.version} · 3. oktober 2026</p>
+  <h1>{publication.title}</h1><p>Version {publication.version} · 5. oktober 2026</p>
   <div className="my-6 rounded-lg border border-[var(--border)] bg-[var(--bg-secondary)] p-5" role="note">{publication.notice}</div>
   {publication.blocks.map((block,index)=>{
    if(block.type==="heading")return <h2 key={index}>{block.text}</h2>;

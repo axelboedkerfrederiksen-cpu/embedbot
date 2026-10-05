@@ -50,7 +50,7 @@ export default function Footer() {
           <div className="flex flex-col md:flex-row justify-between items-center">
             <p className="text-[var(--text-subtle)] text-sm">
               © {new Date().getFullYear()} EmbedBot. Alle rettigheder forbeholdt.
-              <br />Axel Bødker Frederiksen · +45 91 55 12 50
+              <br />EmbedBot · +45 91 55 12 50
             </p>
             <div className="flex gap-6 mt-4 md:mt-0">
               <Link href="/privacy" className="text-[var(--text-subtle)] hover:text-[var(--text-primary)] text-sm">
