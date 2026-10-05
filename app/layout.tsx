@@ -19,7 +19,7 @@ const lora = Lora({ variable: "--font-lora", subsets: ["latin"], weight: ["400",
 export const metadata: Metadata = {
   metadataBase: new URL("https://www.embedbot.dk"),
   title: "EmbedBot | AI-kundeservice til din webshop",
-  description: "Hjælp dine kunder med svar om produkter, levering og retur med EmbedBot. Se demo, priser og prøvevilkår.",
+  description: "AI-kundeservice til webshops på tværs af platforme. Hjælp kunderne med svar om produkter, levering og retur. Se demo, priser og prøvevilkår.",
   openGraph: { type: "website", locale: "da_DK", siteName: "EmbedBot" },
   twitter: { card: "summary_large_image" },
   icons: {

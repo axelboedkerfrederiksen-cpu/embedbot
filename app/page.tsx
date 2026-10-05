@@ -114,7 +114,7 @@ export default function Home() {
           <p className={styles.lead}>AI-kundeservice, der kender jeres produkter, ordrer og politikker. Giv kunderne svar direkte i webshoppen — også efter lukketid.</p>
           <div className={styles.heroActions}><Link href="/setup" className={styles.button}>Start 14 dage gratis <ArrowRight size={17}/></Link><button className={styles.textButton} onClick={openDemo} disabled={demoStatus === "loading"}>{demoStatus === "loading" ? "Åbner demo…" : "Prøv demoen"}<ArrowRight size={16}/></button></div>
           <p className={styles.trialDisclosure}>{TRIAL.days} dage gratis. Derefter fra {PLANS.starter.monthlyPriceDkk} kr./md. ekskl. moms. Opsig når som helst. <Link href="/prices">Se alle priser</Link>.</p>
-          <div className={styles.reassurance}><span><Check size={14}/> Hjælp til opsætning</span><Link href="/privacy"><Check size={14}/> GDPR-fokuseret</Link><span><Check size={14}/> Shopify, WooCommerce og egne websites</span></div>
+          <div className={styles.reassurance}><span><Check size={14}/> Hjælp til opsætning</span><Link href="/privacy"><Check size={14}/> GDPR-fokuseret</Link><span><Check size={14}/> Til webshops på tværs af platforme</span></div>
           {demoStatus === "error" && <p className={styles.demoError} role="status">Demoen kunne ikke åbnes lige nu. Prøv igen, eller <Link href="/support">kontakt os</Link>.</p>}
         </div>
         <ChatPreview />
@@ -131,13 +131,13 @@ export default function Home() {
         </ol>
       </section>
 
-      <section className={`${styles.platforms} ${styles.container}`} aria-label="Platforme">
-        <p>Forbind Shopify og WooCommerce.<br /><span>Indsæt chatten på WordPress, Webflow og egne websites.</span></p>
+      <section className={`${styles.platforms} ${styles.container}`} aria-label="Webshops på tværs af platforme">
+        <p>Bygget til webshops.<br /><span>AI-kundeservice på tværs af platforme og egne hjemmesider.</span></p>
         <div className={styles.platformNames}>
-          <a href="https://woocommerce.com" aria-label="WooCommerce"><Image src="/platforms/woocommerce.png" alt="WooCommerce" width={88} height={30} /></a>
-          <a href="https://wordpress.org" aria-label="WordPress"><Image src="/platforms/wordpress.png" alt="WordPress" width={132} height={30} /></a>
           <a href="https://www.shopify.com" aria-label="Shopify"><Image src="/platforms/shopify.svg" alt="Shopify" width={108} height={31} /></a>
           <a href="https://webflow.com" aria-label="Webflow"><Image src="/platforms/webflow.svg" alt="Webflow" width={112} height={28} /></a>
+          <a href="https://woocommerce.com" aria-label="WooCommerce"><Image src="/platforms/woocommerce.png" alt="WooCommerce" width={88} height={30} /></a>
+          <a href="https://wordpress.org" aria-label="WordPress"><Image src="/platforms/wordpress.png" alt="WordPress" width={132} height={30} /></a>
         </div>
       </section>
 

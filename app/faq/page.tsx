@@ -18,11 +18,11 @@ const faqGroups = [
       },
       {
         question: "Hvem er EmbedBot til?",
-        answer: "EmbedBot er lavet til virksomheder, der vil give kunder hurtige svar døgnet rundt uden at skulle besvare de samme spørgsmål manuelt igen og igen.",
+        answer: "EmbedBot er lavet til webshops på tværs af platforme, der vil give kunder hurtige svar døgnet rundt uden at skulle besvare de samme spørgsmål manuelt igen og igen.",
       },
       {
         question: "Hvilke platforme virker EmbedBot på?",
-        answer: "EmbedBot kan indsættes på blandt andet WordPress med WooCommerce, Shopify, Squarespace, Wix, Webflow og almindelige HTML-hjemmesider.",
+        answer: "EmbedBot kan bruges på webshops på tværs af platforme og på egne hjemmesider. Chatten indsættes med et lille stykke kode på jeres side. Adgang til live lager- og ordredata afhænger af den valgte webshopintegration.",
       },
     ],
   },
