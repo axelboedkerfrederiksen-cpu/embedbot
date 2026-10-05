@@ -91,7 +91,11 @@ npm run dev
 - `npm run build` - lav produktionsbuild
 - `npm run start` - kør produktionsserver
 - `npm run lint` - kør ESLint
+- `npm run benchmark:chat -- --business-id CHATBOT_ID` - mål gennemsnit og median for flere chat-prompts, og gem JSON/CSV
 - `npm test` - kør tests for abonnement, adgang, Stripe samt webshopadaptere, ordreverificering, supportsager og sikre serverruter (Node.js 22.15+ eller 24 anbefales)
+
+Svartidstesten kan også køres fra `/chat-benchmark.html` med chatbot-id/widget-link,
+egne prompts og valgfrit antal gentagelser. Se [vejledningen](docs/chat-benchmark.md).
 
 ## Kerneflow
 
