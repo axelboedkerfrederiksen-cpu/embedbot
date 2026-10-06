@@ -10,6 +10,14 @@
   --text-muted: #6a6865;
   --text-subtle: #706d68;
   --border: #e9e5dd;
+  --border-strong: #dcd7cf;
+  --success: #237a57;
+  --success-dark: #195d42;
+  --success-soft: #e9f5ef;
+  --warning: #a96218;
+  --warning-soft: #fff5e8;
+  --danger: #a13e35;
+  --danger-soft: #fff0ee;
 }
 
 *, *::before, *::after {
