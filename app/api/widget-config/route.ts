@@ -1,3 +1,5 @@
+import { publicWorkspaceConfig } from "@/lib/workspace/public-config";
+import { validId } from "@/lib/commerce/security";
 import { privacyUrl } from "@/lib/compliance/validation";
 import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@supabase/supabase-js";
@@ -47,7 +49,7 @@ async function fetchBusinessWidgetConfig(businessId: string) {
     const { data, error } = await supabase
       .from("businesses")
       .select(fields)
-      .eq("id", businessId)
+      .eq("id", businessId).or("is_deleted.eq.false,is_deleted.is.null")
       .order("created_at", { ascending: false })
       .limit(1)
       .maybeSingle();
@@ -91,7 +93,7 @@ export async function GET(req: NextRequest) {
     }
 
     const businessId = req.nextUrl.searchParams.get("id");
-    if (!businessId) {
+    if (!validId(businessId)) {
       return NextResponse.json(
         { error: "Mangler id parameter." },
         { status: 400 }
@@ -105,6 +107,7 @@ export async function GET(req: NextRequest) {
     }
 
     const business = asRecord(businessRaw);
+    if(!business)return NextResponse.json({error:"Chatbotten blev ikke fundet."},{status:404});
 
     const name = asString(business?.name);
     const primaryColor = asString(business?.primary_color);
@@ -124,7 +127,10 @@ export async function GET(req: NextRequest) {
     const { data: privacy } = await supabase.from("business_privacy_settings").select("customer_privacy_url").eq("business_id", businessId).maybeSingle();
     let customerPrivacyUrl: string | null = null;
     try { customerPrivacyUrl = privacyUrl(privacy?.customer_privacy_url ?? null); } catch { /* Fail safely if an old invalid value exists. */ }
+    const {data:workspace}=await supabase.from("workspace_settings").select("state").eq("business_id",businessId).maybeSingle();
+    const workspaceConfig=publicWorkspaceConfig(workspace?.state||null,req.nextUrl.searchParams.get("path")||"/");
     return NextResponse.json({
+      ...workspaceConfig,
       customer_privacy_url: customerPrivacyUrl,
       name: name || DEFAULT_WIDGET_CONFIG.name,
       primary_color: primaryColor || DEFAULT_WIDGET_CONFIG.primary_color,

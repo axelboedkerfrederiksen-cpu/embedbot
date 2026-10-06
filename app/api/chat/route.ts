@@ -1,3 +1,4 @@
+import { activeCampaigns,sourceExcerpts,type Workspace } from "@/lib/workspace/model";
 import { chatReference } from "@/lib/compliance/chat-reference";
 import { chatProgressResponse, type ChatStage } from "@/lib/chat-progress";
 import { NextRequest, NextResponse } from "next/server";
@@ -409,6 +410,10 @@ EKSTRA INSTRUKSER FRA VIRKSOMHEDEN:
 ${sanitizeOutput(business?.custom_instructions || "Ingen")}
 `;
 
+  const {data:workspaceRow}=await supabase.from("workspace_settings").select("state").eq("business_id",stableBusinessId).maybeSingle();
+  const workspaceState=workspaceRow?.state as Workspace|undefined;
+  const workspaceContext=workspaceState?sourceExcerpts(workspaceState.sources,trimmedMessage).map(e=>`Kilde: ${e.source.name}\n${e.text}`).join("\n\n"):"";
+  const currentNotices=workspaceState?activeCampaigns(workspaceState).map(c=>`${c.title}: ${c.text}`).join("\n"):"";
   status("details");
   const completion = await openai.chat.completions.create({
     model: "gpt-5.6-luna",
@@ -420,8 +425,8 @@ ${sanitizeOutput(business?.custom_instructions || "Ingen")}
         role: "system",
         content: buildChatSystemPrompt({
           companyName,
-          businessInfo,
-          websiteContext: [context, importedContext ? `Importeret hjemmeside/HTML (${websiteSource.data?.imported_at}, ikke live data; udvalgte uddrag):\n${importedContext}` : ""].filter(Boolean).join("\n\n") || "Ingen relevant hjemmesidekontekst fundet.",
+          businessInfo: businessInfo+(currentNotices?`\nAKTUELLE TIDSBESTEMTE BESKEDER FRA VIRKSOMHEDEN (gælder nu):\n${currentNotices}`:""),
+          websiteContext: [context, workspaceContext, workspaceState?.managedBase?"":importedContext ? `Importeret hjemmeside/HTML (${websiteSource.data?.imported_at}, ikke live data; udvalgte uddrag):\n${importedContext}` : ""].filter(Boolean).join("\n\n") || "Ingen relevant hjemmesidekontekst fundet.",
           publicProductContext: freshProductContext,
           language: sanitizeOutput(business?.language || "dansk"),
           formal: business?.tone === "formel",

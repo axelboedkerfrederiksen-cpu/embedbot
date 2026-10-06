@@ -5,7 +5,8 @@
   const apiOrigin = new URL(scriptTag.src).origin;
   const API_URL = `${apiOrigin}/api/chat`;
   const localPath = businessId === "local-workspace" ? (scriptTag.getAttribute("data-local-path") || "/") : "";
-  const CONFIG_URL = businessId === "local-workspace" ? `${apiOrigin}/api/local-workspace?widget=1&path=${encodeURIComponent(localPath)}` : `${apiOrigin}/api/widget-config?id=${encodeURIComponent(businessId || "")}`;
+  const configPath = previewToken ? (scriptTag.getAttribute("data-preview-path") || window.location.pathname) : window.location.pathname;
+  const CONFIG_URL = businessId === "local-workspace" ? `${apiOrigin}/api/local-workspace?widget=1&path=${encodeURIComponent(localPath)}` : `${apiOrigin}/api/widget-config?id=${encodeURIComponent(businessId || "")}&path=${encodeURIComponent(configPath)}`;
   const OPEN_ICON = `
     <svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 24 24" fill="none" aria-hidden="true">
       <path d="M5 4.75h14a2.75 2.75 0 0 1 2.75 2.75v7A2.75 2.75 0 0 1 19 17.25h-6.23l-2.9 2.6a.75.75 0 0 1-1.24-.65l.33-1.95H5A2.75 2.75 0 0 1 2.25 14.5v-7A2.75 2.75 0 0 1 5 4.75Z" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
@@ -95,7 +96,7 @@
 
     const welcomeMessage = (widgetConfig.welcome_message || "").trim();
     if (!welcomeMessage) {
-      if (widgetConfig.local_workspace) { hasShownWelcomeMessage=true;showStartButtons(); }
+      if (widgetConfig.local_workspace || widgetConfig.workspace_enabled) { hasShownWelcomeMessage=true;showStartButtons(); }
       return;
     }
 
@@ -106,19 +107,20 @@
   }
 
   async function localWorkspaceAction(payload) {
-    const response = await fetch(`${apiOrigin}/api/local-workspace`, {method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify(payload)});
+    const response = await fetch(`${apiOrigin}${widgetConfig.local_workspace?"/api/local-workspace":"/api/workspace-widget"}`, {method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify(widgetConfig.local_workspace?payload:{business_id:businessId,session:commerceSession,...payload})});
     const data = await response.json();
-    if (!response.ok) throw new Error(data.error || "Den lokale demo kunne ikke opdateres.");
+    if (!response.ok) throw new Error(data.error || "Handlingen kunne ikke gennemføres.");
     return data;
   }
   function showStartButtons() {
-    if (!widgetConfig.local_workspace || messages.querySelector(".eb-start-buttons")) return;
+    if (!(widgetConfig.local_workspace || widgetConfig.workspace_enabled) || messages.querySelector(".eb-start-buttons")) return;
     const group = document.createElement("div"); group.className="eb-start-buttons";
     group.style.cssText="display:flex;flex-wrap:wrap;gap:7px;margin:15px 2px;";
     for (const starter of widgetConfig.start_buttons || []) {
       const button = document.createElement("button");button.type="button";button.textContent=starter.label;
       button.style.cssText="font:inherit;font-size:12px;padding:9px 12px;background:var(--bg-secondary,#f4f1eb);color:var(--text-primary,#20211f);border:1px solid var(--border,#e9e5dd);border-radius:18px;cursor:pointer;";
-      button.onclick=()=>{if(messageSending)return;input.value=starter.message;localWorkspaceAction({action:"starter_click",id:starter.id}).catch(()=>{});sendMessage();};group.appendChild(button);
+      button.style.background=widgetConfig.secondary_color;button.style.color=getBubbleTextColor(widgetConfig.secondary_color);
+      button.onclick=()=>{if(messageSending)return;input.value=starter.message;localWorkspaceAction({action:"starter_click",id:starter.id,page:widgetConfig.local_workspace?localPath:window.location.pathname}).catch(()=>{});sendMessage();};group.appendChild(button);
     }
     for (const announcement of widgetConfig.announcements || []) {
       const note=document.createElement("div");note.textContent=`${announcement.title}: ${announcement.text}`;
@@ -129,15 +131,15 @@
     quote.onclick=showLocalQuote;if(widgetConfig.quote_enabled)group.appendChild(quote);
     messages.appendChild(group);messages.scrollTop=messages.scrollHeight;
   }
-  function addLocalFeedback(row,id) {
+  function addLocalFeedback(row,id,reference) {
     const box=document.createElement("div");box.style.cssText="font-size:11px;padding:10px 2px;display:flex;gap:7px;align-items:center;flex-wrap:wrap;";
     const label=document.createElement("span");label.textContent="Fik du hjælp?";box.appendChild(label);
     for (const [value,title] of [["yes","Ja"],["no","Nej"]]) {
       const button=document.createElement("button");button.type="button";button.textContent=title;button.style.cssText="font:inherit;padding:4px 9px;border:1px solid #ddd;border-radius:6px;background:white;cursor:pointer;";
       button.onclick=async()=>{
         button.disabled=true;
-        try {await localWorkspaceAction({action:"feedback",id,value,note:""});box.replaceChildren();label.textContent="Tak for din feedback";box.appendChild(label);
-          if(value==="no") { const note=document.createElement("input");note.placeholder="Hvad manglede du? (valgfrit)";note.maxLength=500;note.setAttribute("aria-label","Hvad manglede du?");note.style.cssText="font:inherit;padding:8px;border:1px solid #ddd;border-radius:6px;width:100%;";const save=document.createElement("button");save.type="button";save.textContent="Gem kommentar";save.style.cssText=button.style.cssText;save.onclick=async()=>{save.disabled=true;try{await localWorkspaceAction({action:"feedback",id,value,note:note.value});note.remove();save.remove();label.textContent="Tak, din kommentar er gemt";}catch(e){label.textContent=e.message;save.disabled=false;}};box.append(note,save);}
+        try {await localWorkspaceAction({action:"feedback",id,reference,value,note:""});box.replaceChildren();label.textContent="Tak for din feedback";box.appendChild(label);
+          if(value==="no") { const note=document.createElement("input");note.placeholder="Hvad manglede du? (valgfrit)";note.maxLength=500;note.setAttribute("aria-label","Hvad manglede du?");note.style.cssText="font:inherit;padding:8px;border:1px solid #ddd;border-radius:6px;width:100%;";const save=document.createElement("button");save.type="button";save.textContent="Gem kommentar";save.style.cssText=button.style.cssText;save.onclick=async()=>{save.disabled=true;try{await localWorkspaceAction({action:"feedback",id,reference,value,note:note.value});note.remove();save.remove();label.textContent="Tak, din kommentar er gemt";}catch(e){label.textContent=e.message;save.disabled=false;}};box.append(note,save);}
         } catch(e) {label.textContent=e.message;button.disabled=false;}
       };box.appendChild(button);
     }
@@ -152,10 +154,11 @@
       const label=document.createElement("label");label.textContent=title;const field=document.createElement(key==="need"?"textarea":"input");field.required=required;field.maxLength=key==="need"?2000:key==="email"?254:100;if(key==="email")field.type="email";field.style.cssText="display:block;box-sizing:border-box;width:100%;font:inherit;padding:8px;margin-top:5px;border:1px solid #ddd;border-radius:6px;";fields[key]=field;label.appendChild(field);form.appendChild(label);
     }
     const submit=document.createElement("button");submit.type="submit";submit.textContent="Gennemgå henvendelsen";submit.style.cssText="font:inherit;padding:10px;background:var(--accent,#232321);color:white;border:0;border-radius:7px;cursor:pointer;";form.appendChild(submit);
-    const status=document.createElement("p");status.textContent="Lokal demo · ingen mail bliver sendt";status.style.fontSize="10px";status.setAttribute("role","status");form.appendChild(status);
+    const status=document.createElement("p");status.textContent=widgetConfig.local_workspace?"Lokal demo · ingen mail bliver sendt":"Din henvendelse gemmes hos virksomheden, når du bekræfter.";status.style.fontSize="10px";status.setAttribute("role","status");form.appendChild(status);
+    let submissionKey=crypto.randomUUID();
     let reviewed=false;
-    form.oninput=()=>{reviewed=false;submit.textContent="Gennemgå henvendelsen";};
-    form.onsubmit=async e=>{e.preventDefault();if(!reviewed){reviewed=true;status.textContent=`Kontrollér: ${fields.need.value} · ${fields.email.value} · ${fields.budget.value} · ${fields.timing.value}`;submit.textContent="Gem henvendelsen lokalt";return;}submit.disabled=true;try{await localWorkspaceAction({action:"lead_create",email:fields.email.value,need:fields.need.value,budget:fields.budget.value,timing:fields.timing.value,page:localPath});form.replaceChildren();title.textContent="Henvendelsen er gemt som lead og supportsag i demoen. Ingen mail er sendt.";form.appendChild(title);}catch(error){status.textContent=error.message;submit.disabled=false;}};
+    form.oninput=()=>{submissionKey=crypto.randomUUID();reviewed=false;submit.textContent="Gennemgå henvendelsen";};
+    form.onsubmit=async e=>{e.preventDefault();if(!reviewed){reviewed=true;status.textContent=`Kontrollér: ${fields.need.value} · ${fields.email.value} · ${fields.budget.value} · ${fields.timing.value}`;submit.textContent=widgetConfig.local_workspace?"Gem henvendelsen lokalt":"Send henvendelsen";return;}submit.disabled=true;try{await localWorkspaceAction({action:"lead_create",email:fields.email.value,need:fields.need.value,budget:fields.budget.value,timing:fields.timing.value,page:widgetConfig.local_workspace?localPath:window.location.pathname,submission_key:submissionKey});form.replaceChildren();title.textContent=widgetConfig.local_workspace?"Henvendelsen er gemt som lead og supportsag i demoen. Ingen mail er sendt.":"Din henvendelse er gemt hos virksomheden.";form.appendChild(title);}catch(error){status.textContent=error.message;submit.disabled=false;}};
     messages.appendChild(form);messages.scrollTop=messages.scrollHeight;
   }
 
@@ -547,7 +550,7 @@
         fab_color: scriptTag.getAttribute("data-fab-color") || data.fab_color || defaultConfig.fab_color,
         logo_url: data.logo_url || defaultConfig.logo_url,
         font_choice: scriptTag.getAttribute("data-font") || data.font_choice || defaultConfig.font_choice,
-        welcome_message: data.welcome_message || defaultConfig.welcome_message,
+        welcome_message: typeof data.welcome_message === "string" ? data.welcome_message : defaultConfig.welcome_message,
         chat_outline_enabled: data.chat_outline_enabled || defaultConfig.chat_outline_enabled,
         chat_outline_color: data.chat_outline_color || defaultConfig.chat_outline_color,
         chat_outline_width: data.chat_outline_width || defaultConfig.chat_outline_width,
@@ -555,6 +558,7 @@
         widget_opacity: data.widget_opacity || defaultConfig.widget_opacity,
         customer_privacy_url: data.customer_privacy_url || "",
         local_workspace: data.local_workspace === true,
+        workspace_enabled: data.workspace_enabled === true,
         answer_mode: data.answer_mode || "ai",
         quote_enabled: data.quote_enabled !== false,
         quote_label: data.quote_label || "Få et tilbud",
@@ -565,6 +569,7 @@
       };
       widgetConfig = freshConfig;
       applyWidgetStyles();
+      if(widgetConfig.workspace_enabled&&!widgetConfig.local_workspace)localWorkspaceAction({action:"heartbeat",page:window.location.pathname}).catch(()=>{});
       if (widgetConfig.local_workspace) {
         document.getElementById("eb-ai-disclosure").textContent=widgetConfig.answer_mode === "sources" ? "Lokal kildedemo · uden AI" : "AI-assistent · lokal demo";
         localWorkspaceAction({action:"heartbeat",page:localPath}).catch(() => {});
@@ -797,14 +802,6 @@
     time.textContent = timestamp;
     meta.appendChild(time);
 
-    if (widgetConfig.local_workspace) {
-      // Local previews inherit the app palette; customer widgets keep their own settings.
-      const theme = getComputedStyle(document.documentElement);
-      widgetConfig.primary_color = theme.getPropertyValue("--bg-primary").trim() || widgetConfig.primary_color;
-      widgetConfig.secondary_color = theme.getPropertyValue("--bg-secondary").trim() || widgetConfig.secondary_color;
-      widgetConfig.fab_color = theme.getPropertyValue("--accent").trim() || widgetConfig.fab_color;
-      box.classList.add("eb-local-workspace");
-    }
     const fontStack = getFontStack(widgetConfig.font_choice || defaultConfig.font_choice);
     setFontImportant(row, fontStack);
     setFontImportant(bubbleWrap, fontStack);
@@ -1075,6 +1072,7 @@
     input.value = "";
     const starters = messages.querySelector(".eb-start-buttons");
     if (starters) starters.remove();
+    const referenceStart=conversationReferences.length;
     const userMessage = addMessage(text, true, { showStatus: true, statusText: labels.sending });
     const botMessage = addMessage("", false);
     renderThinkingState(botMessage.msg, language);
@@ -1204,6 +1202,7 @@
       }
       conversationHistory.push({ role: "user", content: text });
       conversationHistory.push({ role: "assistant", content: botStreamText });
+      if(widgetConfig.workspace_enabled&&conversationReferences.length>referenceStart){const ref=conversationReferences[conversationReferences.length-1];addLocalFeedback(botMessage.row,ref.id,ref.token);}
     } catch (error) {
       streamRenderer.cancel();
       const errorMessage = error instanceof Error && error.message

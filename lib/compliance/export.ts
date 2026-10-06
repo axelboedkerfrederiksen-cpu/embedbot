@@ -1,5 +1,10 @@
 import type { SupabaseClient, User } from "@supabase/supabase-js";
 export const EXPORT_FIELDS = {
+ workspace_settings: "business_id,revision,state,updated_at",
+ workspace_feedback: "id,business_id,conversation_id,value,note,created_at",
+ workspace_leads: "id,business_id,ticket_id,data,created_at",
+ workspace_ticket_entries: "id,business_id,ticket_id,kind,text,delivery_status,attempts,attempted_at,created_at",
+ workspace_activity: "business_id,last_seen_at,page,clicks",
  profiles: "id,username,display_name,avatar_url,created_at",
  businesses: "id,user_id,name,website_url,industry,description,support_email,phone,address,city,hours_weekday,hours_saturday,hours_sunday,response_time,fallback_action,complaint_action,products_services,delivery_time,return_policy,payment_methods,welcome_message,tone,language,faq,cvr,social_media,current_offers,warranty,size_guide,activated,primary_color,secondary_color,fab_color,chat_icon_color,font_choice,logo_url,custom_instructions,created_at,retention_days,deleted_at,is_deleted,subscription_status,payment_status,stripe_customer_id,stripe_subscription_id,current_period_end,canceled_at,activated_at,subscription_updated_at,chat_outline_enabled,chat_outline_color,chat_outline_width,chat_outline_opacity,widget_opacity,plan,ai_answers_used,ai_answer_limit_override,ai_usage_period_start",
  conversations: "id,business_id,created_at,messages,deleted_at,is_deleted",
@@ -46,7 +51,7 @@ export async function exportAccount(db: SupabaseClient, user: User) {
   };
   for (const table of Object.keys(EXPORT_FIELDS) as (keyof typeof EXPORT_FIELDS)[]) {
     if (["profiles","businesses","support_messages"].includes(table)) continue;
-    const key = ["website_sources","commerce_integrations","commerce_settings","business_privacy_settings"].includes(table) ? "business_id" : "id";
+    const key = ["website_sources","commerce_integrations","commerce_settings","business_privacy_settings","workspace_settings","workspace_activity"].includes(table) ? "business_id" : "id";
     const rows: Row[] = [];
     for (let offset=0;offset<ids.length;offset+=100) rows.push(...await allRows(db,table,EXPORT_FIELDS[table],key,q=>q.in("business_id",ids.slice(offset,offset+100))));
     result[table]=rows;

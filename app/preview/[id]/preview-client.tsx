@@ -4,7 +4,7 @@ import Link from "next/link";
 import Script from "next/script";
 import { useState } from "react";
 
-export default function PreviewClient({ businessId, previewToken }: { businessId: string; previewToken: string }) {
+export default function PreviewClient({ businessId, previewToken, previewPath }: { businessId: string; previewToken: string; previewPath: string }) {
   const [ready, setReady] = useState(false);
 
   function openChat() {
@@ -67,6 +67,7 @@ export default function PreviewClient({ businessId, previewToken }: { businessId
         id={`embedbot-preview-${businessId}`}
         src={`/widget.js?id=${encodeURIComponent(businessId)}`}
         data-preview-token={previewToken}
+        data-preview-path={previewPath}
         strategy="afterInteractive"
         onLoad={handleReady}
         onError={() => setReady(false)}

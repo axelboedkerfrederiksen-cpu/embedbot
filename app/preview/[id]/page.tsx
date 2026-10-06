@@ -13,8 +13,10 @@ const UUID_PATTERN = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3
 
 export const dynamic = "force-dynamic";
 
-export default async function PreviewPage({ params }: { params: Promise<{ id: string }> }) {
+export default async function PreviewPage({ params, searchParams }: { params: Promise<{ id: string }>; searchParams: Promise<{ path?: string }> }) {
   const { id } = await params;
+  const { path } = await searchParams;
+  const previewPath = typeof path === "string" && path.startsWith("/") && path.length <= 200 ? path.split(/[?#]/)[0] : "/";
   if (!UUID_PATTERN.test(id)) {
     notFound();
   }
@@ -24,5 +26,5 @@ export default async function PreviewPage({ params }: { params: Promise<{ id: st
     notFound();
   }
 
-  return <PreviewClient businessId={id} previewToken={createPreviewToken(id, secret)} />;
+  return <PreviewClient businessId={id} previewToken={createPreviewToken(id, secret)} previewPath={previewPath} />;
 }

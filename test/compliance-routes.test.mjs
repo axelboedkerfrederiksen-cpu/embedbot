@@ -293,3 +293,34 @@ test('inactive chatbot deletion preserves the ordinary admin confirmation flow',
   assert.equal(res.status,200);assert.equal(state.mfaChecks,0);
  }finally{delete process.env.ADMIN_USER_IDS;}
 });
+
+test('live workspace routes enforce ownership and connect sources, tested answers, feedback, quote leads and idempotent customer replies',async()=>{
+ const workspace=await import('../app/api/dashboard/workspace/route.ts');
+ const widget=await import('../app/api/workspace-widget/route.ts');
+ const business=await tenant(),ownerUser=state.user;const other=await tenant();state.user=ownerUser;
+ const path=`/api/dashboard/workspace?business_id=${business}`;
+ state.user=null;assert.equal((await workspace.GET(new NextRequest(origin+path))).status,401);state.user=ownerUser;
+ assert.equal((await workspace.GET(new NextRequest(`${origin}/api/dashboard/workspace?business_id=${other}`))).status,404);
+ assert.equal((await workspace.POST(request(path,{action:'welcome',name:'Owned shop',welcome:'Hello'},'https://evil.example'))).status,403);
+ const post=async input=>{const r=await workspace.POST(request(path,input));const d=await r.json();assert.equal(r.status,200,JSON.stringify(d));return d;};
+ await post({action:'welcome',name:'Owned shop',welcome:''});
+ await post({action:'source_save',name:'Shipping',text:'We deliver orders in 2-4 business days.'});
+ await post({action:'answer_mode',mode:'sources'});
+ const answer=await post({action:'test',question:'How do you deliver orders?'});assert.match(answer.result.answer,/2-4 business days/);
+ await post({action:'quote_settings',enabled:true,label:'Request a quote'});
+ await db.pg.query('update businesses set activated=true where id=$1',[business]);
+ const session='a'.repeat(64),conversationId=randomUUID();
+ await db.pg.query('insert into conversations(id,business_id,messages) values($1,$2,$3)',[conversationId,business,JSON.stringify([{role:'user',content:'How fast?'},{role:'assistant',content:'2-4 days'}])]);
+ const reference=chatReference(conversationId,business,session);
+ const call=input=>widget.POST(request('/api/workspace-widget',{business_id:business,session,...input}));
+ assert.equal((await call({action:'feedback',id:conversationId,reference:'forged',value:'no'})).status,403);
+ assert.equal((await call({action:'feedback',id:conversationId,reference,value:'no',note:'Need more info'})).status,200);
+ const payload={action:'lead_create',email:'visitor@example.org',need:'I need a quote for an office setup',budget:'5000',timing:'Next month',page:'/contact',submission_key:randomUUID()};
+ assert.equal((await call(payload)).status,200);assert.equal((await call(payload)).status,200);
+ let result=await (await workspace.GET(new NextRequest(origin+path))).json();assert.equal(result.state.leads.length,1);assert.equal(result.state.conversations.find(c=>c.id===conversationId).feedbackNote,'Need more info');
+ const leadTicket=result.state.tickets.find(t=>t.email==='visitor@example.org');assert.ok(leadTicket);
+ state.mails=[];
+ const reply={action:'ticket_reply',id:leadTicket.id,text:'Thanks, we will prepare a quote.',request_id:randomUUID()};
+ await post(reply);await post(reply);assert.equal(state.mails.length,1);assert.equal(state.mails[0].message.to,'visitor@example.org');assert.equal(state.mails[0].options.idempotencyKey,`workspace-reply-${reply.request_id}`);
+ result=await (await workspace.GET(new NextRequest(origin+path))).json();assert.equal(result.state.tickets.find(t=>t.id===leadTicket.id).entries[0].deliveryStatus,'sent');
+});

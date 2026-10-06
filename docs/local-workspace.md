@@ -39,3 +39,7 @@ En separat dev-server kan startes med `EMBEDBOT_LOCAL_DIST_DIR=.next-workspace n
 ## Før en produktionsversion
 
 Dette er en funktionel lokal gennemgangsversion, ikke en kundedeployment. Før produktionsaktivering skal den lokale store erstattes med ejerbeskyttet databaselagring og migrations-/retention-/eksport-/sletteflows; kundesvar og uge-mails skal integreres med mailudbyderen og prøves; hjemmesidekontroller og uge-mails skal have en driftsscheduler. Installation på eksterne sider kræver et separat beskyttet offentligt heartbeat-flow. Demoen er deaktiveret i production, og den eksisterende widget har kun demo-adfærd, når den får lokal demo-konfiguration.
+
+## Produktionsarbejdsområde
+
+De nye funktioner findes nu også som et separat kundearbejdsområde via **Nye funktioner** i dashboardet. Se `docs/production-workspace.md` for lagring, integrationer og grænser. Denne fil beskriver fortsat den isolerede lokale demo.

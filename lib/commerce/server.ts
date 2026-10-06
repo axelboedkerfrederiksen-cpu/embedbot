@@ -8,10 +8,8 @@ import { freshShopifyConfig } from "./shopify-tokens.ts";
 import { digest, supportKey, unseal, validId, validSession } from "./security.ts";
 import { isBusinessSubscriptionActive } from "../subscription.ts";
 import { localShopifyTestConfig, localShopifyTestSettings } from "./local-test.ts";
-export class CommerceError extends Error {
-  status: number;
-  constructor(message: string, status = 503) { super(message); this.status = status; }
-}
+import { CommerceError } from "./errors.ts";
+export { CommerceError } from "./errors.ts";
 export function database() {
   if (!process.env.SUPABASE_URL || !process.env.SUPABASE_SERVICE_KEY) throw new CommerceError("Serveren er ikke konfigureret.");
   return createClient(process.env.SUPABASE_URL, process.env.SUPABASE_SERVICE_KEY, { auth: { persistSession: false, autoRefreshToken: false } });

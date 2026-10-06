@@ -5,20 +5,21 @@ import vm from 'node:vm';
 import {webcrypto} from 'node:crypto';
 const source=await readFile(new URL('../public/widget.js',import.meta.url),'utf8');
 async function widget(config){
- const ids=new Map(),created=[],storageCalls=[];
+ const ids=new Map(),created=[],storageCalls=[],requests=[];
  class Element{
   constructor(tag){this.tagName=tag;this.children=[];this.attributes={};this.style={setProperty(k,v){this[k]=v;}};this.classList={add(){},remove(){},toggle(){},contains(){return false;}};this.textContent='';created.push(this);}
   set innerHTML(value){this.html=value;for(const match of value.matchAll(/<(\w+)[^>]*id="([^"]+)"[^>]*>([^<]*)/g)){const element=new Element(match[1]);element.id=match[2];element.textContent=match[3];ids.set(element.id,element);}}
   get innerHTML(){return this.html||'';}
   replaceChildren(){this.children=[];}
-  appendChild(el){this.children.push(el);if(el.id)ids.set(el.id,el);return el;}
+  appendChild(el){el.parentNode=this;this.children.push(el);if(el.id)ids.set(el.id,el);return el;}
+  append(...els){els.forEach(el=>this.appendChild(el));} querySelector(selector){return this.children.find(el=>el.className===selector.slice(1))||null;} insertBefore(el,before){el.parentNode=this;this.children.splice(this.children.indexOf(before),0,el);}
   addEventListener(){} setAttribute(k,v){this.attributes[k]=v;} getAttribute(k){return this.attributes[k]??null;} removeAttribute(k){delete this.attributes[k];} focus(){} querySelectorAll(){return [];} remove(){}
  }
  const script=new Element('script');script.src='https://embedbot.example/widget.js?id=11111111-1111-1111-1111-111111111111';script.attributes={'data-name':'Custom','data-hide-ai':'true'};
  const document={currentScript:script,createElement:tag=>new Element(tag),createTextNode:text=>({textContent:text}),getElementById:id=>ids.get(id),head:new Element('head'),body:new Element('body'),addEventListener(){}};
  const window={innerWidth:390,innerHeight:844,addEventListener(){},requestAnimationFrame:fn=>fn(),matchMedia:()=>({matches:false}),location:{origin:'https://shop.example',pathname:'/',href:'https://shop.example/?private=never-store'},localStorage:{getItem:key=>{storageCalls.push(key);throw new Error('No persistent storage');},setItem:key=>storageCalls.push(key)}};
- const context=vm.createContext({document,window,URL,crypto:webcrypto,console,TextDecoder,TextEncoder,AbortController,setTimeout,clearTimeout,fetch:async()=>({ok:true,json:async()=>config}),localStorage:window.localStorage,requestAnimationFrame:fn=>fn(),navigator:{language:'da-DK'}});
- vm.runInContext(source.replace('  loadWidgetConfig();', '  window.renderCommerce = renderCommerce; window.inspectChat = () => ({history: conversationHistory, references: conversationReferences, session: commerceSession});\n  loadWidgetConfig();'),context);await new Promise(resolve=>setTimeout(resolve,0));return {ids,created,storageCalls,inspectChat:window.inspectChat, renderCommerce:window.renderCommerce};
+ const context=vm.createContext({document,window,URL,crypto:webcrypto,console,TextDecoder,TextEncoder,AbortController,setTimeout,clearTimeout,fetch:async(url,options)=>{requests.push({url,body:options?.body?JSON.parse(options.body):null});return {ok:true,json:async()=>options?.method==="POST"?{success:true}:config};},localStorage:window.localStorage,requestAnimationFrame:fn=>fn(),navigator:{language:'da-DK'}});
+ vm.runInContext(source.replace('  loadWidgetConfig();', '  window.renderCommerce = renderCommerce; window.inspectChat = () => ({history: conversationHistory, references: conversationReferences, session: commerceSession});\n  loadWidgetConfig();'),context);await new Promise(resolve=>setTimeout(resolve,0));return {ids,created,storageCalls,requests,inspectChat:window.inspectChat, renderCommerce:window.renderCommerce};
 }
 test('real widget always discloses AI before first interaction despite custom branding; customer privacy and EmbedBot information survive config; no storage or font request',async()=>{
  const {ids,created,storageCalls}=await widget({name:'Custom Brand',hide_ai:true,show_ai:false,customer_privacy_url:'https://shop.example/privacy',font_choice:'Poppins'});
@@ -49,4 +50,17 @@ test('commerce cards show safe product images and natural stock copy without uns
  assert.ok(created.some(el=>el.textContent.includes('På lager · 50 stk.')));
  assert.ok(created.some(el=>el.textContent==='Pris og lager er tjekket i webshoppen.'));
  assert.ok(!created.some(el=>el.textContent.includes('sekunder gamle')||el.textContent==='Opret en supportsag'));
+});
+
+test('production widget shows owner-selected starters with an empty welcome, records installation, and submits a quote only after review',async()=>{
+ const {ids,created,requests}=await widget({workspace_enabled:true,welcome_message:'',start_buttons:[{id:'starter-one',label:'Our question',message:'Ask this',path:''}],quote_enabled:true,quote_label:'Ask for a quote',secondary_color:'#f4f1eb'});
+ assert.ok(requests.some(r=>r.url.includes('/api/widget-config')&&r.url.includes('&path=')));
+ assert.ok(requests.some(r=>r.url.includes('/api/workspace-widget')&&r.body.action==='heartbeat'&&r.body.session.length===64));
+ ids.get('eb-bubble').onclick();assert.ok(created.some(el=>el.tagName==='button'&&el.textContent==='Our question'));
+ const quote=created.find(el=>el.tagName==='button'&&el.textContent==='Ask for a quote');assert.ok(quote);quote.onclick();
+ const form=created.find(el=>el.tagName==='form'&&el.className==='eb-local-quote');assert.ok(form);
+ const labels=form.children.filter(el=>el.tagName==='label');labels[0].children[0].value='I would like a quote for an office';labels[1].children[0].value='example@example.org';labels[2].children[0].value='5000';labels[3].children[0].value='Next month';
+ await form.onsubmit({preventDefault(){}});assert.equal(requests.filter(r=>r.body?.action==='lead_create').length,0);
+ await form.onsubmit({preventDefault(){}});const submitted=requests.find(r=>r.body?.action==='lead_create');assert.equal(submitted.body.budget,'5000');assert.equal(submitted.body.timing,'Next month');assert.equal(submitted.body.business_id,'11111111-1111-1111-1111-111111111111');assert.match(submitted.body.submission_key,/^[0-9a-f-]{36}$/);
+ assert.ok(created.some(el=>el.textContent==='Din henvendelse er gemt hos virksomheden.'));
 });

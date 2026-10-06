@@ -32,6 +32,7 @@ export async function testDatabase() {
   await pg.exec(await readFile(new URL("../../supabase/migrations/20261003200520_remove_public_contact_address.sql", import.meta.url), "utf8"));
   await pg.exec(await readFile(new URL("../../supabase/migrations/20261003203253_card_registered_trial_terms.sql", import.meta.url), "utf8"));
   await pg.exec(await readFile(new URL("../../supabase/migrations/20261005190951_public_embedbot_brand_identity.sql", import.meta.url), "utf8"));
+  await pg.exec(await readFile(new URL("../../sql/add_production_workspace.sql", import.meta.url), "utf8"));
   const column = (name: string) => { if (!/^[a-z_][a-z0-9_]*$/.test(name)) throw new Error("Invalid test column"); return name; };
   class Query {
     table: string; operation = "select"; values: Record<string, unknown> = {}; filters: [string,string,unknown][] = []; selected = "*"; countOnly = false; returning = false; conflict = ""; ignore = false; sort = ""; max: number | null = null; countMutation = false;
@@ -48,7 +49,7 @@ export async function testDatabase() {
     gte(name:string,value:unknown) {this.filters.push([name,">=",value]);return this;}
     neq(name: string, value: unknown) { this.filters.push([name,"<>",value]); return this; }
     in(name: string, value: unknown[]) { this.filters.push([name,"in",value]); return this; }
-    or(value: string) { this.filters.push(["refresh_locked_until","refresh",value.split(".lt.")[1]]); return this; }
+    or(value: string) { if(value==="is_deleted.is.null,is_deleted.eq.false"||value==="is_deleted.eq.false,is_deleted.is.null")this.filters.push(["is_deleted","active",false]);else this.filters.push(["refresh_locked_until","refresh",value.split(".lt.")[1]]); return this; }
     async run(single = false) {
       try {
         const params: unknown[] = [];
@@ -58,12 +59,12 @@ export async function testDatabase() {
         if (this.operation === "select") sql = `select ${this.countOnly ? "count(*) as total" : fields} from public.${this.table}`;
         if (this.operation === "insert") {
           const keys = Object.keys(this.values);
-          sql = `insert into public.${this.table} (${keys.map(column).join(",")}) values (${keys.map(k => add(["context","messages","counts","document"].includes(k) ? JSON.stringify(this.values[k]) : this.values[k])).join(",")})`;
+          sql = `insert into public.${this.table} (${keys.map(column).join(",")}) values (${keys.map(k => add(["context","messages","counts","document","state","data","clicks"].includes(k) ? JSON.stringify(this.values[k]) : this.values[k])).join(",")})`;
           if (this.conflict) sql += ` on conflict (${this.conflict.split(",").map(column).join(",")}) do ${this.ignore ? "nothing" : "update set " + Object.keys(this.values).filter(k => !this.conflict.split(",").includes(k)).map(k => `${column(k)}=excluded.${column(k)}`).join(",")}`;
         }
         if (this.operation === "delete") sql = `delete from public.${this.table}`;
-        if (this.operation === "update") sql = `update public.${this.table} set ${Object.entries(this.values).map(([k,v]) => `${column(k)}=${add(["context","messages","counts","document"].includes(k) ? JSON.stringify(v):v)}`).join(",")}`;
-        if (this.filters.length) sql += " where " + this.filters.map(([name,op,value]) => op === "in" ? `${column(name)}::text = any(${add(value)}::text[])` : op === "refresh" ? `(${column(name)} is null or ${column(name)} < ${add(value)}::timestamptz)` : `${column(name)} ${op} ${add(value)}`).join(" and ");
+        if (this.operation === "update") sql = `update public.${this.table} set ${Object.entries(this.values).map(([k,v]) => `${column(k)}=${add(["context","messages","counts","document","state","data","clicks"].includes(k) ? JSON.stringify(v):v)}`).join(",")}`;
+        if (this.filters.length) sql += " where " + this.filters.map(([name,op,value]) => op === "in" ? `${column(name)}::text = any(${add(value)}::text[])` : op === "active" ? `(${column(name)} is null or ${column(name)}=false)` : op === "refresh" ? `(${column(name)} is null or ${column(name)} < ${add(value)}::timestamptz)` : `${name==="state->digest->>enabled"?"state->'digest'->>'enabled'":column(name)} ${op} ${add(value)}`).join(" and ");
         if (this.operation === "select" && !this.countOnly) {if(this.sort)sql+=` order by ${this.sort}`;if(this.max!==null)sql+=` limit ${this.max}`;}
         if (this.countMutation)sql+=" returning id";
         if (this.returning) sql += ` returning ${fields}`;
@@ -100,6 +101,9 @@ export async function testDatabase() {
           return { data: result.rows, error: null };
         }
         const signatures:Record<string,string[]>={
+          save_workspace_settings:["p_business_id","p_revision","p_state","p_brand"],
+          workspace_activity_event:["p_business_id","p_page","p_starter"],
+          create_workspace_lead:["p_business_id","p_submission_key","p_data","p_notification_email"],cleanup_workspace:[],
           update_business_privacy:["p_business_id","p_actor","p_url","p_ticket_days","p_chat_days"],
           accept_legal_document:["p_business_id","p_actor","p_slug","p_version","p_sha256"],
           visitor_records:["p_business_id","p_actor","p_kind","p_value","p_after_kind","p_after_id","p_limit"],
@@ -107,7 +111,7 @@ export async function testDatabase() {
           start_embedbot_trial:["p_business_id","p_actor","p_terms_version"],
           delete_owner_conversations:["p_business_id","p_actor","p_id"],delete_embedbot_account_data:["target_user_id","target_email"],
         };
-        const keys=signatures[name];if(keys){const result=await pg.query<{value:unknown}>(`select ${name==="visitor_records"||name==="delete_embedbot_account_data"?"*":`public.${name}(${keys.map((_,i)=>`$${i+1}`).join(",")}) as value`}${name==="visitor_records"||name==="delete_embedbot_account_data"?` from public.${name}(${keys.map((_,i)=>`$${i+1}`).join(",")})`:""}`,keys.map(k=>args?.[k]));return {data:name==="visitor_records"||name==="delete_embedbot_account_data"?result.rows:result.rows[0].value,error:null};}
+        const keys=signatures[name];if(keys){const result=await pg.query<{value:unknown}>(`select ${name==="visitor_records"||name==="delete_embedbot_account_data"?"*":`public.${name}(${keys.map((_,i)=>`$${i+1}`).join(",")}) as value`}${name==="visitor_records"||name==="delete_embedbot_account_data"?` from public.${name}(${keys.map((_,i)=>`$${i+1}`).join(",")})`:""}`,keys.map(k=>["p_state","p_data"].includes(k)?JSON.stringify(args?.[k]):args?.[k]));return {data:name==="visitor_records"||name==="delete_embedbot_account_data"?result.rows:result.rows[0].value,error:null};}
         throw new Error("Unexpected RPC");
       } catch (error) { return { data: null, error }; }
     },
