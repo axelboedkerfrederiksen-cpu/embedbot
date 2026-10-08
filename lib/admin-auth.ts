@@ -12,10 +12,6 @@ export async function verifyAdminSession(req:Request){
   if(!process.env.ADMIN_USER_IDS?.trim()&&!process.env.ADMIN_EMAIL?.trim())return {error:"Admin-adgang er ikke konfigureret.",status:503 as const};
   if(!authorizedAdmin(user,process.env.ADMIN_USER_IDS,process.env.ADMIN_EMAIL))return {error:"Ikke autoriseret.",status:403 as const};
   if(!["GET","HEAD","OPTIONS"].includes(req.method) && req.headers.get("origin")!==new URL(req.url).origin)return {error:"Ugyldig anmodning.",status:403 as const};
-  const {data:aal,error}=await auth.auth.mfa.getAuthenticatorAssuranceLevel();
-  if(error||!aal)return {error:"Sikkerhedskontrollen kunne ikke gennemføres.",status:503 as const};
-  // Enrolled admins must always complete MFA. The environment can additionally require enrollment.
-  if((process.env.ADMIN_REQUIRE_MFA==="true"||aal.nextLevel==="aal2")&&aal.currentLevel!=="aal2")return {error:"Bekræft admin-login med totrinsbekræftelse.",status:403 as const};
   await audit(database(),user.id,null,["GET","HEAD","OPTIONS"].includes(req.method)?"admin.read":"admin.mutate");
   return {supabase:auth,user};
  }catch{return {error:"Log ind med en autoriseret admin-konto.",status:401 as const};}

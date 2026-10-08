@@ -183,14 +183,14 @@ test('agreed default expires chat and copied context at 30 days but keeps suppor
  assert.equal((await db.pg.query('select id from commerce_tickets where id=$1',[expiredTicket])).rows.length,0);
  assert.deepEqual((await db.pg.query('select context from commerce_tickets where id=$1',[surviving])).rows[0].context,[]);
 });
-test('admin headers cannot impersonate users, allowlist and MFA are enforced, and authenticated actions are audited',async()=>{
+test('admin headers cannot impersonate users, allowlist is enforced without a login authenticator, and authenticated actions are audited',async()=>{
  await tenant();const user=state.user;process.env.ADMIN_EMAIL='admin@example.com';process.env.ADMIN_PASSWORD='obsolete';delete process.env.ADMIN_USER_IDS;
  const req=new Request(origin+'/api/admin/businesses',{headers:{'x-admin-email':'admin@example.com','x-admin-password':'obsolete'}});
  state.user=null;assert.equal((await verifyAdminSession(req)).status,401);
  state.user={...user,email:'admin@example.com',email_confirmed_at:undefined};assert.equal((await verifyAdminSession(req)).status,403);
  state.user={...user,email:'admin@example.com'};assert.ok((await verifyAdminSession(req)).user);
  process.env.ADMIN_USER_IDS=randomUUID();assert.equal((await verifyAdminSession(req)).status,403);
- process.env.ADMIN_USER_IDS=user.id;state.aal={currentLevel:'aal1',nextLevel:'aal2'};assert.equal((await verifyAdminSession(req)).status,403);
+ process.env.ADMIN_USER_IDS=user.id;state.aal={currentLevel:'aal1',nextLevel:'aal2'};assert.ok((await verifyAdminSession(req)).user);
  state.aal={currentLevel:'aal2',nextLevel:'aal2'};assert.ok((await verifyAdminSession(req)).user);
  assert.equal((await verifyAdminSession(new Request(origin+'/api/admin/businesses',{method:'POST',headers:{Origin:'https://evil.example'}}))).status,403);
  state.aal=null;delete process.env.ADMIN_USER_IDS;delete process.env.ADMIN_EMAIL;delete process.env.ADMIN_PASSWORD;

@@ -799,11 +799,9 @@ export default function AdminPage() {
       <main id="main-content" className="min-h-screen bg-[var(--bg-page)] px-4 py-16 text-[#20211f]">
         <div className="mx-auto w-full max-w-md rounded-lg border border-[var(--border)] bg-white p-8 shadow-none ">
           <h1 className="text-3xl font-normal tracking-tight">EmbedBot Admin</h1>
-          <p className="mt-2 text-sm text-[#6a6865]">{signedIn ? `Logget ind som ${sessionEmail}. Bekræft totrinsbekræftelsen for at åbne admin.` : "Log ind med din admin-konto for at fortsætte."}</p>
+          <p className="mt-2 text-sm text-[#6a6865]">{signedIn ? `Logget ind som ${sessionEmail}. Kontoen skal være godkendt til admin-adgang.` : "Log ind med din admin-konto for at fortsætte."}</p>
 
-          {signedIn ? <AdminMfa onVerified={async()=>{setAuthError("");const allowed=await fetchBusinesses();if(allowed){await fetchSupportMessages();setIsAuthenticated(true);}else{throw new Error("Admin-adgangen blev afvist. Se beskeden nedenfor.");}}}/> : null}
           {signedIn ? <button type="button" className="mt-4 underline" onClick={async()=>{const {error:signOutError}=await supabase.auth.signOut();if(signOutError){setAuthError("Kunne ikke logge ud. Prøv igen.");return;}setSignedIn(false);setSessionEmail("");setAuthError("");setPassword("");}}>Log ud og vælg en anden konto</button> : <form onSubmit={handleLogin} className="mt-6 space-y-4">
-            <button type="button" className="w-full rounded-lg border p-3" onClick={async()=>{const {error:oauthError}=await supabase.auth.signInWithOAuth({provider:"azure",options:{scopes:"email",redirectTo:window.location.origin+"/auth/callback?next=/admin"}});if(oauthError)setAuthError("Microsoft-login kunne ikke startes.");}}>Fortsæt med Microsoft</button>
             <div>
               <label className="mb-2 block text-xs font-medium uppercase tracking-[0.16em] text-[#797773]">
                 Email
