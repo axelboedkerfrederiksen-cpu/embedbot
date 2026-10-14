@@ -93,6 +93,9 @@ test('intent classification overlaps configuration reads and preserves answer pe
   assert.equal(await (await response).text(), 'Blød uld');
   assert.equal(chatState.saved.length, 1);
   assert.equal(chatState.saved[0].messages[1].content, 'Blød uld');
+  const telemetry=chatState.saved[0].messages.find(message=>message.role==='meta');
+  assert.equal(telemetry.answer_status,'complete');
+  assert.ok(Number.isFinite(telemetry.response_ms)&&telemetry.response_ms>=0);
   assert.match(chatState.prompt.messages[0].content, /30 dages returret/);
 });
 
@@ -132,6 +135,15 @@ test('progress is immediate while classification waits, and streamed text remain
   const events = remainder.trim().split('\n').map(line => JSON.parse(line));
   assert.equal(events.filter(event => event.type === 'text').map(event => event.text).join(''), 'Blød uld');
   assert.equal(chatState.saved.length, 1);
+});
+
+test('interrupted answer streams persist an explicit status and measured duration', async () => {
+  chatState.streamFailure=true;
+  const response=await POST(request());
+  assert.match(await response.text(),/opstod et problem/);
+  const meta=chatState.saved[0].messages.find(message=>message.role==='meta');
+  assert.equal(meta.answer_status,'interrupted');
+  assert.ok(Number.isFinite(meta.response_ms)&&meta.response_ms>=0);
 });
 
 test('obvious order and support intents avoid classification and embeddings', async () => {

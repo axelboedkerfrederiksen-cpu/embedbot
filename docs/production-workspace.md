@@ -1,6 +1,11 @@
 # Kundernes nye arbejdsområde
 
-Det eksisterende dashboard viser **Nye funktioner** for den valgte chatbot. Adressen er `/dashboard/workspace/<business-id>`. Den lokale `/dashboard/lab` er fortsat en separat udviklingsdemo.
+Det eksisterende dashboard viser **Arbejdsområde** for den valgte chatbot. Adressen er `/dashboard/workspace/<business-id>`. Den lokale `/dashboard/lab` er fortsat en separat udviklingsdemo.
+
+Overblik, Ugens opsummering og Teknik & data bruger nu fælles, dokumenterede
+beregninger med 7/30-dages perioder, grafer, opfølgningskø og tydelig datadækning.
+Nye AI-svar får målinger af genereringstid og streamstatus. Se
+[verifikation og måledefinitioner](workspace-insights-verification.md).
 
 ## Forløb og lagring
 

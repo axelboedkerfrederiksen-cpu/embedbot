@@ -415,6 +415,7 @@ ${sanitizeOutput(business?.custom_instructions || "Ingen")}
   const workspaceContext=workspaceState?sourceExcerpts(workspaceState.sources,trimmedMessage).map(e=>`Kilde: ${e.source.name}\n${e.text}`).join("\n\n"):"";
   const currentNotices=workspaceState?activeCampaigns(workspaceState).map(c=>`${c.title}: ${c.text}`).join("\n"):"";
   status("details");
+  const generationStartedAt = performance.now();
   const completion = await openai.chat.completions.create({
     model: "gpt-5.6-luna",
     reasoning_effort: "none",
@@ -474,7 +475,7 @@ ${sanitizeOutput(business?.custom_instructions || "Ingen")}
                     role: "assistant", 
                     content: answer || "(Teknisk fejl - besked blev ikke gemmet)" 
                   },
-                  ...(stablePageUrl ? [{ role: "meta", page_url: stablePageUrl }] : []),
+                  { role: "meta", ...(stablePageUrl ? { page_url: stablePageUrl } : {}), response_ms: Math.round(performance.now() - generationStartedAt), answer_status: streamError ? "interrupted" : "complete" },
                 ],
               }).select("id").single();
             if (!saveError && saved?.id) {

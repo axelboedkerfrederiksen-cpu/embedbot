@@ -1,6 +1,12 @@
 import { selectWebsiteContext } from "../chat-context.ts";
 export type Message = { role: "user" | "assistant"; content: string };
-export type Conversation = { id: string; question: string; answer: string; page: string; date: string; email?: string; feedback?: "yes" | "no"; feedbackNote?: string };
+export type Conversation = { id: string; question: string; answer: string; page: string; date: string; email?: string; feedback?: "yes" | "no"; feedbackNote?: string; exchanges?: {question:string;answer:string}[]; responseMs?: number; answerStatus?: "complete"|"interrupted" };
+export type DataScope = {
+ readAt:string;
+ conversations:{total:number;loaded:number;excluded:number;oldestAt?:string};
+ feedback?:{total:number;loaded:number};tickets:{total:number;loaded:number};leads:{total:number;loaded:number};entries:{total:number;loaded:number};
+ openTickets:number;openLeads:number;pendingReplies:number;failedReplies:number;oldestOpenTicketAt?:string;
+};
 export type Source = { id: string; name: string; kind: "text" | "url" | "pdf"; text: string; updatedAt: string; pendingText?: string; checkedAt?: string; error?: string; truncated?: boolean };
 export type Starter = { id: string; label: string; message: string; path: string; clicks: number };
 export type Campaign = { id: string; title: string; text: string; startsAt: string; endsAt: string; enabled: boolean };
@@ -8,7 +14,7 @@ export type TestCase = { id: string; question: string; expected: string; answer?
 export type TicketEntry = { id: string; kind: "note" | "reply"; text: string; date: string; deliveryStatus?: "pending"|"failed"|"sent"|"note" };
 export type Ticket = { id: string; number: number; email: string; description: string; status: "new" | "in_progress" | "closed"; date: string; entries: TicketEntry[] };
 export type Lead = { id: string; email: string; need: string; budget: string; timing: string; page: string; conversationId?: string; status: "new" | "contacted" | "closed"; note: string; date: string };
-export type Workspace = { version: number; managedBase?:boolean; answerMode?: "sources"|"ai"; revision: number; name: string; welcome: string; quoteEnabled?:boolean; quoteLabel?:string; starters: Starter[]; campaigns: Campaign[]; sources: Source[]; tests: TestCase[]; conversations: Conversation[]; tickets: Ticket[]; leads: Lead[]; dismissed: string[]; addressed?: Record<string,{sourceId:string;date:string}>; digest: { enabled: boolean; weekday: number; lastGeneratedAt?: string; lastMailedAt?: string; report?: {from:string;to:string;count:number;feedbackCount:number;helpful:number;awaiting:number;newLeads:number;opportunities:{id:string;title:string;count:number;suggestion:string;missing:boolean}[]} }; installation: { lastSeenAt?: string; page?: string; error?: string } };
+export type Workspace = { dataScope?:DataScope; version: number; managedBase?:boolean; answerMode?: "sources"|"ai"; revision: number; name: string; welcome: string; quoteEnabled?:boolean; quoteLabel?:string; starters: Starter[]; campaigns: Campaign[]; sources: Source[]; tests: TestCase[]; conversations: Conversation[]; tickets: Ticket[]; leads: Lead[]; dismissed: string[]; addressed?: Record<string,{sourceId:string;date:string}>; digest: { enabled: boolean; weekday: number; lastGeneratedAt?: string; lastMailedAt?: string; report?: {text?:string;from:string;to:string;count:number;feedbackCount:number;helpful:number;awaiting:number;newLeads:number;opportunities:{id:string;title:string;count:number;suggestion:string;missing:boolean}[]} }; installation: { lastSeenAt?: string; page?: string; error?: string } };
 export type Insight = { id: string; title: string; count: number; examples: Conversation[]; missing: boolean; suggestion: string };
 export function activeCampaigns(state: Pick<Workspace, "campaigns">, now = new Date()) {
   return state.campaigns.filter(c => c.enabled && Date.parse(c.startsAt) <= now.getTime() && now.getTime() < Date.parse(c.endsAt));
@@ -26,14 +32,20 @@ const topics = [
   { key: "product", title: "Manglende produktinformation", regex: /dæmp|pære|material|vedligehold|vask/, suggestion: "Udbyg produktbeskrivelsen med de egenskaber, kunderne efterspørger." },
   { key: "quote", title: "Kunderne ønsker rådgivning eller tilbud", regex: /tilbud|budget|projekt|rådgiv/, suggestion: "Tilbyd en enkel vej til et tilbud med behov, budget og tidspunkt." },
 ];
+export function questionRecords(conversations: Conversation[]): Conversation[] {
+  return conversations.flatMap(c => c.exchanges?.length ? c.exchanges.map((exchange,index)=>({...c,...exchange,id:`${c.id}:turn:${index}`,exchanges:undefined,feedback:index===c.exchanges!.length-1?c.feedback:undefined})) : [c]);
+}
+export function hasGapSignal(c:Conversation) {
+  return !c.answer.trim() || /ved (?:det )?ikke|kan ikke (?:bekræfte|svare)|kontakt (?:os|support)|mangler oplysninger/i.test(c.answer) || c.feedback === "no";
+}
 export function insights(conversations: Conversation[], now = new Date(), days = 7): Insight[] {
   const cutoff = now.getTime() - days * 86400000;
   const groups = new Map<string, Insight>();
-  for (const c of conversations.filter(c => Date.parse(c.date) >= cutoff && Date.parse(c.date) <= now.getTime())) {
+  for (const c of questionRecords(conversations).filter(c => Date.parse(c.date) >= cutoff && Date.parse(c.date) <= now.getTime())) {
     const normalized = c.question.toLocaleLowerCase("da");
     const topic = topics.find(t => t.regex.test(normalized));
     const key = topic?.key || normalized.replace(/[?!.,]/g, "").trim();
-    const missing = /ved (?:det )?ikke|kan ikke (?:bekræfte|svare)|kontakt (?:os|support)|mangler oplysninger/i.test(c.answer) || c.feedback === "no";
+    const missing = hasGapSignal(c);
     const current = groups.get(key) || { id: key, title: topic?.title || c.question, count: 0, examples: [], missing: false, suggestion: topic?.suggestion || "Tilføj et konkret svar, og test det med kundens spørgsmål." };
     current.count++; current.examples.push(c); current.missing ||= missing; groups.set(key, current);
   }
@@ -56,10 +68,10 @@ export function sourceExcerpts(sources: Source[], question: string) {
   }).sort((a,b) => b.score-a.score).slice(0,5);
 }
 export function weeklySummary(state: Workspace, now = new Date()) {
-  const recent = state.conversations.filter(c => Date.parse(c.date) >= now.getTime()-7*86400000 && Date.parse(c.date)<=now.getTime());
+  const recent = state.conversations.filter(c => Date.parse(c.date) >= now.getTime()-7*86400000 && Date.parse(c.date)<now.getTime());
   const groups = insights(recent, now);
   const feedback = recent.filter(c=>c.feedback);
-  return { from: new Date(now.getTime()-7*86400000).toISOString(), to: now.toISOString(), count: recent.length, feedbackCount: feedback.length, helpful: feedback.filter(c=>c.feedback==="yes").length, awaiting: state.tickets.filter(t=>t.status!=="closed").length, opportunities: groups.filter(g=>!state.dismissed.includes(g.id)).slice(0,3), newLeads: state.leads.filter(l=>l.status==="new").length };
+  return { from: new Date(now.getTime()-7*86400000).toISOString(), to: now.toISOString(), count: questionRecords(recent).length, feedbackCount: feedback.length, helpful: feedback.filter(c=>c.feedback==="yes").length, awaiting: state.dataScope?.openTickets ?? state.tickets.filter(t=>t.status!=="closed").length, opportunities: groups.filter(g=>!state.dismissed.includes(g.id)).slice(0,3), newLeads: state.leads.filter(l=>Date.parse(l.date)>=now.getTime()-7*86400000&&Date.parse(l.date)<now.getTime()).length };
 }
 export function seedWorkspace(now = new Date()): Workspace {
   const ago = (hours: number) => new Date(now.getTime()-hours*3600000).toISOString();

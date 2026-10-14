@@ -5,6 +5,20 @@ import { emptyWorkspace,settingsOnly,conversationFromRow } from '../lib/workspac
 import { productionStore } from '../lib/workspace/production-store.ts';
 import { publicWorkspaceConfig } from '../lib/workspace/public-config.ts';
 const A='00000000-0000-4000-8000-000000000001',B='00000000-0000-4000-8000-000000000002',U='00000000-0000-4000-8000-000000000003';
+test('exact tenant counts survive the conversation and ticket display limits',async()=>{
+ const {pg,client}=await testDatabase();try{
+  await pg.query('insert into businesses(id,user_id,name) values($1,$3,$4),($2,$3,$5)',[A,B,U,'Shop A','Shop B']);
+  await pg.query('insert into conversations(business_id,messages,created_at) select $1,$2::jsonb,now()-i*interval \'1 minute\' from generate_series(1,1005) i',[A,JSON.stringify([{role:'user',content:'Question'},{role:'assistant',content:'Answer'}])]);
+  await pg.query('insert into conversations(business_id,messages) values($1,$2)',[B,'[]']);
+  await pg.query("insert into commerce_tickets(business_id,submission_key,contact_email,description,status) select $1,'s-'||i,'fixture@example.org','A synthetic test case','new' from generate_series(1,350) i",[A]);
+  const store=await productionStore(client,{id:A,name:'A'}),state=await store.readWorkspace();
+  assert.equal(state.conversations.length,1000);assert.equal(state.dataScope?.conversations.total,1005);assert.equal(state.dataScope?.conversations.loaded,1000);
+  assert.equal(state.tickets.length,300);assert.equal(state.dataScope?.tickets.total,350);assert.equal(state.dataScope?.openTickets,350);
+  await store.mutateWorkspace(s=>{s.digest.enabled=false;});
+  const stored=(await pg.query<{state:{dataScope?:unknown;conversations:unknown[]}}>('select state from workspace_settings where business_id=$1',[A])).rows[0].state;
+  assert.equal(stored.dataScope,undefined);assert.equal(stored.conversations.length,0);
+ }finally{await pg.close();}
+});
 test('production starts empty and public config never includes private sources, tickets or leads',()=>{
  const state=emptyWorkspace('Shop','');assert.equal(state.conversations.length,0);assert.equal(state.sources.length,0);assert.equal(state.quoteEnabled,false);
  state.sources.push({id:'secret',name:'Private source',kind:'text',text:'private!',updatedAt:new Date().toISOString()});

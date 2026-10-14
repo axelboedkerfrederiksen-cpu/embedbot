@@ -35,13 +35,13 @@ export async function testDatabase() {
   await pg.exec(await readFile(new URL("../../sql/add_production_workspace.sql", import.meta.url), "utf8"));
   const column = (name: string) => { if (!/^[a-z_][a-z0-9_]*$/.test(name)) throw new Error("Invalid test column"); return name; };
   class Query {
-    table: string; operation = "select"; values: Record<string, unknown> = {}; filters: [string,string,unknown][] = []; selected = "*"; countOnly = false; returning = false; conflict = ""; ignore = false; sort = ""; max: number | null = null; countMutation = false;
+    table: string; operation = "select"; values: Record<string, unknown> = {}; filters: [string,string,unknown][] = []; selected = "*"; countOnly = false; withCount = false; returning = false; conflict = ""; ignore = false; sort = ""; max: number | null = null; countMutation = false;
     constructor(table: string) { this.table = column(table); }
     insert(value: Record<string,unknown>) { this.operation = "insert"; this.values = Object.fromEntries(Object.entries(value).filter(([,v])=>v!==undefined)); return this; }
     upsert(value: Record<string,unknown>, options: { onConflict?: string; ignoreDuplicates?: boolean } = {}) { this.insert(value); this.conflict = options.onConflict || "business_id"; this.ignore = options.ignoreDuplicates || false; return this; }
     delete(options: {count?:string} = {}) { this.operation = "delete"; this.countMutation=options.count==="exact";return this; }
     update(value: Record<string,unknown>) { this.operation = "update"; this.values = Object.fromEntries(Object.entries(value).filter(([,v])=>v!==undefined)); return this; }
-    select(value = "*", options: {count?: string; head?: boolean} = {}) { this.countOnly = options.count === "exact" && options.head === true; this.selected = value; this.returning = this.operation !== "select"; return this; }
+    select(value = "*", options: {count?: string; head?: boolean} = {}) { this.countOnly = options.count === "exact" && options.head === true; this.withCount = options.count === "exact" && !options.head; this.selected = value; this.returning = this.operation !== "select"; return this; }
     eq(name: string, value: unknown) { this.filters.push([name,"=",value]); return this; }
     ilike(name:string,value:string){this.filters.push([name,"ilike",value]);return this;}
     gt(name:string,value:unknown) {this.filters.push([name,">",value]);return this;}
@@ -56,7 +56,7 @@ export async function testDatabase() {
         const add = (v: unknown) => { params.push(v); return `$${params.length}`; };
         const fields = this.selected === "*" ? "*" : this.selected.split(",").map(name => column(name.trim())).join(",");
         let sql = "";
-        if (this.operation === "select") sql = `select ${this.countOnly ? "count(*) as total" : fields} from public.${this.table}`;
+        if (this.operation === "select") sql = `select ${this.countOnly ? "count(*) as total" : fields+(this.withCount?",count(*) over() as __total":"")} from public.${this.table}`;
         if (this.operation === "insert") {
           const keys = Object.keys(this.values);
           sql = `insert into public.${this.table} (${keys.map(column).join(",")}) values (${keys.map(k => add(["context","messages","counts","document","state","data","clicks"].includes(k) ? JSON.stringify(this.values[k]) : this.values[k])).join(",")})`;
@@ -64,12 +64,14 @@ export async function testDatabase() {
         }
         if (this.operation === "delete") sql = `delete from public.${this.table}`;
         if (this.operation === "update") sql = `update public.${this.table} set ${Object.entries(this.values).map(([k,v]) => `${column(k)}=${add(["context","messages","counts","document","state","data","clicks"].includes(k) ? JSON.stringify(v):v)}`).join(",")}`;
-        if (this.filters.length) sql += " where " + this.filters.map(([name,op,value]) => op === "in" ? `${column(name)}::text = any(${add(value)}::text[])` : op === "active" ? `(${column(name)} is null or ${column(name)}=false)` : op === "refresh" ? `(${column(name)} is null or ${column(name)} < ${add(value)}::timestamptz)` : `${name==="state->digest->>enabled"?"state->'digest'->>'enabled'":column(name)} ${op} ${add(value)}`).join(" and ");
+        if (this.filters.length) sql += " where " + this.filters.map(([name,op,value]) => op === "in" ? `${column(name)}::text = any(${add(value)}::text[])` : op === "active" ? `(${column(name)} is null or ${column(name)}=false)` : op === "refresh" ? `(${column(name)} is null or ${column(name)} < ${add(value)}::timestamptz)` : `${name==="state->digest->>enabled"?"state->'digest'->>'enabled'":name==="data->>status"?"data->>'status'":column(name)} ${op} ${add(value)}`).join(" and ");
         if (this.operation === "select" && !this.countOnly) {if(this.sort)sql+=` order by ${this.sort}`;if(this.max!==null)sql+=` limit ${this.max}`;}
         if (this.countMutation)sql+=" returning id";
         if (this.returning) sql += ` returning ${fields}`;
         const result = await pg.query<Record<string, unknown>>(sql, params);
-        return { data: this.countOnly ? null : single ? result.rows[0] || null : result.rows, count: this.countOnly ? Number(result.rows[0]?.total) : this.countMutation ? result.rows.length : null, error: null };
+        const exactCount=this.withCount?Number(result.rows[0]?.__total||0):null;
+        if(this.withCount)for(const row of result.rows)delete row.__total;
+        return { data: this.countOnly ? null : single ? result.rows[0] || null : result.rows, count: this.countOnly ? Number(result.rows[0]?.total) : this.countMutation ? result.rows.length : exactCount, error: null };
       } catch (error) { return { data: null, error }; }
     }
     order(name:string, options:{ascending?:boolean}={}) {this.sort=`${column(name)} ${options.ascending===false?"desc":"asc"}`;return this;}

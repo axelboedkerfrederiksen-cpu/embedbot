@@ -1,7 +1,7 @@
 export const chatState = {};
 export function resetChatState() {
   Object.assign(chatState, {
-    calls: [], saved: [], connected: null,
+    calls: [], saved: [], connected: null, streamFailure: false,
     business: { id: 'tenant-a', name: 'Test shop', activated: true, plan: 'starter' },
     rate: { data: false, error: null },
     allowance: { data: { allowed: true, used: 1, limit_value: 1000 }, error: null },
@@ -68,6 +68,7 @@ export class OpenAI {
     chatState.prompt = request;
     return (async function* () {
       yield { choices: [{ delta: { content: 'Blød ' } }] };
+      if(chatState.streamFailure)throw new Error('Synthetic interrupted stream');
       yield { choices: [{ delta: { content: 'uld' } }] };
     })();
   } } };

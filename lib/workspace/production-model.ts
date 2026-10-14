@@ -4,13 +4,20 @@ export function emptyWorkspace(name:string,welcome:string):Workspace {
 }
 export function conversationFromRow(row:{id:string;created_at:string;messages:unknown}):Conversation|null {
  if(!Array.isArray(row.messages))return null;
- const user=row.messages.find(m=>m?.role==='user'&&typeof m.content==='string');
- const answer=row.messages.find(m=>m?.role==='assistant'&&typeof m.content==='string');
- if(!user||!answer)return null;
+ const exchanges:{question:string;answer:string}[]=[];
+ for(const message of row.messages){
+  if(message?.role==='user'&&typeof message.content==='string'&&message.content.trim())exchanges.push({question:message.content,answer:''});
+  else if(message?.role==='assistant'&&typeof message.content==='string'&&exchanges.length&&!exchanges.at(-1)!.answer)exchanges.at(-1)!.answer=message.content;
+ }
+ if(!exchanges.length)return null;
  const meta=row.messages.find(m=>m?.role==='meta');let page='';
  try{page=new URL(meta?.page_url).pathname;}catch{/* Old chats may not have a page. */}
- return {id:row.id,question:user.content,answer:answer.content,page,date:row.created_at};
+ return {id:row.id,...exchanges[0],exchanges,page,date:row.created_at,
+  ...(typeof meta?.response_ms==='number'&&Number.isFinite(meta.response_ms)&&meta.response_ms>=0?{responseMs:meta.response_ms}:{}),
+  ...(['complete','interrupted'].includes(meta?.answer_status)?{answerStatus:meta.answer_status}:{}),
+ };
 }
 export function settingsOnly(state:Workspace):Workspace {
- return {...state,sources:state.managedBase?state.sources:state.sources.filter(s=>s.id!=="imported-website"),conversations:[],tickets:[],leads:[],starters:state.starters.map(s=>({...s,clicks:0}))};
+ const {dataScope,...settings}=state;void dataScope;
+ return {...settings,sources:state.managedBase?state.sources:state.sources.filter(s=>s.id!=="imported-website"),conversations:[],tickets:[],leads:[],starters:state.starters.map(s=>({...s,clicks:0}))};
 }
