@@ -1,3 +1,4 @@
+import { APPEARANCE_KEYS, validateAppearance } from "@/lib/widget-appearance";
 import { businessInput } from "@/lib/compliance/business-input";
 import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@supabase/supabase-js";
@@ -11,7 +12,6 @@ const supabase = createClient(
   process.env.SUPABASE_SERVICE_KEY!
 );
 
-const LOGO_UPLOAD_ENABLED = false;
 const TRANSIENT_DATABASE_RETRY_DELAYS = [250, 750] as const;
 
 function wait(ms: number) {
@@ -57,17 +57,6 @@ function isLegacyBusinessIdForeignKeyError(errorMessage: string) {
   return errorMessage.toLowerCase().includes("businesses_id_fkey");
 }
 
-function getFormForPersistence(form: Record<string, unknown>) {
-  if (LOGO_UPLOAD_ENABLED) {
-    return form;
-  }
-
-  return {
-    ...form,
-    logo_data_url: "",
-    logo_file_name: "",
-  };
-}
 
 async function persistBusinessPayload(payload: Record<string, unknown> & { id: string }) {
   for (let attempt = 0; attempt <= TRANSIENT_DATABASE_RETRY_DELAYS.length; attempt++) {
@@ -101,6 +90,8 @@ async function persistWithMissingColumnFallback(payload: Record<string, unknown>
     if (!missingColumn || !(missingColumn in activePayload) || ["id","user_id"].includes(missingColumn)) {
       return result;
     }
+
+    if (APPEARANCE_KEYS.includes(missingColumn) && missingColumn !== "logo_file_name" && !(missingColumn === "logo_data_url" && activePayload[missingColumn] === "")) return result;
 
     // Keep as much data as possible by removing only unavailable columns.
     const rest = { ...activePayload };
@@ -182,7 +173,15 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    const formForPersistence = getFormForPersistence(businessInput(form as Record<string, unknown>));
+    const appearanceError = validateAppearance(form as Record<string, unknown>);
+    if (appearanceError) return NextResponse.json({ success: false, error: appearanceError }, { status: 400 });
+    const formForPersistence = businessInput(form as Record<string, unknown>);
+    // Store uploads in the existing public logo field. Older installations do
+    // not have the optional onboarding data/file-name columns.
+    if (typeof formForPersistence.logo_data_url === "string") {
+      if (formForPersistence.logo_data_url) formForPersistence.logo_url = formForPersistence.logo_data_url;
+      formForPersistence.logo_data_url = "";
+    }
     const normalizedForm: Record<string, unknown> = {
       ...formForPersistence,
       fab_color:

@@ -5,7 +5,7 @@ Last reviewed: 17 September 2026.
 ## Fonts
 
 - Poppins is loaded through `next/font` and is licensed under the SIL Open Font License. Source and metadata: https://github.com/google/fonts/tree/main/ofl/poppins
-- The optional widget/font previews can request Poppins, Inter, DM Sans, DM Serif Display, or Lora through Google Fonts. Before adding another font, verify its entry and license in the Google Fonts repository.
+- The widget self-hosts Latin and Latin Extended subsets of Poppins, Inter, DM Sans and Lora. Their SIL Open Font License texts and provenance are included in `public/fonts/`. The widget makes no Google Fonts request at runtime. The application also uses DM Serif Display through `next/font`.
 
 ## Platform icons
 

@@ -16,6 +16,8 @@ import {
 import { createClient } from "@/lib/supabase";
 import { isBusinessSubscriptionActive } from "@/lib/subscription";
 import styles from "./dashboard.module.css";
+import AppearanceEditor from "../components/appearance-editor";
+import { APPEARANCE_KEYS, appearanceDraft } from "@/lib/widget-appearance";
 import PrivacyPanel from "./privacy-panel";
 import CommercePanel from "./commerce-panel";
 import TicketsPanel from "./tickets-panel";
@@ -167,13 +169,7 @@ const BEHAVIOR_FIELDS: FieldDefinition[] = [
   { key: "complaint_action", label: "Når kunden klager", type: "textarea", placeholder: "Beskriv hvordan botten skal hjælpe videre" },
   { key: "custom_instructions", label: "Ekstra instruktioner", type: "textarea", placeholder: "Særlige regler botten skal følge", hint: "Hold instruktionerne korte og undgå regler, der modsiger hinanden." },
 ];
-const APPEARANCE_FIELDS: FieldDefinition[] = [
-  { key: "primary_color", label: "Primær farve", type: "color" },
-  { key: "secondary_color", label: "Kundens beskedfarve", type: "color" },
-  { key: "chat_icon_color", label: "Chatknap", type: "color" },
-  { key: "font_choice", label: "Skrifttype", type: "select", options: [{ label: "Poppins", value: "Poppins" }, { label: "DM Sans", value: "DM Sans" }, { label: "Inter", value: "Inter" }, { label: "Lora", value: "Lora" }] },
-  { key: "widget_opacity", label: "Gennemsigtighed", type: "range", min: 40, max: 100, step: 5, suffix: "%" },
-];
+const APPEARANCE_FIELDS: FieldDefinition[] = APPEARANCE_KEYS.map(key => ({ key, label: key, type: "text" }));
 const ALL_FIELDS = [...IDENTITY_FIELDS, ...CONTACT_FIELDS, ...KNOWLEDGE_FIELDS, ...BEHAVIOR_FIELDS, ...APPEARANCE_FIELDS];
 
 const VIEW_COPY: Record<DashboardView, { eyebrow: string; title: string; description: string }> = {
@@ -237,7 +233,7 @@ function formatCardBrand(value: string | null | undefined) { if (!value) return 
 function normalizeExternalUrl(value: string | null | undefined) { const trimmed = (value || "").trim(); return !trimmed ? "" : /^https?:\/\//i.test(trimmed) ? trimmed : `https://${trimmed}`; }
 function normalizeMessageActionUrl(value: string | null | undefined) { const trimmed = (value || "").trim(); if (!trimmed) return ""; if (trimmed.startsWith("/") && !trimmed.startsWith("//")) return trimmed; try { const parsed = new URL(trimmed); return parsed.protocol === "https:" ? parsed.toString() : ""; } catch { return ""; } }
 function sanitizeColor(value: string, fallback: string) { return /^#([0-9a-f]{3}|[0-9a-f]{6})$/i.test(value.trim()) ? value.trim() : fallback; }
-function buildDraft(business: Business): Record<string, string> { return Object.fromEntries(ALL_FIELDS.map((field) => { const value = business[field.key]; if (typeof value === "boolean") return [field.key, value ? "true" : "false"]; return [field.key, value === null || value === undefined ? "" : String(value)]; })); }
+function buildDraft(business: Business): Record<string, string> { return { ...Object.fromEntries(ALL_FIELDS.map((field) => { const value = business[field.key]; if (typeof value === "boolean") return [field.key, value ? "true" : "false"]; return [field.key, value === null || value === undefined ? "" : String(value)]; })), ...appearanceDraft(business) }; }
 function getConversationQuestion(conversation: ConversationRow) { return normalizeMessages(conversation.messages).find((message) => message.role.toLowerCase().includes("user"))?.content || "Samtale uden spørgsmål"; }
 function getConversationAnswer(conversation: ConversationRow) { return normalizeMessages(conversation.messages).find((message) => message.role.toLowerCase().includes("assistant"))?.content || ""; }
 
@@ -270,25 +266,6 @@ function EditorSection({ title, description, fields, draft, onChange, onSave, sa
         })}
       </div>
       <div className={styles.editorFooter}><button className={styles.button} type="button" onClick={onSave} disabled={saving}>{saving ? "Gemmer…" : "Gem ændringer"}</button></div>
-    </section>
-  );
-}
-
-function WidgetPreview({ businessName, draft }: { businessName: string; draft: Record<string, string> }) {
-  const primaryColor = sanitizeColor(draft.primary_color || "", "#237a57");
-  const secondaryColor = sanitizeColor(draft.secondary_color || "", "#edf3ef");
-  const iconColor = sanitizeColor(draft.chat_icon_color || "", primaryColor);
-  const opacity = Math.max(0.4, Math.min(1, Number(draft.widget_opacity || "100") / 100));
-  return (
-    <section className={cx(styles.card, styles.previewCard)}>
-      <div className={styles.cardHeader} style={{ padding: "18px 18px 0" }}><div><h2 className={styles.cardTitle}>Live preview</h2><p className={styles.cardDescription}>Sådan føles chatten på en lys hjemmeside.</p></div><Eye size={17} className={styles.metricIcon} /></div>
-      <div className={styles.previewStage}>
-        <div className={styles.mockSite} aria-hidden="true"><div className={styles.mockNav} /><div className={styles.mockTitle} /><div className={styles.mockCopy} /></div>
-        <div className={styles.widgetMock} style={{ opacity, fontFamily: `"${draft.font_choice || "Poppins"}", sans-serif` }}>
-          <div className={styles.widgetHeader} style={{ background: primaryColor, color: "#ffffff" }}>{businessName}</div>
-          <div className={styles.widgetBody}><div className={styles.widgetMessage} style={{ background: secondaryColor, color: "#142019" }}>{draft.welcome_message?.trim() || "Hej! Hvordan kan jeg hjælpe dig i dag?"}</div><div className={styles.widgetInput}>Skriv en besked…<span className={styles.widgetSend} style={{ background: iconColor }}><ArrowRight size={12} /></span></div></div>
-        </div>
-      </div>
     </section>
   );
 }
@@ -529,15 +506,20 @@ export default function DashboardPage() {
     setSavingSection(sectionName); setActionError("");
     const currentDraft = editDrafts[selectedBusiness.id] || buildDraft(selectedBusiness);
     const updates: Record<string, string> = {};
-    for (const field of fields) { if (!Object.prototype.hasOwnProperty.call(selectedBusiness, field.key)) continue; const value = (currentDraft[field.key] || "").trim(); updates[field.key] = field.type === "color" ? sanitizeColor(value, field.key === "secondary_color" ? "#edf3ef" : "#237a57") : value; }
+    for (const field of fields) { if (sectionName !== "appearance" && !Object.prototype.hasOwnProperty.call(selectedBusiness, field.key)) continue; const value = (currentDraft[field.key] || "").trim(); updates[field.key] = field.type === "color" ? sanitizeColor(value, field.key === "secondary_color" ? "#edf3ef" : "#237a57") : value; }
     try {
+      if (dashboardPreview) {
+        setBusinesses(current => current.map(business => business.id === selectedBusiness.id ? { ...business, ...updates } : business));
+        setToast("Designet er gemt i denne demo. Ingen kundedata er ændret.");
+        return;
+      }
       const response = await fetch("/api/business-draft", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ business_id: selectedBusiness.id, form: updates }) });
       const result = await response.json() as { success?: boolean; error?: string };
       if (!response.ok || !result.success) throw new Error(result.error || "Kunne ikke gemme ændringerne.");
       const { data } = await supabase.from("businesses").select("*").eq("id", selectedBusiness.id).maybeSingle();
       setBusinesses((current) => current.map((business) => business.id === selectedBusiness.id ? (data as Business || { ...business, ...updates }) : business));
       setToast("Ændringerne er gemt og bruges nu af chatbotten.");
-    } catch { setActionError("Ændringerne kunne ikke gemmes. Prøv igen om et øjeblik."); }
+    } catch (error) { setActionError(error instanceof Error ? error.message : "Ændringerne kunne ikke gemmes. Prøv igen om et øjeblik."); }
     finally { setSavingSection(""); }
   }
 
@@ -689,7 +671,7 @@ export default function DashboardPage() {
 
   function renderKnowledge() { return <>{renderPageHeader()}{faqCandidate ? <section className={styles.candidateCard}><h3>Nyt svar fra en samtale</h3><p className={styles.candidateQuestion}>{faqCandidate.question}</p><label className={styles.field}><span className={styles.fieldLabel}>Det korrekte svar</span><textarea className={styles.textarea} rows={4} autoFocus value={faqCandidate.answer} onChange={(event) => setFaqCandidate({ ...faqCandidate, answer: event.target.value })} placeholder="Skriv det svar, botten skal kunne give fremover…" /></label><div className={styles.buttonRow} style={{ marginTop: 12 }}><button className={styles.button} type="button" onClick={addFaqCandidate} disabled={!faqCandidate.answer.trim()}>Føj til FAQ</button><button className={styles.buttonGhost} type="button" onClick={() => setFaqCandidate(null)}>Annuller</button></div></section> : null}<EditorSection title="Det botten skal vide" description="Opdater indholdet her, når produkter, vilkår eller tilbud ændrer sig." fields={KNOWLEDGE_FIELDS} draft={draft} onChange={updateDraftValue} onSave={() => void saveFields("knowledge", KNOWLEDGE_FIELDS)} saving={savingSection === "knowledge"} /></>; }
   function renderBehavior() { return <>{renderPageHeader()}<EditorSection title="Sådan skal botten hjælpe" description="Indstillingerne bruges direkte, når chatbotten formulerer sit svar." fields={BEHAVIOR_FIELDS} draft={draft} onChange={updateDraftValue} onSave={() => void saveFields("behavior", BEHAVIOR_FIELDS)} saving={savingSection === "behavior"} /></>; }
-  function renderAppearance() { return <>{renderPageHeader()}<div className={styles.appearanceLayout}><EditorSection title="Farver og typografi" description="Hold udtrykket enkelt og genkendeligt på jeres hjemmeside." fields={APPEARANCE_FIELDS} draft={draft} onChange={updateDraftValue} onSave={() => void saveFields("appearance", APPEARANCE_FIELDS)} saving={savingSection === "appearance"} /><WidgetPreview businessName={selectedBusiness?.name || "EmbedBot"} draft={draft} /></div></>; }
+  function renderAppearance() { return <>{renderPageHeader()}<AppearanceEditor key={selectedBusiness?.id} value={{ ...draft, name: selectedBusiness?.name || "EmbedBot" }} onChange={updateDraftValue} onSave={() => void saveFields("appearance", APPEARANCE_FIELDS)} saving={savingSection === "appearance"} /></>; }
 
   function renderInstallation() { return <>{renderPageHeader(<Link className={styles.buttonSecondary} href="/EmbedBot_Installationsguide.pdf" target="_blank"><ExternalLink size={14} />Åbn hele guiden</Link>)}<section className={styles.gridTwo}><article className={cx(styles.card, styles.sectionCard)}><div className={styles.cardHeader}><div><h2 className={styles.cardTitle}>Din installationskode</h2><p className={styles.cardDescription}>Koden er unik for {selectedBusiness?.name || "denne chatbot"}.</p></div></div><pre className={styles.embedCode}>{embedCode}</pre><div className={styles.buttonRow} style={{ marginTop: 14 }}><button className={styles.button} type="button" onClick={() => void handleCopyEmbedCode()}>{copied ? <Check size={14} /> : <Copy size={14} />}{copied ? "Kopieret" : "Kopiér kode"}</button></div></article><article className={cx(styles.card, styles.sectionCard)}><div className={styles.cardHeader}><div><h2 className={styles.cardTitle}>Sådan går du live</h2><p className={styles.cardDescription}>Det tager normalt få minutter.</p></div></div><ol className={styles.stepList}><li className={styles.step}><span className={styles.stepNumber}>1</span><div><strong>Kopiér koden</strong><p>Brug knappen til venstre og send eventuelt koden til den, der vedligeholder hjemmesiden.</p></div></li><li className={styles.step}><span className={styles.stepNumber}>2</span><div><strong>Indsæt før &lt;/body&gt;</strong><p>Placér scriptet på alle sider, hvor chatten skal være synlig.</p></div></li><li className={styles.step}><span className={styles.stepNumber}>3</span><div><strong>Udgiv og kontrollér</strong><p>Åbn hjemmesiden i et nyt vindue og kontrollér, at chatknappen vises.</p></div></li></ol></article></section><section className={cx(styles.card, styles.sectionCard)}><div className={styles.cardHeader}><div><h2 className={styles.cardTitle}>Website</h2><p className={styles.cardDescription}>Den hjemmeside, denne bot er knyttet til.</p></div></div>{websiteUrl ? <a className={styles.buttonSecondary} href={websiteUrl} target="_blank" rel="noreferrer"><ExternalLink size={14} />{selectedBusiness?.website_url}</a> : <div className={styles.infoBanner}><AlertCircle size={15} />Tilføj hjemmesiden under Indstillinger, så installationen bliver lettere at kontrollere.</div>}</section></>; }
 

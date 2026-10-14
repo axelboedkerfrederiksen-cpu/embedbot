@@ -27,6 +27,7 @@ const nextConfig: NextConfig = {
           { key: "Strict-Transport-Security", value: "max-age=31536000; includeSubDomains; preload" },
         ],
       },
+      { source: "/fonts/:path*", headers: [{ key: "Access-Control-Allow-Origin", value: "*" }, { key: "Cache-Control", value: "public, max-age=86400" }] },
       // Widget JS - intentionally open for cross-origin embedding
       {
         source: "/widget.js",

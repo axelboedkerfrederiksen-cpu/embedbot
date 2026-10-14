@@ -1,7 +1,7 @@
 "use client";
 import { useEffect, useState } from "react";
 import Link from "next/link";
-import Image from "next/image";
+import AppearanceEditor from "../components/appearance-editor";
 import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase";
 import { isBusinessSubscriptionActive } from "@/lib/subscription";
@@ -10,7 +10,6 @@ import { readOnboardingSnapshot } from "@/lib/onboarding";
 
 const ONBOARDING_BUSINESS_ID_KEY = "onboarding_business_id";
 const ONBOARDING_FORM_SNAPSHOT_KEY = "onboarding_form_snapshot";
-const LOGO_UPLOAD_ENABLED = false;
 
 const GENERATING_MESSAGES = [
   "Analyserer din virksomhed...",
@@ -37,10 +36,10 @@ export default function Home() {
     welcome_message: "", tone: "uformel", language: "dansk",
     custom_instructions: "",
     faq: "", cvr: "", social_media: "", current_offers: "", warranty: "", size_guide: "",
-    primary_color: "#ffffff", secondary_color: "#f6f3ed", chat_icon_color: "#ffffff",
-    font_choice: "Poppins", logo_data_url: "", logo_file_name: "",
-    chat_outline_enabled: "false", chat_outline_color: "#111111", chat_outline_width: "1",
-    chat_outline_opacity: "25", widget_opacity: "100"
+    primary_color: "#ffffff", secondary_color: "#f6f3ed", chat_icon_color: "#232321",
+    font_choice: "Inter", logo_url: "", logo_data_url: "", logo_file_name: "",
+    chat_outline_enabled: "false", chat_outline_color: "#232321", chat_outline_width: "1",
+    chat_outline_opacity: "20", widget_opacity: "100"
   };
   type FormState = typeof initialForm;
 
@@ -284,96 +283,7 @@ export default function Home() {
 
   const update = (key: keyof FormState, value: string) => setForm(f => ({ ...f, [key]: value }));
 
-  function getFormForSubmit() {
-    if (LOGO_UPLOAD_ENABLED) {
-      return form;
-    }
-
-    return {
-      ...form,
-      logo_data_url: "",
-      logo_file_name: "",
-    };
-  }
-
-  const previewFontFamily: Record<string, string> = {
-    "DM Sans": 'var(--font-dm-sans), sans-serif',
-    Inter: 'var(--font-inter), sans-serif',
-    Poppins: 'var(--font-poppins), sans-serif',
-    Lora: 'var(--font-lora), serif',
-  };
-
-  function normalizeHexForPreview(value: string, fallback: string) {
-    const trimmed = value.trim();
-    const shortHex = /^#([0-9a-f]{3})$/i.exec(trimmed);
-    if (shortHex) {
-      const expanded = shortHex[1].split("").map(char => char + char).join("");
-      return `#${expanded.toLowerCase()}`;
-    }
-
-    if (/^#([0-9a-f]{6})$/i.test(trimmed)) {
-      return trimmed.toLowerCase();
-    }
-
-    return fallback;
-  }
-
-  function clampNumeric(value: number, min: number, max: number, fallback: number) {
-    if (!Number.isFinite(value)) {
-      return fallback;
-    }
-
-    return Math.min(max, Math.max(min, value));
-  }
-
-  function hexToRgba(hex: string, opacityPercent: number) {
-    const normalized = normalizeHexForPreview(hex, "#111111");
-    const color = normalized.slice(1);
-    const red = Number.parseInt(color.slice(0, 2), 16);
-    const green = Number.parseInt(color.slice(2, 4), 16);
-    const blue = Number.parseInt(color.slice(4, 6), 16);
-    return `rgba(${red}, ${green}, ${blue}, ${clampNumeric(opacityPercent, 0, 100, 100) / 100})`;
-  }
-
-  function getReadableTextColor(hex: string) {
-    const normalized = normalizeHexForPreview(hex, "#ffffff").slice(1);
-    const red = Number.parseInt(normalized.slice(0, 2), 16);
-    const green = Number.parseInt(normalized.slice(2, 4), 16);
-    const blue = Number.parseInt(normalized.slice(4, 6), 16);
-    const brightness = ((red * 299) + (green * 587) + (blue * 114)) / 1000;
-    return brightness < 150 ? "#ffffff" : "#1a1a1a";
-  }
-
-  const previewPrimaryColor = normalizeHexForPreview(form.primary_color, "#ffffff");
-  const previewSecondaryColor = normalizeHexForPreview(form.secondary_color, "#f6f3ed");
-  const previewIconColor = normalizeHexForPreview(form.chat_icon_color, "#ffffff");
-  const previewOutlineColor = normalizeHexForPreview(form.chat_outline_color, "#111111");
-  const previewOutlineWidth = clampNumeric(Number.parseFloat(form.chat_outline_width), 0, 6, 1);
-  const previewOutlineOpacity = clampNumeric(Number.parseFloat(form.chat_outline_opacity), 0, 100, 25);
-  const previewWidgetOpacity = clampNumeric(Number.parseFloat(form.widget_opacity), 40, 100, 100);
-  const previewOutlineEnabled = (form.chat_outline_enabled || "false") === "true";
-  const outlineControlsDisabled = !previewOutlineEnabled;
-
-  const previewOutlineStyle = previewOutlineEnabled
-    ? `${previewOutlineWidth}px solid ${hexToRgba(previewOutlineColor, previewOutlineOpacity)}`
-    : "none";
-
-  function handleLogoUpload(file: File | null) {
-    if (!file) {
-      update("logo_data_url", "");
-      update("logo_file_name", "");
-      return;
-    }
-
-    const reader = new FileReader();
-    reader.onload = () => {
-      if (typeof reader.result === "string") {
-        update("logo_data_url", reader.result);
-        update("logo_file_name", file.name);
-      }
-    };
-    reader.readAsDataURL(file);
-  }
+  function getFormForSubmit() { return form; }
 
   function formatSetupError(error: unknown) {
     if (!(error instanceof Error)) {
@@ -1699,260 +1609,8 @@ export default function Home() {
     ),
     5: (
       <div className="design-step">
-        <div className="design-step-header">
-          <p className="step-kicker">Design</p>
-          <h2 className="section-title">5. Branding</h2>
-        </div>
-
-        <div className="design-panel">
-          <div className="design-panel-header">
-            <h3>Farver</h3>
-          </div>
-          <div className="color-grid">
-            <div className="field color-card">
-              <label className="field-label">Primærfarve *</label>
-              <div className="color-swatch-wrap">
-                <input
-                  type="color"
-                  value={previewPrimaryColor}
-                  onChange={e => update("primary_color", e.target.value)}
-                  className="color-input"
-                  aria-label="Primærfarve"
-                />
-                <input
-                  value={form.primary_color}
-                  onChange={e => update("primary_color", e.target.value)}
-                  className="field-input color-text"
-                  placeholder="#ffffff"
-                />
-              </div>
-              <p className="font-preview">Header og send-knap</p>
-            </div>
-
-            <div className="field color-card">
-              <label className="field-label">Sekundærfarve *</label>
-              <div className="color-swatch-wrap">
-                <input
-                  type="color"
-                  value={previewSecondaryColor}
-                  onChange={e => update("secondary_color", e.target.value)}
-                  className="color-input"
-                  aria-label="Sekundærfarve"
-                />
-                <input
-                  value={form.secondary_color}
-                  onChange={e => update("secondary_color", e.target.value)}
-                  className="field-input color-text"
-                  placeholder="#f6f3ed"
-                />
-              </div>
-              <p className="font-preview">Kundens beskeder</p>
-            </div>
-
-            <div className="field color-card">
-              <label className="field-label">Chat-ikon *</label>
-              <div className="color-swatch-wrap">
-                <input
-                  type="color"
-                  value={previewIconColor}
-                  onChange={e => update("chat_icon_color", e.target.value)}
-                  className="color-input"
-                  aria-label="Chat-ikon farve"
-                />
-                <input
-                  value={form.chat_icon_color}
-                  onChange={e => update("chat_icon_color", e.target.value)}
-                  className="field-input color-text"
-                  placeholder="#ffffff"
-                />
-              </div>
-              <p className="font-preview">Knappen i hjørnet</p>
-            </div>
-          </div>
-        </div>
-
-        <div className="design-panel">
-          <div className="design-panel-header">
-            <h3>Ramme</h3>
-            <select
-              value={form.chat_outline_enabled}
-              onChange={e => update("chat_outline_enabled", e.target.value)}
-              className="field-input compact-select"
-              aria-label="Outline på chatvindue"
-            >
-              <option value="false">Fra</option>
-              <option value="true">Til</option>
-            </select>
-          </div>
-
-          <div className="color-grid">
-            <div className={`field color-card ${outlineControlsDisabled ? "control-disabled" : ""}`}>
-              <label className="field-label">Outline farve</label>
-              <div className="color-swatch-wrap">
-                <input
-                  type="color"
-                  value={previewOutlineColor}
-                  onChange={e => update("chat_outline_color", e.target.value)}
-                  className="color-input"
-                  aria-label="Outline farve"
-                  disabled={outlineControlsDisabled}
-                />
-                <input
-                  value={form.chat_outline_color}
-                  onChange={e => update("chat_outline_color", e.target.value)}
-                  className="field-input color-text"
-                  placeholder="#111111"
-                  disabled={outlineControlsDisabled}
-                />
-              </div>
-            </div>
-
-            <div className={`field range-card ${outlineControlsDisabled ? "control-disabled" : ""}`}>
-              <div className="range-label-row">
-                <label className="field-label">Tykkelse</label>
-                <span className="range-value">{previewOutlineWidth.toFixed(1)}px</span>
-              </div>
-              <input
-                type="range"
-                min="0"
-                max="6"
-                step="0.5"
-                value={form.chat_outline_width}
-                onChange={e => update("chat_outline_width", e.target.value)}
-                className="range-input"
-                disabled={outlineControlsDisabled}
-              />
-            </div>
-
-            <div className={`field range-card ${outlineControlsDisabled ? "control-disabled" : ""}`}>
-              <div className="range-label-row">
-                <label className="field-label">Outline opacity</label>
-                <span className="range-value">{Math.round(previewOutlineOpacity)}%</span>
-              </div>
-              <input
-                type="range"
-                min="0"
-                max="100"
-                step="1"
-                value={form.chat_outline_opacity}
-                onChange={e => update("chat_outline_opacity", e.target.value)}
-                className="range-input"
-                disabled={outlineControlsDisabled}
-              />
-            </div>
-
-            <div className="field range-card">
-              <div className="range-label-row">
-                <label className="field-label">Widget opacity</label>
-                <span className="range-value">{Math.round(previewWidgetOpacity)}%</span>
-              </div>
-              <input
-                type="range"
-                min="40"
-                max="100"
-                step="1"
-                value={form.widget_opacity}
-                onChange={e => update("widget_opacity", e.target.value)}
-                className="range-input"
-              />
-            </div>
-          </div>
-        </div>
-
-        {LOGO_UPLOAD_ENABLED && (
-          <div className="field">
-            <label className="field-label">Logo upload</label>
-            <input
-              type="file"
-              accept="image/*"
-              className="field-input"
-              onChange={e => handleLogoUpload(e.target.files?.[0] || null)}
-            />
-            {form.logo_file_name && <p className="font-preview">Valgt fil: {form.logo_file_name}</p>}
-            {form.logo_data_url && (
-              <div className="logo-preview">
-                <Image src={form.logo_data_url} alt="Logo preview" width={160} height={80} unoptimized />
-              </div>
-            )}
-          </div>
-        )}
-
-        <div className="field design-panel font-panel">
-          <label className="field-label">Font *</label>
-          <select
-            value={form.font_choice}
-            onChange={e => update("font_choice", e.target.value)}
-            className="field-input"
-          >
-            <option value="DM Sans">DM Sans</option>
-            <option value="Inter">Inter</option>
-            <option value="Poppins">Poppins</option>
-            <option value="Lora">Lora</option>
-          </select>
-          <p className="font-preview" style={{ fontFamily: previewFontFamily[form.font_choice] || 'var(--font-poppins), sans-serif' }}>
-            Preview: Sådan kan teksten se ud i chatten.
-          </p>
-        </div>
-
-        <div className="widget-live-preview">
-          <p className="live-preview-title">Live preview</p>
-          <div className="widget-stage">
-            <div
-              className="widget-mini"
-              style={{
-                border: previewOutlineStyle,
-                opacity: previewWidgetOpacity / 100,
-                fontFamily: previewFontFamily[form.font_choice] || 'var(--font-poppins), sans-serif',
-              }}
-            >
-              <div
-                className="widget-mini-header"
-                style={{
-                  background: previewPrimaryColor,
-                  color: getReadableTextColor(previewPrimaryColor),
-                }}
-              >
-                {LOGO_UPLOAD_ENABLED && form.logo_data_url ? (
-                  <Image className="widget-mini-logo" src={form.logo_data_url} alt="Logo" width={32} height={32} unoptimized />
-                ) : (
-                  <div className="widget-mini-logo" aria-hidden="true" />
-                )}
-                <span>{form.name?.trim() ? `${form.name.trim()} Chat` : "Support Chat"}</span>
-              </div>
-
-              <div className="widget-mini-body">
-                <div className="widget-mini-message bot">
-                  {form.welcome_message?.trim() || "Hej! Hvordan kan jeg hjælpe dig i dag?"}
-                </div>
-                <div
-                  className="widget-mini-message user"
-                  style={{
-                    background: previewSecondaryColor,
-                    color: getReadableTextColor(previewSecondaryColor),
-                  }}
-                >
-                  Har I åbent på lørdag?
-                </div>
-              </div>
-
-              <div className="widget-mini-composer">
-                <div className="widget-mini-input" />
-                <div className="widget-mini-send" style={{ background: previewPrimaryColor }}>➜</div>
-              </div>
-            </div>
-
-            <div
-              className="widget-mini-fab"
-              style={{
-                background: previewIconColor,
-                color: getReadableTextColor(previewIconColor),
-                border: previewOutlineStyle,
-              }}
-            >
-              💬
-            </div>
-          </div>
-        </div>
+        <div className="design-step-header"><p className="step-kicker">Design</p><h2 className="section-title">5. Gør chatten til jeres</h2></div>
+        <AppearanceEditor value={form} onChange={(key, value) => update(key as keyof FormState, value)} />
       </div>
     ),
     6: (

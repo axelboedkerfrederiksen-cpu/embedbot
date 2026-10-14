@@ -3,6 +3,7 @@
   const businessId = new URL(scriptTag.src).searchParams.get("id");
   const previewToken = (scriptTag.getAttribute("data-preview-token") || "").trim();
   const apiOrigin = new URL(scriptTag.src).origin;
+  const appearancePreview = scriptTag.getAttribute("data-appearance-preview") === "true" && window.parent !== window && window.location.origin === apiOrigin;
   const API_URL = `${apiOrigin}/api/chat`;
   const localPath = businessId === "local-workspace" ? (scriptTag.getAttribute("data-local-path") || "/") : "";
   const configPath = previewToken ? (scriptTag.getAttribute("data-preview-path") || window.location.pathname) : window.location.pathname;
@@ -26,16 +27,16 @@
   const defaultConfig = {
     primary_color: "#ffffff",
     secondary_color: "#f6f3ed",
-    fab_color: "#ffffff",
+    fab_color: "#232321",
     logo_url: "",
     font_choice: "Inter",
     name: "",
     header_title: "Support Chat",
     welcome_message: "",
     chat_outline_enabled: "false",
-    chat_outline_color: "#111111",
+    chat_outline_color: "#232321",
     chat_outline_width: "1",
-    chat_outline_opacity: "25",
+    chat_outline_opacity: "20",
     widget_opacity: "100",
   };
 
@@ -57,6 +58,9 @@
 
     const primaryFamily = cleanFont.split(",")[0].trim().replace(/^['\"]|['\"]$/g, "");
     const normalized = primaryFamily.toLowerCase();
+    if (["Inter", "DM Sans", "Poppins", "Lora"].includes(primaryFamily)) {
+      return `"EmbedBot ${primaryFamily}", ${primaryFamily === "Lora" ? "Georgia, serif" : "system-ui, -apple-system, sans-serif"}`;
+    }
     if (GENERIC_FONTS.has(normalized)) {
       return normalized;
     }
@@ -72,7 +76,7 @@
 
   function formatHeaderTitle(name) {
     const cleanName = (name || "").trim();
-    return cleanName ? `${cleanName} ChatBot` : defaultConfig.header_title;
+    return cleanName || defaultConfig.header_title;
   }
 
   let widgetConfig = {
@@ -198,16 +202,16 @@
       return "#1a1a1a";
     }
 
-    const red = parseInt(normalizedHex.slice(0, 2), 16);
-    const green = parseInt(normalizedHex.slice(2, 4), 16);
-    const blue = parseInt(normalizedHex.slice(4, 6), 16);
-    const brightness = ((red * 299) + (green * 587) + (blue * 114)) / 1000;
-
-    return brightness < 150 ? "#ffffff" : "#1a1a1a";
+    const channels = [0, 2, 4].map(offset => {
+      const channel = parseInt(normalizedHex.slice(offset, offset + 2), 16) / 255;
+      return channel <= 0.04045 ? channel / 12.92 : Math.pow((channel + 0.055) / 1.055, 2.4);
+    });
+    const luminance = channels[0] * 0.2126 + channels[1] * 0.7152 + channels[2] * 0.0722;
+    return (luminance + 0.05) / 0.05 >= 1.05 / (luminance + 0.05) ? "#000000" : "#ffffff";
   }
 
   function clampNumber(value, min, max, fallback) {
-    const parsed = Number(value);
+    const parsed = value === "" || value === null || value === undefined ? NaN : Number(value);
     if (!Number.isFinite(parsed)) {
       return fallback;
     }
@@ -242,8 +246,8 @@
   container.innerHTML = `
     <button type="button" id="eb-bubble" aria-label="Åbn supportchat" aria-controls="eb-box" aria-expanded="false" style="position:fixed;bottom:24px;right:24px;width:56px;height:56px;background:#ffffff;color:#1a1a1a;border-radius:50%;border:none;cursor:pointer;display:flex;align-items:center;justify-content:center;z-index:9999;box-shadow:0 6px 18px rgba(0,0,0,0.10);opacity:0;transition:opacity 0.16s ease, transform 0.16s ease, box-shadow 0.16s ease;">${OPEN_ICON}</button>
     <div id="eb-box" role="dialog" aria-label="Supportchat" aria-hidden="true" style="position:fixed;bottom:90px;right:24px;width:352px;height:510px;background:#ffffff;border:none;border-radius:18px;box-shadow:0 10px 28px rgba(15,23,42,0.10);z-index:9999;display:flex;flex-direction:column;overflow:hidden;color:#1a1a1a;opacity:0;visibility:hidden;transform:translateY(10px) scale(0.985);pointer-events:none;transition:opacity 0.18s ease, transform 0.18s ease, visibility 0.18s ease;">
-      <div id="eb-header" style="background:#f9f9f9;color:#1a1a1a;padding:8px 14px;font-weight:600;display:flex;align-items:center;gap:10px;">
-        <img id="eb-logo" alt="Virksomhedslogo" style="display:none;height:24px;width:auto;max-width:120px;object-fit:contain;filter:brightness(0) invert(1);" />
+      <div id="eb-header" style="background:#f9f9f9;color:#1a1a1a;padding:14px 16px;font-weight:600;display:flex;align-items:center;gap:10px;">
+        <img id="eb-logo" alt="Virksomhedslogo" style="display:none;height:32px;width:40px;max-width:40px;flex:0 0 40px;object-fit:contain;background:#fff;border-radius:6px;padding:3px;" />
         <div style="display:flex;flex-direction:column;line-height:1.2;flex:1;min-width:0;">
           <div style="min-width:0"><span id="eb-title" style="display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">Support Chat</span><span id="eb-ai-disclosure" style="display:block;font-size:11px;font-weight:500;line-height:1.5;opacity:1;">AI-assistent</span></div>
         </div>
@@ -357,6 +361,37 @@
         border-color: rgba(17, 17, 17, 0.28);
         box-shadow: 0 0 0 4px rgba(17, 17, 17, 0.06);
       }
+      /* Keep storefront input/focus styles out of the chat composer. */
+      #eb-box #eb-input,
+      #eb-box #eb-input:hover,
+      #eb-box #eb-input:focus,
+      #eb-box #eb-input:focus-visible {
+        appearance: none !important;
+        -webkit-appearance: none !important;
+        box-sizing: border-box !important;
+        flex: 1 1 0% !important;
+        width: 0 !important;
+        min-width: 0 !important;
+        max-width: none !important;
+        height: auto !important;
+        min-height: 0 !important;
+        margin: 0 !important;
+        padding: 11px 0 !important;
+        border: 0 !important;
+        border-radius: 0 !important;
+        outline: 0 !important;
+        box-shadow: none !important;
+        background: transparent !important;
+        color: #1a1a1a !important;
+        font: inherit !important;
+        font-size: 14px !important;
+        line-height: 1.45 !important;
+        letter-spacing: normal !important;
+      }
+      #eb-box #eb-input::placeholder {
+        color: #757575 !important;
+        opacity: 1 !important;
+      }
       .eb-row {
         animation: eb-message-in 0.2s ease;
       }
@@ -392,9 +427,14 @@
         content: none !important;
         display: none !important;
       }
-      #eb-box, #eb-box * {
-        box-sizing: border-box;
-      }
+      #eb-box, #eb-box *, #eb-bubble { box-sizing: border-box; }
+      #eb-box * { font-family: var(--eb-font, system-ui) !important; }
+      #eb-header { font-size: 14px; line-height: 1.4; }
+      #eb-box button, #eb-bubble { text-transform: none; letter-spacing: normal; }
+      #eb-logo { box-shadow: none; border: 0; }
+      #eb-send:focus-visible, #eb-bubble:focus-visible { outline: 2px solid currentColor; outline-offset: 3px; }
+      @media (max-width: 400px) { #eb-header { padding: 10px; gap: 7px; } #eb-new-chat { font-size: 11px; padding: 0 4px; } }
+      @media (prefers-reduced-motion: reduce) { #eb-bubble, #eb-messages * { animation: none !important; transition: none !important; } }
       .eb-ai-msg p {
         font-size: inherit;
         line-height: inherit;
@@ -453,6 +493,37 @@
   }
 
   ensureWidgetStylesheet();
+  if (!document.getElementById("eb-fonts")) {
+    const fonts = document.createElement("link");
+    fonts.id = "eb-fonts"; fonts.rel = "stylesheet"; fonts.href = `${apiOrigin}/fonts/widget-fonts.css`;
+    document.head.appendChild(fonts);
+  }
+  logo.onerror = () => { logo.style.display = "none"; };
+  function getLogoBackdrop(pixels) {
+    let brightness = 0;
+    let coverage = 0;
+    for (let offset = 0; offset < pixels.length; offset += 4) {
+      const alpha = pixels[offset + 3] / 255;
+      brightness += (pixels[offset] * 0.2126 + pixels[offset + 1] * 0.7152 + pixels[offset + 2] * 0.0722) * alpha;
+      coverage += alpha;
+    }
+    return coverage && brightness / coverage > 180 ? "#232321" : "#ffffff";
+  }
+  logo.onload = () => {
+    logo.style.display = "block";
+    logo.style.background = "#ffffff";
+    // Inline uploads can be sampled without a cross-origin request. A legacy
+    // remote logo may disallow canvas reads; it still displays normally.
+    try {
+      const canvas = document.createElement("canvas");
+      canvas.width = 32; canvas.height = 32;
+      const context = canvas.getContext("2d", { willReadFrequently: true });
+      if (context) {
+        context.drawImage(logo, 0, 0, 32, 32);
+        logo.style.background = getLogoBackdrop(context.getImageData(0, 0, 32, 32).data);
+      }
+    } catch { /* Cross-origin logos retain the neutral backdrop. */ }
+  };
 
   function applyWidgetStyles() {
     if (widgetConfig.local_workspace) {
@@ -464,8 +535,8 @@
       box.classList.add("eb-local-workspace");
     }
     const fontStack = getFontStack(widgetConfig.font_choice || defaultConfig.font_choice);
-    const fabBackground = widgetConfig.fab_color || defaultConfig.fab_color;
-    const primaryBackground = widgetConfig.primary_color || defaultConfig.primary_color;
+    const fabBackground = normalizeHexColor(widgetConfig.fab_color) ? widgetConfig.fab_color : defaultConfig.fab_color;
+    const primaryBackground = normalizeHexColor(widgetConfig.primary_color) ? widgetConfig.primary_color : defaultConfig.primary_color;
     const headerBackground = primaryBackground;
     const fabTextColor = getBubbleTextColor(fabBackground);
     const primaryTextColor = getBubbleTextColor(primaryBackground);
@@ -505,6 +576,7 @@
       privacyLink.href = privacyHref;
     }
 
+    box.style.setProperty("--eb-font", fontStack);
     setFontImportant(box, fontStack);
     setFontImportant(header, fontStack);
     setFontImportant(title, fontStack);
@@ -513,12 +585,23 @@
     setFontImportant(input, fontStack);
     setFontImportant(send, fontStack);
     setFontImportant(watermark, fontStack);
+    // A visitor may open/send before the fresh configuration finishes loading.
+    messages.querySelectorAll("*").forEach(element => setFontImportant(element, fontStack));
+    const messageColor = normalizeHexColor(widgetConfig.secondary_color) ? widgetConfig.secondary_color : defaultConfig.secondary_color;
+    messages.querySelectorAll(".eb-user-msg").forEach(element => {
+      element.style.background = messageColor;
+      element.style.color = getBubbleTextColor(messageColor);
+      element.style.border = resolvedOutline;
+    });
 
-    if (widgetConfig.logo_url) {
-      logo.src = widgetConfig.logo_url;
-      logo.style.display = "block";
-      logo.style.filter = headerTextColor === "#ffffff" ? "brightness(0) invert(1)" : "none";
+    const logoSource = widgetConfig.logo_url || "";
+    let safeLogo = /^data:image\/(png|jpeg|webp);base64,[A-Za-z0-9+/]+={0,2}$/.test(logoSource);
+    try { const url = new URL(logoSource); safeLogo ||= url.protocol === "https:" && !url.username && !url.password; } catch { /* Inline bitmap or no logo. */ }
+    if (safeLogo && logoSource.length < 350000) {
+      logo.style.filter = "none";
+      if (logo.getAttribute("src") !== logoSource) { logo.style.display = "none"; logo.src = logoSource; }
     } else {
+      logo.removeAttribute("src");
       logo.style.display = "none";
     }
 
@@ -547,15 +630,15 @@
       const freshConfig = {
         primary_color: scriptTag.getAttribute("data-primary-color") || data.primary_color || defaultConfig.primary_color,
         secondary_color: scriptTag.getAttribute("data-secondary-color") || data.secondary_color || defaultConfig.secondary_color,
-        fab_color: scriptTag.getAttribute("data-fab-color") || data.fab_color || defaultConfig.fab_color,
+        fab_color: scriptTag.getAttribute("data-fab-color") || data.chat_icon_color || data.fab_color || defaultConfig.fab_color,
         logo_url: data.logo_url || defaultConfig.logo_url,
         font_choice: scriptTag.getAttribute("data-font") || data.font_choice || defaultConfig.font_choice,
         welcome_message: typeof data.welcome_message === "string" ? data.welcome_message : defaultConfig.welcome_message,
-        chat_outline_enabled: data.chat_outline_enabled || defaultConfig.chat_outline_enabled,
+        chat_outline_enabled: data.chat_outline_enabled ?? defaultConfig.chat_outline_enabled,
         chat_outline_color: data.chat_outline_color || defaultConfig.chat_outline_color,
-        chat_outline_width: data.chat_outline_width || defaultConfig.chat_outline_width,
-        chat_outline_opacity: data.chat_outline_opacity || defaultConfig.chat_outline_opacity,
-        widget_opacity: data.widget_opacity || defaultConfig.widget_opacity,
+        chat_outline_width: data.chat_outline_width ?? defaultConfig.chat_outline_width,
+        chat_outline_opacity: data.chat_outline_opacity ?? defaultConfig.chat_outline_opacity,
+        widget_opacity: data.widget_opacity ?? defaultConfig.widget_opacity,
         customer_privacy_url: data.customer_privacy_url || "",
         local_workspace: data.local_workspace === true,
         workspace_enabled: data.workspace_enabled === true,
@@ -779,13 +862,14 @@
     bubbleWrap.style.cssText = `display:flex;flex-direction:column;max-width:${isUser ? "72%" : "80%"};align-items:${isUser ? "flex-end" : "flex-start"};${isUser ? "margin-right:10px;" : "margin-left:2px;"}`;
 
     const msg = document.createElement("div");
-    const userBubbleColor = widgetConfig.secondary_color || defaultConfig.secondary_color;
+    const userBubbleColor = normalizeHexColor(widgetConfig.secondary_color) ? widgetConfig.secondary_color : defaultConfig.secondary_color;
     const bubbleBackgroundColor = isUser ? userBubbleColor : "transparent";
     const bubbleTextColor = getBubbleTextColor(bubbleBackgroundColor);
     const userMsgStyles = `background:${bubbleBackgroundColor};color:${bubbleTextColor};padding:8px 12px;border-radius:14px;display:inline-block;max-width:100%;font-size:14px;line-height:1.45;word-break:break-word;white-space:pre-wrap;border:${activeOutlineStyle};`;
     const botMsgStyles = "background:transparent;color:#1a1a1a;padding:0;border-radius:0;display:block;max-width:min(100%, 58ch);font-size:15px;line-height:1.52;font-weight:400;word-break:break-word;white-space:normal;";
     msg.style.cssText = isUser ? userMsgStyles : botMsgStyles;
     if (isUser) {
+      msg.classList.add("eb-user-msg");
       msg.textContent = text;
     } else {
       msg.classList.add("eb-ai-msg");
@@ -1062,6 +1146,11 @@
   async function sendMessage() {
     const text = input.value.trim();
     if (!text || messageSending) return;
+    if (appearancePreview) {
+      input.value = ""; addMessage(text, true);
+      addMessage("Sådan ser et svar ud med jeres design. Dette er kun en forhåndsvisning.", false);
+      return;
+    }
     messageSending = true; send.disabled = true; newChat.disabled = true;
 
     const language = detectLanguage(text);
@@ -1233,5 +1322,31 @@
   send.onclick = sendMessage;
   input.onkeydown = (e) => { if (e.key === "Enter") { e.preventDefault(); sendMessage(); } };
 
-  loadWidgetConfig();
+  if (appearancePreview) {
+    applyWidgetStyles();
+    window.addEventListener("message", event => {
+      if (event.origin !== apiOrigin || event.source !== window.parent || event.data?.type !== "embedbot:appearance") return;
+      const config = event.data.config;
+      if (!config || typeof config !== "object") return;
+      // Allow only presentation data; a preview must never enable a live integration.
+      for (const key of Object.keys(defaultConfig)) {
+        if (typeof config[key] === "string") widgetConfig[key] = config[key];
+      }
+      widgetConfig.fab_color = config.chat_icon_color || widgetConfig.fab_color;
+      widgetConfig.logo_url = config.logo_data_url || config.logo_url || "";
+      widgetConfig.header_title = formatHeaderTitle(widgetConfig.name);
+      document.body.style.background = event.data.background === "dark" ? "#262b29" : "#f1f2ee";
+      applyWidgetStyles();
+      messages.replaceChildren();
+      lastSender = null;
+      hasShownWelcomeMessage = false;
+      tryShowWelcomeMessage();
+      addMessage("Kan I hjælpe mig med at vælge?", true);
+      addMessage("Selvfølgelig. Fortæl lidt om, hvad du leder efter, så hjælper jeg dig videre.", false);
+    });
+    setChatOpen(true);
+    window.parent.postMessage({ type: "embedbot:ready" }, apiOrigin);
+  } else {
+    loadWidgetConfig();
+  }
 })();

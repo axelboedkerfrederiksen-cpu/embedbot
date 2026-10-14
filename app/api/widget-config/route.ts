@@ -1,22 +1,15 @@
+import { APPEARANCE_DEFAULTS, validLogoSource } from "@/lib/widget-appearance";
 import { publicWorkspaceConfig } from "@/lib/workspace/public-config";
 import { validId } from "@/lib/commerce/security";
 import { privacyUrl } from "@/lib/compliance/validation";
 import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@supabase/supabase-js";
 
-const DEFAULT_WIDGET_CONFIG = {
-  primary_color: "#ffffff",
-  secondary_color: "#f6f3ed",
-  fab_color: "#ffffff",
-  logo_url: "",
-  font_choice: "Poppins",
+const DEFAULT_WIDGET_CONFIG: Record<string, string> = {
+  ...APPEARANCE_DEFAULTS,
+  fab_color: APPEARANCE_DEFAULTS.chat_icon_color,
   name: "",
   welcome_message: "",
-  chat_outline_enabled: "false",
-  chat_outline_color: "#111111",
-  chat_outline_width: "1",
-  chat_outline_opacity: "25",
-  widget_opacity: "100",
 };
 
 const supabase = createClient(
@@ -36,39 +29,16 @@ function isMissingColumnError(errorMessage: string, columnName: string) {
 }
 
 async function fetchBusinessWidgetConfig(businessId: string) {
-  const selectVariants = [
-    "name, primary_color, secondary_color, fab_color, chat_icon_color, logo_url, logo_data_url, font_choice, welcome_message, chat_outline_enabled, chat_outline_color, chat_outline_width, chat_outline_opacity, widget_opacity",
-    "name, primary_color, secondary_color, fab_color, chat_icon_color, logo_url, logo_data_url, font_choice, welcome_message",
-    "name, primary_color, secondary_color, fab_color, logo_url, logo_data_url, font_choice, welcome_message",
-    "name, primary_color, secondary_color, fab_color, logo_url, font_choice, welcome_message",
-  ];
-
-  let lastError: { message: string } | null = null;
-
-  for (const fields of selectVariants) {
-    const { data, error } = await supabase
-      .from("businesses")
-      .select(fields)
-      .eq("id", businessId).or("is_deleted.eq.false,is_deleted.is.null")
-      .order("created_at", { ascending: false })
-      .limit(1)
-      .maybeSingle();
-
-    if (!error) {
-      return { data, error: null };
-    }
-
-    const missingChatIconColor = isMissingColumnError(error.message, "chat_icon_color");
-    const missingLogoDataUrl = isMissingColumnError(error.message, "logo_data_url");
-
-    if (!missingChatIconColor && !missingLogoDataUrl) {
-      return { data: null, error };
-    }
-
-    lastError = error;
+  let fields = "name,primary_color,secondary_color,fab_color,chat_icon_color,logo_url,logo_data_url,font_choice,welcome_message,chat_outline_enabled,chat_outline_color,chat_outline_width,chat_outline_opacity,widget_opacity".split(",");
+  for (let attempt = 0; attempt < 16; attempt++) {
+    const { data, error } = await supabase.from("businesses").select(fields.join(",")).eq("id", businessId)
+      .or("is_deleted.eq.false,is_deleted.is.null").order("created_at", { ascending: false }).limit(1).maybeSingle();
+    if (!error) return { data, error: null };
+    const missing = fields.find(field => isMissingColumnError(error.message, field));
+    if (!missing) return { data: null, error };
+    fields = fields.filter(field => field !== missing);
   }
-
-  return { data: null, error: lastError };
+  return { data: null, error: { message: "Widget schema unavailable" } };
 }
 
 function asRecord(value: unknown): Record<string, unknown> | null {
@@ -80,7 +50,7 @@ function asRecord(value: unknown): Record<string, unknown> | null {
 }
 
 function asString(value: unknown): string {
-  return typeof value === "string" ? value : "";
+  return typeof value === "string" || typeof value === "number" || typeof value === "boolean" ? String(value) : "";
 }
 
 export async function GET(req: NextRequest) {
@@ -135,8 +105,8 @@ export async function GET(req: NextRequest) {
       name: name || DEFAULT_WIDGET_CONFIG.name,
       primary_color: primaryColor || DEFAULT_WIDGET_CONFIG.primary_color,
       secondary_color: secondaryColor || DEFAULT_WIDGET_CONFIG.secondary_color,
-      fab_color: fabColor || chatIconColor || DEFAULT_WIDGET_CONFIG.fab_color,
-      logo_url: logoUrl || logoDataUrl || DEFAULT_WIDGET_CONFIG.logo_url,
+      fab_color: chatIconColor || fabColor || DEFAULT_WIDGET_CONFIG.fab_color,
+      logo_url: [logoUrl, logoDataUrl].find(value => value && validLogoSource(value)) || DEFAULT_WIDGET_CONFIG.logo_url,
       font_choice: fontChoice || DEFAULT_WIDGET_CONFIG.font_choice,
       welcome_message: welcomeMessage || DEFAULT_WIDGET_CONFIG.welcome_message,
       chat_outline_enabled: chatOutlineEnabled || DEFAULT_WIDGET_CONFIG.chat_outline_enabled,

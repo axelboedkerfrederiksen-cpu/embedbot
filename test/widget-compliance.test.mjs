@@ -21,10 +21,10 @@ async function widget(config){
  const context=vm.createContext({document,window,URL,crypto:webcrypto,console,TextDecoder,TextEncoder,AbortController,setTimeout,clearTimeout,fetch:async(url,options)=>{requests.push({url,body:options?.body?JSON.parse(options.body):null});return {ok:true,json:async()=>options?.method==="POST"?{success:true}:config};},localStorage:window.localStorage,requestAnimationFrame:fn=>fn(),navigator:{language:'da-DK'}});
  vm.runInContext(source.replace('  loadWidgetConfig();', '  window.renderCommerce = renderCommerce; window.inspectChat = () => ({history: conversationHistory, references: conversationReferences, session: commerceSession});\n  loadWidgetConfig();'),context);await new Promise(resolve=>setTimeout(resolve,0));return {ids,created,storageCalls,requests,inspectChat:window.inspectChat, renderCommerce:window.renderCommerce};
 }
-test('real widget always discloses AI before first interaction despite custom branding; customer privacy and EmbedBot information survive config; no storage or font request',async()=>{
+test('real widget always discloses AI before first interaction despite custom branding; customer privacy and EmbedBot information survive config; no storage or third-party font request',async()=>{
  const {ids,created,storageCalls}=await widget({name:'Custom Brand',hide_ai:true,show_ai:false,customer_privacy_url:'https://shop.example/privacy',font_choice:'Poppins'});
- assert.equal(ids.get('eb-ai-disclosure').textContent,'AI-assistent');assert.equal(ids.get('eb-title').textContent,'Custom Brand ChatBot');assert.equal(ids.get('eb-privacy-link').href,'https://shop.example/privacy');
- assert.ok(created.some(el=>el.innerHTML.includes('Drevet af EmbedBot')&&el.innerHTML.includes('https://www.embedbot.dk/privacy')));assert.equal(storageCalls.length,0);assert.ok(!created.some(el=>el.tagName==='link'||String(el.href).includes('fonts.googleapis')));
+ assert.equal(ids.get('eb-ai-disclosure').textContent,'AI-assistent');assert.equal(ids.get('eb-title').textContent,'Custom Brand');assert.equal(ids.get('eb-privacy-link').href,'https://shop.example/privacy');
+ assert.ok(created.some(el=>el.innerHTML.includes('Drevet af EmbedBot')&&el.innerHTML.includes('https://www.embedbot.dk/privacy')));assert.equal(storageCalls.length,0);assert.ok(!created.some(el=>/fonts\.(googleapis|gstatic)/.test(String(el.href))));assert.equal(created.find(el=>el.id==='eb-fonts').href,'https://embedbot.example/fonts/widget-fonts.css');
  // A style refresh cannot remove the permanent disclosure.
  assert.ok(ids.get('eb-bubble').onclick);ids.get('eb-bubble').onclick();assert.equal(ids.get('eb-ai-disclosure').textContent,'AI-assistent');
 });
