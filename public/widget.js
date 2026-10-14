@@ -247,7 +247,7 @@
     <button type="button" id="eb-bubble" aria-label="Åbn supportchat" aria-controls="eb-box" aria-expanded="false" style="position:fixed;bottom:24px;right:24px;width:56px;height:56px;background:#ffffff;color:#1a1a1a;border-radius:50%;border:none;cursor:pointer;display:flex;align-items:center;justify-content:center;z-index:9999;box-shadow:0 6px 18px rgba(0,0,0,0.10);opacity:0;transition:opacity 0.16s ease, transform 0.16s ease, box-shadow 0.16s ease;">${OPEN_ICON}</button>
     <div id="eb-box" role="dialog" aria-label="Supportchat" aria-hidden="true" style="position:fixed;bottom:90px;right:24px;width:352px;height:510px;background:#ffffff;border:none;border-radius:18px;box-shadow:0 10px 28px rgba(15,23,42,0.10);z-index:9999;display:flex;flex-direction:column;overflow:hidden;color:#1a1a1a;opacity:0;visibility:hidden;transform:translateY(10px) scale(0.985);pointer-events:none;transition:opacity 0.18s ease, transform 0.18s ease, visibility 0.18s ease;">
       <div id="eb-header" style="background:#f9f9f9;color:#1a1a1a;padding:14px 16px;font-weight:600;display:flex;align-items:center;gap:10px;">
-        <img id="eb-logo" alt="Virksomhedslogo" style="display:none;height:32px;width:40px;max-width:40px;flex:0 0 40px;object-fit:contain;background:#fff;border-radius:6px;padding:3px;" />
+        <img id="eb-logo" alt="Virksomhedslogo" style="display:none;height:32px;width:40px;max-width:40px;flex:0 0 40px;object-fit:contain;background:transparent;border-radius:0;padding:0;" />
         <div style="display:flex;flex-direction:column;line-height:1.2;flex:1;min-width:0;">
           <div style="min-width:0"><span id="eb-title" style="display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">Support Chat</span><span id="eb-ai-disclosure" style="display:block;font-size:11px;font-weight:500;line-height:1.5;opacity:1;">AI-assistent</span></div>
         </div>
@@ -431,7 +431,7 @@
       #eb-box * { font-family: var(--eb-font, system-ui) !important; }
       #eb-header { font-size: 14px; line-height: 1.4; }
       #eb-box button, #eb-bubble { text-transform: none; letter-spacing: normal; }
-      #eb-logo { box-shadow: none; border: 0; }
+      #eb-logo { background: transparent !important; box-shadow: none; border: 0; padding: 0; border-radius: 0; }
       #eb-send:focus-visible, #eb-bubble:focus-visible { outline: 2px solid currentColor; outline-offset: 3px; }
       @media (max-width: 400px) { #eb-header { padding: 10px; gap: 7px; } #eb-new-chat { font-size: 11px; padding: 0 4px; } }
       @media (prefers-reduced-motion: reduce) { #eb-bubble, #eb-messages * { animation: none !important; transition: none !important; } }
@@ -499,30 +499,8 @@
     document.head.appendChild(fonts);
   }
   logo.onerror = () => { logo.style.display = "none"; };
-  function getLogoBackdrop(pixels) {
-    let brightness = 0;
-    let coverage = 0;
-    for (let offset = 0; offset < pixels.length; offset += 4) {
-      const alpha = pixels[offset + 3] / 255;
-      brightness += (pixels[offset] * 0.2126 + pixels[offset + 1] * 0.7152 + pixels[offset + 2] * 0.0722) * alpha;
-      coverage += alpha;
-    }
-    return coverage && brightness / coverage > 180 ? "#232321" : "#ffffff";
-  }
   logo.onload = () => {
     logo.style.display = "block";
-    logo.style.background = "#ffffff";
-    // Inline uploads can be sampled without a cross-origin request. A legacy
-    // remote logo may disallow canvas reads; it still displays normally.
-    try {
-      const canvas = document.createElement("canvas");
-      canvas.width = 32; canvas.height = 32;
-      const context = canvas.getContext("2d", { willReadFrequently: true });
-      if (context) {
-        context.drawImage(logo, 0, 0, 32, 32);
-        logo.style.background = getLogoBackdrop(context.getImageData(0, 0, 32, 32).data);
-      }
-    } catch { /* Cross-origin logos retain the neutral backdrop. */ }
   };
 
   function applyWidgetStyles() {

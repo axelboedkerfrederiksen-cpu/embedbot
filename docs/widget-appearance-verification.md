@@ -36,8 +36,12 @@ handlers against isolated PostgreSQL via the existing Supabase test adapter:
 `test/widget-appearance.test.mjs` checks valid presets, legacy launcher-color
 fallback, fractional and zero outlines, malformed values, unsupported/oversized
 logo sources and font choices. Automatic text color meets 4.5:1 contrast on
-4,096 RGB samples at full opacity. Transparent white logos receive a dark
-backdrop; dark logos receive a white backdrop, without recoloring pixels.
+4,096 RGB samples at full opacity. Logo load/error handlers preserve image
+colors and transparency, show loaded logos, and hide failed images.
+
+Follow-up: removed the automatic logo backdrop and decorative padding after
+customer feedback. Logos now sit directly on the header. The 14 appearance,
+route and compliance tests and widget JavaScript syntax check pass.
 
 The existing widget compliance test now explicitly checks self-hosted font CSS
 and absence of Google font URLs, while retaining AI disclosure, privacy links
@@ -56,7 +60,8 @@ Performed in Chrome on the local development dashboard with `preview=1`:
 - Logo upload decodes a valid multicolor PNG, retains its colors (`filter:none`),
   fits it inside a 40×32 area and survives preset changes. A corrupt PNG displays
   an error and preserves the prior working logo. Removal hides the logo.
-- A transparent white PNG on a white header renders against `rgb(35,35,33)`.
+- Initial check: a transparent white PNG received a dark backdrop. That behavior
+  has since been removed; the original white-logo screenshot is historical.
 - Preview messages work with Send and Enter. Close/reopen and New chat work.
 - The demo Save button confirms explicitly that only the demo has changed.
 - A 390×844 viewport was inspected; the editor stacks and the widget fits its
@@ -75,7 +80,7 @@ was disabled. No browser permissions were changed.
 
 ## Release scope
 
-Changes are local and have not been published. No customer branding was edited
-in production. External HTTPS logos remain supported; if their origin forbids
-canvas pixel reads, the widget uses the neutral white logo backdrop. Uploaded
-PNG/JPG/WebP logos can be sampled locally for automatic backdrop selection.
+The initial appearance release was published as commit `243189c`. No customer
+branding was edited in production. External HTTPS and uploaded PNG/JPG/WebP
+logos remain supported. The widget does not sample or add a background to logos;
+backgrounds embedded in an uploaded image remain part of the image.

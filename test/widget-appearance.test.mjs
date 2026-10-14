@@ -29,10 +29,15 @@ test('appearance rejects unsafe logos, invalid fonts, ranges and colors',()=>{
  assert.equal(validateAppearance({logo_data_url:'data:image/png;base64,aGVsbG8=',chat_outline_opacity:'0',chat_outline_enabled:'false'}),null);
 });
 
-test('transparent white logos receive a dark backdrop without recoloring their pixels',()=>{
- const start=source.indexOf('  function getLogoBackdrop('),end=source.indexOf('  logo.onload',start);
- const context=vm.createContext({});vm.runInContext(source.slice(start,end)+';globalThis.backdrop=getLogoBackdrop;',context);
- assert.equal(context.backdrop([255,255,255,255,0,0,0,0]),'#232321');
- assert.equal(context.backdrop([20,40,30,255,255,255,255,0]),'#ffffff');
- assert.equal(context.backdrop([0,0,0,0]),'#ffffff');
+test('logo loading preserves transparent background and image colors, while failed images hide',()=>{
+ const logo={style:{display:'none',background:'transparent',filter:'none'},src:'data:image/png;base64,logo'};
+ const start=source.indexOf('  logo.onerror ='),end=source.indexOf('  function applyWidgetStyles()',start);
+ vm.runInContext(source.slice(start,end),vm.createContext({logo}));
+ logo.onload();
+ assert.equal(logo.style.display,'block');
+ assert.equal(logo.style.background,'transparent');
+ assert.equal(logo.style.filter,'none');
+ assert.equal(logo.src,'data:image/png;base64,logo');
+ logo.onerror();
+ assert.equal(logo.style.display,'none');
 });
